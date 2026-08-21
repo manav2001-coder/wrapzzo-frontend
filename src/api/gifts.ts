@@ -1,4 +1,4 @@
-import { authGet, authPost, authDelete } from './client'
+import { apiClient } from '@/lib/axiosClient'
 
 export interface GiftImage {
   id: string
@@ -18,7 +18,7 @@ export interface Gift {
   createdAt: string
 }
 
-export interface CreateGiftInput {
+export interface GiftInput {
   name: string
   category: string
   description?: string
@@ -31,41 +31,48 @@ interface PresignImageUploadResponse {
   key: string
 }
 
-export function listGifts(token: string): Promise<Gift[]> {
-  return authGet<Gift[]>('/api/platform/gifts/list', token)
+export async function listGifts(): Promise<Gift[]> {
+  const { data } = await apiClient.get<Gift[]>('/api/platform/gifts/list')
+  return data
 }
 
-export function getGift(token: string, id: string): Promise<Gift> {
-  return authGet<Gift>(`/api/platform/gifts/view/${id}`, token)
+export async function getGift(id: string): Promise<Gift> {
+  const { data } = await apiClient.get<Gift>(`/api/platform/gifts/view/${id}`)
+  return data
 }
 
-export function createGift(token: string, input: CreateGiftInput): Promise<Gift> {
-  return authPost<Gift>('/api/platform/gifts/add', token, input)
+export async function createGift(input: GiftInput): Promise<Gift> {
+  const { data } = await apiClient.post<Gift>('/api/platform/gifts/add', input)
+  return data
 }
 
-export function updateGift(token: string, id: string, input: CreateGiftInput): Promise<Gift> {
-  return authPost<Gift>(`/api/platform/gifts/edit/${id}`, token, input)
+export async function updateGift(id: string, input: GiftInput): Promise<Gift> {
+  const { data } = await apiClient.post<Gift>(`/api/platform/gifts/edit/${id}`, input)
+  return data
 }
 
-export function activateGift(token: string, id: string): Promise<Gift> {
-  return authPost<Gift>(`/api/platform/gifts/activate/${id}`, token)
+export async function activateGift(id: string): Promise<Gift> {
+  const { data } = await apiClient.post<Gift>(`/api/platform/gifts/activate/${id}`)
+  return data
 }
 
-export function deactivateGift(token: string, id: string): Promise<Gift> {
-  return authPost<Gift>(`/api/platform/gifts/deactivate/${id}`, token)
+export async function deactivateGift(id: string): Promise<Gift> {
+  const { data } = await apiClient.post<Gift>(`/api/platform/gifts/deactivate/${id}`)
+  return data
 }
 
-export function deleteGiftImage(token: string, giftId: string, imageId: string): Promise<Gift> {
-  return authDelete<Gift>(`/api/platform/gifts/removeImage/${giftId}/${imageId}`, token)
+export async function deleteGiftImage(giftId: string, imageId: string): Promise<Gift> {
+  const { data } = await apiClient.delete<Gift>(`/api/platform/gifts/removeImage/${giftId}/${imageId}`)
+  return data
 }
 
-/** Presigns an upload URL, PUTs the file straight to S3/MinIO, then attaches the resulting key to the gift. */
-export async function uploadGiftImage(token: string, giftId: string, file: File): Promise<Gift> {
-  const { uploadUrl, key } = await authPost<PresignImageUploadResponse>(`/api/platform/gifts/presignImage/${giftId}`, token, {
+/** Presigns an upload URL, PUTs the file straight to object storage, then attaches the resulting key to the gift. */
+export async function uploadGiftImage(giftId: string, file: File, displayOrder: number): Promise<Gift> {
+  const { data: presign } = await apiClient.post<PresignImageUploadResponse>(`/api/platform/gifts/presignImage/${giftId}`, {
     contentType: file.type,
   })
 
-  const uploadResponse = await fetch(uploadUrl, {
+  const uploadResponse = await fetch(presign.uploadUrl, {
     method: 'PUT',
     headers: { 'Content-Type': file.type },
     body: file,
@@ -74,5 +81,6 @@ export async function uploadGiftImage(token: string, giftId: string, file: File)
     throw new Error(`Upload to storage failed with status ${uploadResponse.status}`)
   }
 
-  return authPost<Gift>(`/api/platform/gifts/addImage/${giftId}`, token, { key })
+  const { data } = await apiClient.post<Gift>(`/api/platform/gifts/addImage/${giftId}`, { key: presign.key, displayOrder })
+  return data
 }

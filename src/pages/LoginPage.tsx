@@ -10,8 +10,10 @@ import { Controller, useForm } from 'react-hook-form'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { login } from '@/api/auth'
+import { vendorLogin } from '@/api/vendorAuth'
 import { useAppDispatch } from '@/app/hooks'
 import { setCredentials } from '@/features/auth/authSlice'
+import { setVendorCredentials } from '@/features/vendorAuth/vendorAuthSlice'
 import { ApiError } from '@/lib/axiosClient'
 
 const loginSchema = z.object({
@@ -51,7 +53,19 @@ export function LoginPage() {
     defaultValues: { email: '', password: '' },
   })
 
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/admin'
+  const requestedFrom = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
+  // Only honor the redirect-back target if it actually belongs to the side that just
+  // authenticated -- otherwise an admin who got bounced here from a vendor-only route
+  // (or vice versa) would land somewhere their session can't access.
+  const fromForAdmin = requestedFrom?.startsWith('/admin') ? requestedFrom : undefined
+  const fromForVendor = requestedFrom?.startsWith('/vendor') ? requestedFrom : undefined
+
+  function lockedMessage(error: ApiError): string {
+    const lockedUntil = (error.data as { lockedUntil?: string } | undefined)?.lockedUntil
+    return lockedUntil
+      ? `Too many failed attempts. Account locked until ${new Date(lockedUntil).toLocaleTimeString()}.`
+      : 'Too many failed attempts. Please try again later.'
+  }
 
   async function onSubmit(values: LoginFormValues) {
     setSubmitError(null)
@@ -59,19 +73,27 @@ export function LoginPage() {
     try {
       const tokens = await login(values.email, values.password)
       dispatch(setCredentials({ ...tokens, email: values.email, rememberMe }))
-      navigate(from, { replace: true })
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 423) {
-        const lockedUntil = (error.data as { lockedUntil?: string } | undefined)?.lockedUntil
-        setSubmitError(
-          lockedUntil
-            ? `Too many failed attempts. Account locked until ${new Date(lockedUntil).toLocaleTimeString()}.`
-            : 'Too many failed attempts. Please try again later.',
-        )
-      } else if (error instanceof Error) {
-        setSubmitError(error.message)
-      } else {
-        setSubmitError('Something went wrong. Please try again.')
+      navigate(fromForAdmin ?? '/admin', { replace: true })
+      return
+    } catch (userError) {
+      if (userError instanceof ApiError && userError.status === 423) {
+        setSubmitError(lockedMessage(userError))
+        setSubmitting(false)
+        return
+      }
+      // Not a recognized platform user -- this same login form doubles as the
+      // vendor portal's entry point, so try that identity before giving up.
+      try {
+        const tokens = await vendorLogin(values.email, values.password)
+        dispatch(setVendorCredentials({ ...tokens, email: values.email, rememberMe }))
+        navigate(fromForVendor ?? '/vendor/orders', { replace: true })
+        return
+      } catch (vendorError) {
+        if (vendorError instanceof ApiError && vendorError.status === 423) {
+          setSubmitError(lockedMessage(vendorError))
+        } else {
+          setSubmitError('Invalid email or password')
+        }
       }
     } finally {
       setSubmitting(false)

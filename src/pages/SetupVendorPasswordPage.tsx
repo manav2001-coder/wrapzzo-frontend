@@ -5,9 +5,11 @@ import { Message } from 'primereact/message'
 import { Password } from 'primereact/password'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { setupVendorPassword } from '@/api/vendorAuth'
+import { useAppDispatch } from '@/app/hooks'
+import { setVendorCredentials } from '@/features/vendorAuth/vendorAuthSlice'
 
 const setupSchema = z
   .object({
@@ -24,10 +26,11 @@ type SetupFormValues = z.infer<typeof setupSchema>
 export function SetupVendorPasswordPage() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') ?? ''
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
 
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(false)
 
   const {
     control,
@@ -42,14 +45,16 @@ export function SetupVendorPasswordPage() {
     setSubmitError(null)
     setSubmitting(true)
     try {
-      await setupVendorPassword(token, values.password, values.confirmPassword)
-      setDone(true)
+      const tokens = await setupVendorPassword(token, values.password, values.confirmPassword)
+      // The setup link doesn't carry the vendor's email, so the topbar shows it blank
+      // until their next real login -- a minor cosmetic gap, not worth a profile fetch here.
+      dispatch(setVendorCredentials({ ...tokens, email: '' }))
+      navigate('/vendor/orders', { replace: true })
     } catch (error) {
       const message = axios.isAxiosError(error)
         ? ((error.response?.data as { error?: string } | undefined)?.error ?? 'Something went wrong. Please try again.')
         : 'Something went wrong. Please try again.'
       setSubmitError(message)
-    } finally {
       setSubmitting(false)
     }
   }
@@ -64,11 +69,6 @@ export function SetupVendorPasswordPage() {
 
         {!token ? (
           <Message severity="error" text="This link is missing its setup token. Ask for a new invite email." className="w-full justify-start" />
-        ) : done ? (
-          <>
-            <h1 className="text-2xl font-semibold tracking-tight text-text">Password set</h1>
-            <p className="mt-2 text-base text-text-muted">Your password is set. You can now log in to the vendor portal.</p>
-          </>
         ) : (
           <>
             <h1 className="text-2xl font-semibold tracking-tight text-text">Set up your password</h1>

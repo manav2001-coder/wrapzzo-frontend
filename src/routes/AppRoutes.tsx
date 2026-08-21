@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
 import { AccessControlPage } from '@/modules/admin/access-control/AccessControlPage'
 import { CompanyFormPage } from '@/modules/admin/companies/CompanyFormPage'
 import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
@@ -9,6 +10,8 @@ import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
 import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
 import { VendorFormPage } from '@/modules/admin/vendors/VendorFormPage'
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
+import { VendorLayout } from '@/modules/vendor/VendorLayout'
+import { VendorOrdersPage } from '@/modules/vendor/orders/VendorOrdersPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
@@ -40,6 +43,13 @@ export function AppRoutes() {
           <Route path="/admin/orders" element={<OrdersPage />} />
 
           <Route path="/admin/access-control" element={<AccessControlPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<VendorProtectedRoute />}>
+        <Route element={<VendorLayout />}>
+          <Route path="/vendor" element={<Navigate to="/vendor/orders" replace />} />
+          <Route path="/vendor/orders" element={<VendorOrdersPage />} />
         </Route>
       </Route>
 

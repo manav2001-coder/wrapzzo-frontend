@@ -1,111 +1,138 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/*
+ * PrimeReact ships its own base styles for native elements (button, input,
+ * dialog chrome, etc). Tailwind's preflight layer resets those same
+ * elements, which is what made buttons/dialogs/inputs look broken -- so we
+ * only pull in Tailwind's theme + utilities, never preflight, and let
+ * PrimeReact own element-level styling.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* Our theme toggle sets data-theme on <html>, not Tailwind's default .dark class -- key the dark: variant off that. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* Brand -- constant across themes. */
+  --color-accent: #2e5ad1;
+  --color-accent-hover: #25489f;
+  --color-dot: #60636c;
+
+  /* App shell surfaces (light default). */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+
+  /* Sidebar -- its own palette since it's a distinct panel in both themes. */
+  --color-sidebar: #0a0e17;
+  --color-sidebar-fg: #cbd5e1;
+  --color-sidebar-fg-muted: #64748b;
+  --color-sidebar-border: rgba(255, 255, 255, 0.06);
+  --color-sidebar-hover: rgba(255, 255, 255, 0.04);
+  --color-sidebar-active: rgba(255, 255, 255, 0.06);
+  --color-sidebar-active-fg: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/*
+ * Dark theme overrides. Applied via [data-theme="dark"] on <html> -- see
+ * src/lib/theme.ts, which resolves the user's light/dark/system preference
+ * and keeps this in sync with the swapped PrimeReact theme stylesheet.
+ */
+[data-theme='dark'] {
+  --color-accent: #5b7fe0;
+  --color-accent-hover: #7b9aea;
+  --color-dot: #4b5563;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  --color-bg: #0b0d12;
+  --color-surface: #14171e;
+  --color-surface-muted: #191c24;
+  --color-border: #262b36;
+  --color-text: #e5e7eb;
+  --color-text-muted: #94a3b8;
+
+  --color-sidebar: #05070c;
+  --color-sidebar-fg: #94a3b8;
+  --color-sidebar-fg-muted: #4b5563;
+  --color-sidebar-border: rgba(255, 255, 255, 0.05);
+  --color-sidebar-hover: rgba(255, 255, 255, 0.03);
+  --color-sidebar-active: rgba(255, 255, 255, 0.05);
+  --color-sidebar-active-fg: #ffffff;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* Minimal, targeted reset -- box-sizing only, so it can't clash with PrimeReact's own button/input/dialog styling. */
+*,
+::before,
+::after {
   box-sizing: border-box;
+}
+
+/* Skipping Tailwind's preflight also skipped its <a> reset -- links default to
+   the browser's blue/underline unless every one is styled individually. Reset
+   once, globally, and let each link opt into its own color/hover treatment. */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:root {
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* PrimeReact DataTable: align with the app's denser, professional table look */
+.p-datatable .p-datatable-thead > tr > th {
+  background: var(--color-surface-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  font-weight: 600;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.p-datatable .p-datatable-tbody > tr > td {
+  font-size: 0.875rem;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.p-paginator {
+  font-size: 0.875rem;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.p-component {
+  font-family: var(--font-sans);
+}
+
+/*
+ * PrimeReact's Password wraps its <input> in an internal .p-icon-field div
+ * (for the eye-toggle icon). That wrapper is a flex item inside the
+ * .p-password flex container but has no flex-grow, so it shrinks to the
+ * input's default intrinsic width instead of filling the field -- which is
+ * why a full-width Password looked narrower than a plain InputText next to
+ * it. Force it to grow like any other full-width field.
+ */
+.p-password.p-inputwrapper > .p-icon-field {
+  flex: 1 1 auto;
+  min-width: 0;
 }

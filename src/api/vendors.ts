@@ -1,4 +1,4 @@
-import { authGet, authPost } from './client'
+import { apiClient } from '@/lib/axiosClient'
 
 export interface Vendor {
   id: string
@@ -14,29 +14,45 @@ export interface AddVendorResult {
   temporaryPassword: string | null
 }
 
-export function listVendors(token: string): Promise<Vendor[]> {
-  return authGet<Vendor[]>('/api/platform/vendors/list', token)
+export interface AddVendorInput {
+  name: string
+  contactEmail: string
+  contactPhone?: string
+  password?: string
+  confirmPassword?: string
 }
 
-export function getVendor(token: string, id: string): Promise<Vendor> {
-  return authGet<Vendor>(`/api/platform/vendors/view/${id}`, token)
+export interface EditVendorInput {
+  name: string
+  contactPhone?: string
 }
 
-export function addVendor(
-  token: string,
-  input: { name: string; contactEmail: string; contactPhone?: string },
-): Promise<AddVendorResult> {
-  return authPost<AddVendorResult>('/api/platform/vendors/add', token, input)
+export async function listVendors(): Promise<Vendor[]> {
+  const { data } = await apiClient.get<Vendor[]>('/api/platform/vendors/list')
+  return data
 }
 
-export function editVendor(token: string, id: string, input: { name: string; contactPhone?: string }): Promise<Vendor> {
-  return authPost<Vendor>(`/api/platform/vendors/edit/${id}`, token, input)
+export async function getVendor(id: string): Promise<Vendor> {
+  const { data } = await apiClient.get<Vendor>(`/api/platform/vendors/view/${id}`)
+  return data
 }
 
-export function suspendVendor(token: string, id: string): Promise<Vendor> {
-  return authPost<Vendor>(`/api/platform/vendors/suspend/${id}`, token)
+export async function addVendor(input: AddVendorInput): Promise<AddVendorResult> {
+  const { data } = await apiClient.post<AddVendorResult>('/api/platform/vendors/add', input)
+  return data
 }
 
-export function reactivateVendor(token: string, id: string): Promise<Vendor> {
-  return authPost<Vendor>(`/api/platform/vendors/reactivate/${id}`, token)
+export async function editVendor(id: string, input: EditVendorInput): Promise<Vendor> {
+  const { data } = await apiClient.post<Vendor>(`/api/platform/vendors/edit/${id}`, input)
+  return data
+}
+
+export async function suspendVendor(id: string): Promise<Vendor> {
+  const { data } = await apiClient.post<Vendor>(`/api/platform/vendors/suspend/${id}`)
+  return data
+}
+
+export async function reactivateVendor(id: string): Promise<Vendor> {
+  const { data } = await apiClient.post<Vendor>(`/api/platform/vendors/reactivate/${id}`)
+  return data
 }

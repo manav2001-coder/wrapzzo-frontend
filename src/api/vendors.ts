@@ -9,17 +9,10 @@ export interface Vendor {
   createdAt: string
 }
 
-export interface AddVendorResult {
-  vendor: Vendor
-  temporaryPassword: string | null
-}
-
 export interface AddVendorInput {
   name: string
   contactEmail: string
   contactPhone?: string
-  password?: string
-  confirmPassword?: string
 }
 
 export interface EditVendorInput {
@@ -37,8 +30,15 @@ export async function getVendor(id: string): Promise<Vendor> {
   return data
 }
 
-export async function addVendor(input: AddVendorInput): Promise<AddVendorResult> {
-  const { data } = await apiClient.post<AddVendorResult>('/api/platform/vendors/add', input)
+/** No password here -- the vendor sets their own via the invite email we send. */
+export async function addVendor(input: AddVendorInput): Promise<Vendor> {
+  const { data } = await apiClient.post<Vendor>('/api/platform/vendors/add', input)
+  return data
+}
+
+/** For when the original invite email was lost or its link expired. */
+export async function resendVendorInvite(id: string): Promise<Vendor> {
+  const { data } = await apiClient.post<Vendor>(`/api/platform/vendors/resendInvite/${id}`)
   return data
 }
 

@@ -3,35 +3,22 @@ import { format } from 'date-fns'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { confirmDialog } from 'primereact/confirmdialog'
-import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
-import { Password } from 'primereact/password'
 import { ProgressSpinner } from 'primereact/progressspinner'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
-import { useAddVendor, useEditVendor, useSetVendorStatus, useVendor } from '@/hooks/useVendors'
+import { useAddVendor, useEditVendor, useResendVendorInvite, useSetVendorStatus, useVendor } from '@/hooks/useVendors'
 import { showApiError, showToast } from '@/lib/toast'
 
-const createVendorSchema = z
-  .object({
-    name: z.string().min(1, 'Vendor name is required'),
-    contactEmail: z.string().min(1, 'Contact email is required').email('Enter a valid email address'),
-    contactPhone: z.string().optional(),
-    password: z.string().optional(),
-    confirmPassword: z.string().optional(),
-  })
-  .refine((data) => !data.password || data.password.length >= 8, {
-    message: 'Password must be at least 8 characters',
-    path: ['password'],
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  })
+const createVendorSchema = z.object({
+  name: z.string().min(1, 'Vendor name is required'),
+  contactEmail: z.string().min(1, 'Contact email is required').email('Enter a valid email address'),
+  contactPhone: z.string().optional(),
+})
 
 const editVendorSchema = z.object({
   name: z.string().min(1, 'Vendor name is required'),
@@ -50,13 +37,11 @@ export function VendorFormPage() {
   const addVendor = useAddVendor()
   const editVendor = useEditVendor(id ?? '')
   const setStatus = useSetVendorStatus(id ?? '')
-
-  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const resendInvite = useResendVendorInvite(id ?? '')
 
   const createForm = useForm<CreateVendorValues>({
     resolver: zodResolver(createVendorSchema),
-    defaultValues: { name: '', contactEmail: '', contactPhone: '', password: '', confirmPassword: '' },
+    defaultValues: { name: '', contactEmail: '', contactPhone: '' },
   })
 
   const editForm = useForm<EditVendorValues>({
@@ -71,19 +56,17 @@ export function VendorFormPage() {
 
   async function onCreateSubmit(values: CreateVendorValues) {
     try {
-      const result = await addVendor.mutateAsync({
+      const created = await addVendor.mutateAsync({
         name: values.name,
         contactEmail: values.contactEmail,
         contactPhone: values.contactPhone || undefined,
-        password: values.password || undefined,
-        confirmPassword: values.confirmPassword || undefined,
       })
-      showToast({ severity: 'success', summary: 'Vendor created' })
-      if (result.temporaryPassword) {
-        setTemporaryPassword(result.temporaryPassword)
-      } else {
-        navigate(`/admin/vendors/${result.vendor.id}`, { replace: true })
-      }
+      showToast({
+        severity: 'success',
+        summary: 'Invite sent',
+        detail: `${created.contactEmail} will receive an email to set up their password.`,
+      })
+      navigate(`/admin/vendors/${created.id}`, { replace: true })
     } catch (error) {
       showApiError(error)
     }
@@ -119,12 +102,13 @@ export function VendorFormPage() {
     })
   }
 
-  function copyPassword() {
-    if (!temporaryPassword) return
-    navigator.clipboard.writeText(temporaryPassword).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
+  async function handleResendInvite() {
+    try {
+      await resendInvite.mutateAsync()
+      showToast({ severity: 'success', summary: 'Invite resent' })
+    } catch (error) {
+      showApiError(error)
+    }
   }
 
   if (isEdit && isLoadingVendor) {
@@ -202,7 +186,17 @@ export function VendorFormPage() {
                   onClick={confirmStatusToggle}
                 />
               )}
+              <Button
+                type="button"
+                label="Resend setup invite"
+                text
+                loading={resendInvite.isPending}
+                onClick={handleResendInvite}
+              />
             </div>
+            <small className="text-text-muted">
+              If they never got the invite email, or their setup link expired, resend it above.
+            </small>
           </form>
         </Card>
       ) : (
@@ -256,56 +250,8 @@ export function VendorFormPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="password" className="text-sm font-medium text-text">
-                  Password
-                </label>
-                <Controller
-                  name="password"
-                  control={createForm.control}
-                  render={({ field }) => (
-                    <Password
-                      inputId="password"
-                      {...field}
-                      toggleMask
-                      feedback={false}
-                      inputClassName="w-full"
-                      className="w-full"
-                      placeholder="Leave blank to auto-generate"
-                    />
-                  )}
-                />
-                {createForm.formState.errors.password && (
-                  <small className="text-red-500 dark:text-red-400">{createForm.formState.errors.password.message}</small>
-                )}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="confirmPassword" className="text-sm font-medium text-text">
-                  Confirm password
-                </label>
-                <Controller
-                  name="confirmPassword"
-                  control={createForm.control}
-                  render={({ field }) => (
-                    <Password
-                      inputId="confirmPassword"
-                      {...field}
-                      toggleMask
-                      feedback={false}
-                      inputClassName="w-full"
-                      className="w-full"
-                    />
-                  )}
-                />
-                {createForm.formState.errors.confirmPassword && (
-                  <small className="text-red-500 dark:text-red-400">{createForm.formState.errors.confirmPassword.message}</small>
-                )}
-              </div>
-            </div>
             <small className="text-text-muted">
-              Leave both password fields blank to have a secure one generated automatically -- you'll see it once, right
-              after creation, to share with the vendor.
+              They'll receive an email with a link to set up their own password -- no password is set here.
             </small>
 
             <Button type="submit" label="Create vendor" loading={addVendor.isPending} className="mt-2 self-start" />
@@ -313,30 +259,6 @@ export function VendorFormPage() {
         </Card>
       )}
       </div>
-
-      <Dialog
-        header="Vendor created"
-        visible={Boolean(temporaryPassword)}
-        onHide={() => {
-          setTemporaryPassword(null)
-          if (addVendor.data) navigate(`/admin/vendors/${addVendor.data.vendor.id}`, { replace: true })
-        }}
-        style={{ width: '28rem' }}
-      >
-        <p className="mb-3 text-sm text-text-muted">
-          Share this one-time password with the vendor securely -- it won't be shown again.
-        </p>
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-muted px-3 py-2">
-          <code className="flex-1 font-mono text-sm text-text">{temporaryPassword}</code>
-          <Button
-            icon={copied ? 'pi pi-check' : 'pi pi-copy'}
-            text
-            rounded
-            aria-label="Copy password"
-            onClick={copyPassword}
-          />
-        </div>
-      </Dialog>
     </div>
   )
 }

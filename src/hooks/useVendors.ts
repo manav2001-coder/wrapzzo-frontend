@@ -5,6 +5,7 @@ import {
   getVendor,
   listVendors,
   reactivateVendor,
+  resendVendorInvite,
   suspendVendor,
   type AddVendorInput,
   type EditVendorInput,
@@ -49,4 +50,8 @@ export function useSetVendorStatus(id: string) {
       queryClient.invalidateQueries({ queryKey: vendorsKey })
     },
   })
+}
+
+export function useResendVendorInvite(id: string) {
+  return useMutation({ mutationFn: () => resendVendorInvite(id) })
 }

@@ -27,6 +27,7 @@ export const NAV_MODULES: NavModule[] = [
       { label: 'Vendors', to: '/admin/vendors', icon: 'pi-truck' },
       { label: 'Gift Store', to: '/admin/gifts', icon: 'pi-gift' },
       { label: 'Orders', to: '/admin/orders', icon: 'pi-shopping-bag' },
+      { label: 'Access Control', to: '/admin/access-control', icon: 'pi-lock' },
     ],
   },
 ]

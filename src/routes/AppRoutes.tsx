@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AccessControlPage } from '@/modules/admin/access-control/AccessControlPage'
 import { CompanyFormPage } from '@/modules/admin/companies/CompanyFormPage'
 import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
 import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
@@ -10,11 +11,13 @@ import { VendorFormPage } from '@/modules/admin/vendors/VendorFormPage'
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/vendor/setup-password" element={<SetupVendorPasswordPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
@@ -35,6 +38,8 @@ export function AppRoutes() {
           <Route path="/admin/gifts/:id" element={<GiftFormPage />} />
 
           <Route path="/admin/orders" element={<OrdersPage />} />
+
+          <Route path="/admin/access-control" element={<AccessControlPage />} />
         </Route>
       </Route>
 

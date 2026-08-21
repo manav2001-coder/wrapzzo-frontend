@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { confirmDialog } from 'primereact/confirmdialog'
+import { InputNumber } from 'primereact/inputnumber'
 import { InputText } from 'primereact/inputtext'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { useEffect } from 'react'
@@ -14,15 +15,21 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { useAddVendor, useEditVendor, useResendVendorInvite, useSetVendorStatus, useVendor } from '@/hooks/useVendors'
 import { showApiError, showToast } from '@/lib/toast'
 
+const percentField = z.number().min(0, 'Must be between 0 and 100').max(100, 'Must be between 0 and 100').optional()
+
 const createVendorSchema = z.object({
   name: z.string().min(1, 'Vendor name is required'),
   contactEmail: z.string().min(1, 'Contact email is required').email('Enter a valid email address'),
   contactPhone: z.string().optional(),
+  markupFees: percentField,
+  commission: percentField,
 })
 
 const editVendorSchema = z.object({
   name: z.string().min(1, 'Vendor name is required'),
   contactPhone: z.string().optional(),
+  markupFees: percentField,
+  commission: percentField,
 })
 
 type CreateVendorValues = z.infer<typeof createVendorSchema>
@@ -41,16 +48,23 @@ export function VendorFormPage() {
 
   const createForm = useForm<CreateVendorValues>({
     resolver: zodResolver(createVendorSchema),
-    defaultValues: { name: '', contactEmail: '', contactPhone: '' },
+    defaultValues: { name: '', contactEmail: '', contactPhone: '', markupFees: undefined, commission: undefined },
   })
 
   const editForm = useForm<EditVendorValues>({
     resolver: zodResolver(editVendorSchema),
-    defaultValues: { name: '', contactPhone: '' },
+    defaultValues: { name: '', contactPhone: '', markupFees: undefined, commission: undefined },
   })
 
   useEffect(() => {
-    if (vendor) editForm.reset({ name: vendor.name, contactPhone: vendor.contactPhone ?? '' })
+    if (vendor) {
+      editForm.reset({
+        name: vendor.name,
+        contactPhone: vendor.contactPhone ?? '',
+        markupFees: vendor.markupFees ?? undefined,
+        commission: vendor.commission ?? undefined,
+      })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendor])
 
@@ -60,6 +74,8 @@ export function VendorFormPage() {
         name: values.name,
         contactEmail: values.contactEmail,
         contactPhone: values.contactPhone || undefined,
+        markupFees: values.markupFees,
+        commission: values.commission,
       })
       showToast({
         severity: 'success',
@@ -74,7 +90,12 @@ export function VendorFormPage() {
 
   async function onEditSubmit(values: EditVendorValues) {
     try {
-      await editVendor.mutateAsync({ name: values.name, contactPhone: values.contactPhone || undefined })
+      await editVendor.mutateAsync({
+        name: values.name,
+        contactPhone: values.contactPhone || undefined,
+        markupFees: values.markupFees,
+        commission: values.commission,
+      })
       showToast({ severity: 'success', summary: 'Vendor updated' })
     } catch (error) {
       showApiError(error)
@@ -169,6 +190,61 @@ export function VendorFormPage() {
               />
             </div>
 
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="markupFees" className="text-sm font-medium text-text">
+                  Markup fees
+                </label>
+                <Controller
+                  name="markupFees"
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="markupFees"
+                      value={field.value ?? null}
+                      onValueChange={(e) => field.onChange(e.value ?? undefined)}
+                      suffix="%"
+                      minFractionDigits={0}
+                      maxFractionDigits={2}
+                      min={0}
+                      max={100}
+                      placeholder="Optional"
+                      className={editForm.formState.errors.markupFees ? 'p-invalid w-full' : 'w-full'}
+                    />
+                  )}
+                />
+                {editForm.formState.errors.markupFees && (
+                  <small className="text-red-500 dark:text-red-400">{editForm.formState.errors.markupFees.message}</small>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="commission" className="text-sm font-medium text-text">
+                  Commission
+                </label>
+                <Controller
+                  name="commission"
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="commission"
+                      value={field.value ?? null}
+                      onValueChange={(e) => field.onChange(e.value ?? undefined)}
+                      suffix="%"
+                      minFractionDigits={0}
+                      maxFractionDigits={2}
+                      min={0}
+                      max={100}
+                      placeholder="Optional"
+                      className={editForm.formState.errors.commission ? 'p-invalid w-full' : 'w-full'}
+                    />
+                  )}
+                />
+                {editForm.formState.errors.commission && (
+                  <small className="text-red-500 dark:text-red-400">{editForm.formState.errors.commission.message}</small>
+                )}
+              </div>
+            </div>
+
             {vendor && (
               <p className="text-xs text-text-muted">Onboarded on {format(new Date(vendor.createdAt), 'dd MMM yyyy, HH:mm')}</p>
             )}
@@ -252,6 +328,61 @@ export function VendorFormPage() {
                 control={createForm.control}
                 render={({ field }) => <InputText id="contactPhone" {...field} placeholder="Optional" />}
               />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="markupFees" className="text-sm font-medium text-text">
+                  Markup fees
+                </label>
+                <Controller
+                  name="markupFees"
+                  control={createForm.control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="markupFees"
+                      value={field.value ?? null}
+                      onValueChange={(e) => field.onChange(e.value ?? undefined)}
+                      suffix="%"
+                      minFractionDigits={0}
+                      maxFractionDigits={2}
+                      min={0}
+                      max={100}
+                      placeholder="Optional"
+                      className={createForm.formState.errors.markupFees ? 'p-invalid w-full' : 'w-full'}
+                    />
+                  )}
+                />
+                {createForm.formState.errors.markupFees && (
+                  <small className="text-red-500 dark:text-red-400">{createForm.formState.errors.markupFees.message}</small>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="commission" className="text-sm font-medium text-text">
+                  Commission
+                </label>
+                <Controller
+                  name="commission"
+                  control={createForm.control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="commission"
+                      value={field.value ?? null}
+                      onValueChange={(e) => field.onChange(e.value ?? undefined)}
+                      suffix="%"
+                      minFractionDigits={0}
+                      maxFractionDigits={2}
+                      min={0}
+                      max={100}
+                      placeholder="Optional"
+                      className={createForm.formState.errors.commission ? 'p-invalid w-full' : 'w-full'}
+                    />
+                  )}
+                />
+                {createForm.formState.errors.commission && (
+                  <small className="text-red-500 dark:text-red-400">{createForm.formState.errors.commission.message}</small>
+                )}
+              </div>
             </div>
 
             <small className="text-text-muted">

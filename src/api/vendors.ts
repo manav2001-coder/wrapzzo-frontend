@@ -6,6 +6,10 @@ export interface Vendor {
   name: string
   contactEmail: string
   contactPhone: string | null
+  /** Percentage, e.g. 12.5 means 12.5%. */
+  markupFees: number | null
+  /** Percentage, e.g. 12.5 means 12.5%. */
+  commission: number | null
   status: 'ACTIVE' | 'SUSPENDED'
   createdAt: string
 }
@@ -14,11 +18,15 @@ export interface AddVendorInput {
   name: string
   contactEmail: string
   contactPhone?: string
+  markupFees?: number
+  commission?: number
 }
 
 export interface EditVendorInput {
   name: string
   contactPhone?: string
+  markupFees?: number
+  commission?: number
 }
 
 export async function listVendors(): Promise<Vendor[]> {

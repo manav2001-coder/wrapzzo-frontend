@@ -123,7 +123,11 @@ export function VendorFormPage() {
     <div>
       <PageHeader
         title={isEdit ? vendor?.name ?? 'Vendor' : 'Add vendor'}
-        subtitle={isEdit ? 'Update vendor details and manage status.' : 'Onboard a new fulfillment partner.'}
+        subtitle={
+          isEdit && vendor
+            ? `${vendor.displayId} · Update vendor details and manage status.`
+            : 'Onboard a new fulfillment partner.'
+        }
         backTo="/admin/vendors"
         actions={isEdit && vendor ? <StatusBadge status={vendor.status} /> : undefined}
       />

@@ -36,6 +36,7 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3.5">
+        <span className="font-mono text-[11px] text-text-muted">{gift.displayId}</span>
         <span className="truncate font-medium text-text">{gift.name}</span>
         <span className="truncate text-xs text-text-muted">{gift.category}</span>
         {gift.moq && <span className="text-xs text-text-muted">MOQ {gift.moq}</span>}

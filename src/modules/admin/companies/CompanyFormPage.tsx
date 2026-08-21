@@ -135,7 +135,11 @@ export function CompanyFormPage() {
     <div>
       <PageHeader
         title={isEdit ? company?.name ?? 'Company' : 'Add company'}
-        subtitle={isEdit ? 'Update company details and manage status.' : 'Onboard a new corporate customer.'}
+        subtitle={
+          isEdit && company
+            ? `${company.displayId} · Update company details and manage status.`
+            : 'Onboard a new corporate customer.'
+        }
         backTo="/admin/companies"
         actions={isEdit && company ? <StatusBadge status={company.status} /> : undefined}
       />

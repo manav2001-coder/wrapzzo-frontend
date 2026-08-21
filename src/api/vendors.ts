@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/axiosClient'
 
 export interface Vendor {
   id: string
+  displayId: string
   name: string
   contactEmail: string
   contactPhone: string | null

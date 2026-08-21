@@ -8,6 +8,7 @@ export interface GiftImage {
 
 export interface Gift {
   id: string
+  displayId: string
   name: string
   category: string
   description: string | null

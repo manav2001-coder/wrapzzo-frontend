@@ -196,7 +196,11 @@ export function GiftFormPage() {
     <div>
       <PageHeader
         title={isEdit ? gift?.name ?? 'Gift' : 'Add gift'}
-        subtitle={isEdit ? 'Update gift details and manage its catalogue visibility.' : 'Add a new gift to the catalogue.'}
+        subtitle={
+          isEdit && gift
+            ? `${gift.displayId} · Update gift details and manage its catalogue visibility.`
+            : 'Add a new gift to the catalogue.'
+        }
         backTo="/admin/gifts"
         actions={
           isEdit && gift ? (

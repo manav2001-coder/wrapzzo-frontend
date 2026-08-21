@@ -68,6 +68,7 @@ export function VendorListPage() {
             onRowClick={(event) => navigate(`/admin/vendors/${(event.data as Vendor).id}`)}
             rowClassName={() => 'cursor-pointer'}
           >
+            <Column header="ID" body={(row: Vendor) => <span className="font-mono text-xs text-text-muted">{row.displayId}</span>} style={{ width: '96px' }} />
             <Column
               header="Vendor"
               body={(row: Vendor) => <span className="font-medium text-text">{row.name}</span>}

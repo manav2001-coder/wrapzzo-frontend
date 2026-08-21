@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/axiosClient'
 
 export interface Company {
   id: string
+  displayId: string
   name: string
   status: 'ACTIVE' | 'INACTIVE'
   logoUrl: string | null

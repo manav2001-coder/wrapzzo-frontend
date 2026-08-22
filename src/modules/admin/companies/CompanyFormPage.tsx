@@ -247,16 +247,6 @@ export function CompanyFormPage() {
               )}
             </div>
           </Card>
-
-          {isEdit && (
-            <Card title="Company users" subTitle="Onboard users with designations and org-hierarchy placement.">
-              <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-                <i className="pi pi-info-circle mr-2" />
-                User management isn't wired up on the backend yet — this section will let you add users with a name,
-                email, designation, and org-unit placement as soon as that API ships.
-              </div>
-            </Card>
-          )}
         </div>
       </div>
     </div>

@@ -30,7 +30,11 @@ export function CompanyUsersPage() {
         title="Users"
         subtitle={company ? `Everyone with a Wrapzzo account at ${company.name}.` : 'Everyone with a Wrapzzo account at this company.'}
         backTo={`/admin/companies/${companyId}`}
-        actions={<Button label="Import employees" icon="pi pi-upload" onClick={() => navigate(`/admin/companies/${companyId}/import-users`)} />}
+        actions={
+          users && users.length > 0 ? (
+            <Button label="Import employees" icon="pi pi-upload" onClick={() => navigate(`/admin/companies/${companyId}/import-users`)} />
+          ) : undefined
+        }
       />
 
       {!isLoading && users?.length === 0 ? (

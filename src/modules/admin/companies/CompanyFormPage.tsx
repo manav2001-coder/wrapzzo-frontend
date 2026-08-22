@@ -137,7 +137,7 @@ export function CompanyFormPage() {
         title={isEdit ? company?.name ?? 'Company' : 'Add company'}
         subtitle={
           isEdit && company
-            ? `${company.displayId} · Update company details and manage status.`
+            ? 'Update company details and manage status.'
             : 'Onboard a new corporate customer.'
         }
         backTo="/admin/companies"

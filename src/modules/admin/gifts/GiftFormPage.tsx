@@ -198,7 +198,7 @@ export function GiftFormPage() {
         title={isEdit ? gift?.name ?? 'Gift' : 'Add gift'}
         subtitle={
           isEdit && gift
-            ? `${gift.displayId} · Update gift details and manage its catalogue visibility.`
+            ? 'Update gift details and manage its catalogue visibility.'
             : 'Add a new gift to the catalogue.'
         }
         backTo="/admin/gifts"

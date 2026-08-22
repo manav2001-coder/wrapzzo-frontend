@@ -146,7 +146,7 @@ export function VendorFormPage() {
         title={isEdit ? vendor?.name ?? 'Vendor' : 'Add vendor'}
         subtitle={
           isEdit && vendor
-            ? `${vendor.displayId} · Update vendor details and manage status.`
+            ? 'Update vendor details and manage status.'
             : 'Onboard a new fulfillment partner.'
         }
         backTo="/admin/vendors"

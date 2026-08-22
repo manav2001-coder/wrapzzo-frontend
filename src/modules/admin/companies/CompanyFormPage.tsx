@@ -187,10 +187,10 @@ export function CompanyFormPage() {
               {isEdit && company && (
                 <Button
                   type="button"
-                  label="Import employees"
+                  label="Users"
                   icon="pi pi-users"
                   outlined
-                  onClick={() => navigate(`/admin/companies/${company.id}/import-users`)}
+                  onClick={() => navigate(`/admin/companies/${company.id}/users`)}
                 />
               )}
             </div>

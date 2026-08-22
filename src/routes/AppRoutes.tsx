@@ -6,6 +6,7 @@ import { AccessControlPage } from '@/modules/admin/access-control/AccessControlP
 import { CompanyFormPage } from '@/modules/admin/companies/CompanyFormPage'
 import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
 import { CompanyUsersImportPage } from '@/modules/admin/companies/CompanyUsersImportPage'
+import { CompanyUsersPage } from '@/modules/admin/companies/CompanyUsersPage'
 import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
 import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
 import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
@@ -36,6 +37,7 @@ export function AppRoutes() {
           <Route path="/admin/companies" element={<CompanyListPage />} />
           <Route path="/admin/companies/new" element={<CompanyFormPage />} />
           <Route path="/admin/companies/:id" element={<CompanyFormPage />} />
+          <Route path="/admin/companies/:id/users" element={<CompanyUsersPage />} />
           <Route path="/admin/companies/:id/import-users" element={<CompanyUsersImportPage />} />
 
           <Route path="/admin/vendors" element={<VendorListPage />} />

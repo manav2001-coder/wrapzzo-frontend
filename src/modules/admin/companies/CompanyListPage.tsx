@@ -92,11 +92,16 @@ export function CompanyListPage() {
             <Column
               header=""
               body={(row: Company) => (
-                <Link to={`/admin/companies/${row.id}`} onClick={(event) => event.stopPropagation()}>
-                  <Button icon="pi pi-arrow-right" text rounded aria-label="View company" />
-                </Link>
+                <div className="flex items-center justify-end gap-1">
+                  <Link to={`/admin/companies/${row.id}/users`} onClick={(event) => event.stopPropagation()}>
+                    <Button icon="pi pi-users" label="Users" text aria-label="View users" />
+                  </Link>
+                  <Link to={`/admin/companies/${row.id}`} onClick={(event) => event.stopPropagation()}>
+                    <Button icon="pi pi-arrow-right" text rounded aria-label="View company" />
+                  </Link>
+                </div>
               )}
-              style={{ width: '56px' }}
+              style={{ width: '140px' }}
             />
           </DataTable>
         </div>

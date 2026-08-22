@@ -50,6 +50,9 @@ export function GiftFormPage() {
   const uploadImage = useUploadGiftImage(id ?? '')
   const deleteImage = useDeleteGiftImage(id ?? '')
 
+  // A vendor-submitted gift's content is theirs -- an admin can only view it and delist it.
+  const isVendorOwned = isEdit && Boolean(gift?.vendorId)
+
   // Create mode only -- staged locally since a gift needs to exist (an id)
   // before the backend's presign/attach endpoints have anywhere to point.
   // Uploaded for real right after the gift record is created.
@@ -198,7 +201,9 @@ export function GiftFormPage() {
         title={isEdit ? gift?.name ?? 'Gift' : 'Add gift'}
         subtitle={
           isEdit && gift
-            ? 'Update gift details and manage its catalogue visibility.'
+            ? isVendorOwned
+              ? `Submitted by ${gift.vendorName} -- you can view it and manage its catalogue visibility, not edit its content.`
+              : 'Update gift details and manage its catalogue visibility.'
             : 'Add a new gift to the catalogue.'
         }
         backTo="/admin/gifts"
@@ -212,6 +217,7 @@ export function GiftFormPage() {
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <Card title="Gift details" className="lg:col-span-2">
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+          <fieldset disabled={isVendorOwned} className="contents">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="name" className="text-sm font-medium text-text">
                 Gift name
@@ -307,14 +313,17 @@ export function GiftFormPage() {
             {isEdit && gift && (
               <p className="text-xs text-text-muted">Added on {new Date(gift.createdAt).toLocaleDateString()}</p>
             )}
+          </fieldset>
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Button
-                type="submit"
-                label={isEdit ? 'Save changes' : isUploadingPending ? 'Uploading images...' : 'Create gift'}
-                loading={submitting}
-                disabled={isEdit && !isDirty}
-              />
+              {!isVendorOwned && (
+                <Button
+                  type="submit"
+                  label={isEdit ? 'Save changes' : isUploadingPending ? 'Uploading images...' : 'Create gift'}
+                  loading={submitting}
+                  disabled={isEdit && !isDirty}
+                />
+              )}
               {isEdit && gift && (
                 <Button
                   type="button"
@@ -345,18 +354,20 @@ export function GiftFormPage() {
                       className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border"
                     >
                       <img src={image.imageUrl} alt="" className="h-full w-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => confirmRemoveImage(image.id)}
-                        aria-label="Remove image"
-                        className="absolute top-1 right-1 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                      >
-                        <i className="pi pi-times text-[10px]" />
-                      </button>
+                      {!isVendorOwned && (
+                        <button
+                          type="button"
+                          onClick={() => confirmRemoveImage(image.id)}
+                          aria-label="Remove image"
+                          className="absolute top-1 right-1 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <i className="pi pi-times text-[10px]" />
+                        </button>
+                      )}
                     </div>
                   ))}
 
-                {!atImageCap && (
+                {!atImageCap && !isVendorOwned && (
                   <FileUpload
                     mode="basic"
                     name="image"

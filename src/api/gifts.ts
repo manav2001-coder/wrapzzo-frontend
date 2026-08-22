@@ -15,6 +15,9 @@ export interface Gift {
   moq: number | null
   leadTimeDays: number | null
   active: boolean
+  /** Null for Wrapzzo's own catalogue entries; set when a vendor submitted this gift themselves. */
+  vendorId: string | null
+  vendorName: string | null
   images: GiftImage[]
   createdAt: string
 }

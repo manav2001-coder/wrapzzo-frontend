@@ -86,7 +86,7 @@ export function LoginPage() {
       try {
         const tokens = await vendorLogin(values.email, values.password)
         dispatch(setVendorCredentials({ ...tokens, email: values.email, rememberMe }))
-        navigate(fromForVendor ?? '/vendor/orders', { replace: true })
+        navigate(fromForVendor ?? '/vendor', { replace: true })
         return
       } catch (vendorError) {
         if (vendorError instanceof ApiError && vendorError.status === 423) {

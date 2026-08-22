@@ -11,6 +11,8 @@ import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
 import { VendorFormPage } from '@/modules/admin/vendors/VendorFormPage'
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
 import { VendorLayout } from '@/modules/vendor/VendorLayout'
+import { VendorGiftFormPage } from '@/modules/vendor/gifts/VendorGiftFormPage'
+import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
 import { VendorOrdersPage } from '@/modules/vendor/orders/VendorOrdersPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -48,7 +50,10 @@ export function AppRoutes() {
 
       <Route element={<VendorProtectedRoute />}>
         <Route element={<VendorLayout />}>
-          <Route path="/vendor" element={<Navigate to="/vendor/orders" replace />} />
+          <Route path="/vendor" element={<Navigate to="/vendor/gifts" replace />} />
+          <Route path="/vendor/gifts" element={<VendorGiftListPage />} />
+          <Route path="/vendor/gifts/new" element={<VendorGiftFormPage />} />
+          <Route path="/vendor/gifts/:id" element={<VendorGiftFormPage />} />
           <Route path="/vendor/orders" element={<VendorOrdersPage />} />
         </Route>
       </Route>

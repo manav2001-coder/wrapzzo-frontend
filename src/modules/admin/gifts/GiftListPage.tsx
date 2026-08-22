@@ -39,6 +39,12 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
         <span className="truncate font-medium text-text">{gift.name}</span>
         <span className="truncate text-xs text-text-muted">{gift.category}</span>
         {gift.moq && <span className="text-xs text-text-muted">MOQ {gift.moq}</span>}
+        {gift.vendorName && (
+          <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[11px] text-text-muted">
+            <i className="pi pi-truck text-[10px]" />
+            {gift.vendorName}
+          </span>
+        )}
       </div>
     </button>
   )

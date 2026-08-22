@@ -184,6 +184,15 @@ export function CompanyFormPage() {
                   onClick={confirmStatusToggle}
                 />
               )}
+              {isEdit && company && (
+                <Button
+                  type="button"
+                  label="Import employees"
+                  icon="pi pi-users"
+                  outlined
+                  onClick={() => navigate(`/admin/companies/${company.id}/import-users`)}
+                />
+              )}
             </div>
           </form>
         </Card>

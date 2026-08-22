@@ -5,6 +5,7 @@ import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
 import { AccessControlPage } from '@/modules/admin/access-control/AccessControlPage'
 import { CompanyFormPage } from '@/modules/admin/companies/CompanyFormPage'
 import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
+import { CompanyUsersImportPage } from '@/modules/admin/companies/CompanyUsersImportPage'
 import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
 import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
 import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
@@ -16,12 +17,14 @@ import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
 import { VendorOrdersPage } from '@/modules/vendor/orders/VendorOrdersPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { SetupPasswordPage } from '@/pages/SetupPasswordPage'
 import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/setup-password" element={<SetupPasswordPage />} />
       <Route path="/vendor/setup-password" element={<SetupVendorPasswordPage />} />
 
       <Route element={<ProtectedRoute />}>
@@ -33,6 +36,7 @@ export function AppRoutes() {
           <Route path="/admin/companies" element={<CompanyListPage />} />
           <Route path="/admin/companies/new" element={<CompanyFormPage />} />
           <Route path="/admin/companies/:id" element={<CompanyFormPage />} />
+          <Route path="/admin/companies/:id/import-users" element={<CompanyUsersImportPage />} />
 
           <Route path="/admin/vendors" element={<VendorListPage />} />
           <Route path="/admin/vendors/new" element={<VendorFormPage />} />

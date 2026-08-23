@@ -16,6 +16,7 @@ import { VendorLayout } from '@/modules/vendor/VendorLayout'
 import { VendorGiftFormPage } from '@/modules/vendor/gifts/VendorGiftFormPage'
 import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
 import { VendorOrdersPage } from '@/modules/vendor/orders/VendorOrdersPage'
+import { LandingPage } from '@/pages/LandingPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { SetupPasswordPage } from '@/pages/SetupPasswordPage'
@@ -24,14 +25,13 @@ import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/setup-password" element={<SetupPasswordPage />} />
       <Route path="/vendor/setup-password" element={<SetupVendorPasswordPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/admin/companies" replace />} />
-
           {/* Admin module -- add a new module by adding its route tree here and its entry in config/navigation.ts */}
           <Route path="/admin" element={<Navigate to="/admin/companies" replace />} />
           <Route path="/admin/companies" element={<CompanyListPage />} />

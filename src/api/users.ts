@@ -3,11 +3,11 @@ import { apiClient } from '@/lib/axiosClient'
 export interface BulkImportUserRow {
   name: string
   email: string
-  mobile?: string
-  designation?: string
-  employeeCode?: string
+  mobile: string
+  designation: string
+  employeeCode: string
   reportsToEmail?: string
-  orgUnitPath?: string[]
+  orgUnitPath: string[]
 }
 
 export interface CompanyUser {

@@ -2,19 +2,43 @@ import ExcelJS from 'exceljs'
 import type { BulkImportUserRow } from '@/api/users'
 
 // Generic on purpose -- works for any client's shape, not just a pharma-style
-// Division/Zone/Region/Area rollout. A company with no named hierarchy just
-// leaves the Org Level columns blank; reportsTo alone still builds their org chart.
+// Division/Zone/Region/Area rollout. Org Level 1 is required for every row;
+// deeper levels can be left blank for a company with a shallower hierarchy.
 export const ORG_LEVEL_COUNT = 4
 
-export const EMPLOYEE_TEMPLATE_HEADERS = [
-  'Name',
-  'Email',
-  'Mobile',
-  'Designation',
-  'Employee Code',
-  'Reports To Email',
-  ...Array.from({ length: ORG_LEVEL_COUNT }, (_, i) => `Org Level ${i + 1}`),
+export type EmployeeFieldKey =
+  | 'name'
+  | 'email'
+  | 'mobile'
+  | 'designation'
+  | 'employeeCode'
+  | 'reportsToEmail'
+  | `orgLevel${1 | 2 | 3 | 4}`
+
+export interface EmployeeFieldDef {
+  key: EmployeeFieldKey
+  label: string
+  required: boolean
+}
+
+export const EMPLOYEE_FIELDS: EmployeeFieldDef[] = [
+  { key: 'name', label: 'Name', required: true },
+  { key: 'email', label: 'Email', required: true },
+  { key: 'mobile', label: 'Mobile', required: true },
+  { key: 'designation', label: 'Designation', required: true },
+  { key: 'employeeCode', label: 'Employee Code', required: true },
+  { key: 'reportsToEmail', label: 'Reports To Email', required: false },
+  ...Array.from({ length: ORG_LEVEL_COUNT }, (_, i) => ({
+    key: `orgLevel${i + 1}` as EmployeeFieldKey,
+    label: `Org Level ${i + 1}`,
+    required: i === 0,
+  })),
 ]
+
+export const EMPLOYEE_TEMPLATE_HEADERS = EMPLOYEE_FIELDS.map((field) => field.label)
+
+/** field key -> the column header text to read it from in the uploaded sheet. */
+export type ColumnMapping = Partial<Record<EmployeeFieldKey, string>>
 
 export async function generateEmployeeTemplateBlob(): Promise<Blob> {
   const workbook = new ExcelJS.Workbook()
@@ -44,8 +68,45 @@ function cellText(value: unknown): string {
   return String(value).trim()
 }
 
-/** Reads the client's filled-in template -- matches columns by header name, not position, so a reordered sheet still works. */
-export async function parseEmployeeWorkbook(file: File): Promise<ParsedEmployeeSheet> {
+/** Reads just the header row -- lets the caller offer a column-mapping step before committing to a full parse. */
+export async function getWorkbookHeaders(file: File): Promise<string[]> {
+  const workbook = new ExcelJS.Workbook()
+  const buffer = await file.arrayBuffer()
+  await workbook.xlsx.load(buffer)
+
+  const sheet = workbook.worksheets[0]
+  if (!sheet) return []
+
+  const headers: string[] = []
+  sheet.getRow(1).eachCell((cell) => {
+    const text = cellText(cell.value)
+    if (text) headers.push(text)
+  })
+  return headers
+}
+
+/** Matches our field labels against a client's sheet headers by exact (case-insensitive) name -- the fast path for anyone who used our template as-is. */
+export function buildAutoMapping(headers: string[]): ColumnMapping {
+  const byNormalized = new Map(headers.map((header) => [normalizeHeader(header), header]))
+  const mapping: ColumnMapping = {}
+  for (const field of EMPLOYEE_FIELDS) {
+    const match = byNormalized.get(normalizeHeader(field.label))
+    if (match) mapping[field.key] = match
+  }
+  return mapping
+}
+
+export function getUnmappedRequiredFields(mapping: ColumnMapping): EmployeeFieldDef[] {
+  return EMPLOYEE_FIELDS.filter((field) => field.required && !mapping[field.key])
+}
+
+/**
+ * Reads a client's roster sheet. `mapping` says which of the client's own column
+ * headers holds each of our fields -- pass it when their sheet doesn't use our
+ * template's exact header names (collected via a "map your columns" step).
+ * Falls back to auto-matching our own header names when omitted.
+ */
+export async function parseEmployeeWorkbook(file: File, mapping?: ColumnMapping): Promise<ParsedEmployeeSheet> {
   const workbook = new ExcelJS.Workbook()
   const buffer = await file.arrayBuffer()
   await workbook.xlsx.load(buffer)
@@ -55,47 +116,76 @@ export async function parseEmployeeWorkbook(file: File): Promise<ParsedEmployeeS
     return { rows: [], errors: ['This file has no worksheet to read.'] }
   }
 
-  const headerRow = sheet.getRow(1)
   const columnIndexByHeader = new Map<string, number>()
-  headerRow.eachCell((cell, colNumber) => {
+  sheet.getRow(1).eachCell((cell, colNumber) => {
     columnIndexByHeader.set(normalizeHeader(cell.value), colNumber)
   })
 
-  const nameCol = columnIndexByHeader.get('name')
-  const emailCol = columnIndexByHeader.get('email')
-  if (!nameCol || !emailCol) {
-    return { rows: [], errors: ['This sheet is missing required "Name" and/or "Email" columns -- download the template to check the expected headers.'] }
+  const colByKey: Partial<Record<EmployeeFieldKey, number>> = {}
+  for (const field of EMPLOYEE_FIELDS) {
+    const headerText = mapping?.[field.key] ?? field.label
+    const col = columnIndexByHeader.get(normalizeHeader(headerText))
+    if (col) colByKey[field.key] = col
   }
-  const mobileCol = columnIndexByHeader.get('mobile')
-  const designationCol = columnIndexByHeader.get('designation')
-  const employeeCodeCol = columnIndexByHeader.get('employee code')
-  const reportsToCol = columnIndexByHeader.get('reports to email')
-  const orgLevelCols = Array.from({ length: ORG_LEVEL_COUNT }, (_, i) => columnIndexByHeader.get(`org level ${i + 1}`))
+
+  // Every field but "Reports To Email" is required -- someone always has to be
+  // at the top of the org chart with no manager, so that one alone stays optional.
+  const missingRequiredCols = EMPLOYEE_FIELDS.filter((field) => field.required && !colByKey[field.key])
+  if (missingRequiredCols.length > 0) {
+    return {
+      rows: [],
+      errors: [
+        `This sheet is missing required column(s): ${missingRequiredCols.map((f) => f.label).join(', ')} -- map your columns below or download the template.`,
+      ],
+    }
+  }
 
   const rows: BulkImportUserRow[] = []
   const errors: string[] = []
 
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return
-    const name = cellText(row.getCell(nameCol).value)
-    const email = cellText(row.getCell(emailCol).value)
-    if (!name && !email) return // a genuinely blank row -- skip silently
 
-    if (!name || !email) {
-      errors.push(`Row ${rowNumber}: both Name and Email are required.`)
+    const values: Partial<Record<EmployeeFieldKey, string>> = {}
+    for (const field of EMPLOYEE_FIELDS) {
+      const col = colByKey[field.key]
+      values[field.key] = col ? cellText(row.getCell(col).value) : ''
+    }
+
+    const orgUnitPath = [values.orgLevel1, values.orgLevel2, values.orgLevel3, values.orgLevel4].filter(
+      (v): v is string => !!v && v.length > 0,
+    )
+
+    const isBlankRow =
+      !values.name &&
+      !values.email &&
+      !values.mobile &&
+      !values.designation &&
+      !values.employeeCode &&
+      !values.reportsToEmail &&
+      orgUnitPath.length === 0
+    if (isBlankRow) return // a genuinely blank row -- skip silently
+
+    const missing: string[] = []
+    if (!values.name) missing.push('Name')
+    if (!values.email) missing.push('Email')
+    if (!values.mobile) missing.push('Mobile')
+    if (!values.designation) missing.push('Designation')
+    if (!values.employeeCode) missing.push('Employee Code')
+    if (orgUnitPath.length === 0) missing.push('Org Level 1')
+    if (missing.length > 0) {
+      errors.push(`Row ${rowNumber}: missing required field(s): ${missing.join(', ')}.`)
       return
     }
 
-    const orgUnitPath = orgLevelCols.map((col) => (col ? cellText(row.getCell(col).value) : '')).filter((v) => v.length > 0)
-
     rows.push({
-      name,
-      email,
-      mobile: mobileCol ? cellText(row.getCell(mobileCol).value) || undefined : undefined,
-      designation: designationCol ? cellText(row.getCell(designationCol).value) || undefined : undefined,
-      employeeCode: employeeCodeCol ? cellText(row.getCell(employeeCodeCol).value) || undefined : undefined,
-      reportsToEmail: reportsToCol ? cellText(row.getCell(reportsToCol).value) || undefined : undefined,
-      orgUnitPath: orgUnitPath.length > 0 ? orgUnitPath : undefined,
+      name: values.name!,
+      email: values.email!,
+      mobile: values.mobile!,
+      designation: values.designation!,
+      employeeCode: values.employeeCode!,
+      reportsToEmail: values.reportsToEmail || undefined,
+      orgUnitPath,
     })
   })
 

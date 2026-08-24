@@ -5,6 +5,7 @@ import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
 import { AccessControlPage } from '@/modules/admin/access-control/AccessControlPage'
 import { CompanyFormPage } from '@/modules/admin/companies/CompanyFormPage'
 import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
+import { CompanyUsersAddPage } from '@/modules/admin/companies/CompanyUsersAddPage'
 import { CompanyUsersImportPage } from '@/modules/admin/companies/CompanyUsersImportPage'
 import { CompanyUsersPage } from '@/modules/admin/companies/CompanyUsersPage'
 import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
@@ -38,6 +39,7 @@ export function AppRoutes() {
           <Route path="/admin/companies/new" element={<CompanyFormPage />} />
           <Route path="/admin/companies/:id" element={<CompanyFormPage />} />
           <Route path="/admin/companies/:id/users" element={<CompanyUsersPage />} />
+          <Route path="/admin/companies/:id/add-users" element={<CompanyUsersAddPage />} />
           <Route path="/admin/companies/:id/import-users" element={<CompanyUsersImportPage />} />
 
           <Route path="/admin/vendors" element={<VendorListPage />} />

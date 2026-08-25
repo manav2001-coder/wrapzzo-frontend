@@ -13,6 +13,13 @@ import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
 import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
 import { VendorFormPage } from '@/modules/admin/vendors/VendorFormPage'
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
+import { ApprovalQueuePage } from '@/modules/campaigns/ApprovalQueuePage'
+import { CampaignDetailPage } from '@/modules/campaigns/CampaignDetailPage'
+import { CampaignListPage } from '@/modules/campaigns/CampaignListPage'
+import { CampaignWizardPage } from '@/modules/campaigns/CampaignWizardPage'
+import { MyCampaignsPage } from '@/modules/campaigns/MyCampaignsPage'
+import { OrdersPage as CampaignOrdersPage } from '@/modules/campaigns/OrdersPage'
+import { SubmissionFormPage } from '@/modules/campaigns/SubmissionFormPage'
 import { VendorLayout } from '@/modules/vendor/VendorLayout'
 import { VendorGiftFormPage } from '@/modules/vendor/gifts/VendorGiftFormPage'
 import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
@@ -53,6 +60,15 @@ export function AppRoutes() {
           <Route path="/admin/orders" element={<OrdersPage />} />
 
           <Route path="/admin/access-control" element={<AccessControlPage />} />
+
+          {/* Campaigns module -- company-side, PRD Part 2.5. Peer of /admin, not nested under it. */}
+          <Route path="/campaigns" element={<CampaignListPage />} />
+          <Route path="/campaigns/new" element={<CampaignWizardPage />} />
+          <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
+          <Route path="/campaigns/:id/submit" element={<SubmissionFormPage />} />
+          <Route path="/my-campaigns" element={<MyCampaignsPage />} />
+          <Route path="/approvals" element={<ApprovalQueuePage />} />
+          <Route path="/orders" element={<CampaignOrdersPage />} />
         </Route>
       </Route>
 

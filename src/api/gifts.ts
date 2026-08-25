@@ -6,6 +6,8 @@ export interface GiftImage {
   displayOrder: number
 }
 
+export type GiftModule = 'QUICK_GIFT' | 'BULK_GIFTING' | 'CAMPAIGN'
+
 export interface Gift {
   id: string
   displayId: string
@@ -15,6 +17,7 @@ export interface Gift {
   moq: number | null
   leadTimeDays: number | null
   active: boolean
+  modules: GiftModule[]
   /** Null for Wrapzzo's own catalogue entries; set when a vendor submitted this gift themselves. */
   vendorId: string | null
   vendorName: string | null
@@ -28,6 +31,8 @@ export interface GiftInput {
   description?: string
   moq?: number
   leadTimeDays?: number
+  /** Omitted entirely for vendor-submitted gifts -- module tagging is an admin catalogue decision, not the vendor's. */
+  modules?: GiftModule[]
 }
 
 interface PresignImageUploadResponse {
@@ -37,6 +42,12 @@ interface PresignImageUploadResponse {
 
 export async function listGifts(): Promise<Gift[]> {
   const { data } = await apiClient.get<Gift[]>('/api/platform/gifts/list')
+  return data
+}
+
+/** The Gift Store, from a company user's side -- active gifts only, no gift.manage required. */
+export async function listActiveGifts(): Promise<Gift[]> {
+  const { data } = await apiClient.get<Gift[]>('/api/gifts/list')
   return data
 }
 

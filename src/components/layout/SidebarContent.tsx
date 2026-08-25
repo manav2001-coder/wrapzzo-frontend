@@ -1,7 +1,8 @@
 import { ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
-import { NAV_MODULES } from '@/config/navigation'
+import { isSuperAdmin } from '@/config/auth'
+import { getNavModules } from '@/config/navigation'
 import { toggleModuleExpanded } from '@/features/ui/uiSlice'
 
 export function SidebarContent({
@@ -16,6 +17,8 @@ export function SidebarContent({
 }) {
   const dispatch = useAppDispatch()
   const expandedModules = useAppSelector((state) => state.ui.expandedModules)
+  const email = useAppSelector((state) => state.auth.user?.email)
+  const navModules = getNavModules(isSuperAdmin(email))
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-fg">
@@ -52,7 +55,7 @@ export function SidebarContent({
       )}
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {NAV_MODULES.map((mod) => {
+        {navModules.map((mod) => {
           const isExpanded = collapsed || expandedModules.includes(mod.key)
           return (
             <div key={mod.key}>

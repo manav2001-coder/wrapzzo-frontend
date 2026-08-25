@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
+import { Checkbox } from 'primereact/checkbox'
 import { confirmDialog } from 'primereact/confirmdialog'
 import { FileUpload } from 'primereact/fileupload'
 import { InputNumber } from 'primereact/inputnumber'
@@ -11,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
-import { uploadGiftImage } from '@/api/gifts'
+import { uploadGiftImage, type GiftModule } from '@/api/gifts'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import {
@@ -28,12 +29,19 @@ import { showApiError, showToast } from '@/lib/toast'
 // in the Gift Store grid) if multi-image support is turned back on later.
 export const MAX_GIFT_IMAGES = 1
 
+const MODULE_OPTIONS: { value: GiftModule; label: string }[] = [
+  { value: 'QUICK_GIFT', label: 'Quick Gift' },
+  { value: 'BULK_GIFTING', label: 'Bulk Gifting' },
+  { value: 'CAMPAIGN', label: 'Campaigns' },
+]
+
 const giftSchema = z.object({
   name: z.string().min(1, 'Gift name is required'),
   category: z.string().min(1, 'Category is required'),
   description: z.string().optional(),
   moq: z.number().positive().optional().nullable(),
   leadTimeDays: z.number().positive().optional().nullable(),
+  modules: z.array(z.enum(['QUICK_GIFT', 'BULK_GIFTING', 'CAMPAIGN'])),
 })
 
 type GiftFormValues = z.infer<typeof giftSchema>
@@ -70,7 +78,7 @@ export function GiftFormPage() {
     formState: { errors, isDirty },
   } = useForm<GiftFormValues>({
     resolver: zodResolver(giftSchema),
-    defaultValues: { name: '', category: '', description: '', moq: null, leadTimeDays: null },
+    defaultValues: { name: '', category: '', description: '', moq: null, leadTimeDays: null, modules: [] },
   })
 
   useEffect(() => {
@@ -81,6 +89,7 @@ export function GiftFormPage() {
         description: gift.description ?? '',
         moq: gift.moq,
         leadTimeDays: gift.leadTimeDays,
+        modules: gift.modules,
       })
     }
   }, [gift, reset])
@@ -92,6 +101,7 @@ export function GiftFormPage() {
       description: values.description || undefined,
       moq: values.moq ?? undefined,
       leadTimeDays: values.leadTimeDays ?? undefined,
+      modules: values.modules,
     }
     try {
       if (isEdit && id) {
@@ -308,6 +318,32 @@ export function GiftFormPage() {
                   )}
                 />
               </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-text">Available in</span>
+              <Controller
+                name="modules"
+                control={control}
+                render={({ field }) => (
+                  <div className="flex flex-wrap gap-4">
+                    {MODULE_OPTIONS.map((option) => (
+                      <label key={option.value} className="flex items-center gap-2 text-sm text-text">
+                        <Checkbox
+                          checked={field.value.includes(option.value)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.checked ? [...field.value, option.value] : field.value.filter((m) => m !== option.value),
+                            )
+                          }
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              />
+              <p className="text-xs text-text-muted">Which commerce paths can pick this gift.</p>
             </div>
 
             {isEdit && gift && (

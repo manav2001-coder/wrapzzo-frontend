@@ -5,6 +5,7 @@ import {
   deactivateGift,
   deleteGiftImage,
   getGift,
+  listActiveGifts,
   listGifts,
   updateGift,
   uploadGiftImage,
@@ -16,6 +17,11 @@ const giftKey = (id: string) => ['gifts', id] as const
 
 export function useGifts() {
   return useQuery({ queryKey: giftsKey, queryFn: listGifts })
+}
+
+/** The Gift Store, for pickers on the company side (Campaigns, Quick Gift, Bulk Gifting). */
+export function useActiveGifts() {
+  return useQuery({ queryKey: ['gifts', 'active'], queryFn: listActiveGifts })
 }
 
 export function useGift(id: string | undefined) {

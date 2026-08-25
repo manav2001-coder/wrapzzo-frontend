@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { login } from '@/api/auth'
 import { vendorLogin } from '@/api/vendorAuth'
 import { useAppDispatch } from '@/app/hooks'
+import { isSuperAdmin } from '@/config/auth'
 import { setCredentials } from '@/features/auth/authSlice'
 import { setVendorCredentials } from '@/features/vendorAuth/vendorAuthSlice'
 import { ApiError } from '@/lib/axiosClient'
@@ -22,6 +23,8 @@ const loginSchema = z.object({
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
+
+const CAMPAIGNS_SURFACE_PATHS = ['/campaigns', '/my-campaigns', '/approvals', '/orders']
 
 const ACTIVITY_FEED = [
   { dot: 'bg-sky-400', time: '14:22', label: 'Quick Gift sent', detail: '· to Rohan Verma' },
@@ -58,6 +61,7 @@ export function LoginPage() {
   // authenticated -- otherwise an admin who got bounced here from a vendor-only route
   // (or vice versa) would land somewhere their session can't access.
   const fromForAdmin = requestedFrom?.startsWith('/admin') ? requestedFrom : undefined
+  const fromForCampaigns = CAMPAIGNS_SURFACE_PATHS.some((p) => requestedFrom?.startsWith(p)) ? requestedFrom : undefined
   const fromForVendor = requestedFrom?.startsWith('/vendor') ? requestedFrom : undefined
 
   function lockedMessage(error: ApiError): string {
@@ -73,7 +77,8 @@ export function LoginPage() {
     try {
       const tokens = await login(values.email, values.password)
       dispatch(setCredentials({ ...tokens, email: values.email, rememberMe }))
-      navigate(fromForAdmin ?? '/admin', { replace: true })
+      const defaultLanding = isSuperAdmin(values.email) ? '/admin' : '/campaigns'
+      navigate((isSuperAdmin(values.email) ? fromForAdmin : fromForCampaigns) ?? defaultLanding, { replace: true })
       return
     } catch (userError) {
       if (userError instanceof ApiError && userError.status === 423) {

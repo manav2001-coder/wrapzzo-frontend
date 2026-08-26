@@ -119,7 +119,7 @@ export function GiftFormPage() {
             await uploadGiftImage(created.id, pendingFiles[index], index)
           }
         } catch (error) {
-          showApiError(error, 'Gift created, but one or more images failed to upload -- add them from the gift page.')
+          showApiError(error, 'Gift created, but one or more images failed to upload. Add them from the gift page.')
           navigate(`/admin/gifts/${created.id}`, { replace: true })
           return
         } finally {
@@ -212,7 +212,7 @@ export function GiftFormPage() {
         subtitle={
           isEdit && gift
             ? isVendorOwned
-              ? `Submitted by ${gift.vendorName} -- you can view it and manage its catalogue visibility, not edit its content.`
+              ? `Submitted by ${gift.vendorName}. You can view it and manage its catalogue visibility, but not edit its content.`
               : 'Update gift details and manage its catalogue visibility.'
             : 'Add a new gift to the catalogue.'
         }
@@ -376,7 +376,7 @@ export function GiftFormPage() {
 
         <Card
           title="Images"
-          subTitle={`${existingImageCount} of ${MAX_GIFT_IMAGES} used${isEdit ? ' -- shown in this order in the Gift Store.' : ' -- optional, add now or after creating.'}`}
+          subTitle={`${existingImageCount} of ${MAX_GIFT_IMAGES} used${isEdit ? '. Shown in this order in the Gift Store.' : '. Optional — add now or after creating.'}`}
           className="lg:col-span-1"
         >
           <div className="flex flex-wrap gap-3">

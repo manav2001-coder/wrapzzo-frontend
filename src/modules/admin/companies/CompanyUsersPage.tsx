@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import { Button } from 'primereact/button'
 import { Column } from 'primereact/column'
+import { confirmDialog } from 'primereact/confirmdialog'
 import { DataTable } from 'primereact/datatable'
 import { useRef, type ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -9,8 +10,11 @@ import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useCompany } from '@/hooks/useCompanies'
-import { useCompanyUsers } from '@/hooks/useUsers'
+import { useCompanyUsers, useMakeCompanyAdmin } from '@/hooks/useUsers'
 import { generateEmployeeTemplateBlob } from '@/lib/employeeTemplate'
+import { showApiError, showToast } from '@/lib/toast'
+
+const COMPANY_ADMIN_ROLE_NAME = 'Company Admin'
 
 const STATUS_LABEL: Record<CompanyUser['status'], string> = {
   ACTIVE: 'Active',
@@ -25,8 +29,25 @@ export function CompanyUsersPage() {
 
   const { data: company } = useCompany(id)
   const { data: users, isLoading } = useCompanyUsers(companyId)
+  const makeCompanyAdmin = useMakeCompanyAdmin(companyId)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleMakeCompanyAdmin(user: CompanyUser) {
+    confirmDialog({
+      header: 'Make Company Admin',
+      message: `${user.name} will be able to manage users, roles, and campaigns for ${company?.name ?? 'this company'}. Continue?`,
+      icon: 'pi pi-user-plus',
+      accept: async () => {
+        try {
+          await makeCompanyAdmin.mutateAsync(user.id)
+          showToast({ severity: 'success', summary: 'Company Admin assigned', detail: `${user.name} is now a Company Admin.` })
+        } catch (error) {
+          showApiError(error)
+        }
+      },
+    })
+  }
 
   async function handleDownloadTemplate() {
     const blob = await generateEmployeeTemplateBlob()
@@ -90,6 +111,11 @@ export function CompanyUsersPage() {
             <Column header="Reports to" body={(row: CompanyUser) => row.reportsToName ?? '—'} />
             <Column header="Org unit" body={(row: CompanyUser) => row.orgUnitName ?? '—'} />
             <Column
+              header="Access"
+              body={(row: CompanyUser) => <StatusBadge status={row.roleName} label={row.roleName} />}
+              style={{ width: '140px' }}
+            />
+            <Column
               header="Status"
               body={(row: CompanyUser) => (
                 <StatusBadge status={row.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE'} label={STATUS_LABEL[row.status]} />
@@ -97,6 +123,21 @@ export function CompanyUsersPage() {
               style={{ width: '120px' }}
             />
             <Column header="Added" body={(row: CompanyUser) => format(new Date(row.createdAt), 'dd MMM yyyy')} style={{ width: '130px' }} />
+            <Column
+              header=""
+              body={(row: CompanyUser) =>
+                row.roleName === COMPANY_ADMIN_ROLE_NAME ? null : (
+                  <Button
+                    label="Make Company Admin"
+                    icon="pi pi-user-plus"
+                    text
+                    size="small"
+                    onClick={() => handleMakeCompanyAdmin(row)}
+                  />
+                )
+              }
+              style={{ width: '180px' }}
+            />
           </DataTable>
         </div>
       )}

@@ -74,7 +74,7 @@ export function CompanyFormPage() {
         try {
           await uploadCompanyLogo(created.id, pendingLogo)
         } catch (error) {
-          showApiError(error, 'Company created, but the logo failed to upload -- add it from the company page.')
+          showApiError(error, 'Company created, but the logo failed to upload. Add it from the company page.')
           navigate(`/admin/companies/${created.id}`, { replace: true })
           return
         } finally {
@@ -198,7 +198,7 @@ export function CompanyFormPage() {
         </Card>
 
         <div className="flex flex-col gap-6 lg:col-span-1">
-          <Card title="Logo" subTitle={isEdit ? undefined : 'Optional -- add now, or come back after creating the company.'}>
+          <Card title="Logo" subTitle={isEdit ? undefined : 'Optional. Add now, or come back after creating the company.'}>
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               {isEdit && company ? (
                 <>

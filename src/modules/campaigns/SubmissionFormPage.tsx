@@ -156,9 +156,9 @@ export function SubmissionFormPage() {
         }),
     )
     if (succeededKeys.length > 0) {
-      showApiError(new Error(`${succeededKeys.length} submitted, ${failures.length} failed -- see the remaining row(s) below.`))
+      showApiError(new Error(`${succeededKeys.length} submitted, ${failures.length} failed. See the remaining row(s) below.`))
     } else {
-      showApiError(new Error('Nothing could be submitted -- see the row error(s) below.'))
+      showApiError(new Error('Nothing could be submitted. See the row error(s) below.'))
     }
   }
 
@@ -268,7 +268,7 @@ export function SubmissionFormPage() {
     <div>
       <PageHeader
         title={isResubmit ? 'Resubmit recipient' : 'Submit recipients'}
-        subtitle={`${campaign.displayId} · ${campaign.name}${!isResubmit ? ' -- add as many recipients as you like in one go.' : ''}`}
+        subtitle={`${campaign.displayId} · ${campaign.name}${!isResubmit ? '. Add as many recipients as you like in one go.' : ''}`}
         backTo={`/campaigns/${campaignId}`}
       />
 

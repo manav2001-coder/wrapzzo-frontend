@@ -386,7 +386,7 @@ export function VendorFormPage() {
             </div>
 
             <small className="text-text-muted">
-              They'll receive an email with a link to set up their own password -- no password is set here.
+              They'll receive an email with a link to set up their own password. No password is set here.
             </small>
 
             <Button type="submit" label="Create vendor" loading={addVendor.isPending} className="mt-2 self-start" />

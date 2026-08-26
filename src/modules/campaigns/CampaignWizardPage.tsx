@@ -50,7 +50,7 @@ const campaignSchema = z.object({
   recipientCategory: z.enum(RECIPIENT_OPTIONS as [CampaignRecipientCategory, ...CampaignRecipientCategory[]], {
     message: 'Recipient category is required',
   }),
-  giftIds: z.array(z.string()).min(1, 'Pick at least one gift -- a campaign has no purpose without one'),
+  giftIds: z.array(z.string()).min(1, 'Pick at least one gift to continue'),
   instructions: z.string().optional(),
   submissionDeadline: z.date().optional().nullable(),
 })

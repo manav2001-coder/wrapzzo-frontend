@@ -2,8 +2,104 @@ import { ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 import { NavLink } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { isSuperAdmin } from '@/config/auth'
-import { getNavModules } from '@/config/navigation'
+import { getNavModules, type NavEntry } from '@/config/navigation'
 import { toggleModuleExpanded } from '@/features/ui/uiSlice'
+
+function NavLeafLink({ item, collapsed, onNavigate }: { item: Extract<NavEntry, { type: 'link' }>; collapsed: boolean; onNavigate?: () => void }) {
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      onClick={onNavigate}
+      title={collapsed ? item.label : undefined}
+      className={({ isActive }) =>
+        [
+          'group relative flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors',
+          collapsed ? 'justify-center px-2' : 'pr-3 pl-3.5',
+          isActive ? 'bg-sidebar-active text-sidebar-active-fg' : 'text-sidebar-fg hover:bg-sidebar-hover hover:text-sidebar-active-fg',
+        ].join(' ')
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {!collapsed && (
+            <span
+              className={`absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent transition-opacity ${
+                isActive ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          )}
+          <i className={`pi ${item.icon} text-[15px]`} />
+          {!collapsed && <span>{item.label}</span>}
+        </>
+      )}
+    </NavLink>
+  )
+}
+
+/** Renders one level of NavEntry[] -- a flat link renders directly; a nested group renders
+ *  its own expand/collapse header (reusing the same expandedModules state as top-level
+ *  modules) and, when collapsed to the icon rail, is flattened to just its child links so
+ *  there's no dead sub-header with nothing to click. */
+function NavEntries({
+  entries,
+  depth,
+  collapsed,
+  expandedModules,
+  onToggle,
+  onNavigate,
+}: {
+  entries: NavEntry[]
+  depth: number
+  collapsed: boolean
+  expandedModules: string[]
+  onToggle: (key: string) => void
+  onNavigate?: () => void
+}) {
+  return (
+    <div className={depth > 0 ? 'mt-0.5 ml-3 space-y-0.5 border-l border-sidebar-border pl-2' : 'space-y-0.5'}>
+      {entries.map((entry) => {
+        if (entry.type === 'link') {
+          return <NavLeafLink key={entry.to} item={entry} collapsed={collapsed} onNavigate={onNavigate} />
+        }
+        if (collapsed) {
+          // Icon-only rail: no room for a sub-header, so surface its links directly.
+          return (
+            <div key={entry.key} className="space-y-0.5">
+              {entry.items.map((item) => (
+                <NavLeafLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+              ))}
+            </div>
+          )
+        }
+        const isExpanded = expandedModules.includes(entry.key)
+        return (
+          <div key={entry.key}>
+            <button
+              type="button"
+              onClick={() => onToggle(entry.key)}
+              className="flex w-full items-center gap-2 rounded-md py-1.5 pr-3 pl-3.5 text-sm font-medium text-sidebar-fg transition-colors hover:bg-sidebar-hover hover:text-sidebar-active-fg"
+            >
+              <i className={`pi ${entry.icon} text-[15px]`} />
+              <span className="flex-1 text-left">{entry.label}</span>
+              {isExpanded ? <ChevronDown className="size-3.5 shrink-0" /> : <ChevronRight className="size-3.5 shrink-0" />}
+            </button>
+            {isExpanded && (
+              <NavEntries
+                entries={entry.items}
+                depth={depth + 1}
+                collapsed={collapsed}
+                expandedModules={expandedModules}
+                onToggle={onToggle}
+                onNavigate={onNavigate}
+              />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 export function SidebarContent({
   collapsed = false,
@@ -19,6 +115,10 @@ export function SidebarContent({
   const expandedModules = useAppSelector((state) => state.ui.expandedModules)
   const email = useAppSelector((state) => state.auth.user?.email)
   const navModules = getNavModules(isSuperAdmin(email))
+
+  function handleToggle(key: string) {
+    dispatch(toggleModuleExpanded(key))
+  }
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-fg">
@@ -56,13 +156,26 @@ export function SidebarContent({
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
         {navModules.map((mod) => {
+          if (mod.flat) {
+            return (
+              <NavEntries
+                key={mod.key}
+                entries={mod.items}
+                depth={0}
+                collapsed={collapsed}
+                expandedModules={expandedModules}
+                onToggle={handleToggle}
+                onNavigate={onNavigate}
+              />
+            )
+          }
           const isExpanded = collapsed || expandedModules.includes(mod.key)
           return (
             <div key={mod.key}>
               <button
                 type="button"
                 title={collapsed ? mod.label : undefined}
-                onClick={() => !collapsed && dispatch(toggleModuleExpanded(mod.key))}
+                onClick={() => !collapsed && handleToggle(mod.key)}
                 className={[
                   'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[11px] font-semibold tracking-wider text-sidebar-fg-muted uppercase transition-colors',
                   collapsed ? 'justify-center' : 'hover:text-sidebar-fg',
@@ -78,38 +191,15 @@ export function SidebarContent({
               </button>
 
               {isExpanded && (
-                <div className="mt-0.5 space-y-0.5">
-                  {mod.items.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      onClick={onNavigate}
-                      title={collapsed ? item.label : undefined}
-                      className={({ isActive }) =>
-                        [
-                          'group relative flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors',
-                          collapsed ? 'justify-center px-2' : 'pr-3 pl-3.5',
-                          isActive
-                            ? 'bg-sidebar-active text-sidebar-active-fg'
-                            : 'text-sidebar-fg hover:bg-sidebar-hover hover:text-sidebar-active-fg',
-                        ].join(' ')
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          {!collapsed && (
-                            <span
-                              className={`absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent transition-opacity ${
-                                isActive ? 'opacity-100' : 'opacity-0'
-                              }`}
-                            />
-                          )}
-                          <i className={`pi ${item.icon} text-[15px]`} />
-                          {!collapsed && <span>{item.label}</span>}
-                        </>
-                      )}
-                    </NavLink>
-                  ))}
+                <div className="mt-0.5">
+                  <NavEntries
+                    entries={mod.items}
+                    depth={0}
+                    collapsed={collapsed}
+                    expandedModules={expandedModules}
+                    onToggle={handleToggle}
+                    onNavigate={onNavigate}
+                  />
                 </div>
               )}
             </div>

@@ -109,7 +109,7 @@ export function CampaignListPage() {
     <div>
       <PageHeader
         title="Campaigns"
-        subtitle="Coordinate team-driven gifting initiatives -- create a campaign, assign your team, and approved recipients become orders."
+        subtitle="Coordinate team-driven gifting initiatives: create a campaign, assign your team, and approved recipients become orders."
         actions={campaigns && campaigns.length > 0 ? newCampaignAction : undefined}
       />
 
@@ -117,7 +117,7 @@ export function CampaignListPage() {
         <EmptyState
           icon="pi-megaphone"
           title="No campaigns yet"
-          description="Start your first campaign -- pick a gift, choose your team, and let approved submissions flow straight into orders."
+          description="Start your first campaign: pick a gift, choose your team, and let approved submissions flow straight into orders."
           action={newCampaignAction}
         />
       ) : (

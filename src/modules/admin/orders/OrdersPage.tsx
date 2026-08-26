@@ -9,7 +9,13 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDonutChart } from '@/components/StatusDonutChart'
-import { useAssignOrderVendor, useAutoAssignOrderVendor, usePlatformOrders } from '@/hooks/useOrders'
+import {
+  useAssignCampaignVendor,
+  useAssignOrderVendor,
+  useAutoAssignCampaignVendor,
+  useAutoAssignOrderVendor,
+  usePlatformOrders,
+} from '@/hooks/useOrders'
 import { useVendors } from '@/hooks/useVendors'
 import { humanize } from '@/lib/format'
 import { groupByCampaign } from '@/lib/groupByCampaign'
@@ -90,6 +96,81 @@ function AssignmentControl({ order }: { order: Order }) {
           className="w-full flex-1"
         />
         <Button label="Assign" size="small" outlined loading={assign.isPending} disabled={!vendorId} onClick={handleManual} />
+      </div>
+    </div>
+  )
+}
+
+/** Campaign-level bulk assignment -- one action for every unassigned order under a campaign, instead of repeating the per-order control one at a time. */
+function CampaignBulkAssignControl({
+  campaignId,
+  campaignName,
+  unassignedCount,
+}: {
+  campaignId: string
+  campaignName: string
+  unassignedCount: number
+}) {
+  const { data: vendors } = useVendors()
+  const assignCampaign = useAssignCampaignVendor()
+  const autoAssignCampaign = useAutoAssignCampaignVendor()
+  const [picking, setPicking] = useState(false)
+  const [vendorId, setVendorId] = useState<string | undefined>(undefined)
+
+  const activeVendors = (vendors ?? []).filter((v) => v.status === 'ACTIVE')
+
+  async function handleAuto() {
+    try {
+      const result = await autoAssignCampaign.mutateAsync(campaignId)
+      if (result.skippedCount > 0) {
+        showToast({
+          severity: 'warn',
+          summary: `${result.assignedCount} auto-assigned, ${result.skippedCount} skipped`,
+          detail: 'No active vendor was available for the skipped order(s). Assign them manually.',
+        })
+      } else {
+        showToast({ severity: 'success', summary: `${result.assignedCount} order${result.assignedCount === 1 ? '' : 's'} auto-assigned` })
+      }
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  async function handleManual() {
+    if (!vendorId) return
+    try {
+      const result = await assignCampaign.mutateAsync({ campaignId, vendorId })
+      showToast({ severity: 'success', summary: `${result.assignedCount} order${result.assignedCount === 1 ? '' : 's'} assigned` })
+      setPicking(false)
+      setVendorId(undefined)
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  return (
+    <div className="mb-3 flex flex-col gap-2 rounded-lg border border-dashed border-border bg-surface-muted p-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-xs text-text-muted">
+        {unassignedCount} order{unassignedCount === 1 ? '' : 's'} in {campaignName} still need{unassignedCount === 1 ? 's' : ''} a vendor.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button label="Auto-assign all" icon="pi pi-bolt" size="small" loading={autoAssignCampaign.isPending} onClick={handleAuto} />
+        {!picking ? (
+          <Button label="Assign all to..." icon="pi pi-truck" size="small" outlined onClick={() => setPicking(true)} />
+        ) : (
+          <>
+            <Dropdown
+              value={vendorId}
+              onChange={(e) => setVendorId(e.value)}
+              options={activeVendors.map((v) => ({ label: v.name, value: v.id }))}
+              placeholder="Choose vendor"
+              filter
+              className="w-48"
+            />
+            <Button label="Assign" size="small" loading={assignCampaign.isPending} disabled={!vendorId} onClick={handleManual} />
+            <Button label="Cancel" text size="small" onClick={() => setPicking(false)} />
+          </>
+        )}
       </div>
     </div>
   )
@@ -187,7 +268,7 @@ export function OrdersPage() {
 
   return (
     <div>
-      <PageHeader title="Orders" subtitle="Every order across every company -- route each one to a vendor for fulfillment." />
+      <PageHeader title="Orders" subtitle="Every order across every company. Route each one to a vendor for fulfillment." />
 
       {!isLoading && orders?.length === 0 ? (
         <EmptyState
@@ -232,20 +313,30 @@ export function OrdersPage() {
             <EmptyState icon="pi-search" title="No orders match" />
           ) : (
             <>
-              <p className="mb-2 text-xs text-text-muted">One entry per campaign -- expand to see its orders and assign vendors.</p>
+              <p className="mb-2 text-xs text-text-muted">Each row is a campaign. Expand it to see its orders and assign vendors.</p>
               <Accordion multiple>
-                {groups.map((group) => (
-                  <AccordionTab
-                    key={group.campaignId}
-                    header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}
-                  >
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {group.items.map((order) => (
-                        <OrderCard key={order.id} order={order} />
-                      ))}
-                    </div>
-                  </AccordionTab>
-                ))}
+                {groups.map((group) => {
+                  const unassignedInGroup = group.items.filter((o) => !o.assignedVendorId && o.status !== 'CANCELLED').length
+                  return (
+                    <AccordionTab
+                      key={group.campaignId}
+                      header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}
+                    >
+                      {unassignedInGroup > 0 && (
+                        <CampaignBulkAssignControl
+                          campaignId={group.campaignId}
+                          campaignName={group.campaignName}
+                          unassignedCount={unassignedInGroup}
+                        />
+                      )}
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {group.items.map((order) => (
+                          <OrderCard key={order.id} order={order} />
+                        ))}
+                      </div>
+                    </AccordionTab>
+                  )
+                })}
               </Accordion>
             </>
           )}

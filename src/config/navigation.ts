@@ -1,15 +1,35 @@
-export interface NavItem {
+export interface NavLink {
+  type: 'link'
   label: string
   to: string
   icon: string
   end?: boolean
 }
 
+/** A collapsible submenu nested one level inside a NavModule -- e.g. "Campaign Module" holding Create/Manage. */
+export interface NavGroup {
+  type: 'group'
+  /** Must be globally unique across all modules -- reused as the sidebar's expand/collapse state key. */
+  key: string
+  label: string
+  icon: string
+  items: NavLink[]
+}
+
+export type NavEntry = NavLink | NavGroup
+
 export interface NavModule {
   key: string
   label: string
   icon: string
-  items: NavItem[]
+  /**
+   * When true, this module renders with no wrapping header/accordion of its own -- its
+   * entries sit directly at the sidebar's top level. Used when there's only one module
+   * to show (the company-facing side has just this one), so a labeled outer accordion
+   * around everything would be a redundant extra click with nothing to actually group.
+   */
+  flat?: boolean
+  items: NavEntry[]
 }
 
 const ADMIN_MODULE: NavModule = {
@@ -17,23 +37,39 @@ const ADMIN_MODULE: NavModule = {
   label: 'Admin',
   icon: 'pi-shield',
   items: [
-    { label: 'Companies', to: '/admin/companies', icon: 'pi-building' },
-    { label: 'Vendors', to: '/admin/vendors', icon: 'pi-truck' },
-    { label: 'Gift Store', to: '/admin/gifts', icon: 'pi-gift' },
-    { label: 'Orders', to: '/admin/orders', icon: 'pi-shopping-bag' },
-    { label: 'Access Control', to: '/admin/access-control', icon: 'pi-lock' },
+    { type: 'link', label: 'Companies', to: '/admin/companies', icon: 'pi-building' },
+    { type: 'link', label: 'Vendors', to: '/admin/vendors', icon: 'pi-truck' },
+    { type: 'link', label: 'Gift Store', to: '/admin/gifts', icon: 'pi-gift' },
+    { type: 'link', label: 'Orders', to: '/admin/orders', icon: 'pi-shopping-bag' },
+    { type: 'link', label: 'Access Control', to: '/admin/access-control', icon: 'pi-lock' },
   ],
 }
 
+/**
+ * Flat (no "Wrappzo" wrapper) -- "Campaigns" is its own collapsible group holding
+ * Create (-> the full campaign list/creation surface, /campaigns) and Manage (-> the
+ * MR's own day-to-day board of what they're in the audience of, /my-campaigns).
+ * Approvals and Orders are deliberately siblings of that group, not nested inside it --
+ * they're their own independent workflows, not part of building/running a campaign.
+ */
 const CAMPAIGNS_MODULE: NavModule = {
   key: 'campaigns',
-  label: 'Wrappzo',
+  label: 'Campaigns',
   icon: 'pi-megaphone',
+  flat: true,
   items: [
-    { label: 'Campaigns', to: '/campaigns', icon: 'pi-megaphone' },
-    { label: 'My Campaigns', to: '/my-campaigns', icon: 'pi-user' },
-    { label: 'Approvals', to: '/approvals', icon: 'pi-check-square' },
-    { label: 'Orders', to: '/orders', icon: 'pi-shopping-bag' },
+    {
+      type: 'group',
+      key: 'campaigns:campaignsGroup',
+      label: 'Campaigns',
+      icon: 'pi-megaphone',
+      items: [
+        { type: 'link', label: 'Create', to: '/campaigns', icon: 'pi-plus-circle' },
+        { type: 'link', label: 'Manage', to: '/my-campaigns', icon: 'pi-briefcase' },
+      ],
+    },
+    { type: 'link', label: 'Approvals', to: '/approvals', icon: 'pi-check-square' },
+    { type: 'link', label: 'Orders', to: '/orders', icon: 'pi-shopping-bag' },
   ],
 }
 

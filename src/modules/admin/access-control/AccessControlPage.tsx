@@ -1,13 +1,15 @@
-import { Card } from 'primereact/card'
+import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 
 export function AccessControlPage() {
   return (
     <div>
       <PageHeader title="Access Control" subtitle="Roles, permissions, and their assignment." />
-      <Card>
-        <p className="text-sm text-text-muted">Not built yet -- roles, permissions, and their assignment will show up here.</p>
-      </Card>
+      <EmptyState
+        icon="pi-lock"
+        title="Role management is on its way"
+        description="You'll be able to create roles, grant permissions, and assign them to users from this page. For now, every company gets a Company Admin and a Member role automatically."
+      />
     </div>
   )
 }

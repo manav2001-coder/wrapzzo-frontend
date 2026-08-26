@@ -4,6 +4,7 @@ import { Dropdown } from 'primereact/dropdown'
 import { InputText } from 'primereact/inputtext'
 import { useState } from 'react'
 import type { CampaignField, FieldType } from '@/api/campaigns'
+import { EmptyState } from '@/components/EmptyState'
 
 const FIELD_TYPE_OPTIONS: { label: string; value: FieldType }[] = [
   { label: 'Text', value: 'TEXT' },
@@ -100,7 +101,9 @@ export function CampaignFieldsEditor({
 
   return (
     <div className="flex flex-col gap-3">
-      {fields.length === 0 && <p className="text-sm text-text-muted">No fields yet -- add at least one below.</p>}
+      {fields.length === 0 && (
+        <EmptyState icon="pi-list" title="No fields yet" description="Add at least one below so field users know what to submit." />
+      )}
 
       {fields.map((field) => (
         <div key={field.key} className="grid grid-cols-1 items-center gap-2 rounded-lg border border-border p-3 sm:grid-cols-12">

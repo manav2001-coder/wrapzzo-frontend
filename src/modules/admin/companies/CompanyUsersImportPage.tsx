@@ -75,7 +75,7 @@ export function CompanyUsersImportPage() {
 
     const headers = await getWorkbookHeaders(file)
     if (headers.length === 0) {
-      setParseErrors(['This sheet has no header row to read -- download the template to check the expected layout.'])
+      setParseErrors(['This sheet has no header row to read. Download the template to check the expected layout.'])
       return
     }
 
@@ -146,7 +146,7 @@ export function CompanyUsersImportPage() {
         <div className="flex flex-col gap-4">
           <p className="text-sm text-text-muted">
             {pendingFile
-              ? "This sheet doesn't use our template's column names -- match your columns to ours below."
+              ? "This sheet doesn't use our template's column names. Match your columns to ours below."
               : fileName
                 ? 'Review the parsed rows below, then import.'
                 : "Use our template, or upload your own sheet and we'll ask you to match its columns. Every field is required except Reports To Email."}
@@ -215,7 +215,7 @@ export function CompanyUsersImportPage() {
           {importErrors.length > 0 && (
             <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
               <p className="mb-2 text-sm font-medium text-red-500 dark:text-red-400">
-                Import validation failed -- fix these rows in the sheet and re-upload:
+                Import validation failed. Fix these rows in the sheet and re-upload:
               </p>
               <ul className="ml-4 list-disc space-y-1 text-xs text-red-500 dark:text-red-400">
                 {importErrors.map((err, i) => (

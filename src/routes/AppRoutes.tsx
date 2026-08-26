@@ -27,6 +27,7 @@ import { VendorOrdersPage } from '@/modules/vendor/orders/VendorOrdersPage'
 import { LandingPage } from '@/pages/LandingPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { RecipientUploadPage } from '@/pages/RecipientUploadPage'
 import { SetupPasswordPage } from '@/pages/SetupPasswordPage'
 import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
 
@@ -37,6 +38,7 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/setup-password" element={<SetupPasswordPage />} />
       <Route path="/vendor/setup-password" element={<SetupVendorPasswordPage />} />
+      <Route path="/recipient-upload/:token" element={<RecipientUploadPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>

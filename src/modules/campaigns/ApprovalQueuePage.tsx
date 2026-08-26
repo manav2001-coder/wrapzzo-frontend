@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
+import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useApproveSubmission, usePendingApproval, useRejectSubmission } from '@/hooks/useSubmissions'
 import { humanize } from '@/lib/format'
@@ -16,11 +17,21 @@ export function ApprovalQueuePage() {
   const reject = useRejectSubmission()
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [reason, setReason] = useState('')
+  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
 
   async function handleApprove(id: string) {
     try {
-      await approve.mutateAsync(id)
+      const result = await approve.mutateAsync(id)
       showToast({ severity: 'success', summary: 'Approved', detail: 'An order has been created.' })
+      if (result.recipientUploadUrl) {
+        const phone = result.values.find((v) => v.fieldKey === 'recipientPhone')?.value
+        const name = result.values.find((v) => v.fieldKey === 'recipientName')?.value
+        setPhotoLinkPrompt({
+          link: result.recipientUploadUrl,
+          phone: typeof phone === 'string' ? phone : null,
+          recipientName: typeof name === 'string' ? name : null,
+        })
+      }
     } catch (error) {
       showApiError(error)
     }
@@ -43,7 +54,7 @@ export function ApprovalQueuePage() {
       <PageHeader title="Approvals" subtitle="Recipient submissions from your team, waiting on your decision." />
 
       {!isLoading && submissions?.length === 0 ? (
-        <EmptyState icon="pi-check-square" title="Nothing pending" description="You're all caught up -- new submissions from your team will show up here." />
+        <EmptyState icon="pi-check-square" title="Nothing pending" description="You're all caught up. New submissions from your team will appear here." />
       ) : (
         <div className="flex flex-col gap-3">
           {submissions?.map((submission) => (
@@ -92,6 +103,8 @@ export function ApprovalQueuePage() {
           </div>
         </div>
       </Dialog>
+
+      <RecipientPhotoLinkDialog prompt={photoLinkPrompt} onHide={() => setPhotoLinkPrompt(null)} />
     </div>
   )
 }

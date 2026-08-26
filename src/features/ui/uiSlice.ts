@@ -15,9 +15,9 @@ const THEME_KEY = 'wrapzzo.theme'
 function loadExpandedModules(): string[] {
   try {
     const raw = localStorage.getItem(EXPANDED_MODULES_KEY)
-    return raw ? (JSON.parse(raw) as string[]) : ['admin']
+    return raw ? (JSON.parse(raw) as string[]) : ['admin', 'campaigns:campaignsGroup']
   } catch {
-    return ['admin']
+    return ['admin', 'campaigns:campaignsGroup']
   }
 }
 

@@ -7,8 +7,8 @@ export function VendorOrdersPage() {
       <PageHeader title="Orders" subtitle="Production and dispatch work assigned to you." />
       <EmptyState
         icon="pi-inbox"
-        title="No orders yet"
-        description="Orders assigned to you for fulfillment will show up here once that's built."
+        title="Order fulfillment tracking is coming soon"
+        description="Orders assigned to you for production and dispatch will appear here."
       />
     </div>
   )

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { bulkImportUsers, listCompanyUsers, type BulkImportUserRow } from '@/api/users'
+import { bulkImportUsers, listCompanyUsers, makeCompanyAdmin, type BulkImportUserRow } from '@/api/users'
 
 export function useCompanyUsers(companyId: string | undefined) {
   return useQuery({
@@ -13,6 +13,14 @@ export function useBulkImportUsers(companyId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (rows: BulkImportUserRow[]) => bulkImportUsers(companyId, rows),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companyUsers', companyId] }),
+  })
+}
+
+export function useMakeCompanyAdmin(companyId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => makeCompanyAdmin(companyId, userId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companyUsers', companyId] }),
   })
 }

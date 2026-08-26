@@ -96,7 +96,7 @@ export function VendorGiftFormPage() {
             await uploadVendorGiftImage(created.id, pendingFiles[index], index)
           }
         } catch (error) {
-          showApiError(error, 'Gift submitted, but one or more images failed to upload -- add them from the gift page.')
+          showApiError(error, 'Gift submitted, but one or more images failed to upload. Add them from the gift page.')
           navigate(`/vendor/gifts/${created.id}`, { replace: true })
           return
         } finally {
@@ -261,7 +261,7 @@ export function VendorGiftFormPage() {
 
             {isEdit && gift && !gift.active && (
               <p className="text-xs text-amber-500">
-                Wrapzzo has delisted this gift from the catalogue. You can still edit it -- it stays hidden until relisted.
+                Wrapzzo has delisted this gift from the catalogue. You can still edit it, but it stays hidden until relisted.
               </p>
             )}
 
@@ -278,7 +278,7 @@ export function VendorGiftFormPage() {
 
         <Card
           title="Images"
-          subTitle={`${existingImageCount} of ${MAX_GIFT_IMAGES} used${isEdit ? '' : ' -- optional, add now or after submitting.'}`}
+          subTitle={`${existingImageCount} of ${MAX_GIFT_IMAGES} used${isEdit ? '' : '. Optional — add now or after submitting.'}`}
           className="lg:col-span-1"
         >
           <div className="flex flex-wrap gap-3">

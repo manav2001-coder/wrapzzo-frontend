@@ -18,6 +18,9 @@ const SEVERITY: Record<string, 'success' | 'danger' | 'warning' | 'secondary' | 
   DISPATCHED: 'warning',
   DELIVERED: 'success',
   CANCELLED: 'danger',
+  // Company user roles
+  'Company Admin': 'info',
+  Member: 'secondary',
 }
 
 export function StatusBadge({ status, label }: { status: string; label?: string }) {

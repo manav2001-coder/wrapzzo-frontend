@@ -208,7 +208,7 @@ export function CompanyUsersAddPage() {
 
           {importErrors.length > 0 && (
             <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-              <p className="mb-2 text-sm font-medium text-red-500 dark:text-red-400">Save failed -- fix these rows and try again:</p>
+              <p className="mb-2 text-sm font-medium text-red-500 dark:text-red-400">Save failed. Fix these rows and try again:</p>
               <ul className="ml-4 list-disc space-y-1 text-xs text-red-500 dark:text-red-400">
                 {importErrors.map((err, i) => (
                   <li key={i}>{err}</li>

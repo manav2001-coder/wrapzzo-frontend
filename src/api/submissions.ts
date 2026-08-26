@@ -31,6 +31,8 @@ export interface Submission {
   values: SubmissionValueEntry[]
   attachments: SubmissionAttachmentEntry[]
   createdAt: string
+  /** Only set right after an approve() call that just issued a fresh recipient photo-upload link. */
+  recipientUploadUrl: string | null
 }
 
 /** IMAGE/FILE field values are an object referencing an already-uploaded attachment. */

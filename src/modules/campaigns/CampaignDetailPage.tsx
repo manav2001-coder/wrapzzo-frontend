@@ -8,7 +8,9 @@ import { ProgressSpinner } from 'primereact/progressspinner'
 import { TabPanel, TabView } from 'primereact/tabview'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
+import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
 import { StatusBadge } from '@/components/StatusBadge'
 import {
   useAudienceOptions,
@@ -47,6 +49,7 @@ export function CampaignDetailPage() {
   const [audienceDraft, setAudienceDraft] = useState<DraftAudience[] | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
   const [giftsDraft, setGiftsDraft] = useState<string[] | null>(null)
 
   // No per-user permission profile on the frontend yet -- this endpoint is the one
@@ -154,8 +157,17 @@ export function CampaignDetailPage() {
 
   async function handleApprove(submissionId: string) {
     try {
-      await approve.mutateAsync(submissionId)
+      const result = await approve.mutateAsync(submissionId)
       showToast({ severity: 'success', summary: 'Submission approved', detail: 'An order has been created.' })
+      if (result.recipientUploadUrl) {
+        const phone = result.values.find((v) => v.fieldKey === 'recipientPhone')?.value
+        const name = result.values.find((v) => v.fieldKey === 'recipientName')?.value
+        setPhotoLinkPrompt({
+          link: result.recipientUploadUrl,
+          phone: typeof phone === 'string' ? phone : null,
+          recipientName: typeof name === 'string' ? name : null,
+        })
+      }
     } catch (error) {
       showApiError(error)
     }
@@ -262,7 +274,7 @@ export function CampaignDetailPage() {
           <TabPanel header="Submission form">
             {campaign.status !== 'DRAFT' ? (
               <p className="mb-3 text-sm text-text-muted">
-                Fields are locked once a campaign is active -- submissions may already reference them.
+                Fields are locked once a campaign is active. Submissions may already reference them.
               </p>
             ) : (
               <p className="mb-3 text-sm text-text-muted">Edit the fields your team fills in when submitting a recipient.</p>
@@ -280,7 +292,11 @@ export function CampaignDetailPage() {
             {submissionsQuery.isLoading ? (
               <ProgressSpinner style={{ width: 32, height: 32 }} strokeWidth="4" />
             ) : submissionsQuery.data?.length === 0 ? (
-              <p className="text-sm text-text-muted">No submissions yet.</p>
+              <EmptyState
+                icon="pi-inbox"
+                title="No submissions yet"
+                description="Recipients submitted by your team for this campaign will appear here."
+              />
             ) : (
               <div className="flex flex-col gap-3">
                 {submissionsQuery.data?.map((submission: Submission) => (
@@ -358,6 +374,8 @@ export function CampaignDetailPage() {
           </div>
         </div>
       </Dialog>
+
+      <RecipientPhotoLinkDialog prompt={photoLinkPrompt} onHide={() => setPhotoLinkPrompt(null)} />
     </div>
   )
 }

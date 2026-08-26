@@ -102,7 +102,7 @@ export function OrdersPage() {
             <StatusDonutChart counts={statusCounts} />
           </div>
 
-          <p className="mb-2 text-xs text-text-muted">One entry per campaign -- expand to see its orders.</p>
+          <p className="mb-2 text-xs text-text-muted">Each row is a campaign. Expand it to see its orders.</p>
           <Accordion multiple className="campaign-accordion">
             {groups.map((group) => (
               <AccordionTab key={group.campaignId} header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}>

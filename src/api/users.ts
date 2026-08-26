@@ -20,6 +20,8 @@ export interface CompanyUser {
   status: 'ACTIVE' | 'INVITED' | 'SUSPENDED'
   reportsToName: string | null
   orgUnitName: string | null
+  roleId: string
+  roleName: string
   createdAt: string
 }
 
@@ -41,5 +43,10 @@ export async function bulkImportUsers(companyId: string, rows: BulkImportUserRow
 
 export async function listCompanyUsers(companyId: string): Promise<CompanyUser[]> {
   const { data } = await apiClient.get<CompanyUser[]>(`/api/platform/companies/${companyId}/users/list`)
+  return data
+}
+
+export async function makeCompanyAdmin(companyId: string, userId: string): Promise<CompanyUser> {
+  const { data } = await apiClient.post<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/makeCompanyAdmin`)
   return data
 }

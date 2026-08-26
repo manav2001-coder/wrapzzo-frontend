@@ -135,7 +135,7 @@ export async function parseEmployeeWorkbook(file: File, mapping?: ColumnMapping)
     return {
       rows: [],
       errors: [
-        `This sheet is missing required column(s): ${missingRequiredCols.map((f) => f.label).join(', ')} -- map your columns below or download the template.`,
+        `This sheet is missing required column(s): ${missingRequiredCols.map((f) => f.label).join(', ')}. Map your columns below or download the template.`,
       ],
     }
   }

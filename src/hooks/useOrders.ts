@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { assignOrderVendor, autoAssignOrderVendor, getOrder, listAllOrdersForPlatform, listOrders } from '@/api/orders'
+import {
+  assignCampaignVendor,
+  assignOrderVendor,
+  autoAssignCampaignVendor,
+  autoAssignOrderVendor,
+  getOrder,
+  listAllOrdersForPlatform,
+  listOrders,
+} from '@/api/orders'
 
 export function useOrders() {
   return useQuery({ queryKey: ['orders'], queryFn: listOrders })
@@ -27,6 +35,22 @@ export function useAutoAssignOrderVendor() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (orderId: string) => autoAssignOrderVendor(orderId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+  })
+}
+
+export function useAssignCampaignVendor() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ campaignId, vendorId }: { campaignId: string; vendorId: string }) => assignCampaignVendor(campaignId, vendorId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+  })
+}
+
+export function useAutoAssignCampaignVendor() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (campaignId: string) => autoAssignCampaignVendor(campaignId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
   })
 }

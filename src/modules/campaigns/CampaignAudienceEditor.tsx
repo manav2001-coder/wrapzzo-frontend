@@ -1,6 +1,7 @@
 import { Button } from 'primereact/button'
 import { Dropdown } from 'primereact/dropdown'
 import type { AudienceOptions, CampaignAudienceType } from '@/api/campaigns'
+import { EmptyState } from '@/components/EmptyState'
 
 const TYPE_OPTIONS: { label: string; value: CampaignAudienceType }[] = [
   { label: 'Everyone at the company', value: 'ALL_COMPANY_USERS' },
@@ -45,7 +46,11 @@ export function CampaignAudienceEditor({
   return (
     <div className="flex flex-col gap-3">
       {audiences.length === 0 && (
-        <p className="text-sm text-text-muted">No audience rules yet -- add at least one so field users can find this campaign.</p>
+        <EmptyState
+          icon="pi-users"
+          title="No audience rules yet"
+          description="Add at least one so field users know they can find and submit into this campaign."
+        />
       )}
 
       {audiences.map((audience) => (

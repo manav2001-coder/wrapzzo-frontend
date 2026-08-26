@@ -51,3 +51,19 @@ export async function autoAssignOrderVendor(orderId: string): Promise<Order> {
   const { data } = await apiClient.post<Order>(`/api/platform/orders/${orderId}/autoAssign`)
   return data
 }
+
+export interface BulkAssignResult {
+  assignedCount: number
+  skippedCount: number
+  orders: Order[]
+}
+
+export async function assignCampaignVendor(campaignId: string, vendorId: string): Promise<BulkAssignResult> {
+  const { data } = await apiClient.post<BulkAssignResult>(`/api/platform/orders/campaign/${campaignId}/assign`, { vendorId })
+  return data
+}
+
+export async function autoAssignCampaignVendor(campaignId: string): Promise<BulkAssignResult> {
+  const { data } = await apiClient.post<BulkAssignResult>(`/api/platform/orders/campaign/${campaignId}/autoAssign`)
+  return data
+}

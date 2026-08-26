@@ -6,6 +6,7 @@ import {
   listMySubmissions,
   listPendingApproval,
   rejectSubmission,
+  requestPhotoLink,
   resubmitSubmission,
   type SubmissionValues,
 } from '@/api/submissions'
@@ -62,4 +63,8 @@ export function useRejectSubmission() {
     mutationFn: ({ id, reason }: { id: string; reason: string }) => rejectSubmission(id, reason),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['submissions'] }),
   })
+}
+
+export function useRequestPhotoLink() {
+  return useMutation({ mutationFn: (id: string) => requestPhotoLink(id) })
 }

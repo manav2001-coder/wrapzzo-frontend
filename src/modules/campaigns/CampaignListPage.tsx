@@ -8,6 +8,7 @@ import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDonutChart } from '@/components/StatusDonutChart'
 import { useCampaigns } from '@/hooks/useCampaigns'
+import { useHasPermission } from '@/hooks/usePermissions'
 import { humanize } from '@/lib/format'
 
 const PURPOSE_ICON: Record<string, string> = {
@@ -103,7 +104,10 @@ export function CampaignListPage() {
     return campaigns.filter((c) => c.status === statusFilter)
   }, [campaigns, statusFilter])
 
-  const newCampaignAction = <Button label="New campaign" icon="pi pi-plus" onClick={() => navigate('/campaigns/new')} />
+  const canManage = useHasPermission('campaign.manage')
+  const newCampaignAction = canManage ? (
+    <Button label="New campaign" icon="pi pi-plus" onClick={() => navigate('/campaigns/new')} />
+  ) : undefined
 
   return (
     <div>
@@ -117,7 +121,11 @@ export function CampaignListPage() {
         <EmptyState
           icon="pi-megaphone"
           title="No campaigns yet"
-          description="Start your first campaign: pick a gift, choose your team, and let approved submissions flow straight into orders."
+          description={
+            canManage
+              ? 'Start your first campaign: pick a gift, choose your team, and let approved submissions flow straight into orders.'
+              : "You'll see campaigns here once your team starts one you're part of."
+          }
           action={newCampaignAction}
         />
       ) : (

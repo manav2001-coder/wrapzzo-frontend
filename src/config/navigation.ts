@@ -70,8 +70,8 @@ const CAMPAIGNS_MODULE: NavModule = {
         { type: 'link', label: 'Manage', to: '/my-campaigns', icon: 'pi-briefcase' },
       ],
     },
-    { type: 'link', label: 'Approvals', to: '/approvals', icon: 'pi-check-square' },
-    { type: 'link', label: 'Orders', to: '/orders', icon: 'pi-shopping-bag' },
+    { type: 'link', label: 'Approvals', to: '/approvals', icon: 'pi-check-square', requiresPermission: 'campaign.manage' },
+    { type: 'link', label: 'Orders', to: '/orders', icon: 'pi-shopping-bag', requiresPermission: 'campaign.manage' },
   ],
 }
 

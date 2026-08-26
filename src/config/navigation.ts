@@ -39,11 +39,11 @@ const ADMIN_MODULE: NavModule = {
   label: 'Admin',
   icon: 'pi-shield',
   items: [
-    { type: 'link', label: 'Companies', to: '/admin/companies', icon: 'pi-building' },
-    { type: 'link', label: 'Vendors', to: '/admin/vendors', icon: 'pi-truck' },
-    { type: 'link', label: 'Gift Store', to: '/admin/gifts', icon: 'pi-gift' },
-    { type: 'link', label: 'Orders', to: '/admin/orders', icon: 'pi-shopping-bag' },
-    { type: 'link', label: 'Access Control', to: '/admin/access-control', icon: 'pi-lock' },
+    { type: 'link', label: 'Companies', to: '/admin/companies', icon: 'pi-building', requiresPermission: 'company.manage' },
+    { type: 'link', label: 'Vendors', to: '/admin/vendors', icon: 'pi-truck', requiresPermission: 'vendor.manage' },
+    { type: 'link', label: 'Gift Store', to: '/admin/gifts', icon: 'pi-gift', requiresPermission: 'gift.manage' },
+    { type: 'link', label: 'Orders', to: '/admin/orders', icon: 'pi-shopping-bag', requiresPermission: 'order.manage' },
+    { type: 'link', label: 'Access Control', to: '/admin/access-control', icon: 'pi-lock', requiresPermission: 'role.manage' },
   ],
 }
 
@@ -67,7 +67,7 @@ const CAMPAIGNS_MODULE: NavModule = {
       icon: 'pi-megaphone',
       items: [
         { type: 'link', label: 'Create', to: '/campaigns', icon: 'pi-plus-circle', requiresPermission: 'campaign.manage' },
-        { type: 'link', label: 'Manage', to: '/my-campaigns', icon: 'pi-briefcase' },
+        { type: 'link', label: 'Manage', to: '/my-campaigns', icon: 'pi-briefcase', requiresPermission: 'campaign.submit' },
       ],
     },
     { type: 'link', label: 'Approvals', to: '/approvals', icon: 'pi-check-square', requiresPermission: 'campaign.manage' },

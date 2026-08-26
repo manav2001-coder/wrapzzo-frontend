@@ -1,6 +1,9 @@
 import { Accordion, AccordionTab } from 'primereact/accordion'
 import { format } from 'date-fns'
-import { useMemo } from 'react'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
+import { InputText } from 'primereact/inputtext'
+import { useMemo, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { StatCard } from '@/components/StatCard'
@@ -73,6 +76,7 @@ function CampaignOrdersTable({ orders }: { orders: Order[] }) {
 
 export function OrdersPage() {
   const { data: orders, isLoading } = useOrders()
+  const [search, setSearch] = useState('')
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { PROCESSING: 0, PRODUCTION_QUEUE: 0, DISPATCHED: 0, DELIVERED: 0, CANCELLED: 0 }
@@ -80,7 +84,18 @@ export function OrdersPage() {
     return counts
   }, [orders])
 
-  const groups = useMemo(() => groupByCampaign(orders ?? []), [orders])
+  const filteredOrders = useMemo(() => {
+    if (!orders) return []
+    const query = search.trim().toLowerCase()
+    if (!query) return orders
+    return orders.filter((order) =>
+      [order.displayId, order.giftName, order.recipientName, order.campaignName, humanize(order.source), humanize(order.status)]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(query)),
+    )
+  }, [orders, search])
+
+  const groups = useMemo(() => groupByCampaign(filteredOrders), [filteredOrders])
 
   return (
     <div>
@@ -102,14 +117,32 @@ export function OrdersPage() {
             <StatusDonutChart counts={statusCounts} />
           </div>
 
-          <p className="mb-2 text-xs text-text-muted">Each row is a campaign. Expand it to see its orders.</p>
-          <Accordion multiple className="campaign-accordion">
-            {groups.map((group) => (
-              <AccordionTab key={group.campaignId} header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}>
-                <CampaignOrdersTable orders={group.items} />
-              </AccordionTab>
-            ))}
-          </Accordion>
+          <div className="mb-4">
+            <IconField iconPosition="left">
+              <InputIcon className="pi pi-search" />
+              <InputText
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search orders"
+                className="w-full sm:w-80"
+              />
+            </IconField>
+          </div>
+
+          {groups.length === 0 ? (
+            <EmptyState icon="pi-search" title="No orders match" description="Try a different order id, gift, recipient, or campaign name." />
+          ) : (
+            <>
+              <p className="mb-2 text-xs text-text-muted">Each row is a campaign. Expand it to see its orders.</p>
+              <Accordion multiple className="campaign-accordion">
+                {groups.map((group) => (
+                  <AccordionTab key={group.campaignId} header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}>
+                    <CampaignOrdersTable orders={group.items} />
+                  </AccordionTab>
+                ))}
+              </Accordion>
+            </>
+          )}
         </>
       )}
     </div>

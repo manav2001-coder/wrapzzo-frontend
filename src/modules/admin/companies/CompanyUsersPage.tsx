@@ -3,7 +3,10 @@ import { Button } from 'primereact/button'
 import { Column } from 'primereact/column'
 import { confirmDialog } from 'primereact/confirmdialog'
 import { DataTable } from 'primereact/datatable'
-import { useRef, type ChangeEvent } from 'react'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
+import { InputText } from 'primereact/inputtext'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { CompanyUser } from '@/api/users'
 import { EmptyState } from '@/components/EmptyState'
@@ -36,6 +39,18 @@ export function CompanyUsersPage() {
   const deleteUser = useDeleteUser(companyId)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [search, setSearch] = useState('')
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return []
+    const query = search.trim().toLowerCase()
+    if (!query) return users
+    return users.filter((user) =>
+      [user.name, user.email, user.mobile, user.designation, user.employeeCode, user.reportsToName, user.orgUnitName]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(query)),
+    )
+  }, [users, search])
 
   function handleMakeCompanyAdmin(user: CompanyUser) {
     confirmDialog({
@@ -129,15 +144,27 @@ export function CompanyUsersPage() {
           action={importActions}
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+        <>
+          <div className="mb-4">
+            <IconField iconPosition="left">
+              <InputIcon className="pi pi-search" />
+              <InputText
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search users"
+                className="w-full sm:w-80"
+              />
+            </IconField>
+          </div>
+          <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <DataTable
-            value={users}
+            value={filteredUsers}
             loading={isLoading}
             dataKey="id"
             paginator
             rows={25}
             rowsPerPageOptions={[25, 50, 100]}
-            emptyMessage="No users match."
+            emptyMessage="No users match your search."
             className="min-w-[960px]"
           >
             <Column header="Name" field="name" />
@@ -196,7 +223,8 @@ export function CompanyUsersPage() {
               style={{ width: '260px' }}
             />
           </DataTable>
-        </div>
+          </div>
+        </>
       )}
     </div>
   )

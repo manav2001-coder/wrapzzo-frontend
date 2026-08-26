@@ -32,6 +32,8 @@ export default defineConfig({
         // panel always shows live data. Offline just means no network calls.
         navigateFallbackDenylist: [/^\/api\//],
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // Default is 2 MiB; the main bundle has grown past that (Campaigns module).
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
     }),
   ],

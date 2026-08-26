@@ -9,8 +9,9 @@ import type { CompanyUser } from '@/api/users'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
+import { useAppSelector } from '@/app/hooks'
 import { useCompany } from '@/hooks/useCompanies'
-import { useCompanyUsers, useMakeCompanyAdmin } from '@/hooks/useUsers'
+import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useRemoveCompanyAdmin } from '@/hooks/useUsers'
 import { generateEmployeeTemplateBlob } from '@/lib/employeeTemplate'
 import { showApiError, showToast } from '@/lib/toast'
 
@@ -26,10 +27,13 @@ export function CompanyUsersPage() {
   const { id } = useParams<{ id: string }>()
   const companyId = id ?? ''
   const navigate = useNavigate()
+  const currentUserId = useAppSelector((state) => state.auth.user?.sub)
 
   const { data: company } = useCompany(id)
   const { data: users, isLoading } = useCompanyUsers(companyId)
   const makeCompanyAdmin = useMakeCompanyAdmin(companyId)
+  const removeCompanyAdmin = useRemoveCompanyAdmin(companyId)
+  const deleteUser = useDeleteUser(companyId)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -42,6 +46,39 @@ export function CompanyUsersPage() {
         try {
           await makeCompanyAdmin.mutateAsync(user.id)
           showToast({ severity: 'success', summary: 'Company Admin assigned', detail: `${user.name} is now a Company Admin.` })
+        } catch (error) {
+          showApiError(error)
+        }
+      },
+    })
+  }
+
+  function handleRemoveCompanyAdmin(user: CompanyUser) {
+    confirmDialog({
+      header: 'Remove Company Admin',
+      message: `${user.name} will lose Company Admin access and go back to being a Member. Continue?`,
+      icon: 'pi pi-user-minus',
+      accept: async () => {
+        try {
+          await removeCompanyAdmin.mutateAsync(user.id)
+          showToast({ severity: 'success', summary: 'Company Admin removed', detail: `${user.name} is now a Member.` })
+        } catch (error) {
+          showApiError(error)
+        }
+      },
+    })
+  }
+
+  function handleDeleteUser(user: CompanyUser) {
+    confirmDialog({
+      header: 'Delete user',
+      message: `This permanently removes ${user.name}'s account. This can't be undone. Continue?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      accept: async () => {
+        try {
+          await deleteUser.mutateAsync(user.id)
+          showToast({ severity: 'success', summary: 'User deleted', detail: `${user.name} has been removed.` })
         } catch (error) {
           showApiError(error)
         }
@@ -125,18 +162,38 @@ export function CompanyUsersPage() {
             <Column header="Added" body={(row: CompanyUser) => format(new Date(row.createdAt), 'dd MMM yyyy')} style={{ width: '130px' }} />
             <Column
               header=""
-              body={(row: CompanyUser) =>
-                row.roleName === COMPANY_ADMIN_ROLE_NAME ? null : (
-                  <Button
-                    label="Make Company Admin"
-                    icon="pi pi-user-plus"
-                    text
-                    size="small"
-                    onClick={() => handleMakeCompanyAdmin(row)}
-                  />
-                )
-              }
-              style={{ width: '180px' }}
+              body={(row: CompanyUser) => (
+                <div className="flex flex-wrap items-center gap-1">
+                  {row.roleName === COMPANY_ADMIN_ROLE_NAME ? (
+                    <Button
+                      label="Remove Company Admin"
+                      icon="pi pi-user-minus"
+                      text
+                      size="small"
+                      onClick={() => handleRemoveCompanyAdmin(row)}
+                    />
+                  ) : (
+                    <Button
+                      label="Make Company Admin"
+                      icon="pi pi-user-plus"
+                      text
+                      size="small"
+                      onClick={() => handleMakeCompanyAdmin(row)}
+                    />
+                  )}
+                  {row.id !== currentUserId && (
+                    <Button
+                      icon="pi pi-trash"
+                      text
+                      size="small"
+                      severity="danger"
+                      aria-label="Delete user"
+                      onClick={() => handleDeleteUser(row)}
+                    />
+                  )}
+                </div>
+              )}
+              style={{ width: '260px' }}
             />
           </DataTable>
         </div>

@@ -50,3 +50,12 @@ export async function makeCompanyAdmin(companyId: string, userId: string): Promi
   const { data } = await apiClient.post<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/makeCompanyAdmin`)
   return data
 }
+
+export async function removeCompanyAdmin(companyId: string, userId: string): Promise<CompanyUser> {
+  const { data } = await apiClient.post<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/removeCompanyAdmin`)
+  return data
+}
+
+export async function deleteUser(companyId: string, userId: string): Promise<void> {
+  await apiClient.delete(`/api/platform/companies/${companyId}/users/${userId}`)
+}

@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { isSuperAdmin } from '@/config/auth'
 import { getNavModules, type NavEntry } from '@/config/navigation'
 import { toggleModuleExpanded } from '@/features/ui/uiSlice'
+import { usePermissions } from '@/hooks/usePermissions'
 
 function NavLeafLink({ item, collapsed, onNavigate }: { item: Extract<NavEntry, { type: 'link' }>; collapsed: boolean; onNavigate?: () => void }) {
   return (
@@ -48,6 +49,7 @@ function NavEntries({
   expandedModules,
   onToggle,
   onNavigate,
+  permissions,
 }: {
   entries: NavEntry[]
   depth: number
@@ -55,10 +57,15 @@ function NavEntries({
   expandedModules: string[]
   onToggle: (key: string) => void
   onNavigate?: () => void
+  /** undefined while still loading -- gated links stay hidden until we've confirmed the key, rather than flashing then hiding. */
+  permissions: string[] | undefined
 }) {
+  const visibleEntries = entries.filter(
+    (entry) => entry.type !== 'link' || !entry.requiresPermission || (permissions?.includes(entry.requiresPermission) ?? false),
+  )
   return (
     <div className={depth > 0 ? 'mt-0.5 ml-3 space-y-0.5 border-l border-sidebar-border pl-2' : 'space-y-0.5'}>
-      {entries.map((entry) => {
+      {visibleEntries.map((entry) => {
         if (entry.type === 'link') {
           return <NavLeafLink key={entry.to} item={entry} collapsed={collapsed} onNavigate={onNavigate} />
         }
@@ -66,9 +73,11 @@ function NavEntries({
           // Icon-only rail: no room for a sub-header, so surface its links directly.
           return (
             <div key={entry.key} className="space-y-0.5">
-              {entry.items.map((item) => (
-                <NavLeafLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
-              ))}
+              {entry.items
+                .filter((item) => !item.requiresPermission || (permissions?.includes(item.requiresPermission) ?? false))
+                .map((item) => (
+                  <NavLeafLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+                ))}
             </div>
           )
         }
@@ -92,6 +101,7 @@ function NavEntries({
                 expandedModules={expandedModules}
                 onToggle={onToggle}
                 onNavigate={onNavigate}
+                permissions={permissions}
               />
             )}
           </div>
@@ -115,6 +125,7 @@ export function SidebarContent({
   const expandedModules = useAppSelector((state) => state.ui.expandedModules)
   const email = useAppSelector((state) => state.auth.user?.email)
   const navModules = getNavModules(isSuperAdmin(email))
+  const { permissions } = usePermissions()
 
   function handleToggle(key: string) {
     dispatch(toggleModuleExpanded(key))
@@ -166,6 +177,7 @@ export function SidebarContent({
                 expandedModules={expandedModules}
                 onToggle={handleToggle}
                 onNavigate={onNavigate}
+                permissions={permissions}
               />
             )
           }
@@ -199,6 +211,7 @@ export function SidebarContent({
                     expandedModules={expandedModules}
                     onToggle={handleToggle}
                     onNavigate={onNavigate}
+                    permissions={permissions}
                   />
                 </div>
               )}

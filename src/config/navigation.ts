@@ -4,6 +4,8 @@ export interface NavLink {
   to: string
   icon: string
   end?: boolean
+  /** Hide this link unless the current user holds this access-control key (see useHasPermission). Omit to always show. */
+  requiresPermission?: string
 }
 
 /** A collapsible submenu nested one level inside a NavModule -- e.g. "Campaign Module" holding Create/Manage. */
@@ -64,7 +66,7 @@ const CAMPAIGNS_MODULE: NavModule = {
       label: 'Campaigns',
       icon: 'pi-megaphone',
       items: [
-        { type: 'link', label: 'Create', to: '/campaigns', icon: 'pi-plus-circle' },
+        { type: 'link', label: 'Create', to: '/campaigns', icon: 'pi-plus-circle', requiresPermission: 'campaign.manage' },
         { type: 'link', label: 'Manage', to: '/my-campaigns', icon: 'pi-briefcase' },
       ],
     },

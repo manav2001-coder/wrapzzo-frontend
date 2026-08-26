@@ -107,3 +107,9 @@ export async function rejectSubmission(id: string, reason: string): Promise<Subm
   const { data } = await apiClient.post<Submission>(`/api/submissions/${id}/reject`, { reason })
   return data
 }
+
+/** Re-sends the recipient's photo-upload link for an already-approved submission -- e.g. their first photo wasn't clear enough. */
+export async function requestPhotoLink(id: string): Promise<{ recipientUploadUrl: string }> {
+  const { data } = await apiClient.post<{ recipientUploadUrl: string }>(`/api/submissions/${id}/requestPhotoLink`)
+  return data
+}

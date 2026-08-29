@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from 'primereact/button'
-import { Calendar } from 'primereact/calendar'
 import { Card } from 'primereact/card'
 import { Dropdown } from 'primereact/dropdown'
 import { InputText } from 'primereact/inputtext'
@@ -52,7 +51,6 @@ const campaignSchema = z.object({
   }),
   giftIds: z.array(z.string()).min(1, 'Pick at least one gift to continue'),
   instructions: z.string().optional(),
-  submissionDeadline: z.date().optional().nullable(),
 })
 
 type CampaignFormValues = z.infer<typeof campaignSchema>
@@ -74,7 +72,7 @@ export function CampaignWizardPage() {
     formState: { errors },
   } = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignSchema),
-    defaultValues: { name: '', instructions: '', giftIds: [], submissionDeadline: null },
+    defaultValues: { name: '', instructions: '', giftIds: [] },
   })
 
   const values = watch()
@@ -106,7 +104,6 @@ export function CampaignWizardPage() {
         recipientCategory: formValues.recipientCategory,
         giftIds: formValues.giftIds,
         instructions: formValues.instructions || undefined,
-        submissionDeadline: formValues.submissionDeadline ? formValues.submissionDeadline.toISOString() : undefined,
       })
       showToast({ severity: 'success', summary: 'Campaign created', detail: 'Next, set who can submit into it and activate it.' })
       navigate(`/campaigns/${campaign.id}`, { replace: true })
@@ -204,26 +201,6 @@ export function CampaignWizardPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5 sm:w-64">
-                <label htmlFor="submissionDeadline" className="text-sm font-medium text-text">
-                  Submission deadline
-                </label>
-                <Controller
-                  name="submissionDeadline"
-                  control={control}
-                  render={({ field }) => (
-                    <Calendar
-                      inputId="submissionDeadline"
-                      value={field.value ?? undefined}
-                      onChange={(e) => field.onChange(e.value ?? null)}
-                      dateFormat="dd M yy"
-                      showIcon
-                      placeholder="Optional"
-                    />
-                  )}
-                />
-              </div>
-
               <div className="mt-2 flex justify-end">
                 <Button type="button" label="Next: Choose gift(s)" icon="pi pi-arrow-right" iconPos="right" onClick={goNext} />
               </div>
@@ -287,12 +264,6 @@ export function CampaignWizardPage() {
                 <div>
                   <p className="text-xs text-text-muted">Instructions</p>
                   <p className="text-sm text-text">{values.instructions}</p>
-                </div>
-              )}
-              {values.submissionDeadline && (
-                <div>
-                  <p className="text-xs text-text-muted">Deadline</p>
-                  <p className="text-sm text-text">{values.submissionDeadline.toLocaleDateString()}</p>
                 </div>
               )}
 

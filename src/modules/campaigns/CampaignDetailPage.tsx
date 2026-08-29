@@ -25,7 +25,7 @@ import { useActiveGifts } from '@/hooks/useGifts'
 import { humanize } from '@/lib/format'
 import { ApiError } from '@/lib/axiosClient'
 import { showApiError, showToast } from '@/lib/toast'
-import { CampaignAudienceEditor, type DraftAudience } from './CampaignAudienceEditor'
+import { computeOrgUnitFrontier, OrgUnitCascadeSelector } from './OrgUnitCascadeSelector'
 import { CampaignFieldsEditor, draftFromFields, type DraftField } from './CampaignFieldsEditor'
 import type { Submission } from '@/api/submissions'
 
@@ -46,7 +46,7 @@ export function CampaignDetailPage() {
   const reject = useRejectSubmission()
 
   const [fieldsDraft, setFieldsDraft] = useState<DraftField[] | null>(null)
-  const [audienceDraft, setAudienceDraft] = useState<DraftAudience[] | null>(null)
+  const [orgUnitIdsDraft, setOrgUnitIdsDraft] = useState<Set<string> | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
@@ -66,9 +66,10 @@ export function CampaignDetailPage() {
   }
 
   const fields = fieldsDraft ?? draftFromFields(campaign.fields)
-  const audiences =
-    audienceDraft ??
-    campaign.audiences.map((a) => ({ key: a.id, type: a.type, orgUnitId: a.orgUnitId ?? undefined, anchorUserId: a.anchorUserId ?? undefined, userId: a.userId ?? undefined }))
+  const orgUnitIds =
+    orgUnitIdsDraft ??
+    new Set(campaign.audiences.filter((a) => a.type === 'ORG_UNIT' && a.orgUnitId).map((a) => a.orgUnitId as string))
+  const audienceDirty = orgUnitIdsDraft !== null
 
   function confirmActivate() {
     confirmDialog({
@@ -125,12 +126,11 @@ export function CampaignDetailPage() {
   }
 
   async function saveAudience() {
-    if (!audienceDraft) return
+    if (!audienceDirty) return
+    const frontier = computeOrgUnitFrontier(orgUnitIds, audienceOptions?.orgUnits ?? [])
     try {
-      await replaceAudience.mutateAsync(
-        audienceDraft.map((a) => ({ type: a.type, orgUnitId: a.orgUnitId, anchorUserId: a.anchorUserId, userId: a.userId })),
-      )
-      setAudienceDraft(null)
+      await replaceAudience.mutateAsync(frontier.map((orgUnitId) => ({ type: 'ORG_UNIT' as const, orgUnitId })))
+      setOrgUnitIdsDraft(null)
       showToast({ severity: 'success', summary: 'Audience saved' })
     } catch (error) {
       showApiError(error)
@@ -258,15 +258,11 @@ export function CampaignDetailPage() {
         <TabView scrollable>
           <TabPanel header="Audience">
             <p className="mb-3 text-sm text-text-muted">Who can submit recipients into this campaign.</p>
-            <CampaignAudienceEditor
-              audiences={audiences}
-              onChange={setAudienceDraft}
-              options={audienceOptions}
-            />
-            {audienceDraft && (
+            <OrgUnitCascadeSelector orgUnits={audienceOptions?.orgUnits ?? []} selected={orgUnitIds} onChange={setOrgUnitIdsDraft} />
+            {audienceDirty && (
               <div className="mt-4 flex gap-2">
                 <Button label="Save audience" icon="pi pi-check" loading={replaceAudience.isPending} onClick={saveAudience} />
-                <Button label="Cancel" text onClick={() => setAudienceDraft(null)} />
+                <Button label="Cancel" text onClick={() => setOrgUnitIdsDraft(null)} />
               </div>
             )}
           </TabPanel>

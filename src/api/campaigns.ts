@@ -115,7 +115,7 @@ export interface AudienceInput {
 }
 
 export interface AudienceOptions {
-  orgUnits: { id: string; name: string; levelName: string }[]
+  orgUnits: { id: string; name: string; levelName: string; parentId: string | null }[]
   users: { id: string; name: string; email: string }[]
 }
 

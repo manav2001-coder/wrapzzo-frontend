@@ -6,9 +6,9 @@ import { useMemo, useState } from 'react'
 import type { Order, OrderStatus } from '@/api/orders'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
+import { SectionHeader } from '@/components/SectionHeader'
 import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
-import { StatusDonutChart } from '@/components/StatusDonutChart'
 import { useUpdateVendorOrderStatus, useVendorOrders } from '@/hooks/useVendorOrders'
 import { formatCurrency, humanize } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
@@ -22,8 +22,45 @@ const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   PRODUCTION_QUEUE: 'Mark dispatched',
   DISPATCHED: 'Mark delivered',
 }
+const STATUS_ORDER: OrderStatus[] = ['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED']
+const STATUS_COLORS: Record<string, string> = {
+  PROCESSING: '#6366f1',
+  PRODUCTION_QUEUE: '#f59e0b',
+  DISPATCHED: '#f59e0b',
+  DELIVERED: '#10b981',
+  CANCELLED: '#ef4444',
+}
 
-function OrderCard({ order }: { order: Order }) {
+/** A slim, glanceable proportion bar instead of a full donut section -- the counts already live in the stat cards above, so this only needs to convey the mix, not repeat the numbers at large size. */
+function StatusBreakdownBar({ counts }: { counts: Record<string, number> }) {
+  const entries = STATUS_ORDER.map((status) => ({ status, count: counts[status] ?? 0 })).filter((e) => e.count > 0)
+  const total = entries.reduce((sum, e) => sum + e.count, 0)
+  if (total === 0) return null
+
+  return (
+    <div className="mb-6 rounded-2xl border border-border bg-surface p-4">
+      <div className="mb-3 flex h-2 overflow-hidden rounded-full bg-surface-muted">
+        {entries.map((e) => (
+          <div
+            key={e.status}
+            style={{ width: `${(e.count / total) * 100}%`, backgroundColor: STATUS_COLORS[e.status] }}
+            className="h-full first:rounded-l-full last:rounded-r-full"
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {entries.map((e) => (
+          <span key={e.status} className="flex items-center gap-1.5 text-xs text-text-muted">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: STATUS_COLORS[e.status] }} />
+            {humanize(e.status)} <span className="font-medium text-text">{e.count}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function OrderCard({ order, highlight = false }: { order: Order; highlight?: boolean }) {
   const updateStatus = useUpdateVendorOrderStatus()
   const nextStatus = NEXT_STATUS[order.status]
 
@@ -38,7 +75,11 @@ function OrderCard({ order }: { order: Order }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
+    <div
+      className={`flex flex-col gap-3 rounded-2xl border p-4 transition-shadow hover:shadow-md ${
+        highlight ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/[0.06] to-surface' : 'border-border bg-surface'
+      }`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="font-semibold text-text">{order.displayId}</p>
@@ -50,15 +91,21 @@ function OrderCard({ order }: { order: Order }) {
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div>
           <p className="text-xs text-text-muted">Recipient</p>
-          <p className="text-text">{order.recipientName ?? '—'}</p>
+          <p className="truncate text-text">{order.recipientName ?? '—'}</p>
         </div>
         <div>
           <p className="text-xs text-text-muted">Gift</p>
-          <p className="text-text">{order.giftName ?? '—'}</p>
+          <p className="truncate text-text">{order.giftName ?? '—'}</p>
         </div>
         <div>
           <p className="text-xs text-text-muted">Phone</p>
-          <p className="text-text">{order.recipientPhone ?? '—'}</p>
+          {order.recipientPhone ? (
+            <a href={`tel:${order.recipientPhone}`} className="font-medium text-accent hover:underline">
+              {order.recipientPhone}
+            </a>
+          ) : (
+            <p className="text-text">—</p>
+          )}
         </div>
         <div>
           <p className="text-xs text-text-muted">Price</p>
@@ -70,13 +117,18 @@ function OrderCard({ order }: { order: Order }) {
         <Button
           label={NEXT_ACTION_LABEL[order.status]}
           icon="pi pi-arrow-right"
+          iconPos="right"
           size="small"
           loading={updateStatus.isPending}
           onClick={handleAdvance}
         />
       ) : (
         <p className="text-center text-xs text-text-muted">
-          {order.status === 'DELIVERED' ? 'Delivered -- fulfillment complete.' : 'No action needed from you right now.'}
+          {order.status === 'DELIVERED'
+            ? 'Delivered -- fulfillment complete.'
+            : order.status === 'CANCELLED'
+              ? 'Cancelled.'
+              : 'No action needed from you right now.'}
         </p>
       )}
     </div>
@@ -94,7 +146,7 @@ export function VendorOrdersPage() {
     return counts
   }, [orders])
 
-  const needsActionCount = useMemo(() => (orders ?? []).filter((o) => o.status in NEXT_STATUS).length, [orders])
+  const actionable = useMemo(() => (orders ?? []).filter((o) => o.status in NEXT_STATUS), [orders])
 
   const filtered = useMemo(() => {
     if (!orders) return []
@@ -126,15 +178,31 @@ export function VendorOrdersPage() {
         <>
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard label="Total orders" value={orders?.length ?? 0} icon="pi-shopping-bag" />
-            <StatCard label="Needs action" value={needsActionCount} icon="pi-exclamation-circle" accent={needsActionCount > 0 ? 'danger' : 'success'} urgent={needsActionCount > 0} />
+            <StatCard
+              label="Needs action"
+              value={actionable.length}
+              icon="pi-exclamation-circle"
+              accent={actionable.length > 0 ? 'danger' : 'success'}
+              urgent={actionable.length > 0}
+            />
             <StatCard label="In production" value={statusCounts.PRODUCTION_QUEUE} icon="pi-cog" accent="warning" />
             <StatCard label="Delivered" value={statusCounts.DELIVERED} icon="pi-check-circle" accent="success" />
           </div>
 
-          <div className="mb-6 rounded-2xl border border-border bg-surface p-5">
-            <p className="mb-2 text-sm font-medium text-text">Orders by status</p>
-            <StatusDonutChart counts={statusCounts} />
-          </div>
+          <StatusBreakdownBar counts={statusCounts} />
+
+          {actionable.length > 0 && (
+            <div className="mb-8">
+              <SectionHeader eyebrow="Priority" title={`Needs your action (${actionable.length})`} />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {actionable.map((order) => (
+                  <OrderCard key={order.id} order={order} highlight />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <SectionHeader eyebrow="Browse" title="All orders" />
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <IconField iconPosition="left">

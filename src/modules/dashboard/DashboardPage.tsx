@@ -91,7 +91,7 @@ export function DashboardPage() {
         <>
           <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="lg:col-span-5">
-              <HeroSpendCard amount={data.monthlySpend} />
+              <HeroSpendCard amount={data.monthlySpend} onClick={() => setDrilldown({ dimension: 'monthlySpend', value: '' })} />
             </div>
             <div className="lg:col-span-7">
               <PipelineFlow

@@ -6,11 +6,11 @@ import type { DrilldownDimension } from '@/api/dashboard'
 import { EmptyState } from '@/components/EmptyState'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useDashboardDrilldown } from '@/hooks/useDashboard'
-import { humanize } from '@/lib/format'
+import { formatCurrency, humanize } from '@/lib/format'
 
 export type DrilldownSelection = { dimension: DrilldownDimension; value: string } | null
 
-/** Shown when a chart datapoint (a donut slice or a bar) is clicked -- the actual records behind that number. */
+/** Shown when a chart datapoint (a donut slice, a bar, or the Monthly Spend hero) is clicked -- the actual records behind that number. */
 export function DashboardDrilldownDialog({ selection, onHide }: { selection: DrilldownSelection; onHide: () => void }) {
   const { data, isLoading } = useDashboardDrilldown(selection)
 
@@ -35,7 +35,10 @@ export function DashboardDrilldownDialog({ selection, onHide }: { selection: Dri
                       {row.subtitle}
                     </p>
                   </div>
-                  <StatusBadge status={row.status} label={humanize(row.status)} />
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <StatusBadge status={row.status} label={humanize(row.status)} />
+                    {row.amount != null && <span className="text-sm font-semibold text-text">{formatCurrency(row.amount)}</span>}
+                  </div>
                 </div>
                 <p className="mt-1 text-xs text-text-muted">{format(new Date(row.at), 'dd MMM yyyy, h:mm a')}</p>
               </>

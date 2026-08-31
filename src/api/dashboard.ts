@@ -93,6 +93,8 @@ export interface DrilldownRow {
   at: string
   /** Set when the row traces back to a campaign -- makes it clickable. */
   campaignId: string | null
+  /** Set only where an order's price is meaningful (order/monthly-spend rows) -- null elsewhere. */
+  amount: number | null
 }
 
 export interface DashboardDrilldown {
@@ -100,7 +102,7 @@ export interface DashboardDrilldown {
   rows: DrilldownRow[]
 }
 
-export type DrilldownDimension = 'orderSource' | 'quickGiftStatus' | 'submissionStatus' | 'topGift' | 'topDepartment' | 'week'
+export type DrilldownDimension = 'orderSource' | 'quickGiftStatus' | 'submissionStatus' | 'topGift' | 'topDepartment' | 'week' | 'monthlySpend'
 
 export async function getDashboardDrilldown(dimension: DrilldownDimension, value: string): Promise<DashboardDrilldown> {
   const { data } = await apiClient.get<DashboardDrilldown>('/api/dashboard/drilldown', { params: { dimension, value } })

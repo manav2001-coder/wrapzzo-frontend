@@ -6,6 +6,7 @@ import { DonutChart } from '@/components/charts/DonutChart'
 import { TrendChart } from '@/components/charts/TrendChart'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
+import { SectionHeader } from '@/components/SectionHeader'
 import { StatCard } from '@/components/StatCard'
 import { useDashboard } from '@/hooks/useDashboard'
 import { humanize } from '@/lib/format'
@@ -15,7 +16,6 @@ import { HeroSpendCard } from './HeroSpendCard'
 import { PipelineFlow } from './PipelineFlow'
 import { RecentActivityFeed } from './RecentActivityFeed'
 import { RecentCampaignsCard } from './RecentCampaignsCard'
-import { SectionHeader } from './SectionHeader'
 
 const SOURCE_LABELS: Record<string, string> = { CAMPAIGN: 'Campaign', QUICK_GIFT: 'Quick Gift', BULK_GIFT: 'Bulk Gifting' }
 const SOURCE_COLORS: Record<string, string> = { CAMPAIGN: '#6366f1', QUICK_GIFT: '#f59e0b', BULK_GIFT: '#0d9488' }

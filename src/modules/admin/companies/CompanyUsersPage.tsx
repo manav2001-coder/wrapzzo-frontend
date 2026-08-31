@@ -154,7 +154,7 @@ export function CompanyUsersPage() {
               />
             </IconField>
           </div>
-          <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+          <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
           <DataTable
             value={filteredUsers}
             loading={isLoading}
@@ -165,7 +165,17 @@ export function CompanyUsersPage() {
             emptyMessage="No users match your search."
             className="min-w-[960px]"
           >
-            <Column header="Name" field="name" />
+            <Column
+              header="Name"
+              body={(row: CompanyUser) => (
+                <div className="flex items-center gap-2.5">
+                  <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent/10 text-xs font-semibold text-accent">
+                    {row.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-medium text-text">{row.name}</span>
+                </div>
+              )}
+            />
             <Column header="Email" field="email" />
             <Column header="Mobile" body={(row: CompanyUser) => row.mobile ?? '—'} />
             <Column header="Designation" body={(row: CompanyUser) => row.designation ?? '—'} />

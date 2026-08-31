@@ -11,7 +11,7 @@ function GiftPickerCard({ gift, selected, onToggle }: { gift: Gift; selected: bo
     <button
       type="button"
       onClick={onToggle}
-      className={`group relative flex flex-col overflow-hidden rounded-xl border-2 bg-surface text-left transition-all ${
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border-2 bg-surface text-left transition-all ${
         selected ? 'border-accent shadow-md ring-2 ring-accent/20' : 'border-border hover:border-accent/40 hover:shadow-sm'
       }`}
     >

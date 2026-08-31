@@ -22,23 +22,27 @@ function GiftPickCard({ gift, onPick }: { gift: Gift; onPick: () => void }) {
     <button
       type="button"
       onClick={onPick}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-surface text-left transition-shadow hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-surface text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
     >
-      <div className="relative aspect-[4/3] w-full bg-surface-muted">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-muted">
         {image ? (
-          <img src={image} alt={gift.name} className="h-full w-full object-cover" />
+          <img src={image} alt={gift.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
         ) : (
           <div className="grid h-full w-full place-items-center text-text-muted">
             <i className="pi pi-gift text-3xl" />
           </div>
         )}
-        <span className="absolute top-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs font-medium text-text shadow-sm">
+        <span className="absolute top-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs font-medium text-text shadow-sm backdrop-blur-sm">
           {gift.category}
         </span>
+        {gift.totalPrice != null && (
+          <span className="absolute right-2 bottom-2 rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+            {formatCurrency(gift.totalPrice)}
+          </span>
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">
-        <p className="truncate text-sm font-medium text-text">{gift.name}</p>
-        <p className="text-sm font-semibold text-text">{formatCurrency(gift.totalPrice)}</p>
+        <p className="truncate text-sm font-semibold text-text">{gift.name}</p>
         {gift.description && <p className="line-clamp-2 text-xs text-text-muted">{gift.description}</p>}
         <span className="mt-auto flex items-center gap-1 pt-1 text-xs font-medium text-accent">
           <i className="pi pi-bolt" /> Quick Gift this

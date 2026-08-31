@@ -14,7 +14,7 @@ function VendorGiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-surface text-left transition-shadow hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-surface text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
     >
       <div className="relative aspect-square w-full overflow-hidden bg-surface-muted">
         {cover ? (

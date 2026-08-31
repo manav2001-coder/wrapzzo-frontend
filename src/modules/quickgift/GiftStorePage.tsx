@@ -1,5 +1,7 @@
 import { Button } from 'primereact/button'
 import { Dropdown } from 'primereact/dropdown'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -15,23 +17,27 @@ function GiftCard({ gift, canQuickGift, canLaunchCampaign }: { gift: Gift; canQu
   const image = gift.images[0]?.imageUrl
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="relative aspect-[4/3] w-full bg-surface-muted">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-muted">
         {image ? (
-          <img src={image} alt={gift.name} className="h-full w-full object-cover" />
+          <img src={image} alt={gift.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
         ) : (
           <div className="grid h-full w-full place-items-center text-text-muted">
             <i className="pi pi-gift text-3xl" />
           </div>
         )}
-        <span className="absolute top-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs font-medium text-text shadow-sm">
+        <span className="absolute top-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs font-medium text-text shadow-sm backdrop-blur-sm">
           {gift.category}
         </span>
+        {gift.totalPrice != null && (
+          <span className="absolute right-2 bottom-2 rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+            {formatCurrency(gift.totalPrice)}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <p className="font-medium text-text">{gift.name}</p>
-        <p className="text-sm font-semibold text-text">{formatCurrency(gift.totalPrice)}</p>
+        <p className="font-semibold text-text">{gift.name}</p>
         {gift.description && <p className="line-clamp-2 text-xs text-text-muted">{gift.description}</p>}
         {gift.leadTimeDays != null && (
           <p className="flex items-center gap-1 text-xs text-text-muted">
@@ -97,7 +103,10 @@ export function GiftStorePage() {
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search gifts..." className="w-full sm:w-72" />
+            <IconField iconPosition="left">
+              <InputIcon className="pi pi-search" />
+              <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search gifts..." className="w-full sm:w-72" />
+            </IconField>
             <Dropdown
               value={category}
               onChange={(e) => setCategory(e.value)}
@@ -109,7 +118,7 @@ export function GiftStorePage() {
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-64 animate-pulse rounded-xl bg-surface-muted" />
+                <div key={i} className="h-64 animate-pulse rounded-2xl bg-surface-muted" />
               ))}
             </div>
           ) : filtered.length === 0 ? (

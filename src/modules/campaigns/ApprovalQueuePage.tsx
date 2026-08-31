@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
+import { SectionHeader } from '@/components/SectionHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useApproveSubmission, usePendingApproval, useRejectSubmission } from '@/hooks/useSubmissions'
 import { useApproveQuickGiftRequest, usePendingQuickGiftApprovals, useRejectQuickGiftRequest } from '@/hooks/useQuickGifts'
@@ -86,14 +87,19 @@ export function ApprovalQueuePage() {
         <div className="flex flex-col gap-6">
           {quickGifts && quickGifts.length > 0 && (
             <div>
-              <p className="mb-2 text-xs font-medium tracking-wide text-text-muted uppercase">Quick Gift requests</p>
+              <SectionHeader eyebrow={`${quickGifts.length} pending`} title="Quick Gift requests" />
               <div className="flex flex-col gap-3">
                 {quickGifts.map((request) => (
-                  <div key={request.id} className="rounded-lg border border-border bg-surface p-4">
+                  <div key={request.id} className="rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <span className="font-medium text-text">{request.giftName}</span>
-                        <span className="ml-2 text-xs text-text-muted">requested by someone on your team</span>
+                      <div className="flex items-center gap-2.5">
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-500/5 text-amber-500">
+                          <i className="pi pi-bolt text-sm" />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-text">{request.giftName}</span>
+                          <span className="ml-2 text-xs text-text-muted">requested by someone on your team</span>
+                        </div>
                       </div>
                       <StatusBadge status={request.status} label={humanize(request.status)} />
                     </div>
@@ -142,16 +148,21 @@ export function ApprovalQueuePage() {
 
           {submissions && submissions.length > 0 && (
             <div>
-              <p className="mb-2 text-xs font-medium tracking-wide text-text-muted uppercase">Campaign submissions</p>
+              <SectionHeader eyebrow={`${submissions.length} pending`} title="Campaign submissions" />
               <div className="flex flex-col gap-3">
                 {submissions.map((submission) => (
-                  <div key={submission.id} className="rounded-lg border border-border bg-surface p-4">
+                  <div key={submission.id} className="rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <Link to={`/campaigns/${submission.campaignId}`} className="font-medium text-text hover:text-accent">
-                          {submission.campaignName}
-                        </Link>
-                        <span className="ml-2 text-xs text-text-muted">by {submission.submittedByName}</span>
+                      <div className="flex items-center gap-2.5">
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 text-accent">
+                          <i className="pi pi-megaphone text-sm" />
+                        </div>
+                        <div>
+                          <Link to={`/campaigns/${submission.campaignId}`} className="font-semibold text-text hover:text-accent">
+                            {submission.campaignName}
+                          </Link>
+                          <span className="ml-2 text-xs text-text-muted">by {submission.submittedByName}</span>
+                        </div>
                       </div>
                       <StatusBadge status={submission.status} label={humanize(submission.status)} />
                     </div>

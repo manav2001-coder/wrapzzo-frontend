@@ -7,12 +7,15 @@ import { statusColor } from '@/lib/statusColors'
 export function StatusDonutChart({ counts }: { counts: Record<string, number> }) {
   const themePreference = useAppSelector((state) => state.ui.theme)
   const dark = resolveTheme(themePreference) === 'dark'
-  const textColor = dark ? '#cbd5e1' : '#475569'
+  const mutedColor = dark ? '#64748b' : '#94a3b8'
 
   const entries = Object.entries(counts).filter(([, count]) => count > 0)
   if (entries.length === 0) {
     return <div className="grid h-48 place-items-center text-sm text-text-muted">No data yet</div>
   }
+
+  const total = entries.reduce((sum, [, count]) => sum + count, 0)
+  const height = 192
 
   const data = {
     labels: entries.map(([status]) => humanize(status)),
@@ -20,19 +23,15 @@ export function StatusDonutChart({ counts }: { counts: Record<string, number> })
       {
         data: entries.map(([, count]) => count),
         backgroundColor: entries.map(([status]) => statusColor(status)),
-        borderWidth: 0,
+        borderWidth: 3,
+        borderColor: dark ? '#14171e' : '#ffffff',
       },
     ],
   }
 
   const options = {
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: { color: textColor, usePointStyle: true, padding: 12, boxWidth: 8 },
-      },
-    },
-    cutout: '65%',
+    plugins: { legend: { display: false }, tooltip: { enabled: true } },
+    cutout: '72%',
     responsive: true,
     maintainAspectRatio: false,
   }
@@ -42,8 +41,25 @@ export function StatusDonutChart({ counts }: { counts: Record<string, number> })
   // the canvas balloons to its default (much taller than intended, worst on narrow/mobile
   // viewports where there's no wide ancestor to implicitly cap it via aspect ratio).
   return (
-    <div style={{ height: '192px', width: '100%', position: 'relative' }}>
-      <Chart type="doughnut" data={data} options={options} style={{ height: '100%', width: '100%' }} />
+    <div>
+      <div className="relative" style={{ height, width: '100%' }}>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-bold tracking-tight text-text">{total}</span>
+          <span className="text-[10px] font-medium tracking-wide text-text-muted uppercase" style={{ color: mutedColor }}>
+            Total
+          </span>
+        </div>
+        <Chart type="doughnut" data={data} options={options} style={{ height: '100%', width: '100%' }} />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
+        {entries.map(([status, count]) => (
+          <div key={status} className="flex items-center gap-1.5 text-xs font-medium text-text">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: statusColor(status) }} />
+            {humanize(status)}
+            <span style={{ color: mutedColor }}>{count}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

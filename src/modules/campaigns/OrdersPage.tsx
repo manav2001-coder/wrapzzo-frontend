@@ -10,7 +10,7 @@ import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDonutChart } from '@/components/StatusDonutChart'
 import { useOrders } from '@/hooks/useOrders'
-import { humanize } from '@/lib/format'
+import { formatCurrency, humanize } from '@/lib/format'
 import { groupByCampaign } from '@/lib/groupByCampaign'
 import type { Order } from '@/api/orders'
 
@@ -24,11 +24,11 @@ function CampaignAccordionHeader({ campaignName, orders }: { campaignName: strin
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-2 pr-2">
       <div className="flex min-w-0 items-center gap-2.5">
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 text-accent">
           <i className="pi pi-megaphone text-sm" />
         </div>
-        <span className="truncate font-medium text-text">{campaignName}</span>
-        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-muted">
+        <span className="truncate font-semibold text-text">{campaignName}</span>
+        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-muted">
           {orders.length} order{orders.length > 1 ? 's' : ''}
         </span>
       </div>
@@ -41,35 +41,32 @@ function CampaignAccordionHeader({ campaignName, orders }: { campaignName: strin
   )
 }
 
-function CampaignOrdersTable({ orders }: { orders: Order[] }) {
+function OrderCard({ order }: { order: Order }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[700px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-xs text-text-muted">
-            <th className="px-4 py-2 text-left font-medium">Order</th>
-            <th className="px-4 py-2 text-left font-medium">Gift</th>
-            <th className="px-4 py-2 text-left font-medium">Recipient</th>
-            <th className="px-4 py-2 text-left font-medium">Source</th>
-            <th className="px-4 py-2 text-left font-medium">Status</th>
-            <th className="px-4 py-2 text-left font-medium">Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order) => (
-            <tr key={order.id} className="border-b border-border last:border-b-0">
-              <td className="px-4 py-2">{order.displayId}</td>
-              <td className="px-4 py-2">{order.giftName ?? '—'}</td>
-              <td className="px-4 py-2">{order.recipientName ?? '—'}</td>
-              <td className="px-4 py-2">{humanize(order.source)}</td>
-              <td className="px-4 py-2">
-                <StatusBadge status={order.status} label={humanize(order.status)} />
-              </td>
-              <td className="px-4 py-2 whitespace-nowrap">{format(new Date(order.createdAt), 'dd MMM yyyy')}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-semibold text-text">{order.displayId}</p>
+        <StatusBadge status={order.status} label={humanize(order.status)} />
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <p className="text-xs text-text-muted">Recipient</p>
+          <p className="text-text">{order.recipientName ?? '—'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-text-muted">Gift</p>
+          <p className="text-text">{order.giftName ?? '—'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-text-muted">Source</p>
+          <p className="text-text">{humanize(order.source)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-text-muted">Price</p>
+          <p className="font-medium text-text">{formatCurrency(order.totalPrice)}</p>
+        </div>
+      </div>
+      <p className="text-xs text-text-muted">Created {format(new Date(order.createdAt), 'dd MMM yyyy')}</p>
     </div>
   )
 }
@@ -112,7 +109,7 @@ export function OrdersPage() {
             <StatCard label="Delivered" value={statusCounts.DELIVERED} icon="pi-check-circle" accent="success" />
           </div>
 
-          <div className="mb-6 rounded-xl border border-border bg-surface p-4">
+          <div className="mb-6 rounded-2xl border border-border bg-surface p-5">
             <p className="mb-2 text-sm font-medium text-text">Orders by status</p>
             <StatusDonutChart counts={statusCounts} />
           </div>
@@ -137,7 +134,11 @@ export function OrdersPage() {
               <Accordion multiple className="campaign-accordion">
                 {groups.map((group) => (
                   <AccordionTab key={group.campaignId} header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}>
-                    <CampaignOrdersTable orders={group.items} />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {group.items.map((order) => (
+                        <OrderCard key={order.id} order={order} />
+                      ))}
+                    </div>
                   </AccordionTab>
                 ))}
               </Accordion>

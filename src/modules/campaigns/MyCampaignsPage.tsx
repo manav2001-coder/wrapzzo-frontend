@@ -7,6 +7,7 @@ import type { Submission, SubmissionStatus } from '@/api/submissions'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
+import { SectionHeader } from '@/components/SectionHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useCampaigns } from '@/hooks/useCampaigns'
 import { useMySubmissions, useRequestPhotoLink } from '@/hooks/useSubmissions'
@@ -38,9 +39,10 @@ function CampaignOpenCard({ campaign, onSubmit }: { campaign: Campaign; onSubmit
   const { preview, isTruncated } = campaign.instructions ? truncateWords(campaign.instructions, INSTRUCTIONS_WORD_LIMIT) : { preview: '', isTruncated: false }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+    <div className="group relative flex flex-col gap-2 overflow-hidden rounded-2xl border border-border bg-surface p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
+      <div className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 bg-accent transition-transform group-hover:scale-x-100" />
       <div className="flex items-start justify-between gap-2">
-        <span className="font-medium text-text">{campaign.name}</span>
+        <span className="font-semibold text-text">{campaign.name}</span>
         <StatusBadge status={campaign.status} label="Open" />
       </div>
       <p className="text-xs text-text-muted">{humanize(campaign.purpose)} · {humanize(campaign.recipientCategory)}</p>
@@ -135,7 +137,7 @@ function SubmissionGroupCard({
   }, [group.items])
 
   return (
-    <div className="rounded-xl border border-border bg-surface">
+    <div className="rounded-2xl border border-border bg-surface">
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}
@@ -143,8 +145,8 @@ function SubmissionGroupCard({
       >
         <div className="flex min-w-0 items-center gap-2">
           <i className={`pi ${collapsed ? 'pi-chevron-right' : 'pi-chevron-down'} shrink-0 text-xs text-text-muted`} />
-          <span className="truncate font-medium text-text">{group.campaignName}</span>
-          <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-muted">{group.items.length}</span>
+          <span className="truncate font-semibold text-text">{group.campaignName}</span>
+          <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-muted">{group.items.length}</span>
         </div>
         <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
           {Object.entries(counts).map(([status, count]) => (
@@ -309,7 +311,7 @@ export function MyCampaignsPage() {
     <div>
       <PageHeader title="My Campaigns" subtitle="Campaigns you can submit recipients into, and what you've already sent for approval." />
 
-      <h2 className="mb-3 text-sm font-semibold text-text-muted uppercase">Open for submissions</h2>
+      <SectionHeader eyebrow="Open" title="Open for submissions" />
       {!isLoading && active.length === 0 ? (
         <EmptyState icon="pi-megaphone" title="No open campaigns right now" description="Check back once your team starts a new one." />
       ) : (
@@ -320,7 +322,7 @@ export function MyCampaignsPage() {
         </div>
       )}
 
-      <h2 className="mb-3 text-sm font-semibold text-text-muted uppercase">My submissions</h2>
+      <SectionHeader eyebrow="Submissions" title="My submissions" />
       {submissions?.length === 0 ? (
         <EmptyState icon="pi-send" title="No submissions yet" description="Submissions you send for approval will show up here." />
       ) : (
@@ -328,7 +330,7 @@ export function MyCampaignsPage() {
           {/* A slim horizontal bar instead of a chart card -- stays this same compact size
               no matter how many campaigns/submissions pile up below it, unlike a donut card
               that either stretches to match a growing list or leaves dead space beside it. */}
-          <div className="mb-4 rounded-xl border border-border bg-surface p-4">
+          <div className="mb-4 rounded-2xl border border-border bg-surface p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-text">Submission status</p>
               {statusFilter && (

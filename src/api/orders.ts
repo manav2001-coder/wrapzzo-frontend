@@ -17,6 +17,8 @@ export interface Order {
   giftName: string | null
   recipientName: string | null
   recipientPhone: string | null
+  /** Snapshotted off the gift's total price at approval time -- null if the gift had no price set then. */
+  totalPrice: number | null
   source: OrderSource
   status: OrderStatus
   assignedVendorId: string | null

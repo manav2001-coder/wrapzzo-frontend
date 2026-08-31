@@ -29,15 +29,16 @@ function CampaignCard({ campaign, onClick }: { campaign: Campaign; onClick: () =
     <button
       type="button"
       onClick={onClick}
-      className="group flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-shadow hover:shadow-md"
+      className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-surface p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
     >
+      <div className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 bg-accent transition-transform group-hover:scale-x-100" />
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 text-accent">
             <i className={`pi ${PURPOSE_ICON[campaign.purpose] ?? 'pi-megaphone'}`} />
           </div>
           <div className="min-w-0">
-            <p className="truncate font-medium text-text">{campaign.name}</p>
+            <p className="truncate font-semibold text-text">{campaign.name}</p>
             <p className="text-xs text-text-muted">{campaign.displayId}</p>
           </div>
         </div>
@@ -56,17 +57,17 @@ function CampaignCard({ campaign, onClick }: { campaign: Campaign; onClick: () =
 
       <div className="mt-1 grid grid-cols-3 gap-2 border-t border-border pt-3 text-center">
         <div>
-          <p className="text-lg font-semibold text-text">{campaign.submissionCount}</p>
+          <p className="text-lg font-bold tracking-tight text-text">{campaign.submissionCount}</p>
           <p className="text-[11px] text-text-muted">Submitted</p>
         </div>
         <div>
-          <p className={`text-lg font-semibold ${campaign.pendingApprovalCount > 0 ? 'text-amber-500' : 'text-text'}`}>
+          <p className={`text-lg font-bold tracking-tight ${campaign.pendingApprovalCount > 0 ? 'text-amber-500' : 'text-text'}`}>
             {campaign.pendingApprovalCount}
           </p>
           <p className="text-[11px] text-text-muted">Pending</p>
         </div>
         <div>
-          <p className="text-lg font-semibold text-emerald-500">{campaign.orderCount}</p>
+          <p className="text-lg font-bold tracking-tight text-emerald-500">{campaign.orderCount}</p>
           <p className="text-[11px] text-text-muted">Orders</p>
         </div>
       </div>
@@ -138,46 +139,58 @@ export function CampaignListPage() {
           </div>
 
           <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="rounded-xl border border-border bg-surface p-4 lg:col-span-1">
+            <div className="rounded-2xl border border-border bg-surface p-5 lg:col-span-1">
               <p className="mb-2 text-sm font-medium text-text">Campaigns by status</p>
               <StatusDonutChart counts={statusCounts} />
             </div>
-            <div className="flex flex-col justify-center gap-3 rounded-xl border border-border bg-surface p-4 lg:col-span-2">
+            <div className="flex flex-col justify-center gap-3 rounded-2xl border border-border bg-surface p-5 lg:col-span-2">
               <p className="text-sm font-medium text-text">Funnel across all campaigns</p>
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-muted">
                     <div
-                      className="h-full rounded-full bg-accent"
+                      className="h-full rounded-full bg-gradient-to-r from-accent/70 to-accent"
                       style={{ width: totals.submissions > 0 ? `${Math.min(100, (totals.orders / totals.submissions) * 100)}%` : '0%' }}
                     />
                   </div>
-                  <div className="mt-2 flex justify-between text-xs text-text-muted">
-                    <span>{totals.submissions} submitted</span>
-                    <span>{totals.pending} awaiting approval</span>
-                    <span>{totals.orders} became orders</span>
+                  <div className="mt-3 flex justify-between text-sm">
+                    <span className="flex flex-col items-start">
+                      <span className="text-lg font-bold tracking-tight text-text">{totals.submissions}</span>
+                      <span className="text-xs text-text-muted">submitted</span>
+                    </span>
+                    <span className="flex flex-col items-center">
+                      <span className="text-lg font-bold tracking-tight text-amber-500">{totals.pending}</span>
+                      <span className="text-xs text-text-muted">awaiting approval</span>
+                    </span>
+                    <span className="flex flex-col items-end">
+                      <span className="text-lg font-bold tracking-tight text-emerald-500">{totals.orders}</span>
+                      <span className="text-xs text-text-muted">became orders</span>
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 inline-flex w-fit gap-1 rounded-xl border border-border bg-surface p-1">
             {(['ALL', 'DRAFT', 'ACTIVE', 'CLOSED'] as const).map((s) => (
-              <Button
+              <button
                 key={s}
-                label={s === 'ALL' ? 'All' : humanize(s)}
-                size="small"
-                outlined={statusFilter !== s}
+                type="button"
                 onClick={() => setStatusFilter(s)}
-              />
+                className={`rounded-lg border-none px-3 py-1.5 text-sm font-medium transition-colors ${
+                  statusFilter === s ? 'bg-accent text-white' : 'bg-transparent text-text-muted hover:text-text'
+                }`}
+              >
+                {s === 'ALL' ? 'All' : humanize(s)}
+              </button>
             ))}
           </div>
 
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-40 animate-pulse rounded-xl bg-surface-muted" />
+                <div key={i} className="h-40 animate-pulse rounded-2xl bg-surface-muted" />
               ))}
             </div>
           ) : filtered.length === 0 ? (

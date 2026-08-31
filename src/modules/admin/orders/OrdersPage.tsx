@@ -1,6 +1,8 @@
 import { Accordion, AccordionTab } from 'primereact/accordion'
 import { Button } from 'primereact/button'
 import { Dropdown } from 'primereact/dropdown'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
 import { useMemo, useState } from 'react'
 import type { Order } from '@/api/orders'
@@ -17,7 +19,7 @@ import {
   usePlatformOrders,
 } from '@/hooks/useOrders'
 import { useVendors } from '@/hooks/useVendors'
-import { humanize } from '@/lib/format'
+import { formatCurrency, humanize } from '@/lib/format'
 import { groupByCampaign } from '@/lib/groupByCampaign'
 import { showApiError, showToast } from '@/lib/toast'
 
@@ -178,9 +180,9 @@ function CampaignBulkAssignControl({
 
 function OrderCard({ order }: { order: Order }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-2">
-        <p className="font-medium text-text">{order.displayId}</p>
+        <p className="font-semibold text-text">{order.displayId}</p>
         <StatusBadge status={order.status} label={humanize(order.status)} />
       </div>
 
@@ -192,6 +194,10 @@ function OrderCard({ order }: { order: Order }) {
         <div>
           <p className="text-xs text-text-muted">Gift</p>
           <p className="text-text">{order.giftName ?? '—'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-text-muted">Price</p>
+          <p className="font-medium text-text">{formatCurrency(order.totalPrice)}</p>
         </div>
       </div>
 
@@ -211,14 +217,14 @@ function CampaignAccordionHeader({ campaignName, orders }: { campaignName: strin
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-2 pr-2">
       <div className="flex min-w-0 items-center gap-2.5">
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 text-accent">
           <i className="pi pi-megaphone text-sm" />
         </div>
         <div className="min-w-0">
-          <p className="truncate font-medium text-text">{campaignName}</p>
+          <p className="truncate font-semibold text-text">{campaignName}</p>
           <p className="text-xs text-text-muted">{orders[0].companyName}</p>
         </div>
-        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-muted">
+        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-muted">
           {orders.length} order{orders.length > 1 ? 's' : ''}
         </span>
       </div>
@@ -285,28 +291,41 @@ export function OrdersPage() {
             <StatCard label="Delivered" value={statusCounts.DELIVERED} icon="pi-check-circle" accent="success" />
           </div>
 
-          <div className="mb-6 rounded-xl border border-border bg-surface p-4">
+          <div className="mb-6 rounded-2xl border border-border bg-surface p-5">
             <p className="mb-2 text-sm font-medium text-text">Orders by status</p>
             <StatusDonutChart counts={statusCounts} />
           </div>
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search company, campaign, recipient..." className="w-full sm:w-72" />
-            {(['ALL', 'PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED'] as const).map((s) => (
-              <Button
-                key={s}
-                label={s === 'ALL' ? 'All' : humanize(s)}
-                size="small"
-                outlined={statusFilter !== s}
-                onClick={() => setStatusFilter(s)}
+            <IconField iconPosition="left">
+              <InputIcon className="pi pi-search" />
+              <InputText
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search company, campaign, recipient..."
+                className="w-full sm:w-72"
               />
-            ))}
+            </IconField>
+            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-border bg-surface p-1">
+              {(['ALL', 'PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED'] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatusFilter(s)}
+                  className={`rounded-lg border-none px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                    statusFilter === s ? 'bg-accent text-white' : 'bg-transparent text-text-muted hover:text-text'
+                  }`}
+                >
+                  {s === 'ALL' ? 'All' : humanize(s)}
+                </button>
+              ))}
+            </div>
           </div>
 
           {isLoading ? (
             <div className="flex flex-col gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-14 animate-pulse rounded-xl bg-surface-muted" />
+                <div key={i} className="h-14 animate-pulse rounded-2xl bg-surface-muted" />
               ))}
             </div>
           ) : filtered.length === 0 ? (

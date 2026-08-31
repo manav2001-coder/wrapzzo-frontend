@@ -34,7 +34,7 @@ export function VendorSidebarContent({
             type="button"
             onClick={onToggleCollapse}
             aria-label="Collapse sidebar"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-sidebar-fg-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-fg"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-md border-none bg-transparent text-sidebar-fg-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-fg"
           >
             <ChevronsLeft className="size-4" />
           </button>
@@ -47,7 +47,7 @@ export function VendorSidebarContent({
             type="button"
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-sidebar-fg-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-fg"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-md border-none bg-transparent text-sidebar-fg-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-fg"
           >
             <ChevronsRight className="size-4" />
           </button>

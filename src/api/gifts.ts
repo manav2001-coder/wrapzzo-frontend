@@ -17,7 +17,16 @@ export interface Gift {
   moq: number | null
   leadTimeDays: number | null
   active: boolean
+  /** Every gift is available in every commerce path -- always all three, no per-gift picker. */
   modules: GiftModule[]
+  /** Base cost. Null until an admin/vendor sets one. */
+  price: number | null
+  /** Percentage, e.g. 12.5 means 12.5%. */
+  markupFeePercentage: number
+  /** Percentage, e.g. 12.5 means 12.5%. */
+  commissionFeePercentage: number
+  /** price + price*markup% + price*commission% -- null until price itself is set. */
+  totalPrice: number | null
   /** Null for Wrapzzo's own catalogue entries; set when a vendor submitted this gift themselves. */
   vendorId: string | null
   vendorName: string | null
@@ -31,8 +40,9 @@ export interface GiftInput {
   description?: string
   moq?: number
   leadTimeDays?: number
-  /** Omitted entirely for vendor-submitted gifts -- module tagging is an admin catalogue decision, not the vendor's. */
-  modules?: GiftModule[]
+  price: number
+  markupFeePercentage?: number
+  commissionFeePercentage?: number
 }
 
 interface PresignImageUploadResponse {

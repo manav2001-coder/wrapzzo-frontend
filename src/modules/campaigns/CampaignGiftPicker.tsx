@@ -1,6 +1,7 @@
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { EmptyState } from '@/components/EmptyState'
 import { useActiveGifts } from '@/hooks/useGifts'
+import { formatCurrency } from '@/lib/format'
 import type { Gift } from '@/api/gifts'
 
 function GiftPickerCard({ gift, selected, onToggle }: { gift: Gift; selected: boolean; onToggle: () => void }) {
@@ -36,6 +37,7 @@ function GiftPickerCard({ gift, selected, onToggle }: { gift: Gift; selected: bo
       <div className="flex flex-col gap-0.5 p-3">
         <span className="truncate text-sm font-medium text-text">{gift.name}</span>
         <span className="truncate text-xs text-text-muted">{gift.category}</span>
+        <span className="text-xs font-semibold text-text">{formatCurrency(gift.totalPrice)}</span>
       </div>
     </button>
   )

@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
-import { Checkbox } from 'primereact/checkbox'
 import { confirmDialog } from 'primereact/confirmdialog'
 import { Dropdown } from 'primereact/dropdown'
 import { FileUpload } from 'primereact/fileupload'
@@ -13,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
-import { uploadGiftImage, type GiftModule } from '@/api/gifts'
+import { uploadGiftImage } from '@/api/gifts'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import {
@@ -25,17 +24,12 @@ import {
   useUpdateGift,
   useUploadGiftImage,
 } from '@/hooks/useGifts'
+import { formatCurrency } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
 
 // Only one image per gift for now -- raise this (and reintroduce a carousel
 // in the Gift Store grid) if multi-image support is turned back on later.
 export const MAX_GIFT_IMAGES = 1
-
-const MODULE_OPTIONS: { value: GiftModule; label: string }[] = [
-  { value: 'QUICK_GIFT', label: 'Quick Gift' },
-  { value: 'BULK_GIFTING', label: 'Bulk Gifting' },
-  { value: 'CAMPAIGN', label: 'Campaigns' },
-]
 
 /** A sane starting set -- the real list grows over time as admins add "Other" categories, which then show up here too. */
 const FIXED_CATEGORIES = [
@@ -53,14 +47,18 @@ const FIXED_CATEGORIES = [
 
 const OTHER_OPTION = '__other__'
 
-const giftSchema = z.object({
-  name: z.string().min(1, 'Gift name is required'),
-  category: z.string().min(1, 'Category is required'),
-  description: z.string().optional(),
-  moq: z.number().positive().optional().nullable(),
-  leadTimeDays: z.number().positive().optional().nullable(),
-  modules: z.array(z.enum(['QUICK_GIFT', 'BULK_GIFTING', 'CAMPAIGN'])),
-})
+const giftSchema = z
+  .object({
+    name: z.string().min(1, 'Gift name is required'),
+    category: z.string().min(1, 'Category is required'),
+    description: z.string().optional(),
+    moq: z.number().positive().optional().nullable(),
+    leadTimeDays: z.number().positive().optional().nullable(),
+    price: z.number().min(0, 'Price must be zero or more').nullable(),
+    markupFeePercentage: z.number().min(0).optional().nullable(),
+    commissionFeePercentage: z.number().min(0).optional().nullable(),
+  })
+  .refine((data) => data.price !== null, { message: 'Price is required', path: ['price'] })
 
 type GiftFormValues = z.infer<typeof giftSchema>
 
@@ -94,11 +92,29 @@ export function GiftFormPage() {
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isDirty },
   } = useForm<GiftFormValues>({
     resolver: zodResolver(giftSchema),
-    defaultValues: { name: '', category: '', description: '', moq: null, leadTimeDays: null, modules: [] },
+    defaultValues: {
+      name: '',
+      category: '',
+      description: '',
+      moq: null,
+      leadTimeDays: null,
+      price: null,
+      markupFeePercentage: null,
+      commissionFeePercentage: null,
+    },
   })
+
+  const [price, markupFeePercentage, commissionFeePercentage] = watch(['price', 'markupFeePercentage', 'commissionFeePercentage'])
+  const totalPrice = useMemo(() => {
+    if (price == null) return null
+    const markup = (price * (markupFeePercentage ?? 0)) / 100
+    const commission = (price * (commissionFeePercentage ?? 0)) / 100
+    return price + markup + commission
+  }, [price, markupFeePercentage, commissionFeePercentage])
 
   useEffect(() => {
     if (gift) {
@@ -108,7 +124,9 @@ export function GiftFormPage() {
         description: gift.description ?? '',
         moq: gift.moq,
         leadTimeDays: gift.leadTimeDays,
-        modules: gift.modules,
+        price: gift.price,
+        markupFeePercentage: gift.markupFeePercentage,
+        commissionFeePercentage: gift.commissionFeePercentage,
       })
     }
   }, [gift, reset])
@@ -142,7 +160,10 @@ export function GiftFormPage() {
       description: values.description || undefined,
       moq: values.moq ?? undefined,
       leadTimeDays: values.leadTimeDays ?? undefined,
-      modules: values.modules,
+      // Validated non-null by the schema's refine before onSubmit can ever fire.
+      price: values.price ?? 0,
+      markupFeePercentage: values.markupFeePercentage ?? undefined,
+      commissionFeePercentage: values.commissionFeePercentage ?? undefined,
     }
     try {
       if (isEdit && id) {
@@ -383,31 +404,84 @@ export function GiftFormPage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-text">Available in</span>
-              <Controller
-                name="modules"
-                control={control}
-                render={({ field }) => (
-                  <div className="flex flex-wrap gap-4">
-                    {MODULE_OPTIONS.map((option) => (
-                      <label key={option.value} className="flex items-center gap-2 text-sm text-text">
-                        <Checkbox
-                          checked={field.value.includes(option.value)}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.checked ? [...field.value, option.value] : field.value.filter((m) => m !== option.value),
-                            )
-                          }
-                        />
-                        {option.label}
-                      </label>
-                    ))}
-                  </div>
-                )}
-              />
-              <p className="text-xs text-text-muted">Which commerce paths can pick this gift.</p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="price" className="text-sm font-medium text-text">
+                  Price
+                </label>
+                <Controller
+                  name="price"
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="price"
+                      value={field.value ?? null}
+                      onValueChange={(event) => field.onChange(event.value)}
+                      mode="currency"
+                      currency="INR"
+                      locale="en-IN"
+                      min={0}
+                      placeholder="0.00"
+                      className={errors.price ? 'p-invalid w-full' : 'w-full'}
+                    />
+                  )}
+                />
+                {errors.price && <small className="text-red-500 dark:text-red-400">{errors.price.message}</small>}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="markupFeePercentage" className="text-sm font-medium text-text">
+                  Markup fee %
+                </label>
+                <Controller
+                  name="markupFeePercentage"
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="markupFeePercentage"
+                      value={field.value ?? null}
+                      onValueChange={(event) => field.onChange(event.value)}
+                      mode="decimal"
+                      minFractionDigits={0}
+                      maxFractionDigits={2}
+                      suffix="%"
+                      min={0}
+                      placeholder="0"
+                      className="w-full"
+                    />
+                  )}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="commissionFeePercentage" className="text-sm font-medium text-text">
+                  Commission fee %
+                </label>
+                <Controller
+                  name="commissionFeePercentage"
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="commissionFeePercentage"
+                      value={field.value ?? null}
+                      onValueChange={(event) => field.onChange(event.value)}
+                      mode="decimal"
+                      minFractionDigits={0}
+                      maxFractionDigits={2}
+                      suffix="%"
+                      min={0}
+                      placeholder="0"
+                      className="w-full"
+                    />
+                  )}
+                />
+              </div>
             </div>
+
+            {totalPrice != null && (
+              <div className="flex items-center justify-between rounded-lg border border-border bg-surface-muted px-3.5 py-2.5">
+                <span className="text-sm text-text-muted">Total price shown to companies</span>
+                <span className="text-base font-semibold text-text">{formatCurrency(totalPrice)}</span>
+              </div>
+            )}
 
             {isEdit && gift && (
               <p className="text-xs text-text-muted">Added on {new Date(gift.createdAt).toLocaleDateString()}</p>

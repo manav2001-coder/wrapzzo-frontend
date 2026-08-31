@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useVendorGifts } from '@/hooks/useVendorGifts'
+import { formatCurrency } from '@/lib/format'
 
 function VendorGiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
   const cover = [...gift.images].sort((a, b) => a.displayOrder - b.displayOrder)[0]
@@ -34,6 +35,7 @@ function VendorGiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) 
       <div className="flex flex-1 flex-col gap-1 p-3.5">
         <span className="truncate font-medium text-text">{gift.name}</span>
         <span className="truncate text-xs text-text-muted">{gift.category}</span>
+        <span className="text-sm font-semibold text-text">{formatCurrency(gift.totalPrice)}</span>
         {gift.moq && <span className="text-xs text-text-muted">MOQ {gift.moq}</span>}
       </div>
     </button>

@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useHasPermission } from '@/hooks/usePermissions'
+import { formatCurrency } from '@/lib/format'
 
 function GiftCard({ gift, canQuickGift, canLaunchCampaign }: { gift: Gift; canQuickGift: boolean; canLaunchCampaign: boolean }) {
   const navigate = useNavigate()
@@ -30,6 +31,7 @@ function GiftCard({ gift, canQuickGift, canLaunchCampaign }: { gift: Gift; canQu
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <p className="font-medium text-text">{gift.name}</p>
+        <p className="text-sm font-semibold text-text">{formatCurrency(gift.totalPrice)}</p>
         {gift.description && <p className="line-clamp-2 text-xs text-text-muted">{gift.description}</p>}
         {gift.leadTimeDays != null && (
           <p className="flex items-center gap-1 text-xs text-text-muted">

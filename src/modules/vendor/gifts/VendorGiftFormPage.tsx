@@ -15,18 +15,24 @@ import { uploadVendorGiftImage } from '@/api/vendorGifts'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useCreateVendorGift, useDeleteVendorGiftImage, useUpdateVendorGift, useUploadVendorGiftImage, useVendorGift } from '@/hooks/useVendorGifts'
+import { formatCurrency } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
 
 // Mirrors the admin gift form's cap -- see MAX_GIFT_IMAGES there for why.
 const MAX_GIFT_IMAGES = 1
 
-const giftSchema = z.object({
-  name: z.string().min(1, 'Gift name is required'),
-  category: z.string().min(1, 'Category is required'),
-  description: z.string().optional(),
-  moq: z.number().positive().optional().nullable(),
-  leadTimeDays: z.number().positive().optional().nullable(),
-})
+const giftSchema = z
+  .object({
+    name: z.string().min(1, 'Gift name is required'),
+    category: z.string().min(1, 'Category is required'),
+    description: z.string().optional(),
+    moq: z.number().positive().optional().nullable(),
+    leadTimeDays: z.number().positive().optional().nullable(),
+    price: z.number().min(0, 'Price must be zero or more').nullable(),
+    markupFeePercentage: z.number().min(0).optional().nullable(),
+    commissionFeePercentage: z.number().min(0).optional().nullable(),
+  })
+  .refine((data) => data.price !== null, { message: 'Price is required', path: ['price'] })
 
 type GiftFormValues = z.infer<typeof giftSchema>
 
@@ -54,11 +60,29 @@ export function VendorGiftFormPage() {
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isDirty },
   } = useForm<GiftFormValues>({
     resolver: zodResolver(giftSchema),
-    defaultValues: { name: '', category: '', description: '', moq: null, leadTimeDays: null },
+    defaultValues: {
+      name: '',
+      category: '',
+      description: '',
+      moq: null,
+      leadTimeDays: null,
+      price: null,
+      markupFeePercentage: null,
+      commissionFeePercentage: null,
+    },
   })
+
+  const [price, markupFeePercentage, commissionFeePercentage] = watch(['price', 'markupFeePercentage', 'commissionFeePercentage'])
+  const totalPrice = useMemo(() => {
+    if (price == null) return null
+    const markup = (price * (markupFeePercentage ?? 0)) / 100
+    const commission = (price * (commissionFeePercentage ?? 0)) / 100
+    return price + markup + commission
+  }, [price, markupFeePercentage, commissionFeePercentage])
 
   useEffect(() => {
     if (gift) {
@@ -68,6 +92,9 @@ export function VendorGiftFormPage() {
         description: gift.description ?? '',
         moq: gift.moq,
         leadTimeDays: gift.leadTimeDays,
+        price: gift.price,
+        markupFeePercentage: gift.markupFeePercentage,
+        commissionFeePercentage: gift.commissionFeePercentage,
       })
     }
   }, [gift, reset])
@@ -79,6 +106,10 @@ export function VendorGiftFormPage() {
       description: values.description || undefined,
       moq: values.moq ?? undefined,
       leadTimeDays: values.leadTimeDays ?? undefined,
+      // Validated non-null by the schema's refine before onSubmit can ever fire.
+      price: values.price ?? 0,
+      markupFeePercentage: values.markupFeePercentage ?? undefined,
+      commissionFeePercentage: values.commissionFeePercentage ?? undefined,
     }
     try {
       if (isEdit && id) {
@@ -258,6 +289,85 @@ export function VendorGiftFormPage() {
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="price" className="text-sm font-medium text-text">
+                  Price
+                </label>
+                <Controller
+                  name="price"
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="price"
+                      value={field.value ?? null}
+                      onValueChange={(event) => field.onChange(event.value)}
+                      mode="currency"
+                      currency="INR"
+                      locale="en-IN"
+                      min={0}
+                      placeholder="0.00"
+                      className={errors.price ? 'p-invalid w-full' : 'w-full'}
+                    />
+                  )}
+                />
+                {errors.price && <small className="text-red-500 dark:text-red-400">{errors.price.message}</small>}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="markupFeePercentage" className="text-sm font-medium text-text">
+                  Markup fee %
+                </label>
+                <Controller
+                  name="markupFeePercentage"
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="markupFeePercentage"
+                      value={field.value ?? null}
+                      onValueChange={(event) => field.onChange(event.value)}
+                      mode="decimal"
+                      minFractionDigits={0}
+                      maxFractionDigits={2}
+                      suffix="%"
+                      min={0}
+                      placeholder="0"
+                      className="w-full"
+                    />
+                  )}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="commissionFeePercentage" className="text-sm font-medium text-text">
+                  Commission fee %
+                </label>
+                <Controller
+                  name="commissionFeePercentage"
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      inputId="commissionFeePercentage"
+                      value={field.value ?? null}
+                      onValueChange={(event) => field.onChange(event.value)}
+                      mode="decimal"
+                      minFractionDigits={0}
+                      maxFractionDigits={2}
+                      suffix="%"
+                      min={0}
+                      placeholder="0"
+                      className="w-full"
+                    />
+                  )}
+                />
+              </div>
+            </div>
+
+            {totalPrice != null && (
+              <div className="flex items-center justify-between rounded-lg border border-border bg-surface-muted px-3.5 py-2.5">
+                <span className="text-sm text-text-muted">Total price shown to companies</span>
+                <span className="text-base font-semibold text-text">{formatCurrency(totalPrice)}</span>
+              </div>
+            )}
 
             {isEdit && gift && !gift.active && (
               <p className="text-xs text-amber-500">

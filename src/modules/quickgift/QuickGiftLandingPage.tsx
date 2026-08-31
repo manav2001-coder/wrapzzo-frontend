@@ -12,7 +12,7 @@ import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/compo
 import { StatusBadge } from '@/components/StatusBadge'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useMyQuickGiftRequests, useRequestQuickGiftPhotoLink } from '@/hooks/useQuickGifts'
-import { humanize } from '@/lib/format'
+import { formatCurrency, humanize } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
 
 function GiftPickCard({ gift, onPick }: { gift: Gift; onPick: () => void }) {
@@ -38,6 +38,7 @@ function GiftPickCard({ gift, onPick }: { gift: Gift; onPick: () => void }) {
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">
         <p className="truncate text-sm font-medium text-text">{gift.name}</p>
+        <p className="text-sm font-semibold text-text">{formatCurrency(gift.totalPrice)}</p>
         {gift.description && <p className="line-clamp-2 text-xs text-text-muted">{gift.description}</p>}
         <span className="mt-auto flex items-center gap-1 pt-1 text-xs font-medium text-accent">
           <i className="pi pi-bolt" /> Quick Gift this

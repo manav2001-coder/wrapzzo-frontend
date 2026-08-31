@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useGifts } from '@/hooks/useGifts'
+import { formatCurrency } from '@/lib/format'
 
 function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
   const cover = [...gift.images].sort((a, b) => a.displayOrder - b.displayOrder)[0]
@@ -38,6 +39,7 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
       <div className="flex flex-1 flex-col gap-1 p-3.5">
         <span className="truncate font-medium text-text">{gift.name}</span>
         <span className="truncate text-xs text-text-muted">{gift.category}</span>
+        <span className="text-sm font-semibold text-text">{formatCurrency(gift.totalPrice)}</span>
         {gift.moq && <span className="text-xs text-text-muted">MOQ {gift.moq}</span>}
         {gift.vendorName && (
           <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[11px] text-text-muted">

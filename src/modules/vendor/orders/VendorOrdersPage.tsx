@@ -1,4 +1,4 @@
-import { Button } from 'primereact/button'
+import { Dropdown } from 'primereact/dropdown'
 import { IconField } from 'primereact/iconfield'
 import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
@@ -14,18 +14,10 @@ import { useUpdateVendorOrderStatus, useVendorOrders } from '@/hooks/useVendorOr
 import { formatCurrency, humanize } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
 
-/**
- * For now, the vendor's only action is marking an order delivered -- no separate "dispatched"
- * step -- from either state it's routed to them in. Mirrors OrderService.VENDOR_TRANSITIONS.
- */
-const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
-  PRODUCTION_QUEUE: 'DELIVERED',
-  DISPATCHED: 'DELIVERED',
-}
-const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
-  PRODUCTION_QUEUE: 'Mark delivered',
-  DISPATCHED: 'Mark delivered',
-}
+/** Mirrors OrderService's VENDOR_SELECTABLE_STATUSES / VENDOR_EDITABLE_SOURCE_STATUSES server-side. */
+const VENDOR_SELECTABLE_STATUSES: OrderStatus[] = ['PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED']
+const VENDOR_EDITABLE_STATUSES: OrderStatus[] = ['PRODUCTION_QUEUE', 'DISPATCHED']
+const STATUS_OPTIONS = VENDOR_SELECTABLE_STATUSES.map((status) => ({ label: humanize(status), value: status }))
 const STATUS_ORDER: OrderStatus[] = ['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED']
 const STATUS_COLORS: Record<string, string> = {
   PROCESSING: '#6366f1',
@@ -66,13 +58,13 @@ function StatusBreakdownBar({ counts }: { counts: Record<string, number> }) {
 
 function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight?: boolean }) {
   const updateStatus = useUpdateVendorOrderStatus()
-  const nextStatus = NEXT_STATUS[order.status]
+  const editable = VENDOR_EDITABLE_STATUSES.includes(order.status)
 
-  async function handleAdvance() {
-    if (!nextStatus) return
+  async function handleStatusChange(newStatus: OrderStatus) {
+    if (newStatus === order.status) return
     try {
-      await updateStatus.mutateAsync({ id: order.id, status: nextStatus })
-      showToast({ severity: 'success', summary: `Order marked ${humanize(nextStatus).toLowerCase()}` })
+      await updateStatus.mutateAsync({ id: order.id, status: newStatus })
+      showToast({ severity: 'success', summary: `Order moved to ${humanize(newStatus).toLowerCase()}` })
     } catch (error) {
       showApiError(error)
     }
@@ -117,15 +109,20 @@ function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight
         </div>
       </div>
 
-      {nextStatus ? (
-        <Button
-          label={NEXT_ACTION_LABEL[order.status]}
-          icon="pi pi-arrow-right"
-          iconPos="right"
-          size="small"
-          loading={updateStatus.isPending}
-          onClick={handleAdvance}
-        />
+      {editable ? (
+        <div className="flex flex-col gap-1">
+          <label htmlFor={`status-${order.id}`} className="text-xs text-text-muted">
+            Update status
+          </label>
+          <Dropdown
+            inputId={`status-${order.id}`}
+            value={order.status}
+            options={STATUS_OPTIONS}
+            onChange={(e) => handleStatusChange(e.value)}
+            disabled={updateStatus.isPending}
+            className="w-full"
+          />
+        </div>
       ) : (
         <p className="text-center text-xs text-text-muted">
           {order.status === 'DELIVERED'
@@ -150,7 +147,7 @@ export function VendorOrdersPage() {
     return counts
   }, [orders])
 
-  const actionable = useMemo(() => (orders ?? []).filter((o) => o.status in NEXT_STATUS), [orders])
+  const actionable = useMemo(() => (orders ?? []).filter((o) => VENDOR_EDITABLE_STATUSES.includes(o.status)), [orders])
 
   const filtered = useMemo(() => {
     if (!orders) return []

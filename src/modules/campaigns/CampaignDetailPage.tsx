@@ -229,7 +229,7 @@ export function CampaignDetailPage() {
                 <MultiSelect
                   value={giftsDraft}
                   onChange={(e) => setGiftsDraft(e.value)}
-                  options={(activeGifts ?? []).filter((g) => g.modules.includes('CAMPAIGN')).map((g) => ({ label: g.name, value: g.id }))}
+                  options={(activeGifts ?? []).map((g) => ({ label: g.name, value: g.id }))}
                   display="chip"
                   filter
                   className="w-full text-sm"

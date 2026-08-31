@@ -20,10 +20,17 @@ export async function logout(refreshToken: string): Promise<void> {
   await apiClient.post('/api/auth/logout', { refreshToken })
 }
 
-/** Effective access-control keys for the logged-in user -- lets the UI gate things like "New campaign" without guessing from a role name. */
-export async function getCurrentUserPermissions(): Promise<string[]> {
-  const { data } = await apiClient.get<{ permissions: string[] }>('/api/auth/me')
-  return data.permissions
+export interface CurrentUser {
+  permissions: string[]
+  /** Null for platform staff -- a company user's own company, so self-service pages can resolve "my company" without an id in the URL. */
+  companyId: string | null
+  companyName: string | null
+}
+
+/** The logged-in user's effective access-control keys and their own company -- lets the UI gate things like "New campaign" without guessing from a role name. */
+export async function getCurrentUser(): Promise<CurrentUser> {
+  const { data } = await apiClient.get<CurrentUser>('/api/auth/me')
+  return data
 }
 
 /**

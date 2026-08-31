@@ -19,6 +19,8 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "exceljs": "^4.4.0",
+    "highcharts": "^13.0.2",
+    "highcharts-react-official": "^3.2.3",
     "lucide-react": "^1.33.0",
     "primeicons": "^8.0.0",
     "primereact": "^10.9.8",

@@ -7,7 +7,7 @@ import { InputTextarea } from 'primereact/inputtextarea'
 import { Steps } from 'primereact/steps'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import type { CampaignPurpose, CampaignRecipientCategory } from '@/api/campaigns'
 import { useActiveGifts } from '@/hooks/useGifts'
@@ -59,6 +59,10 @@ const STEPS = [{ label: 'Basics' }, { label: 'Choose gift(s)' }, { label: 'Revie
 
 export function CampaignWizardPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  // Arrives from a Gift Store card's "Launch Campaign" button -- that gift should already
+  // be checked off when the admin reaches the gift-picking step, not re-picked from scratch.
+  const { initialGiftId } = (location.state as { initialGiftId?: string } | null) ?? {}
   const createCampaign = useCreateCampaign()
   const { data: gifts } = useActiveGifts()
   const [step, setStep] = useState(0)
@@ -72,7 +76,7 @@ export function CampaignWizardPage() {
     formState: { errors },
   } = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignSchema),
-    defaultValues: { name: '', instructions: '', giftIds: [] },
+    defaultValues: { name: '', instructions: '', giftIds: initialGiftId ? [initialGiftId] : [] },
   })
 
   const values = watch()
@@ -210,6 +214,15 @@ export function CampaignWizardPage() {
 
         {step === 1 && (
           <div className="flex flex-col gap-4">
+            {initialGiftId && selectedGifts.length > 0 && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-sm text-text">
+                <i className="pi pi-check-circle text-accent" />
+                <span>
+                  Starting with <span className="font-medium">{selectedGifts[0].name}</span> from the Gift Store — you can add more on the
+                  next step.
+                </span>
+              </div>
+            )}
             <Controller
               name="giftIds"
               control={control}

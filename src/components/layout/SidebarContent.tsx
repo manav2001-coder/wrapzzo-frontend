@@ -1,10 +1,30 @@
 import { ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { isSuperAdmin } from '@/config/auth'
-import { getNavModules, type NavEntry } from '@/config/navigation'
+import { getNavModules, type NavEntry, type NavModule } from '@/config/navigation'
 import { toggleModuleExpanded } from '@/features/ui/uiSlice'
 import { usePermissions } from '@/hooks/usePermissions'
+
+/** True if the current path is exactly one of a group's links, or nested under one. */
+function isPathInGroup(pathname: string, items: NavEntry[]): boolean {
+  return items.some((item) => item.type === 'link' && (pathname === item.to || pathname.startsWith(`${item.to}/`)))
+}
+
+/** Every group key whose own links match the current path -- at any depth. */
+function groupKeysContainingPath(pathname: string, entries: NavEntry[]): string[] {
+  const keys: string[] = []
+  for (const entry of entries) {
+    if (entry.type === 'group') {
+      if (isPathInGroup(pathname, entry.items)) {
+        keys.push(entry.key)
+      }
+      keys.push(...groupKeysContainingPath(pathname, entry.items))
+    }
+  }
+  return keys
+}
 
 function NavLeafLink({ item, collapsed, onNavigate }: { item: Extract<NavEntry, { type: 'link' }>; collapsed: boolean; onNavigate?: () => void }) {
   return (
@@ -63,6 +83,7 @@ function NavEntries({
   const visibleEntries = entries.filter(
     (entry) => entry.type !== 'link' || !entry.requiresPermission || (permissions?.includes(entry.requiresPermission) ?? false),
   )
+  const location = useLocation()
   return (
     <div className={depth > 0 ? 'mt-0.5 ml-3 space-y-0.5 border-l border-sidebar-border pl-2' : 'space-y-0.5'}>
       {visibleEntries.map((entry) => {
@@ -82,12 +103,23 @@ function NavEntries({
           )
         }
         const isExpanded = expandedModules.includes(entry.key)
+        // Only looks "active" once you're actually on one of its own routes (Create/Manage) --
+        // not just because it happens to be expanded.
+        const isChildActive = isPathInGroup(location.pathname, entry.items)
         return (
           <div key={entry.key}>
             <button
               type="button"
               onClick={() => onToggle(entry.key)}
-              className="flex w-full items-center gap-2 rounded-md py-1.5 pr-3 pl-3.5 text-sm font-medium text-sidebar-fg transition-colors hover:bg-sidebar-hover hover:text-sidebar-active-fg"
+              className={[
+                // bg-transparent explicitly, not just omitted -- there's no Tailwind preflight in
+                // this app (see index.css), so a plain <button> with no background utility at all
+                // falls back to PrimeReact's own default button chrome (a solid gray fill).
+                'flex w-full items-center gap-2 rounded-md border-none bg-transparent py-1.5 pr-3 pl-3.5 text-sm font-medium transition-colors',
+                isChildActive
+                  ? 'bg-sidebar-hover text-sidebar-active-fg'
+                  : 'text-sidebar-fg hover:bg-sidebar-hover hover:text-sidebar-active-fg',
+              ].join(' ')}
             >
               <i className={`pi ${entry.icon} text-[15px]`} />
               <span className="flex-1 text-left">{entry.label}</span>
@@ -126,6 +158,21 @@ export function SidebarContent({
   const email = useAppSelector((state) => state.auth.user?.email)
   const navModules = getNavModules(isSuperAdmin(email))
   const { permissions } = usePermissions()
+  const location = useLocation()
+
+  // Auto-open a group once you actually land on one of its own routes (e.g. refreshing on
+  // /campaigns), so the active item is never hidden inside a collapsed group -- but this
+  // never forces it open just because it's expanded/highlighted for any other reason.
+  useEffect(() => {
+    for (const mod of navModules as NavModule[]) {
+      for (const key of groupKeysContainingPath(location.pathname, mod.items)) {
+        if (!expandedModules.includes(key)) {
+          dispatch(toggleModuleExpanded(key))
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname])
 
   function handleToggle(key: string) {
     dispatch(toggleModuleExpanded(key))
@@ -145,7 +192,7 @@ export function SidebarContent({
             type="button"
             onClick={onToggleCollapse}
             aria-label="Collapse sidebar"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-sidebar-fg-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-fg"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-md border-none bg-transparent text-sidebar-fg-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-fg"
           >
             <ChevronsLeft className="size-4" />
           </button>
@@ -158,7 +205,7 @@ export function SidebarContent({
             type="button"
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-sidebar-fg-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-fg"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-md border-none bg-transparent text-sidebar-fg-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-fg"
           >
             <ChevronsRight className="size-4" />
           </button>
@@ -189,7 +236,7 @@ export function SidebarContent({
                 title={collapsed ? mod.label : undefined}
                 onClick={() => !collapsed && handleToggle(mod.key)}
                 className={[
-                  'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[11px] font-semibold tracking-wider text-sidebar-fg-muted uppercase transition-colors',
+                  'flex w-full items-center gap-2 rounded-md border-none bg-transparent px-2 py-1.5 text-[11px] font-semibold tracking-wider text-sidebar-fg-muted uppercase transition-colors',
                   collapsed ? 'justify-center' : 'hover:text-sidebar-fg',
                 ].join(' ')}
               >

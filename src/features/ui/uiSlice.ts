@@ -15,9 +15,11 @@ const THEME_KEY = 'wrapzzo.theme'
 function loadExpandedModules(): string[] {
   try {
     const raw = localStorage.getItem(EXPANDED_MODULES_KEY)
-    return raw ? (JSON.parse(raw) as string[]) : ['admin', 'campaigns:campaignsGroup']
+    // 'campaigns:campaignsGroup' deliberately starts collapsed -- SidebarContent auto-expands
+    // it only once the user actually lands on one of its routes (Create/Manage).
+    return raw ? (JSON.parse(raw) as string[]) : ['admin']
   } catch {
-    return ['admin', 'campaigns:campaignsGroup']
+    return ['admin']
   }
 }
 

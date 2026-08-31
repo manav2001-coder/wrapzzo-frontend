@@ -43,7 +43,6 @@ function GiftPickerCard({ gift, selected, onToggle }: { gift: Gift; selected: bo
 
 export function CampaignGiftPicker({ selectedIds, onChange }: { selectedIds: string[]; onChange: (ids: string[]) => void }) {
   const { data: gifts, isLoading } = useActiveGifts()
-  const campaignGifts = (gifts ?? []).filter((g) => g.modules.includes('CAMPAIGN'))
 
   function toggle(id: string) {
     onChange(selectedIds.includes(id) ? selectedIds.filter((existing) => existing !== id) : [...selectedIds, id])
@@ -57,19 +56,19 @@ export function CampaignGiftPicker({ selectedIds, onChange }: { selectedIds: str
     )
   }
 
-  if (campaignGifts.length === 0) {
+  if (!gifts || gifts.length === 0) {
     return (
       <EmptyState
         icon="pi-gift"
-        title="No gifts are tagged for Campaigns yet"
-        description="Ask an admin to enable at least one gift for the Campaigns module in the Gift Store."
+        title="No gifts in the catalogue yet"
+        description="Ask your Wrapzzo account manager to add a gift before you can launch a campaign."
       />
     )
   }
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {campaignGifts.map((gift) => (
+      {gifts.map((gift) => (
         <GiftPickerCard key={gift.id} gift={gift} selected={selectedIds.includes(gift.id)} onToggle={() => toggle(gift.id)} />
       ))}
     </div>

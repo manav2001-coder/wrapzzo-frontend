@@ -9,9 +9,10 @@ export interface Order {
   displayId: string
   companyId: string
   companyName: string
-  campaignId: string
-  campaignName: string
-  submissionId: string
+  /** Null for a Quick Gift order (source !== 'CAMPAIGN'). */
+  campaignId: string | null
+  campaignName: string | null
+  submissionId: string | null
   giftId: string | null
   giftName: string | null
   recipientName: string | null

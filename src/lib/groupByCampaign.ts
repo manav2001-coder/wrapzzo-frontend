@@ -1,18 +1,26 @@
+import type { Order } from '@/api/orders'
+
 export interface CampaignGroup<T> {
   campaignId: string
   campaignName: string
   items: T[]
 }
 
-/** Groups a flat list of campaign-linked records (Orders, Submissions, ...) by their campaign, preserving first-seen order. */
-export function groupByCampaign<T extends { campaignId: string; campaignName: string }>(items: T[]): CampaignGroup<T>[] {
+/**
+ * Groups a flat list of Orders by their campaign, preserving first-seen order. A Quick Gift
+ * order has no campaign -- those are bucketed into one synthetic "Quick Gift" group per
+ * company, so a platform-wide (cross-company) view never merges different companies' requests.
+ */
+export function groupByCampaign<T extends Order>(items: T[]): CampaignGroup<T>[] {
   const groups: CampaignGroup<T>[] = []
   const byId = new Map<string, CampaignGroup<T>>()
   for (const item of items) {
-    let group = byId.get(item.campaignId)
+    const id = item.campaignId ?? `quick-gift:${item.companyId}`
+    const name = item.campaignName ?? 'Quick Gift'
+    let group = byId.get(id)
     if (!group) {
-      group = { campaignId: item.campaignId, campaignName: item.campaignName, items: [] }
-      byId.set(item.campaignId, group)
+      group = { campaignId: id, campaignName: name, items: [] }
+      byId.set(id, group)
       groups.push(group)
     }
     group.items.push(item)

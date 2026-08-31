@@ -6,11 +6,11 @@ import { Dropdown } from 'primereact/dropdown'
 import { FileUpload, type FileUploadSelectEvent } from 'primereact/fileupload'
 import { Message } from 'primereact/message'
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { ApiError } from '@/lib/axiosClient'
 import type { BulkImportUserRow } from '@/api/users'
 import { PageHeader } from '@/components/PageHeader'
-import { useCompany } from '@/hooks/useCompanies'
+import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useBulkImportUsers } from '@/hooks/useUsers'
 import {
   EMPLOYEE_FIELDS,
@@ -24,12 +24,10 @@ import {
 import { showToast } from '@/lib/toast'
 
 export function CompanyUsersImportPage() {
-  const { id } = useParams<{ id: string }>()
-  const companyId = id ?? ''
+  const { companyId, companyName, basePath } = useCompanyUserContext()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const { data: company } = useCompany(id)
   const bulkImport = useBulkImportUsers(companyId)
 
   const [parsedRows, setParsedRows] = useState<BulkImportUserRow[]>([])
@@ -138,8 +136,8 @@ export function CompanyUsersImportPage() {
     <div>
       <PageHeader
         title="Import employees"
-        subtitle={company ? `Bulk-add ${company.name}'s roster from a spreadsheet.` : 'Bulk-add a roster from a spreadsheet.'}
-        backTo={`/admin/companies/${companyId}/users`}
+        subtitle={companyName ? `Bulk-add ${companyName}'s roster from a spreadsheet.` : 'Bulk-add a roster from a spreadsheet.'}
+        backTo={`${basePath}/users`}
       />
 
       <Card title="Upload roster">
@@ -232,7 +230,7 @@ export function CompanyUsersImportPage() {
                 className="w-full justify-start sm:w-auto"
                 text={`Imported: ${resultSummary.created} added, ${resultSummary.updated} updated.`}
               />
-              <Button label="View users" icon="pi pi-arrow-right" text onClick={() => navigate(`/admin/companies/${companyId}/users`)} />
+              <Button label="View users" icon="pi pi-arrow-right" text onClick={() => navigate(`${basePath}/users`)} />
             </div>
           )}
 

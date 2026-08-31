@@ -24,7 +24,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
-const CAMPAIGNS_SURFACE_PATHS = ['/campaigns', '/my-campaigns', '/approvals', '/orders']
+const CAMPAIGNS_SURFACE_PATHS = ['/campaigns', '/my-campaigns', '/approvals', '/orders', '/dashboard', '/quick-gift', '/gift-store']
 
 const ACTIVITY_FEED = [
   { dot: 'bg-sky-400', time: '14:22', label: 'Quick Gift sent', detail: '· to Rohan Verma' },
@@ -77,7 +77,7 @@ export function LoginPage() {
     try {
       const tokens = await login(values.email, values.password)
       dispatch(setCredentials({ ...tokens, email: values.email, rememberMe }))
-      const defaultLanding = isSuperAdmin(values.email) ? '/admin' : '/campaigns'
+      const defaultLanding = isSuperAdmin(values.email) ? '/admin' : '/dashboard'
       navigate((isSuperAdmin(values.email) ? fromForAdmin : fromForCampaigns) ?? defaultLanding, { replace: true })
       return
     } catch (userError) {

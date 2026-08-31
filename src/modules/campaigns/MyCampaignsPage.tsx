@@ -1,8 +1,9 @@
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Submission } from '@/api/submissions'
+import type { Campaign } from '@/api/campaigns'
+import type { Submission, SubmissionStatus } from '@/api/submissions'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
@@ -10,7 +11,163 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { useCampaigns } from '@/hooks/useCampaigns'
 import { useMySubmissions, useRequestPhotoLink } from '@/hooks/useSubmissions'
 import { humanize } from '@/lib/format'
+import { statusColor } from '@/lib/statusColors'
 import { showApiError, showToast } from '@/lib/toast'
+
+/** SUBMITTED and RESUBMITTED both just mean "waiting on your manager" -- one bucket for the chart and filter. */
+function submissionBucket(status: SubmissionStatus): string {
+  return status === 'SUBMITTED' || status === 'RESUBMITTED' ? 'PENDING' : status
+}
+
+const INSTRUCTIONS_WORD_LIMIT = 18
+
+function truncateWords(text: string, limit: number): { preview: string; isTruncated: boolean } {
+  const words = text.trim().split(/\s+/)
+  if (words.length <= limit) return { preview: text, isTruncated: false }
+  return { preview: words.slice(0, limit).join(' ') + '…', isTruncated: true }
+}
+
+/**
+ * Fixed-position "Submit a recipient" button across a row of cards -- instructions vary wildly
+ * in length, so the text is capped to a preview with a "See more" toggle instead of letting the
+ * card grow, and the button is pinned to the bottom via mt-auto regardless of how much text is
+ * showing above it.
+ */
+function CampaignOpenCard({ campaign, onSubmit }: { campaign: Campaign; onSubmit: () => void }) {
+  const [expanded, setExpanded] = useState(false)
+  const { preview, isTruncated } = campaign.instructions ? truncateWords(campaign.instructions, INSTRUCTIONS_WORD_LIMIT) : { preview: '', isTruncated: false }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+      <div className="flex items-start justify-between gap-2">
+        <span className="font-medium text-text">{campaign.name}</span>
+        <StatusBadge status={campaign.status} label="Open" />
+      </div>
+      <p className="text-xs text-text-muted">{humanize(campaign.purpose)} · {humanize(campaign.recipientCategory)}</p>
+      {campaign.gifts.length > 0 && (
+        <p className="text-xs text-text-muted">Gift{campaign.gifts.length > 1 ? 's' : ''}: {campaign.gifts.map((g) => g.name).join(', ')}</p>
+      )}
+      {campaign.instructions && (
+        <div className="text-sm text-text">
+          <p>{expanded ? campaign.instructions : preview}</p>
+          {isTruncated && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-0.5 border-none bg-transparent p-0 text-xs font-medium text-accent hover:underline"
+            >
+              {expanded ? 'See less' : 'See more'}
+            </button>
+          )}
+        </div>
+      )}
+      <Button label="Submit a recipient" icon="pi pi-send" size="small" className="mt-auto self-start" onClick={onSubmit} />
+    </div>
+  )
+}
+
+function SubmissionRow({ submission, onView, onResubmit }: { submission: Submission; onView: () => void; onResubmit: () => void }) {
+  return (
+    // A <div> with a button role, not a real <button> -- it needs to contain the
+    // "Resubmit" <Button> below, and a <button> can't nest another <button>.
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onView}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onView()
+        }
+      }}
+      className="cursor-pointer rounded-lg border border-border bg-surface p-4 text-left transition-colors hover:border-accent/50"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="font-medium text-text">{submission.campaignName}</span>
+        <StatusBadge status={submission.status} label={humanize(submission.status)} />
+      </div>
+      <p className="mt-1 text-xs text-text-muted">
+        {submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : ''}
+      </p>
+      {submission.rejectionReason && (
+        <p className="mt-2 text-sm text-red-500 dark:text-red-400">Rejected: {submission.rejectionReason}</p>
+      )}
+      {submission.status === 'REJECTED' && (
+        <Button
+          label="Resubmit"
+          icon="pi pi-refresh"
+          size="small"
+          outlined
+          className="mt-2"
+          onClick={(e) => {
+            e.stopPropagation()
+            onResubmit()
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+interface SubmissionGroup {
+  campaignId: string
+  campaignName: string
+  items: Submission[]
+}
+
+/** One campaign's worth of submissions, collapsible -- so a Member with several campaigns can scan status at a glance without scrolling past every row. */
+function SubmissionGroupCard({
+  group,
+  defaultCollapsed,
+  onView,
+  onResubmit,
+}: {
+  group: SubmissionGroup
+  defaultCollapsed: boolean
+  onView: (submission: Submission) => void
+  onResubmit: (submission: Submission) => void
+}) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed)
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {}
+    for (const s of group.items) c[submissionBucket(s.status)] = (c[submissionBucket(s.status)] ?? 0) + 1
+    return c
+  }, [group.items])
+
+  return (
+    <div className="rounded-xl border border-border bg-surface">
+      <button
+        type="button"
+        onClick={() => setCollapsed((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 border-none bg-transparent p-4 text-left"
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <i className={`pi ${collapsed ? 'pi-chevron-right' : 'pi-chevron-down'} shrink-0 text-xs text-text-muted`} />
+          <span className="truncate font-medium text-text">{group.campaignName}</span>
+          <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-muted">{group.items.length}</span>
+        </div>
+        <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
+          {Object.entries(counts).map(([status, count]) => (
+            <span
+              key={status}
+              className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{ backgroundColor: `${statusColor(status)}1a`, color: statusColor(status) }}
+            >
+              {count} {humanize(status)}
+            </span>
+          ))}
+        </div>
+      </button>
+      {!collapsed && (
+        <div className="flex flex-col gap-2 border-t border-border p-3">
+          {group.items.map((submission) => (
+            <SubmissionRow key={submission.id} submission={submission} onView={() => onView(submission)} onResubmit={() => onResubmit(submission)} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function SubmissionDetailDialog({
   submission,
@@ -94,8 +251,43 @@ export function MyCampaignsPage() {
 
   const [viewing, setViewing] = useState<Submission | null>(null)
   const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
 
   const active = (campaigns ?? []).filter((c) => c.status === 'ACTIVE')
+
+  const statusSlices = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const s of submissions ?? []) counts[submissionBucket(s.status)] = (counts[submissionBucket(s.status)] ?? 0) + 1
+    return Object.entries(counts).map(([key, value]) => ({ key, name: humanize(key), value, color: statusColor(key) }))
+  }, [submissions])
+  const submissionsTotal = submissions?.length ?? 0
+
+  const filtered = useMemo(
+    () => (statusFilter ? (submissions ?? []).filter((s) => submissionBucket(s.status) === statusFilter) : (submissions ?? [])),
+    [submissions, statusFilter],
+  )
+
+  const groups = useMemo<SubmissionGroup[]>(() => {
+    const map = new Map<string, SubmissionGroup>()
+    for (const s of filtered) {
+      if (!map.has(s.campaignId)) map.set(s.campaignId, { campaignId: s.campaignId, campaignName: s.campaignName, items: [] })
+      map.get(s.campaignId)!.items.push(s)
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      const latest = (g: SubmissionGroup) => Math.max(...g.items.map((i) => new Date(i.createdAt).getTime()))
+      return latest(b) - latest(a)
+    })
+  }, [filtered])
+
+  function resubmit(submission: Submission) {
+    navigate(`/campaigns/${submission.campaignId}/submit`, {
+      state: {
+        resubmitId: submission.id,
+        initialGiftId: submission.giftId ?? undefined,
+        initialValues: Object.fromEntries(submission.values.map((v) => [v.fieldKey, v.value])),
+      },
+    })
+  }
 
   async function handleRequestPhotoLink(submission: Submission) {
     try {
@@ -123,24 +315,7 @@ export function MyCampaignsPage() {
       ) : (
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {active.map((campaign) => (
-            <div key={campaign.id} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-medium text-text">{campaign.name}</span>
-                <StatusBadge status={campaign.status} label="Open" />
-              </div>
-              <p className="text-xs text-text-muted">{humanize(campaign.purpose)} · {humanize(campaign.recipientCategory)}</p>
-              {campaign.gifts.length > 0 && (
-                <p className="text-xs text-text-muted">Gift{campaign.gifts.length > 1 ? 's' : ''}: {campaign.gifts.map((g) => g.name).join(', ')}</p>
-              )}
-              {campaign.instructions && <p className="line-clamp-2 text-sm text-text">{campaign.instructions}</p>}
-              <Button
-                label="Submit a recipient"
-                icon="pi pi-send"
-                size="small"
-                className="mt-2 self-start"
-                onClick={() => navigate(`/campaigns/${campaign.id}/submit`)}
-              />
-            </div>
+            <CampaignOpenCard key={campaign.id} campaign={campaign} onSubmit={() => navigate(`/campaigns/${campaign.id}/submit`)} />
           ))}
         </div>
       )}
@@ -149,46 +324,66 @@ export function MyCampaignsPage() {
       {submissions?.length === 0 ? (
         <EmptyState icon="pi-send" title="No submissions yet" description="Submissions you send for approval will show up here." />
       ) : (
-        <div className="flex flex-col gap-3">
-          {submissions?.map((submission) => (
-            <button
-              key={submission.id}
-              type="button"
-              onClick={() => setViewing(submission)}
-              className="rounded-lg border border-border bg-surface p-4 text-left transition-colors hover:border-accent/50"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-medium text-text">{submission.campaignName}</span>
-                <StatusBadge status={submission.status} label={humanize(submission.status)} />
-              </div>
-              <p className="mt-1 text-xs text-text-muted">
-                {submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : ''}
-              </p>
-              {submission.rejectionReason && (
-                <p className="mt-2 text-sm text-red-500 dark:text-red-400">Rejected: {submission.rejectionReason}</p>
+        <>
+          {/* A slim horizontal bar instead of a chart card -- stays this same compact size
+              no matter how many campaigns/submissions pile up below it, unlike a donut card
+              that either stretches to match a growing list or leaves dead space beside it. */}
+          <div className="mb-4 rounded-xl border border-border bg-surface p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-text">Submission status</p>
+              {statusFilter && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter(null)}
+                  className="flex items-center gap-1 border-none bg-transparent p-0 text-xs font-medium text-accent hover:underline"
+                >
+                  <i className="pi pi-filter-slash" /> Showing {humanize(statusFilter)} only — clear filter
+                </button>
               )}
-              {submission.status === 'REJECTED' && (
-                <Button
-                  label="Resubmit"
-                  icon="pi pi-refresh"
-                  size="small"
-                  outlined
-                  className="mt-2"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    navigate(`/campaigns/${submission.campaignId}/submit`, {
-                      state: {
-                        resubmitId: submission.id,
-                        initialGiftId: submission.giftId ?? undefined,
-                        initialValues: Object.fromEntries(submission.values.map((v) => [v.fieldKey, v.value])),
-                      },
-                    })
-                  }}
+            </div>
+            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-surface-muted">
+              {statusSlices.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  title={`${s.name}: ${s.value}`}
+                  onClick={() => setStatusFilter((prev) => (prev === s.key ? null : s.key))}
+                  style={{ width: `${(s.value / Math.max(submissionsTotal, 1)) * 100}%`, backgroundColor: s.color }}
+                  className={`h-full border-none p-0 transition-opacity hover:opacity-80 ${statusFilter && statusFilter !== s.key ? 'opacity-30' : 'opacity-100'}`}
                 />
-              )}
-            </button>
-          ))}
-        </div>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+              {statusSlices.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setStatusFilter((prev) => (prev === s.key ? null : s.key))}
+                  className={`flex items-center gap-1.5 border-none bg-transparent p-0 text-xs font-medium ${statusFilter && statusFilter !== s.key ? 'text-text-muted' : 'text-text'}`}
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                  {s.name} <span className="text-text-muted">({s.value})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {groups.length === 0 ? (
+              <EmptyState icon="pi-filter-slash" title="No submissions match this filter" />
+            ) : (
+              groups.map((group) => (
+                <SubmissionGroupCard
+                  key={group.campaignId}
+                  group={group}
+                  defaultCollapsed={groups.length > 3}
+                  onView={setViewing}
+                  onResubmit={resubmit}
+                />
+              ))
+            )}
+          </div>
+        </>
       )}
 
       <SubmissionDetailDialog

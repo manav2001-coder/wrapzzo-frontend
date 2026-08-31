@@ -1,4 +1,7 @@
+export type PipelineStage = 'inProgress' | 'dispatched' | 'delivered'
+
 interface Stage {
+  key: PipelineStage
   label: string
   value: number
   icon: string
@@ -16,12 +19,18 @@ export function PipelineFlow({
   inProgress: number
   dispatched: number
   delivered: number
-  onSelectStage: () => void
+  onSelectStage: (stage: PipelineStage) => void
 }) {
   const stages: Stage[] = [
-    { label: 'In progress', value: inProgress, icon: 'pi-cog', colorClass: 'from-amber-500/15 to-amber-500/5 text-amber-500' },
-    { label: 'Dispatched', value: dispatched, icon: 'pi-send', colorClass: 'from-sky-500/15 to-sky-500/5 text-sky-500' },
-    { label: 'Delivered', value: delivered, icon: 'pi-check-circle', colorClass: 'from-emerald-500/15 to-emerald-500/5 text-emerald-500' },
+    { key: 'inProgress', label: 'In progress', value: inProgress, icon: 'pi-cog', colorClass: 'from-amber-500/15 to-amber-500/5 text-amber-500' },
+    { key: 'dispatched', label: 'Dispatched', value: dispatched, icon: 'pi-send', colorClass: 'from-sky-500/15 to-sky-500/5 text-sky-500' },
+    {
+      key: 'delivered',
+      label: 'Delivered',
+      value: delivered,
+      icon: 'pi-check-circle',
+      colorClass: 'from-emerald-500/15 to-emerald-500/5 text-emerald-500',
+    },
   ]
 
   return (
@@ -38,7 +47,7 @@ export function PipelineFlow({
           <div key={stage.label} className="flex flex-1 items-center">
             <button
               type="button"
-              onClick={onSelectStage}
+              onClick={() => onSelectStage(stage.key)}
               className="flex w-full flex-col items-center gap-2 rounded-xl border-none bg-transparent p-2 text-center transition-transform hover:-translate-y-0.5"
             >
               <div className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${stage.colorClass}`}>

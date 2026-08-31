@@ -98,7 +98,7 @@ export function DashboardPage() {
                 inProgress={data.giftsInProgress}
                 dispatched={data.dispatched}
                 delivered={data.delivered}
-                onSelectStage={() => navigate('/orders')}
+                onSelectStage={(stage) => setDrilldown({ dimension: 'pipelineStage', value: stage })}
               />
             </div>
           </div>

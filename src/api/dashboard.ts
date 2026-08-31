@@ -102,7 +102,15 @@ export interface DashboardDrilldown {
   rows: DrilldownRow[]
 }
 
-export type DrilldownDimension = 'orderSource' | 'quickGiftStatus' | 'submissionStatus' | 'topGift' | 'topDepartment' | 'week' | 'monthlySpend'
+export type DrilldownDimension =
+  | 'orderSource'
+  | 'quickGiftStatus'
+  | 'submissionStatus'
+  | 'topGift'
+  | 'topDepartment'
+  | 'week'
+  | 'monthlySpend'
+  | 'pipelineStage'
 
 export async function getDashboardDrilldown(dimension: DrilldownDimension, value: string): Promise<DashboardDrilldown> {
   const { data } = await apiClient.get<DashboardDrilldown>('/api/dashboard/drilldown', { params: { dimension, value } })

@@ -95,6 +95,8 @@ export interface DrilldownRow {
   campaignId: string | null
   /** Set only where an order's price is meaningful (order/monthly-spend rows) -- null elsewhere. */
   amount: number | null
+  /** 'CAMPAIGN' | 'QUICK_GIFT' | 'BULK_GIFT' -- set only on monthly-spend rows, for grouping. Null elsewhere. */
+  source: string | null
 }
 
 export interface DashboardDrilldown {

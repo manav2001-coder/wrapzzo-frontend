@@ -2,16 +2,23 @@ import { useQuery } from '@tanstack/react-query'
 import { getCurrentUser } from '@/api/auth'
 import { useAppSelector } from '@/app/hooks'
 
-const CURRENT_USER_QUERY_KEY = ['me', 'permissions']
+export const CURRENT_USER_QUERY_KEY = ['me', 'permissions']
 
-/** Rarely changes mid-session (a role/company reassignment needs a fresh login to take effect anyway, see JwtService), so this is safe to cache for the whole session. */
+/**
+ * A Company Admin can be promoted/demoted, or have their designation's access changed, by
+ * someone else while this tab stays open -- the sidebar/nav gate on this data but never
+ * remount (they live in the persistent layout), and the app disables refetchOnWindowFocus
+ * globally, so without a poll here a demoted user would keep seeing admin-only modules
+ * indefinitely, not just "until their next login" as the old staleTime: Infinity assumed.
+ */
 export function useCurrentUser() {
   const isAuthenticated = useAppSelector((state) => Boolean(state.auth.accessToken))
   return useQuery({
     queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: getCurrentUser,
     enabled: isAuthenticated,
-    staleTime: Infinity,
+    staleTime: 60_000,
+    refetchInterval: isAuthenticated ? 60_000 : false,
   })
 }
 

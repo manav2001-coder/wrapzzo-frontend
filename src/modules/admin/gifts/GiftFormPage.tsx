@@ -3,6 +3,7 @@ import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { Checkbox } from 'primereact/checkbox'
 import { confirmDialog } from 'primereact/confirmdialog'
+import { Dropdown } from 'primereact/dropdown'
 import { FileUpload } from 'primereact/fileupload'
 import { InputNumber } from 'primereact/inputnumber'
 import { InputText } from 'primereact/inputtext'
@@ -19,6 +20,7 @@ import {
   useCreateGift,
   useDeleteGiftImage,
   useGift,
+  useGifts,
   useSetGiftStatus,
   useUpdateGift,
   useUploadGiftImage,
@@ -34,6 +36,22 @@ const MODULE_OPTIONS: { value: GiftModule; label: string }[] = [
   { value: 'BULK_GIFTING', label: 'Bulk Gifting' },
   { value: 'CAMPAIGN', label: 'Campaigns' },
 ]
+
+/** A sane starting set -- the real list grows over time as admins add "Other" categories, which then show up here too. */
+const FIXED_CATEGORIES = [
+  'Drinkware',
+  'Stationery & Desk',
+  'Wellness',
+  'Travel & Lifestyle',
+  'Corporate Gifting',
+  'Writing Instruments',
+  'Home & Living',
+  'Apparel',
+  'Electronics',
+  'Food & Beverages',
+]
+
+const OTHER_OPTION = '__other__'
 
 const giftSchema = z.object({
   name: z.string().min(1, 'Gift name is required'),
@@ -52,6 +70,7 @@ export function GiftFormPage() {
   const navigate = useNavigate()
 
   const { data: gift, isLoading: isLoadingGift } = useGift(id)
+  const { data: allGifts } = useGifts()
   const createGift = useCreateGift()
   const updateGift = useUpdateGift(id ?? '')
   const setStatus = useSetGiftStatus(id ?? '')
@@ -93,6 +112,28 @@ export function GiftFormPage() {
       })
     }
   }, [gift, reset])
+
+  // The fixed starting set, plus every category any gift already uses -- so once someone
+  // picks "Other" and types a new one, it's a real option for everyone from then on.
+  const knownCategories = useMemo(() => {
+    const set = new Set(FIXED_CATEGORIES)
+    ;(allGifts ?? []).forEach((g) => {
+      if (g.category) set.add(g.category)
+    })
+    return Array.from(set).sort()
+  }, [allGifts])
+
+  // Dropdown selection is separate from the actual category value being submitted: it's
+  // either one of the known categories, or the OTHER_OPTION sentinel while a custom one is
+  // being typed into the field revealed below.
+  const [categorySelect, setCategorySelect] = useState<string>('')
+  useEffect(() => {
+    if (!gift) return
+    setCategorySelect(knownCategories.includes(gift.category) ? gift.category : OTHER_OPTION)
+    // Only re-derive when the gift itself (re)loads -- not on every knownCategories recompute,
+    // which would fight the admin's own in-progress "Other" selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gift])
 
   async function onSubmit(values: GiftFormValues) {
     const input = {
@@ -255,12 +296,34 @@ export function GiftFormPage() {
                 name="category"
                 control={control}
                 render={({ field }) => (
-                  <InputText
-                    id="category"
-                    {...field}
-                    className={errors.category ? 'p-invalid' : ''}
-                    placeholder="Stationery"
-                  />
+                  <>
+                    <Dropdown
+                      inputId="category"
+                      value={categorySelect}
+                      onChange={(e) => {
+                        setCategorySelect(e.value)
+                        if (e.value !== OTHER_OPTION) {
+                          field.onChange(e.value)
+                        } else if (knownCategories.includes(field.value)) {
+                          // Switching away from a known category into "Other" -- start blank, not with the old value.
+                          field.onChange('')
+                        }
+                      }}
+                      options={[...knownCategories.map((c) => ({ label: c, value: c })), { label: 'Other', value: OTHER_OPTION }]}
+                      placeholder="Select a category"
+                      filter
+                      className={errors.category ? 'p-invalid' : ''}
+                    />
+                    {categorySelect === OTHER_OPTION && (
+                      <InputText
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        placeholder="Type the new category"
+                        className={`mt-1.5 ${errors.category ? 'p-invalid' : ''}`}
+                        autoFocus
+                      />
+                    )}
+                  </>
                 )}
               />
               {errors.category && <small className="text-red-500 dark:text-red-400">{errors.category.message}</small>}

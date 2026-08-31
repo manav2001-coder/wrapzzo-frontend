@@ -257,7 +257,7 @@ export function OrdersPage() {
       if (!q) return true
       return (
         o.companyName.toLowerCase().includes(q) ||
-        o.campaignName.toLowerCase().includes(q) ||
+        (o.campaignName ?? '').toLowerCase().includes(q) ||
         (o.recipientName ?? '').toLowerCase().includes(q) ||
         o.displayId.toLowerCase().includes(q)
       )
@@ -313,16 +313,21 @@ export function OrdersPage() {
             <EmptyState icon="pi-search" title="No orders match" />
           ) : (
             <>
-              <p className="mb-2 text-xs text-text-muted">Each row is a campaign. Expand it to see its orders and assign vendors.</p>
+              <p className="mb-2 text-xs text-text-muted">
+                Each row groups orders by campaign, or by Quick Gift for one-off requests. Expand one to see its orders and assign vendors.
+              </p>
               <Accordion multiple>
                 {groups.map((group) => {
                   const unassignedInGroup = group.items.filter((o) => !o.assignedVendorId && o.status !== 'CANCELLED').length
+                  // Bulk campaign-assign only applies to real campaigns -- a Quick Gift's synthetic
+                  // group id isn't a campaign the platform assignment endpoint knows about.
+                  const isRealCampaign = group.items[0]?.source === 'CAMPAIGN'
                   return (
                     <AccordionTab
                       key={group.campaignId}
                       header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}
                     >
-                      {unassignedInGroup > 0 && (
+                      {isRealCampaign && unassignedInGroup > 0 && (
                         <CampaignBulkAssignControl
                           campaignId={group.campaignId}
                           campaignName={group.campaignName}

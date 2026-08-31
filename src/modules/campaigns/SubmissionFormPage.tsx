@@ -13,6 +13,7 @@ import type { CampaignField } from '@/api/campaigns'
 import { uploadSubmissionAttachment, type AttachmentValue, type SubmissionValues } from '@/api/submissions'
 import { PageHeader } from '@/components/PageHeader'
 import { useCampaign } from '@/hooks/useCampaigns'
+import { useHasPermission } from '@/hooks/usePermissions'
 import { useCreateSubmission, useResubmitSubmission } from '@/hooks/useSubmissions'
 import { showApiError, showToast } from '@/lib/toast'
 
@@ -43,6 +44,10 @@ export function SubmissionFormPage() {
   const location = useLocation()
   const { resubmitId, initialGiftId, initialValues } = (location.state as ResubmitState | null) ?? {}
   const isResubmit = Boolean(resubmitId)
+  // A Member can't edit/manage a campaign, so the near-empty read-only Campaign Detail page
+  // is a dead end for them -- send them back to their own board instead.
+  const canManageCampaigns = useHasPermission('campaign.manage')
+  const backTarget = canManageCampaigns ? `/campaigns/${campaignId}` : '/my-campaigns'
 
   const { data: campaign, isLoading } = useCampaign(campaignId)
   const createSubmission = useCreateSubmission(campaignId)
@@ -143,7 +148,7 @@ export function SubmissionFormPage() {
         summary: isResubmit ? 'Resubmitted' : `${succeededKeys.length} recipient${succeededKeys.length > 1 ? 's' : ''} submitted`,
         detail: 'Sent for approval.',
       })
-      navigate(`/campaigns/${campaignId}`)
+      navigate(backTarget)
       return
     }
 
@@ -269,7 +274,7 @@ export function SubmissionFormPage() {
       <PageHeader
         title={isResubmit ? 'Resubmit recipient' : 'Submit recipients'}
         subtitle={`${campaign.displayId} · ${campaign.name}${!isResubmit ? '. Add as many recipients as you like in one go.' : ''}`}
-        backTo={`/campaigns/${campaignId}`}
+        backTo={backTarget}
       />
 
       <div className="overflow-x-auto rounded-xl border border-border bg-surface">

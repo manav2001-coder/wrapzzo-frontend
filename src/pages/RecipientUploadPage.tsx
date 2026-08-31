@@ -4,7 +4,7 @@ import { Button } from 'primereact/button'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { useParams } from 'react-router-dom'
-import { getRecipientUploadDetails, uploadRecipientPhoto } from '@/api/recipientUpload'
+import { getRecipientUploadDetails, uploadRecipientPhoto, type RecipientUploadKind } from '@/api/recipientUpload'
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -62,7 +62,7 @@ function SuccessState({ companyName, giftName }: { companyName: string; giftName
   )
 }
 
-export function RecipientUploadPage() {
+export function RecipientUploadPage({ kind = 'recipient' }: { kind?: RecipientUploadKind }) {
   const { token } = useParams<{ token: string }>()
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -73,8 +73,8 @@ export function RecipientUploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: details, isLoading, isError, error: queryError } = useQuery({
-    queryKey: ['recipient-upload', token],
-    queryFn: () => getRecipientUploadDetails(token!),
+    queryKey: ['recipient-upload', kind, token],
+    queryFn: () => getRecipientUploadDetails(token!, kind),
     enabled: Boolean(token),
     retry: false,
   })
@@ -101,7 +101,7 @@ export function RecipientUploadPage() {
     setUploading(true)
     setError(null)
     try {
-      await uploadRecipientPhoto(token, file)
+      await uploadRecipientPhoto(token, file, kind)
       setUploaded(true)
     } catch (err) {
       const message = axios.isAxiosError(err)

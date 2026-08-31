@@ -7,13 +7,13 @@ import { IconField } from 'primereact/iconfield'
 import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { CompanyUser } from '@/api/users'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useAppSelector } from '@/app/hooks'
-import { useCompany } from '@/hooks/useCompanies'
+import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useRemoveCompanyAdmin } from '@/hooks/useUsers'
 import { generateEmployeeTemplateBlob } from '@/lib/employeeTemplate'
 import { showApiError, showToast } from '@/lib/toast'
@@ -27,12 +27,10 @@ const STATUS_LABEL: Record<CompanyUser['status'], string> = {
 }
 
 export function CompanyUsersPage() {
-  const { id } = useParams<{ id: string }>()
-  const companyId = id ?? ''
+  const { companyId, companyName, basePath, backTo } = useCompanyUserContext()
   const navigate = useNavigate()
   const currentUserId = useAppSelector((state) => state.auth.user?.sub)
 
-  const { data: company } = useCompany(id)
   const { data: users, isLoading } = useCompanyUsers(companyId)
   const makeCompanyAdmin = useMakeCompanyAdmin(companyId)
   const removeCompanyAdmin = useRemoveCompanyAdmin(companyId)
@@ -55,7 +53,7 @@ export function CompanyUsersPage() {
   function handleMakeCompanyAdmin(user: CompanyUser) {
     confirmDialog({
       header: 'Make Company Admin',
-      message: `${user.name} will be able to manage users, roles, and campaigns for ${company?.name ?? 'this company'}. Continue?`,
+      message: `${user.name} will be able to manage users, roles, and campaigns for ${companyName ?? 'this company'}. Continue?`,
       icon: 'pi pi-user-plus',
       accept: async () => {
         try {
@@ -115,12 +113,12 @@ export function CompanyUsersPage() {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
-    navigate(`/admin/companies/${companyId}/import-users`, { state: { file } })
+    navigate(`${basePath}/import-users`, { state: { file } })
   }
 
   const importActions = (
     <div className="flex flex-wrap items-center gap-2">
-      <Button label="Add users" icon="pi pi-plus" outlined onClick={() => navigate(`/admin/companies/${companyId}/add-users`)} />
+      <Button label="Add users" icon="pi pi-plus" outlined onClick={() => navigate(`${basePath}/add-users`)} />
       <Button label="Download template" icon="pi pi-download" outlined onClick={handleDownloadTemplate} />
       <Button label="Import employees" icon="pi pi-upload" onClick={() => fileInputRef.current?.click()} />
       <input ref={fileInputRef} type="file" accept=".xlsx" className="hidden" onChange={handleFileChosen} />
@@ -131,8 +129,8 @@ export function CompanyUsersPage() {
     <div>
       <PageHeader
         title="Users"
-        subtitle={company ? `Everyone with a Wrapzzo account at ${company.name}.` : 'Everyone with a Wrapzzo account at this company.'}
-        backTo={`/admin/companies/${companyId}`}
+        subtitle={companyName ? `Everyone with a Wrapzzo account at ${companyName}.` : 'Everyone with a Wrapzzo account at this company.'}
+        backTo={backTo}
         actions={users && users.length > 0 ? importActions : undefined}
       />
 

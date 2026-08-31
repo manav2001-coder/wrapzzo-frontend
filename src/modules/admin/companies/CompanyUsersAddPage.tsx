@@ -3,11 +3,11 @@ import { Card } from 'primereact/card'
 import { InputText } from 'primereact/inputtext'
 import { Message } from 'primereact/message'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { ApiError } from '@/lib/axiosClient'
 import type { BulkImportUserRow } from '@/api/users'
 import { PageHeader } from '@/components/PageHeader'
-import { useCompany } from '@/hooks/useCompanies'
+import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useBulkImportUsers } from '@/hooks/useUsers'
 import { showToast } from '@/lib/toast'
 
@@ -42,11 +42,9 @@ const FIELD_COLUMNS: { key: keyof Omit<DraftRow, 'key'>; label: string; required
 let nextKey = 1
 
 export function CompanyUsersAddPage() {
-  const { id } = useParams<{ id: string }>()
-  const companyId = id ?? ''
+  const { companyId, companyName, basePath } = useCompanyUserContext()
   const navigate = useNavigate()
 
-  const { data: company } = useCompany(id)
   const bulkImport = useBulkImportUsers(companyId)
 
   const [rows, setRows] = useState<DraftRow[]>([emptyRow(nextKey++)])
@@ -131,8 +129,8 @@ export function CompanyUsersAddPage() {
     <div>
       <PageHeader
         title="Add users"
-        subtitle={company ? `Add employees to ${company.name} directly, one row per person.` : 'Add employees directly, one row per person.'}
-        backTo={`/admin/companies/${companyId}/users`}
+        subtitle={companyName ? `Add employees to ${companyName} directly, one row per person.` : 'Add employees directly, one row per person.'}
+        backTo={`${basePath}/users`}
       />
 
       <Card title="New users">
@@ -142,7 +140,7 @@ export function CompanyUsersAddPage() {
             <button
               type="button"
               className="text-accent underline-offset-2 hover:underline"
-              onClick={() => navigate(`/admin/companies/${companyId}/import-users`)}
+              onClick={() => navigate(`${basePath}/import-users`)}
             >
               spreadsheet import
             </button>{' '}
@@ -227,7 +225,7 @@ export function CompanyUsersAddPage() {
 
           <div className="flex items-center gap-2">
             <Button label="Save users" icon="pi pi-check" loading={bulkImport.isPending} onClick={handleSave} />
-            <Button label="View users" text onClick={() => navigate(`/admin/companies/${companyId}/users`)} />
+            <Button label="View users" text onClick={() => navigate(`${basePath}/users`)} />
           </div>
         </div>
       </Card>

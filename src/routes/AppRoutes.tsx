@@ -20,6 +20,10 @@ import { CampaignWizardPage } from '@/modules/campaigns/CampaignWizardPage'
 import { MyCampaignsPage } from '@/modules/campaigns/MyCampaignsPage'
 import { OrdersPage as CampaignOrdersPage } from '@/modules/campaigns/OrdersPage'
 import { SubmissionFormPage } from '@/modules/campaigns/SubmissionFormPage'
+import { DashboardPage } from '@/modules/dashboard/DashboardPage'
+import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
+import { QuickGiftFormPage } from '@/modules/quickgift/QuickGiftFormPage'
+import { QuickGiftLandingPage } from '@/modules/quickgift/QuickGiftLandingPage'
 import { VendorLayout } from '@/modules/vendor/VendorLayout'
 import { VendorGiftFormPage } from '@/modules/vendor/gifts/VendorGiftFormPage'
 import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
@@ -39,6 +43,7 @@ export function AppRoutes() {
       <Route path="/setup-password" element={<SetupPasswordPage />} />
       <Route path="/vendor/setup-password" element={<SetupVendorPasswordPage />} />
       <Route path="/recipient-upload/:token" element={<RecipientUploadPage />} />
+      <Route path="/quick-gift-upload/:token" element={<RecipientUploadPage kind="quick-gift" />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
@@ -64,6 +69,10 @@ export function AppRoutes() {
           <Route path="/admin/access-control" element={<AccessControlPage />} />
 
           {/* Campaigns module -- company-side, PRD Part 2.5. Peer of /admin, not nested under it. */}
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/quick-gift" element={<QuickGiftLandingPage />} />
+          <Route path="/quick-gift/new/:giftId" element={<QuickGiftFormPage />} />
+          <Route path="/gift-store" element={<GiftStorePage />} />
           <Route path="/campaigns" element={<CampaignListPage />} />
           <Route path="/campaigns/new" element={<CampaignWizardPage />} />
           <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
@@ -71,6 +80,11 @@ export function AppRoutes() {
           <Route path="/my-campaigns" element={<MyCampaignsPage />} />
           <Route path="/approvals" element={<ApprovalQueuePage />} />
           <Route path="/orders" element={<CampaignOrdersPage />} />
+
+          {/* Company Admin's own roster -- same Users pages as the platform-admin route above, just resolving "my company" instead of an :id param. */}
+          <Route path="/company/users" element={<CompanyUsersPage />} />
+          <Route path="/company/add-users" element={<CompanyUsersAddPage />} />
+          <Route path="/company/import-users" element={<CompanyUsersImportPage />} />
         </Route>
       </Route>
 

@@ -48,11 +48,13 @@ const ADMIN_MODULE: NavModule = {
 }
 
 /**
- * Flat (no "Wrappzo" wrapper) -- "Campaigns" is its own collapsible group holding
- * Create (-> the full campaign list/creation surface, /campaigns) and Manage (-> the
- * MR's own day-to-day board of what they're in the audience of, /my-campaigns).
- * Approvals and Orders are deliberately siblings of that group, not nested inside it --
- * they're their own independent workflows, not part of building/running a campaign.
+ * Flat (no "Wrappzo" wrapper) -- Dashboard sits at the top level, then "Campaigns" is its
+ * own collapsible group holding Create (-> the full campaign list/creation surface,
+ * /campaigns) and Manage (-> the MR's own day-to-day board of what they're in the audience
+ * of, /my-campaigns), then Quick Gift and Gift Store (everyone with quickgift.create sees
+ * them, Member and Company Admin alike). Approvals, Orders, and Users are deliberately
+ * siblings of the Campaigns group, not nested inside it -- they're their own independent
+ * workflows, not part of building/running a campaign.
  */
 const CAMPAIGNS_MODULE: NavModule = {
   key: 'campaigns',
@@ -60,6 +62,7 @@ const CAMPAIGNS_MODULE: NavModule = {
   icon: 'pi-megaphone',
   flat: true,
   items: [
+    { type: 'link', label: 'Dashboard', to: '/dashboard', icon: 'pi-home', requiresPermission: 'dashboard.view' },
     {
       type: 'group',
       key: 'campaigns:campaignsGroup',
@@ -70,8 +73,11 @@ const CAMPAIGNS_MODULE: NavModule = {
         { type: 'link', label: 'Manage', to: '/my-campaigns', icon: 'pi-briefcase', requiresPermission: 'campaign.submit' },
       ],
     },
+    { type: 'link', label: 'Quick Gift', to: '/quick-gift', icon: 'pi-bolt', requiresPermission: 'quickgift.create' },
+    { type: 'link', label: 'Gift Store', to: '/gift-store', icon: 'pi-shop', requiresPermission: 'quickgift.create' },
     { type: 'link', label: 'Approvals', to: '/approvals', icon: 'pi-check-square', requiresPermission: 'campaign.manage' },
     { type: 'link', label: 'Orders', to: '/orders', icon: 'pi-shopping-bag', requiresPermission: 'campaign.manage' },
+    { type: 'link', label: 'Users', to: '/company/users', icon: 'pi-users', requiresPermission: 'user.manage' },
   ],
 }
 

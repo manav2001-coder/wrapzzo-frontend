@@ -133,7 +133,7 @@ export function CampaignListPage() {
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard label="Total campaigns" value={campaigns?.length ?? 0} icon="pi-megaphone" />
             <StatCard label="Active now" value={statusCounts.ACTIVE} icon="pi-play" accent="success" />
-            <StatCard label="Pending approval" value={totals.pending} icon="pi-clock" accent="warning" />
+            <StatCard label="Submission Approvals Pending" value={totals.pending} icon="pi-clock" accent="warning" />
             <StatCard label="Orders generated" value={totals.orders} icon="pi-shopping-bag" accent="accent" />
           </div>
 

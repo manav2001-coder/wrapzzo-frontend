@@ -133,7 +133,7 @@ export function OrdersPage() {
             <EmptyState icon="pi-search" title="No orders match" description="Try a different order id, gift, recipient, or campaign name." />
           ) : (
             <>
-              <p className="mb-2 text-xs text-text-muted">Each row is a campaign. Expand it to see its orders.</p>
+              <p className="mb-2 text-xs text-text-muted">Each row groups orders by campaign, or by Quick Gift for one-off requests.</p>
               <Accordion multiple className="campaign-accordion">
                 {groups.map((group) => (
                   <AccordionTab key={group.campaignId} header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}>

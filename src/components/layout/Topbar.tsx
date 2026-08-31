@@ -29,7 +29,7 @@ export function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
       <button
         type="button"
-        className="grid h-9 w-9 place-items-center rounded-lg text-text-muted hover:bg-surface-muted lg:hidden"
+        className="grid h-9 w-9 place-items-center rounded-lg border-none bg-transparent text-text-muted transition-colors hover:bg-surface-muted lg:hidden"
         onClick={onOpenMobileNav}
         aria-label="Open navigation"
       >
@@ -37,10 +37,10 @@ export function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
       </button>
       <span />
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <button
           type="button"
-          className="grid h-9 w-9 place-items-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted"
+          className="grid h-9 w-9 place-items-center rounded-full border-none bg-transparent text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
           onClick={(event) => themeMenuRef.current?.toggle(event)}
           aria-label="Change theme"
         >
@@ -58,7 +58,7 @@ export function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
                   dispatch(setTheme(option.value))
                   themeMenuRef.current?.hide(event)
                 }}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-text hover:bg-surface-muted"
+                className="flex w-full items-center gap-2.5 border-none bg-transparent px-3.5 py-2 text-left text-sm text-text hover:bg-surface-muted"
               >
                 <option.Icon className="size-4 text-text-muted" strokeWidth={1.75} />
                 <span className="flex-1">{option.label}</span>
@@ -70,14 +70,14 @@ export function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
 
         <button
           type="button"
-          className="flex items-center gap-2 rounded-full py-1 pr-1 pl-1 transition-colors hover:bg-surface-muted"
+          className="flex items-center gap-2 rounded-full border-none bg-transparent py-1 pr-2 pl-1 transition-colors hover:bg-surface-muted"
           onClick={(event) => menuRef.current?.toggle(event)}
           aria-label="Account menu"
         >
           <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-sm font-semibold text-white">
             {initial}
           </span>
-          <i className="pi pi-chevron-down mr-1 text-[10px] text-text-muted" />
+          <i className="pi pi-chevron-down text-[10px] text-text-muted" />
         </button>
         <Menu
           ref={menuRef}

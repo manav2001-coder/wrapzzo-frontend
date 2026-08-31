@@ -7,11 +7,9 @@ import {
   getCampaign,
   listCampaigns,
   replaceCampaignAudience,
-  replaceCampaignFields,
   updateCampaign,
   type AudienceInput,
   type CampaignInput,
-  type FieldInput,
 } from '@/api/campaigns'
 
 const campaignsKey = ['campaigns'] as const
@@ -56,14 +54,6 @@ export function useSetCampaignStatus(id: string) {
       queryClient.setQueryData(campaignKey(id), data)
       queryClient.invalidateQueries({ queryKey: campaignsKey })
     },
-  })
-}
-
-export function useReplaceCampaignFields(id: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (fields: FieldInput[]) => replaceCampaignFields(id, fields),
-    onSuccess: (data) => queryClient.setQueryData(campaignKey(id), data),
   })
 }
 

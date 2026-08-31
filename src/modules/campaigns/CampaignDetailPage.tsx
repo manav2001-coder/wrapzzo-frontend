@@ -13,7 +13,6 @@ import {
   useAudienceOptions,
   useCampaign,
   useReplaceCampaignAudience,
-  useReplaceCampaignFields,
   useSetCampaignStatus,
   useUpdateCampaign,
 } from '@/hooks/useCampaigns'
@@ -23,7 +22,6 @@ import { humanize } from '@/lib/format'
 import { ApiError } from '@/lib/axiosClient'
 import { showApiError, showToast } from '@/lib/toast'
 import { computeOrgUnitFrontier, OrgUnitCascadeSelector } from './OrgUnitCascadeSelector'
-import { CampaignFieldsEditor, draftFromFields, type DraftField } from './CampaignFieldsEditor'
 import type { Submission } from '@/api/submissions'
 
 export function CampaignDetailPage() {
@@ -36,11 +34,9 @@ export function CampaignDetailPage() {
   const { data: activeGifts } = useActiveGifts()
   const submissionsQuery = useCampaignSubmissions(campaignId)
   const setStatus = useSetCampaignStatus(campaignId)
-  const replaceFields = useReplaceCampaignFields(campaignId)
   const replaceAudience = useReplaceCampaignAudience(campaignId)
   const updateCampaign = useUpdateCampaign(campaignId)
 
-  const [fieldsDraft, setFieldsDraft] = useState<DraftField[] | null>(null)
   const [orgUnitIdsDraft, setOrgUnitIdsDraft] = useState<Set<string> | null>(null)
   const [giftsDraft, setGiftsDraft] = useState<string[] | null>(null)
 
@@ -57,7 +53,6 @@ export function CampaignDetailPage() {
     )
   }
 
-  const fields = fieldsDraft ?? draftFromFields(campaign.fields)
   const orgUnitIds =
     orgUnitIdsDraft ??
     new Set(campaign.audiences.filter((a) => a.type === 'ORG_UNIT' && a.orgUnitId).map((a) => a.orgUnitId as string))
@@ -94,27 +89,6 @@ export function CampaignDetailPage() {
         }
       },
     })
-  }
-
-  async function saveFields() {
-    if (!fieldsDraft) return
-    try {
-      await replaceFields.mutateAsync(
-        fieldsDraft.map((f, i) => ({
-          fieldKey: f.fieldKey,
-          label: f.label,
-          fieldType: f.fieldType,
-          required: f.required,
-          placeholder: f.placeholder || undefined,
-          options: f.options,
-          displayOrder: i,
-        })),
-      )
-      setFieldsDraft(null)
-      showToast({ severity: 'success', summary: 'Fields saved' })
-    } catch (error) {
-      showApiError(error)
-    }
   }
 
   async function saveAudience() {
@@ -225,23 +199,6 @@ export function CampaignDetailPage() {
               <div className="mt-4 flex gap-2">
                 <Button label="Save audience" icon="pi pi-check" loading={replaceAudience.isPending} onClick={saveAudience} />
                 <Button label="Cancel" text onClick={() => setOrgUnitIdsDraft(null)} />
-              </div>
-            )}
-          </TabPanel>
-
-          <TabPanel header="Submission form">
-            {campaign.status !== 'DRAFT' ? (
-              <p className="mb-3 text-sm text-text-muted">
-                Fields are locked once a campaign is active. Submissions may already reference them.
-              </p>
-            ) : (
-              <p className="mb-3 text-sm text-text-muted">Edit the fields your team fills in when submitting a recipient.</p>
-            )}
-            <CampaignFieldsEditor fields={fields} onChange={setFieldsDraft} disabled={campaign.status !== 'DRAFT'} />
-            {fieldsDraft && (
-              <div className="mt-4 flex gap-2">
-                <Button label="Save fields" icon="pi pi-check" loading={replaceFields.isPending} onClick={saveFields} />
-                <Button label="Cancel" text onClick={() => setFieldsDraft(null)} />
               </div>
             )}
           </TabPanel>

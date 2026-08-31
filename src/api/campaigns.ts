@@ -98,15 +98,6 @@ export interface CampaignInput {
   submissionDeadline?: string
 }
 
-export interface FieldInput {
-  fieldKey: string
-  label: string
-  fieldType: FieldType
-  required: boolean
-  placeholder?: string
-  options: string[]
-}
-
 export interface AudienceInput {
   type: CampaignAudienceType
   orgUnitId?: string
@@ -146,11 +137,6 @@ export async function activateCampaign(id: string): Promise<Campaign> {
 
 export async function closeCampaign(id: string): Promise<Campaign> {
   const { data } = await apiClient.post<Campaign>(`/api/campaigns/${id}/close`)
-  return data
-}
-
-export async function replaceCampaignFields(id: string, fields: FieldInput[]): Promise<Campaign> {
-  const { data } = await apiClient.put<Campaign>(`/api/campaigns/${id}/fields`, { fields })
   return data
 }
 

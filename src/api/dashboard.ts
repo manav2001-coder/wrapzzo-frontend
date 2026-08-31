@@ -113,6 +113,7 @@ export type DrilldownDimension =
   | 'week'
   | 'monthlySpend'
   | 'pipelineStage'
+  | 'quickGiftsThisMonth'
 
 export async function getDashboardDrilldown(dimension: DrilldownDimension, value: string): Promise<DashboardDrilldown> {
   const { data } = await apiClient.get<DashboardDrilldown>('/api/dashboard/drilldown', { params: { dimension, value } })

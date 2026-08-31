@@ -128,7 +128,11 @@ export function DashboardPage() {
                 urgent={data.quickGiftsPending > 0}
               />
             </button>
-            <button type="button" onClick={() => navigate('/quick-gift')} className={STAT_BUTTON_CLASS}>
+            <button
+              type="button"
+              onClick={() => setDrilldown({ dimension: 'quickGiftsThisMonth', value: '' })}
+              className={STAT_BUTTON_CLASS}
+            >
               <StatCard label="Quick Gifts this month" value={data.quickGiftsThisMonth} icon="pi-calendar" />
             </button>
           </div>

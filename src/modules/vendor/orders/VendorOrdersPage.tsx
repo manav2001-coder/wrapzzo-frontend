@@ -3,7 +3,8 @@ import { IconField } from 'primereact/iconfield'
 import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
 import { useMemo, useState } from 'react'
-import type { Order, OrderStatus } from '@/api/orders'
+import type { OrderStatus } from '@/api/orders'
+import type { VendorOrder } from '@/api/vendorOrders'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -13,13 +14,16 @@ import { useUpdateVendorOrderStatus, useVendorOrders } from '@/hooks/useVendorOr
 import { formatCurrency, humanize } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
 
-/** The one forward step a vendor may move an order -- mirrors OrderService.VENDOR_TRANSITIONS server-side. */
+/**
+ * For now, the vendor's only action is marking an order delivered -- no separate "dispatched"
+ * step -- from either state it's routed to them in. Mirrors OrderService.VENDOR_TRANSITIONS.
+ */
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
-  PRODUCTION_QUEUE: 'DISPATCHED',
+  PRODUCTION_QUEUE: 'DELIVERED',
   DISPATCHED: 'DELIVERED',
 }
 const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
-  PRODUCTION_QUEUE: 'Mark dispatched',
+  PRODUCTION_QUEUE: 'Mark delivered',
   DISPATCHED: 'Mark delivered',
 }
 const STATUS_ORDER: OrderStatus[] = ['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED']
@@ -60,7 +64,7 @@ function StatusBreakdownBar({ counts }: { counts: Record<string, number> }) {
   )
 }
 
-function OrderCard({ order, highlight = false }: { order: Order; highlight?: boolean }) {
+function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight?: boolean }) {
   const updateStatus = useUpdateVendorOrderStatus()
   const nextStatus = NEXT_STATUS[order.status]
 
@@ -109,7 +113,7 @@ function OrderCard({ order, highlight = false }: { order: Order; highlight?: boo
         </div>
         <div>
           <p className="text-xs text-text-muted">Price</p>
-          <p className="font-medium text-text">{formatCurrency(order.totalPrice)}</p>
+          <p className="font-medium text-text">{formatCurrency(order.price)}</p>
         </div>
       </div>
 

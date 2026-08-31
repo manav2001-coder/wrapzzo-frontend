@@ -35,7 +35,7 @@ export function HeroSpendCard({ amount, onClick }: { amount: number; onClick: ()
         {amount > 0 ? (
           <>
             <p className="text-4xl font-bold tracking-tight text-text sm:text-5xl">{formatCurrency(amount)}</p>
-            <p className="mt-2 text-sm text-text-muted">Delivered gifts, priced and fulfilled this calendar month.</p>
+            <p className="mt-2 text-sm text-text-muted">Orders approved and priced this calendar month.</p>
           </>
         ) : (
           <>

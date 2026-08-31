@@ -57,13 +57,11 @@ function validateRow(row: DraftRecipient): Record<string, string> {
  */
 function RecipientRow({
   row,
-  index,
   onUpdate,
   onRemove,
   canRemove,
 }: {
   row: DraftRecipient
-  index: number
   onUpdate: (patch: Partial<DraftRecipient>) => void
   onRemove: () => void
   canRemove: boolean
@@ -73,9 +71,7 @@ function RecipientRow({
   return (
     <div className={`rounded-lg border bg-surface p-3 ${row.errors.__submit ? 'border-red-500/50' : 'border-border'}`}>
       <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-12 sm:items-center sm:gap-3">
-        <span className="hidden shrink-0 text-xs text-text-muted sm:col-span-1 sm:block">{index + 1}</span>
-
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-4">
           <InputText
             value={row.recipientName}
             onChange={(e) => onUpdate({ recipientName: e.target.value })}
@@ -265,7 +261,7 @@ export function QuickGiftFormPage() {
   if (!gift) {
     return (
       <div>
-        <PageHeader title="Quick Gift" backTo="/gift-store" />
+        <PageHeader title="Quick Gift" backTo="/quick-gift" />
         <EmptyState icon="pi-exclamation-circle" title="Gift not available" description="This gift isn't available for Quick Gift right now." />
       </div>
     )
@@ -276,7 +272,7 @@ export function QuickGiftFormPage() {
       <PageHeader
         title={`Quick Gift — ${gift.name}`}
         subtitle="Add as many recipients as you like, then send. No campaign, no waiting — it goes straight to your Company Admin for approval."
-        backTo="/gift-store"
+        backTo="/quick-gift"
       />
 
       <div className="mb-4 flex items-center gap-3 rounded-xl border border-border bg-surface p-4">
@@ -296,11 +292,10 @@ export function QuickGiftFormPage() {
       </div>
 
       <div className="flex flex-col gap-2">
-        {rows.map((row, index) => (
+        {rows.map((row) => (
           <RecipientRow
             key={row.key}
             row={row}
-            index={index}
             onUpdate={(patch) => updateRow(row.key, patch)}
             onRemove={() => removeRow(row.key)}
             canRemove={rows.length > 1}

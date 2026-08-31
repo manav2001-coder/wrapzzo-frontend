@@ -1,7 +1,10 @@
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
+import { Dropdown } from 'primereact/dropdown'
+import { InputText } from 'primereact/inputtext'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { Gift } from '@/api/gifts'
 import type { QuickGiftRequest } from '@/api/quickGifts'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
@@ -11,6 +14,38 @@ import { useActiveGifts } from '@/hooks/useGifts'
 import { useMyQuickGiftRequests, useRequestQuickGiftPhotoLink } from '@/hooks/useQuickGifts'
 import { humanize } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
+
+function GiftPickCard({ gift, onPick }: { gift: Gift; onPick: () => void }) {
+  const image = gift.images[0]?.imageUrl
+
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-surface text-left transition-shadow hover:shadow-md"
+    >
+      <div className="relative aspect-[4/3] w-full bg-surface-muted">
+        {image ? (
+          <img src={image} alt={gift.name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="grid h-full w-full place-items-center text-text-muted">
+            <i className="pi pi-gift text-3xl" />
+          </div>
+        )}
+        <span className="absolute top-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs font-medium text-text shadow-sm">
+          {gift.category}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col gap-1 p-3">
+        <p className="truncate text-sm font-medium text-text">{gift.name}</p>
+        {gift.description && <p className="line-clamp-2 text-xs text-text-muted">{gift.description}</p>}
+        <span className="mt-auto flex items-center gap-1 pt-1 text-xs font-medium text-accent">
+          <i className="pi pi-bolt" /> Quick Gift this
+        </span>
+      </div>
+    </button>
+  )
+}
 
 function QuickGiftDetailDialog({
   request,
@@ -93,19 +128,28 @@ function QuickGiftDetailDialog({
 
 export function QuickGiftLandingPage() {
   const navigate = useNavigate()
-  const { data: gifts } = useActiveGifts()
+  const { data: gifts, isLoading: giftsLoading } = useActiveGifts()
   const { data: requests, isLoading } = useMyQuickGiftRequests()
   const requestPhotoLink = useRequestQuickGiftPhotoLink()
 
   const [viewing, setViewing] = useState<QuickGiftRequest | null>(null)
   const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('ALL')
 
-  const recentlyUsed = useMemo(() => {
-    const quickGiftEligible = (gifts ?? []).filter((g) => g.modules.includes('QUICK_GIFT'))
-    const usedIds = new Set((requests ?? []).map((r) => r.giftId))
-    const used = quickGiftEligible.filter((g) => usedIds.has(g.id))
-    return (used.length > 0 ? used : quickGiftEligible).slice(0, 4)
-  }, [gifts, requests])
+  const categories = useMemo(() => {
+    const set = new Set((gifts ?? []).map((g) => g.category))
+    return ['ALL', ...Array.from(set).sort()]
+  }, [gifts])
+
+  const filteredGifts = useMemo(() => {
+    return (gifts ?? []).filter((g) => {
+      if (category !== 'ALL' && g.category !== category) return false
+      const q = search.trim().toLowerCase()
+      if (!q) return true
+      return g.name.toLowerCase().includes(q) || g.category.toLowerCase().includes(q) || (g.description ?? '').toLowerCase().includes(q)
+    })
+  }, [gifts, search, category])
 
   async function handleRequestPhotoLink(request: QuickGiftRequest) {
     try {
@@ -119,49 +163,44 @@ export function QuickGiftLandingPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Quick Gift"
-        subtitle="Request a personalized gift for one recipient — no campaign, no waiting."
-        actions={<Button label="Browse Gift Store" icon="pi pi-shop" onClick={() => navigate('/gift-store')} />}
-      />
+      <PageHeader title="Quick Gift" subtitle="Pick a gift below to request it for one recipient — no campaign, no waiting." />
 
-      {recentlyUsed.length > 0 && (
+      <h2 className="mb-3 text-sm font-semibold text-text-muted uppercase">Choose a gift</h2>
+      {!giftsLoading && (gifts ?? []).length === 0 ? (
+        <EmptyState icon="pi-gift" title="No gifts available yet" description="Your Wrapzzo account manager hasn't added any gifts to the catalogue yet." />
+      ) : (
         <div className="mb-8">
-          <h2 className="mb-3 text-sm font-semibold text-text-muted uppercase">
-            {(requests ?? []).length > 0 ? 'Recently used gifts' : 'Available gifts'}
-          </h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {recentlyUsed.map((gift) => (
-              <button
-                key={gift.id}
-                type="button"
-                onClick={() => navigate(`/quick-gift/new/${gift.id}`)}
-                className="group overflow-hidden rounded-xl border border-border bg-surface text-left transition-shadow hover:shadow-md"
-              >
-                <div className="aspect-[4/3] w-full bg-surface-muted">
-                  {gift.images[0] ? (
-                    <img src={gift.images[0].imageUrl} alt={gift.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center text-text-muted">
-                      <i className="pi pi-gift text-2xl" />
-                    </div>
-                  )}
-                </div>
-                <p className="truncate p-3 text-sm font-medium text-text">{gift.name}</p>
-              </button>
-            ))}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search gifts..." className="w-full sm:w-72" />
+            <Dropdown
+              value={category}
+              onChange={(e) => setCategory(e.value)}
+              options={categories.map((c) => ({ label: c === 'ALL' ? 'All categories' : c, value: c }))}
+              className="w-full sm:w-56"
+            />
           </div>
+
+          {giftsLoading ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-56 animate-pulse rounded-xl bg-surface-muted" />
+              ))}
+            </div>
+          ) : filteredGifts.length === 0 ? (
+            <EmptyState icon="pi-search" title="No gifts match your search" />
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {filteredGifts.map((gift) => (
+                <GiftPickCard key={gift.id} gift={gift} onPick={() => navigate(`/quick-gift/new/${gift.id}`)} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       <h2 className="mb-3 text-sm font-semibold text-text-muted uppercase">Recent requests</h2>
       {!isLoading && requests?.length === 0 ? (
-        <EmptyState
-          icon="pi-bolt"
-          title="No Quick Gift requests yet"
-          description="Pick a gift from the Gift Store to send your first one — it goes straight to your Company Admin for approval."
-          action={<Button label="Browse Gift Store" icon="pi pi-shop" onClick={() => navigate('/gift-store')} />}
-        />
+        <EmptyState icon="pi-bolt" title="No Quick Gift requests yet" description="Pick a gift above to send your first one — it goes straight to your Company Admin for approval." />
       ) : (
         <div className="flex flex-col gap-3">
           {requests?.map((request) => (

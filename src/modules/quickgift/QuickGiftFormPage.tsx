@@ -1,16 +1,21 @@
+import { format } from 'date-fns'
 import { Button } from 'primereact/button'
+import { Calendar } from 'primereact/calendar'
 import { FileUpload } from 'primereact/fileupload'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { uploadQuickGiftPhoto, type QuickGiftPhotoValue } from '@/api/quickGifts'
+import type { Recipient, UpcomingBirthday } from '@/api/recipients'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useCreateQuickGiftRequest } from '@/hooks/useQuickGifts'
+import { parseDateOnly } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
+import { RecipientPickerDialog } from '@/modules/recipients/RecipientPickerDialog'
 
 interface DraftRecipient {
   key: number
@@ -18,6 +23,7 @@ interface DraftRecipient {
   recipientPhone: string
   recipientEmail: string
   deliveryAddress: string
+  dateOfBirth?: Date
   giftMessage: string
   internalNotes: string
   photo?: File
@@ -25,19 +31,42 @@ interface DraftRecipient {
   errors: Record<string, string>
 }
 
+interface RecipientPrefill {
+  recipientName?: string
+  recipientPhone?: string
+  recipientEmail?: string
+  deliveryAddress?: string
+  dateOfBirth?: Date
+}
+
+function prefillFrom(recipient: Recipient | UpcomingBirthday): RecipientPrefill {
+  return {
+    recipientName: recipient.name,
+    recipientPhone: recipient.phone,
+    recipientEmail: recipient.email ?? undefined,
+    deliveryAddress: 'address' in recipient ? (recipient.address ?? undefined) : undefined,
+    dateOfBirth: recipient.dateOfBirth ? parseDateOnly(recipient.dateOfBirth) : undefined,
+  }
+}
+
 let nextRowKey = 1
-function emptyRow(expanded = false): DraftRecipient {
+function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient {
   return {
     key: nextRowKey++,
-    recipientName: '',
-    recipientPhone: '',
-    recipientEmail: '',
-    deliveryAddress: '',
+    recipientName: prefill?.recipientName ?? '',
+    recipientPhone: prefill?.recipientPhone ?? '',
+    recipientEmail: prefill?.recipientEmail ?? '',
+    deliveryAddress: prefill?.deliveryAddress ?? '',
+    dateOfBirth: prefill?.dateOfBirth,
     giftMessage: '',
     internalNotes: '',
     expanded,
     errors: {},
   }
+}
+
+function isBlankRow(row: DraftRecipient): boolean {
+  return !row.recipientName && !row.recipientPhone && !row.recipientEmail && !row.deliveryAddress
 }
 
 function validateRow(row: DraftRecipient): Record<string, string> {
@@ -71,7 +100,7 @@ function RecipientRow({
   return (
     <div className={`rounded-lg border bg-surface p-3 ${row.errors.__submit ? 'border-red-500/50' : 'border-border'}`}>
       <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-12 sm:items-center sm:gap-3">
-        <div className="sm:col-span-4">
+        <div className="sm:col-span-3">
           <InputText
             value={row.recipientName}
             onChange={(e) => onUpdate({ recipientName: e.target.value })}
@@ -89,7 +118,18 @@ function RecipientRow({
           />
         </div>
 
-        <div className="sm:col-span-4">
+        <div className="sm:col-span-2">
+          <Calendar
+            value={row.dateOfBirth ?? null}
+            onChange={(e) => onUpdate({ dateOfBirth: (e.value as Date) ?? undefined })}
+            dateFormat="dd M yy"
+            placeholder="Date of birth"
+            showIcon
+            className="w-full"
+          />
+        </div>
+
+        <div className="sm:col-span-3">
           <InputText
             value={row.deliveryAddress}
             onChange={(e) => onUpdate({ deliveryAddress: e.target.value })}
@@ -169,12 +209,15 @@ function RecipientRow({
 export function QuickGiftFormPage() {
   const { giftId } = useParams<{ giftId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { prefillRecipient } = (location.state as { prefillRecipient?: Recipient | UpcomingBirthday } | null) ?? {}
   const { data: gifts, isLoading } = useActiveGifts()
   const gift = gifts?.find((g) => g.id === giftId)
   const createRequest = useCreateQuickGiftRequest()
 
-  const [rows, setRows] = useState<DraftRecipient[]>([emptyRow(true)])
+  const [rows, setRows] = useState<DraftRecipient[]>([emptyRow(true, prefillRecipient ? prefillFrom(prefillRecipient) : undefined)])
   const [submitting, setSubmitting] = useState(false)
+  const [pickerVisible, setPickerVisible] = useState(false)
 
   function updateRow(key: number, patch: Partial<DraftRecipient>) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch, errors: {} } : r)))
@@ -186,6 +229,16 @@ export function QuickGiftFormPage() {
 
   function removeRow(key: number) {
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.key !== key) : prev))
+  }
+
+  /** If the only row so far is still untouched, the picked recipients replace it instead of leaving a stray blank row alongside them. */
+  function handlePickRecipients(picked: Recipient[]) {
+    setPickerVisible(false)
+    if (picked.length === 0) return
+    setRows((prev) => {
+      const base = prev.length === 1 && isBlankRow(prev[0]) ? [] : prev
+      return [...base, ...picked.map((r) => emptyRow(false, prefillFrom(r)))]
+    })
   }
 
   async function onSubmitAll() {
@@ -213,6 +266,7 @@ export function QuickGiftFormPage() {
           recipientPhone: row.recipientPhone.trim(),
           recipientEmail: row.recipientEmail.trim() || undefined,
           deliveryAddress: row.deliveryAddress.trim(),
+          recipientDob: row.dateOfBirth ? format(row.dateOfBirth, 'yyyy-MM-dd') : undefined,
           giftMessage: row.giftMessage.trim() || undefined,
           internalNotes: row.internalNotes.trim() || undefined,
           photo,
@@ -303,8 +357,9 @@ export function QuickGiftFormPage() {
         ))}
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button label="Add another recipient" icon="pi pi-plus" outlined onClick={addRow} />
+        <Button label="Browse existing recipients" icon="pi pi-address-book" outlined onClick={() => setPickerVisible(true)} />
         <Button
           label={rows.length > 1 ? `Send all ${rows.length}` : 'Send request'}
           icon="pi pi-send"
@@ -312,6 +367,8 @@ export function QuickGiftFormPage() {
           onClick={onSubmitAll}
         />
       </div>
+
+      <RecipientPickerDialog visible={pickerVisible} onHide={() => setPickerVisible(false)} onConfirm={handlePickRecipients} />
     </div>
   )
 }

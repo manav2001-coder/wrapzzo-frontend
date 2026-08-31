@@ -8,22 +8,17 @@ import { InputText } from 'primereact/inputtext'
 import { MultiSelect } from 'primereact/multiselect'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import type { CampaignField } from '@/api/campaigns'
 import { uploadSubmissionAttachment, type AttachmentValue, type SubmissionValues } from '@/api/submissions'
 import { PageHeader } from '@/components/PageHeader'
+import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
 import { useCampaign } from '@/hooks/useCampaigns'
 import { useHasPermission } from '@/hooks/usePermissions'
-import { useCreateSubmission, useResubmitSubmission } from '@/hooks/useSubmissions'
+import { useCreateSubmission } from '@/hooks/useSubmissions'
 import { showApiError, showToast } from '@/lib/toast'
 
 type FieldValue = string | number | boolean | string[] | File | undefined
-
-interface ResubmitState {
-  resubmitId?: string
-  initialGiftId?: string
-  initialValues?: Record<string, string | number | boolean | string[]>
-}
 
 interface DraftRow {
   key: number
@@ -41,9 +36,6 @@ export function SubmissionFormPage() {
   const { id } = useParams<{ id: string }>()
   const campaignId = id ?? ''
   const navigate = useNavigate()
-  const location = useLocation()
-  const { resubmitId, initialGiftId, initialValues } = (location.state as ResubmitState | null) ?? {}
-  const isResubmit = Boolean(resubmitId)
   // A Member can't edit/manage a campaign, so the near-empty read-only Campaign Detail page
   // is a dead end for them -- send them back to their own board instead.
   const canManageCampaigns = useHasPermission('campaign.manage')
@@ -51,12 +43,10 @@ export function SubmissionFormPage() {
 
   const { data: campaign, isLoading } = useCampaign(campaignId)
   const createSubmission = useCreateSubmission(campaignId)
-  const resubmit = useResubmitSubmission(resubmitId ?? '')
 
-  const [rows, setRows] = useState<DraftRow[]>([
-    { key: nextRowKey++, giftId: initialGiftId, values: initialValues ?? {}, errors: {} },
-  ])
+  const [rows, setRows] = useState<DraftRow[]>([emptyRow()])
   const [submitting, setSubmitting] = useState(false)
+  const [photoLinkQueue, setPhotoLinkQueue] = useState<RecipientPhotoLinkPrompt[]>([])
 
   function updateRow(key: number, patch: Partial<DraftRow>) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch, errors: {} } : r)))
@@ -124,17 +114,23 @@ export function SubmissionFormPage() {
     setSubmitting(true)
     const succeededKeys: number[] = []
     const failures: { key: number; message: string }[] = []
+    const photoLinkPrompts: RecipientPhotoLinkPrompt[] = []
 
     for (const row of rows) {
       try {
         const payload = await buildPayload(row)
         const giftId = effectiveGiftId(row)!
-        if (isResubmit) {
-          await resubmit.mutateAsync({ giftId, values: payload })
-        } else {
-          await createSubmission.mutateAsync({ giftId, values: payload })
-        }
+        const result = await createSubmission.mutateAsync({ giftId, values: payload })
         succeededKeys.push(row.key)
+        if (result.recipientUploadUrl) {
+          const phone = row.values.recipientPhone
+          const name = row.values.recipientName
+          photoLinkPrompts.push({
+            link: result.recipientUploadUrl,
+            phone: typeof phone === 'string' ? phone : null,
+            recipientName: typeof name === 'string' ? name : null,
+          })
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to submit.'
         failures.push({ key: row.key, message })
@@ -145,10 +141,14 @@ export function SubmissionFormPage() {
     if (failures.length === 0) {
       showToast({
         severity: 'success',
-        summary: isResubmit ? 'Resubmitted' : `${succeededKeys.length} recipient${succeededKeys.length > 1 ? 's' : ''} submitted`,
-        detail: 'Sent for approval.',
+        summary: `${succeededKeys.length} recipient${succeededKeys.length > 1 ? 's' : ''} submitted`,
+        detail: `Order${succeededKeys.length > 1 ? 's' : ''} created.`,
       })
-      navigate(backTarget)
+      if (photoLinkPrompts.length > 0) {
+        setPhotoLinkQueue(photoLinkPrompts)
+      } else {
+        navigate(backTarget)
+      }
       return
     }
 
@@ -269,11 +269,19 @@ export function SubmissionFormPage() {
     }
   }
 
+  function dismissPhotoLinkPrompt() {
+    setPhotoLinkQueue((prev) => {
+      const rest = prev.slice(1)
+      if (rest.length === 0) navigate(backTarget)
+      return rest
+    })
+  }
+
   return (
     <div>
       <PageHeader
-        title={isResubmit ? 'Resubmit recipient' : 'Submit recipients'}
-        subtitle={`${campaign.displayId} · ${campaign.name}${!isResubmit ? '. Add as many recipients as you like in one go.' : ''}`}
+        title="Submit recipients"
+        subtitle={`${campaign.displayId} · ${campaign.name}. Add as many recipients as you like in one go.`}
         backTo={backTarget}
       />
 
@@ -290,7 +298,7 @@ export function SubmissionFormPage() {
                   {field.required && <span className="text-red-500 dark:text-red-400"> *</span>}
                 </th>
               ))}
-              {!isResubmit && <th className="w-10 px-2 py-2" />}
+              <th className="w-10 px-2 py-2" />
             </tr>
           </thead>
           <tbody>
@@ -317,18 +325,16 @@ export function SubmissionFormPage() {
                     )}
                   </td>
                 ))}
-                {!isResubmit && (
-                  <td className="p-1.5 text-center">
-                    <Button
-                      icon="pi pi-trash"
-                      text
-                      severity="danger"
-                      disabled={rows.length === 1}
-                      aria-label="Remove row"
-                      onClick={() => removeRow(row.key)}
-                    />
-                  </td>
-                )}
+                <td className="p-1.5 text-center">
+                  <Button
+                    icon="pi pi-trash"
+                    text
+                    severity="danger"
+                    disabled={rows.length === 1}
+                    aria-label="Remove row"
+                    onClick={() => removeRow(row.key)}
+                  />
+                </td>
                 {row.errors.__submit && (
                   <td colSpan={campaign.fields.length + 2} className="px-3 pb-2">
                     <small className="text-red-500 dark:text-red-400">{row.errors.__submit}</small>
@@ -341,14 +347,16 @@ export function SubmissionFormPage() {
       </div>
 
       <div className="mt-4 flex items-center gap-2">
-        {!isResubmit && <Button label="Add row" icon="pi pi-plus" outlined onClick={addRow} />}
+        <Button label="Add row" icon="pi pi-plus" outlined onClick={addRow} />
         <Button
-          label={isResubmit ? 'Resubmit' : `Submit ${rows.length > 1 ? `all ${rows.length}` : ''}`}
+          label={`Submit ${rows.length > 1 ? `all ${rows.length}` : ''}`}
           icon="pi pi-send"
           loading={submitting}
           onClick={onSubmitAll}
         />
       </div>
+
+      <RecipientPhotoLinkDialog prompt={photoLinkQueue[0] ?? null} onHide={dismissPhotoLinkPrompt} />
     </div>
   )
 }

@@ -1,8 +1,6 @@
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { confirmDialog } from 'primereact/confirmdialog'
-import { Dialog } from 'primereact/dialog'
-import { InputTextarea } from 'primereact/inputtextarea'
 import { MultiSelect } from 'primereact/multiselect'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { TabPanel, TabView } from 'primereact/tabview'
@@ -10,7 +8,6 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
-import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
 import { StatusBadge } from '@/components/StatusBadge'
 import {
   useAudienceOptions,
@@ -20,7 +17,7 @@ import {
   useSetCampaignStatus,
   useUpdateCampaign,
 } from '@/hooks/useCampaigns'
-import { useApproveSubmission, useCampaignSubmissions, useRejectSubmission } from '@/hooks/useSubmissions'
+import { useCampaignSubmissions } from '@/hooks/useSubmissions'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { humanize } from '@/lib/format'
 import { ApiError } from '@/lib/axiosClient'
@@ -42,14 +39,9 @@ export function CampaignDetailPage() {
   const replaceFields = useReplaceCampaignFields(campaignId)
   const replaceAudience = useReplaceCampaignAudience(campaignId)
   const updateCampaign = useUpdateCampaign(campaignId)
-  const approve = useApproveSubmission()
-  const reject = useRejectSubmission()
 
   const [fieldsDraft, setFieldsDraft] = useState<DraftField[] | null>(null)
   const [orgUnitIdsDraft, setOrgUnitIdsDraft] = useState<Set<string> | null>(null)
-  const [rejectingId, setRejectingId] = useState<string | null>(null)
-  const [rejectReason, setRejectReason] = useState('')
-  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
   const [giftsDraft, setGiftsDraft] = useState<string[] | null>(null)
 
   // No per-user permission profile on the frontend yet -- this endpoint is the one
@@ -150,36 +142,6 @@ export function CampaignDetailPage() {
       })
       setGiftsDraft(null)
       showToast({ severity: 'success', summary: 'Gifts updated' })
-    } catch (error) {
-      showApiError(error)
-    }
-  }
-
-  async function handleApprove(submissionId: string) {
-    try {
-      const result = await approve.mutateAsync(submissionId)
-      showToast({ severity: 'success', summary: 'Submission approved', detail: 'An order has been created.' })
-      if (result.recipientUploadUrl) {
-        const phone = result.values.find((v) => v.fieldKey === 'recipientPhone')?.value
-        const name = result.values.find((v) => v.fieldKey === 'recipientName')?.value
-        setPhotoLinkPrompt({
-          link: result.recipientUploadUrl,
-          phone: typeof phone === 'string' ? phone : null,
-          recipientName: typeof name === 'string' ? name : null,
-        })
-      }
-    } catch (error) {
-      showApiError(error)
-    }
-  }
-
-  async function handleReject() {
-    if (!rejectingId || !rejectReason.trim()) return
-    try {
-      await reject.mutateAsync({ id: rejectingId, reason: rejectReason.trim() })
-      showToast({ severity: 'success', summary: 'Submission rejected' })
-      setRejectingId(null)
-      setRejectReason('')
     } catch (error) {
       showApiError(error)
     }
@@ -329,22 +291,6 @@ export function CampaignDetailPage() {
                         ))}
                       </div>
                     )}
-                    {submission.rejectionReason && (
-                      <p className="mt-2 text-sm text-red-500 dark:text-red-400">Rejected: {submission.rejectionReason}</p>
-                    )}
-                    {(submission.status === 'SUBMITTED' || submission.status === 'RESUBMITTED') && (
-                      <div className="mt-3 flex gap-2">
-                        <Button label="Approve" icon="pi pi-check" size="small" loading={approve.isPending} onClick={() => handleApprove(submission.id)} />
-                        <Button
-                          label="Reject"
-                          icon="pi pi-times"
-                          size="small"
-                          severity="danger"
-                          outlined
-                          onClick={() => setRejectingId(submission.id)}
-                        />
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -357,21 +303,6 @@ export function CampaignDetailPage() {
           {campaign.status === 'ACTIVE' ? 'Use "Submit a recipient" above to add one.' : 'It is not currently accepting submissions.'}
         </p>
       )}
-
-      <Dialog header="Reject submission" visible={rejectingId !== null} onHide={() => setRejectingId(null)} style={{ width: '28rem' }}>
-        <div className="flex flex-col gap-3">
-          <label htmlFor="rejectReason" className="text-sm font-medium text-text">
-            Reason (shown to the submitter)
-          </label>
-          <InputTextarea id="rejectReason" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} rows={3} autoFocus />
-          <div className="flex justify-end gap-2">
-            <Button label="Cancel" text onClick={() => setRejectingId(null)} />
-            <Button label="Reject" severity="danger" disabled={!rejectReason.trim()} loading={reject.isPending} onClick={handleReject} />
-          </div>
-        </div>
-      </Dialog>
-
-      <RecipientPhotoLinkDialog prompt={photoLinkPrompt} onHide={() => setPhotoLinkPrompt(null)} />
     </div>
   )
 }

@@ -68,21 +68,12 @@ function CampaignOpenCard({ campaign, onSubmit }: { campaign: Campaign; onSubmit
   )
 }
 
-function SubmissionRow({ submission, onView, onResubmit }: { submission: Submission; onView: () => void; onResubmit: () => void }) {
+function SubmissionRow({ submission, onView }: { submission: Submission; onView: () => void }) {
   return (
-    // A <div> with a button role, not a real <button> -- it needs to contain the
-    // "Resubmit" <Button> below, and a <button> can't nest another <button>.
-    <div
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       onClick={onView}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onView()
-        }
-      }}
-      className="cursor-pointer rounded-lg border border-border bg-surface p-4 text-left transition-colors hover:border-accent/50"
+      className="w-full cursor-pointer rounded-lg border border-border bg-surface p-4 text-left transition-colors hover:border-accent/50"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-medium text-text">{submission.campaignName}</span>
@@ -91,23 +82,7 @@ function SubmissionRow({ submission, onView, onResubmit }: { submission: Submiss
       <p className="mt-1 text-xs text-text-muted">
         {submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : ''}
       </p>
-      {submission.rejectionReason && (
-        <p className="mt-2 text-sm text-red-500 dark:text-red-400">Rejected: {submission.rejectionReason}</p>
-      )}
-      {submission.status === 'REJECTED' && (
-        <Button
-          label="Resubmit"
-          icon="pi pi-refresh"
-          size="small"
-          outlined
-          className="mt-2"
-          onClick={(e) => {
-            e.stopPropagation()
-            onResubmit()
-          }}
-        />
-      )}
-    </div>
+    </button>
   )
 }
 
@@ -122,12 +97,10 @@ function SubmissionGroupCard({
   group,
   defaultCollapsed,
   onView,
-  onResubmit,
 }: {
   group: SubmissionGroup
   defaultCollapsed: boolean
   onView: (submission: Submission) => void
-  onResubmit: (submission: Submission) => void
 }) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const counts = useMemo(() => {
@@ -163,7 +136,7 @@ function SubmissionGroupCard({
       {!collapsed && (
         <div className="flex flex-col gap-2 border-t border-border p-3">
           {group.items.map((submission) => (
-            <SubmissionRow key={submission.id} submission={submission} onView={() => onView(submission)} onResubmit={() => onResubmit(submission)} />
+            <SubmissionRow key={submission.id} submission={submission} onView={() => onView(submission)} />
           ))}
         </div>
       )}
@@ -210,10 +183,6 @@ function SubmissionDetailDialog({
               </div>
             ))}
           </div>
-
-          {submission.rejectionReason && (
-            <p className="text-sm text-red-500 dark:text-red-400">Rejected: {submission.rejectionReason}</p>
-          )}
 
           <div>
             <p className="mb-2 text-xs text-text-muted">Recipient's photo</p>
@@ -280,16 +249,6 @@ export function MyCampaignsPage() {
       return latest(b) - latest(a)
     })
   }, [filtered])
-
-  function resubmit(submission: Submission) {
-    navigate(`/campaigns/${submission.campaignId}/submit`, {
-      state: {
-        resubmitId: submission.id,
-        initialGiftId: submission.giftId ?? undefined,
-        initialValues: Object.fromEntries(submission.values.map((v) => [v.fieldKey, v.value])),
-      },
-    })
-  }
 
   async function handleRequestPhotoLink(submission: Submission) {
     try {
@@ -375,13 +334,7 @@ export function MyCampaignsPage() {
               <EmptyState icon="pi-filter-slash" title="No submissions match this filter" />
             ) : (
               groups.map((group) => (
-                <SubmissionGroupCard
-                  key={group.campaignId}
-                  group={group}
-                  defaultCollapsed={groups.length > 3}
-                  onView={setViewing}
-                  onResubmit={resubmit}
-                />
+                <SubmissionGroupCard key={group.campaignId} group={group} defaultCollapsed={groups.length > 3} onView={setViewing} />
               ))
             )}
           </div>

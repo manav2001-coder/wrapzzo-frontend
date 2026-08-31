@@ -31,7 +31,7 @@ export interface Submission {
   values: SubmissionValueEntry[]
   attachments: SubmissionAttachmentEntry[]
   createdAt: string
-  /** Only set right after an approve() call that just issued a fresh recipient photo-upload link. */
+  /** Only set right after a create() call that just issued a fresh recipient photo-upload link. */
   recipientUploadUrl: string | null
 }
 
@@ -78,11 +78,6 @@ export async function createSubmission(campaignId: string, giftId: string, value
   return data
 }
 
-export async function resubmitSubmission(submissionId: string, giftId: string, values: SubmissionValues): Promise<Submission> {
-  const { data } = await apiClient.post<Submission>(`/api/submissions/${submissionId}/resubmit`, { giftId, values })
-  return data
-}
-
 export async function listCampaignSubmissions(campaignId: string): Promise<Submission[]> {
   const { data } = await apiClient.get<Submission[]>(`/api/campaigns/${campaignId}/submissions`)
   return data
@@ -90,21 +85,6 @@ export async function listCampaignSubmissions(campaignId: string): Promise<Submi
 
 export async function listMySubmissions(): Promise<Submission[]> {
   const { data } = await apiClient.get<Submission[]>('/api/submissions/mine')
-  return data
-}
-
-export async function listPendingApproval(): Promise<Submission[]> {
-  const { data } = await apiClient.get<Submission[]>('/api/submissions/pending-approval')
-  return data
-}
-
-export async function approveSubmission(id: string): Promise<Submission> {
-  const { data } = await apiClient.post<Submission>(`/api/submissions/${id}/approve`)
-  return data
-}
-
-export async function rejectSubmission(id: string, reason: string): Promise<Submission> {
-  const { data } = await apiClient.post<Submission>(`/api/submissions/${id}/reject`, { reason })
   return data
 }
 

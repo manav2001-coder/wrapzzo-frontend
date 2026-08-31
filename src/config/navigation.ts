@@ -75,6 +75,7 @@ const CAMPAIGNS_MODULE: NavModule = {
     },
     { type: 'link', label: 'Quick Gift', to: '/quick-gift', icon: 'pi-bolt', requiresPermission: 'quickgift.create' },
     { type: 'link', label: 'Gift Store', to: '/gift-store', icon: 'pi-shop', requiresPermission: 'quickgift.create' },
+    { type: 'link', label: 'Recipients', to: '/recipients', icon: 'pi-address-book', requiresPermission: 'recipient.manage' },
     { type: 'link', label: 'Approvals', to: '/approvals', icon: 'pi-check-square', requiresPermission: 'campaign.manage' },
     { type: 'link', label: 'Orders', to: '/orders', icon: 'pi-shopping-bag', requiresPermission: 'campaign.manage' },
     { type: 'link', label: 'Users', to: '/company/users', icon: 'pi-users', requiresPermission: 'user.manage' },

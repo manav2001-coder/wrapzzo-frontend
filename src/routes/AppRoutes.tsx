@@ -24,6 +24,7 @@ import { DashboardPage } from '@/modules/dashboard/DashboardPage'
 import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
 import { QuickGiftFormPage } from '@/modules/quickgift/QuickGiftFormPage'
 import { QuickGiftLandingPage } from '@/modules/quickgift/QuickGiftLandingPage'
+import { RecipientsPage } from '@/modules/recipients/RecipientsPage'
 import { VendorLayout } from '@/modules/vendor/VendorLayout'
 import { VendorGiftFormPage } from '@/modules/vendor/gifts/VendorGiftFormPage'
 import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
@@ -78,6 +79,7 @@ export function AppRoutes() {
           <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
           <Route path="/campaigns/:id/submit" element={<SubmissionFormPage />} />
           <Route path="/my-campaigns" element={<MyCampaignsPage />} />
+          <Route path="/recipients" element={<RecipientsPage />} />
           <Route path="/approvals" element={<ApprovalQueuePage />} />
           <Route path="/orders" element={<CampaignOrdersPage />} />
 

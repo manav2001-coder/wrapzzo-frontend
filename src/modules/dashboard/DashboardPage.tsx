@@ -11,6 +11,7 @@ import { StatCard } from '@/components/StatCard'
 import { useDashboard } from '@/hooks/useDashboard'
 import { humanize } from '@/lib/format'
 import { statusColor } from '@/lib/statusColors'
+import { UpcomingBirthdaysWidget } from '@/modules/recipients/UpcomingBirthdaysWidget'
 import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
 import { HeroSpendCard } from './HeroSpendCard'
 import { PipelineFlow } from './PipelineFlow'
@@ -76,6 +77,8 @@ export function DashboardPage() {
             : 'Your campaigns, orders, and Quick Gift requests, in one place.'
         }
       />
+
+      <UpcomingBirthdaysWidget />
 
       {!hasAnyActivity ? (
         <EmptyState

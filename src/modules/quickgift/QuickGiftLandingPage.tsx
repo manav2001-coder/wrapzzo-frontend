@@ -1,11 +1,14 @@
+import { format } from 'date-fns'
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { Dropdown } from 'primereact/dropdown'
 import { InputText } from 'primereact/inputtext'
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { Gift } from '@/api/gifts'
 import type { QuickGiftRequest } from '@/api/quickGifts'
+import type { Recipient, UpcomingBirthday } from '@/api/recipients'
+import { parseDateOnly } from '@/lib/format'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
@@ -85,6 +88,12 @@ function QuickGiftDetailDialog({
               <p className="text-xs text-text-muted">Delivery address</p>
               <p className="text-text">{request.deliveryAddress}</p>
             </div>
+            {request.recipientDob && (
+              <div>
+                <p className="text-xs text-text-muted">Date of birth</p>
+                <p className="text-text">{format(parseDateOnly(request.recipientDob), 'dd MMM yyyy')}</p>
+              </div>
+            )}
             {request.giftMessage && (
               <div className="sm:col-span-2">
                 <p className="text-xs text-text-muted">Gift message</p>
@@ -133,6 +142,8 @@ function QuickGiftDetailDialog({
 
 export function QuickGiftLandingPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { prefillRecipient } = (location.state as { prefillRecipient?: Recipient | UpcomingBirthday } | null) ?? {}
   const { data: gifts, isLoading: giftsLoading } = useActiveGifts()
   const { data: requests, isLoading } = useMyQuickGiftRequests()
   const requestPhotoLink = useRequestQuickGiftPhotoLink()
@@ -168,7 +179,14 @@ export function QuickGiftLandingPage() {
 
   return (
     <div>
-      <PageHeader title="Quick Gift" subtitle="Pick a gift below to request it for one recipient — no campaign, no waiting." />
+      <PageHeader
+        title="Quick Gift"
+        subtitle={
+          prefillRecipient
+            ? `Pick a gift below to send to ${prefillRecipient.name} — their details are already filled in.`
+            : 'Pick a gift below to request it for one recipient — no campaign, no waiting.'
+        }
+      />
 
       <h2 className="mb-3 text-sm font-semibold text-text-muted uppercase">Choose a gift</h2>
       {!giftsLoading && (gifts ?? []).length === 0 ? (
@@ -196,7 +214,11 @@ export function QuickGiftLandingPage() {
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {filteredGifts.map((gift) => (
-                <GiftPickCard key={gift.id} gift={gift} onPick={() => navigate(`/quick-gift/new/${gift.id}`)} />
+                <GiftPickCard
+                  key={gift.id}
+                  gift={gift}
+                  onPick={() => navigate(`/quick-gift/new/${gift.id}`, prefillRecipient ? { state: { prefillRecipient } } : undefined)}
+                />
               ))}
             </div>
           )}

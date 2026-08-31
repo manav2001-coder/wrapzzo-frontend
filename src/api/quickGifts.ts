@@ -15,6 +15,7 @@ export interface QuickGiftRequest {
   recipientPhone: string
   recipientEmail: string | null
   deliveryAddress: string
+  recipientDob: string | null
   giftMessage: string | null
   internalNotes: string | null
   photoUrl: string | null
@@ -40,6 +41,7 @@ export interface CreateQuickGiftInput {
   recipientPhone: string
   recipientEmail?: string
   deliveryAddress: string
+  recipientDob?: string
   giftMessage?: string
   internalNotes?: string
   photo?: QuickGiftPhotoValue

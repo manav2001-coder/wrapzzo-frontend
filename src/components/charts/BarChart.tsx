@@ -1,7 +1,7 @@
 import Highcharts from 'highcharts'
 import { HighchartsReact } from 'highcharts-react-official'
 import { useMemo } from 'react'
-import { useChartTheme } from './chartTheme'
+import { barGradient, useChartTheme } from './chartTheme'
 
 export interface BarRow {
   label: string
@@ -48,9 +48,10 @@ export function BarChart({
       tooltip: { pointFormat: '<b>{point.y}</b>' },
       plotOptions: {
         bar: {
-          borderRadius: 4,
+          borderRadius: 6,
           borderWidth: 0,
-          color,
+          color: barGradient(color),
+          dataLabels: { enabled: true, style: { color: textColor, fontSize: '12px', fontWeight: '600', textOutline: 'none' } },
           cursor: clickable ? 'pointer' : undefined,
           point: {
             events: clickable
@@ -64,7 +65,7 @@ export function BarChart({
           },
         },
       },
-      series: [{ type: 'bar', name: 'Orders', data: rows.map((r) => r.value) }],
+      series: [{ type: 'bar', name: 'Orders', data: rows.map((r) => r.value), dataLabels: { enabled: true } }],
     }),
     [rows, height, color, textColor, mutedColor, gridColor, clickable, onSelect],
   )

@@ -1,7 +1,7 @@
 import Highcharts from 'highcharts'
 import { HighchartsReact } from 'highcharts-react-official'
 import { useMemo } from 'react'
-import { useChartTheme } from './chartTheme'
+import { fadeGradient, useChartTheme } from './chartTheme'
 
 export interface TrendSeries {
   name: string
@@ -29,7 +29,7 @@ export function TrendChart({
 
   const options = useMemo<Highcharts.Options>(
     () => ({
-      chart: { type: 'spline', backgroundColor: 'transparent', height, style: { fontFamily: 'inherit' } },
+      chart: { type: 'areaspline', backgroundColor: 'transparent', height, style: { fontFamily: 'inherit' } },
       title: { text: undefined },
       credits: { enabled: false },
       xAxis: {
@@ -45,19 +45,24 @@ export function TrendChart({
         min: 0,
         labels: { style: { color: mutedColor, fontSize: '11px' } },
       },
-      legend: { itemStyle: { color: textColor, fontSize: '12px' }, itemHoverStyle: { color: textColor } },
+      legend: {
+        itemStyle: { color: textColor, fontSize: '12px', fontWeight: '500' },
+        itemHoverStyle: { color: textColor },
+        symbolRadius: 6,
+      },
       tooltip: { shared: true },
       plotOptions: {
-        spline: {
+        areaspline: {
           lineWidth: 3,
-          marker: { enabled: true, radius: 4, lineWidth: 2, lineColor: '#ffffff' },
-          states: { hover: { lineWidth: 4 } },
+          fillOpacity: 1,
+          marker: { enabled: false, radius: 4, lineWidth: 2, lineColor: '#ffffff', states: { hover: { enabled: true } } },
+          states: { hover: { lineWidth: 3.5 } },
           cursor: onSelect ? 'pointer' : undefined,
           point: onSelect
             ? {
                 events: {
                   click: function (this: Highcharts.Point) {
-                    const key = (this.series.options as Highcharts.SeriesSplineOptions & { custom?: { key: string } }).custom?.key
+                    const key = (this.series.options as Highcharts.SeriesAreasplineOptions & { custom?: { key: string } }).custom?.key
                     if (key) onSelect(this.index, key)
                   },
                 },
@@ -65,7 +70,14 @@ export function TrendChart({
             : undefined,
         },
       },
-      series: series.map((s) => ({ type: 'spline', name: s.name, data: s.data, color: s.color, custom: { key: s.key } })),
+      series: series.map((s) => ({
+        type: 'areaspline',
+        name: s.name,
+        data: s.data,
+        color: s.color,
+        fillColor: fadeGradient(s.color),
+        custom: { key: s.key },
+      })),
     }),
     [categories, series, height, textColor, mutedColor, gridColor, onSelect],
   )

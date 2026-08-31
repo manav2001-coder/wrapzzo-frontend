@@ -63,6 +63,8 @@ export interface DashboardSummary {
   submissionsPending: number
   quickGiftsThisMonth: number
   quickGiftsPending: number
+  /** Sum of totalPrice for DELIVERED orders delivered this calendar month. */
+  monthlySpend: number
   /** Order counts by source -- "CAMPAIGN" / "QUICK_GIFT" / "BULK_GIFT". */
   orderSourceBreakdown: Record<string, number>
   /** Quick Gift request counts by status -- "SUBMITTED" / "APPROVED" / "REJECTED". */

@@ -56,7 +56,9 @@ export function LoginPage() {
     defaultValues: { email: '', password: '' },
   })
 
-  const requestedFrom = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
+  const locationState = location.state as { from?: { pathname: string }; passwordSetUp?: boolean } | null
+  const requestedFrom = locationState?.from?.pathname
+  const passwordSetUp = locationState?.passwordSetUp ?? false
   // Only honor the redirect-back target if it actually belongs to the side that just
   // authenticated -- otherwise an admin who got bounced here from a vendor-only route
   // (or vice versa) would land somewhere their session can't access.
@@ -128,6 +130,14 @@ export function LoginPage() {
           <p className="mt-2 mb-6 text-base text-text-muted">
             Sign in to manage campaigns, track submissions, and keep every order moving toward dispatch.
           </p>
+
+          {passwordSetUp && (
+            <Message
+              severity="success"
+              text="Password set up successfully. Log in with your new password."
+              className="mb-4 w-full justify-start"
+            />
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
             <div className="flex flex-col gap-1.5">

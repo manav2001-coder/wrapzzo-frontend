@@ -8,8 +8,6 @@ import { Controller, useForm } from 'react-hook-form'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { setupPassword } from '@/api/auth'
-import { useAppDispatch } from '@/app/hooks'
-import { setCredentials } from '@/features/auth/authSlice'
 
 const setupSchema = z
   .object({
@@ -27,7 +25,6 @@ type SetupFormValues = z.infer<typeof setupSchema>
 export function SetupPasswordPage() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') ?? ''
-  const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -46,11 +43,10 @@ export function SetupPasswordPage() {
     setSubmitError(null)
     setSubmitting(true)
     try {
-      const tokens = await setupPassword(token, values.password, values.confirmPassword)
-      // The setup link doesn't carry the user's email, so the topbar shows it blank
-      // until their next real login -- a minor cosmetic gap, not worth a profile fetch here.
-      dispatch(setCredentials({ ...tokens, email: '' }))
-      navigate('/admin', { replace: true })
+      // Discards the returned tokens rather than auto-logging the user in -- per request, a
+      // freshly-set-up account should land on the login screen, not straight into the portal.
+      await setupPassword(token, values.password, values.confirmPassword)
+      navigate('/login', { replace: true, state: { passwordSetUp: true } })
     } catch (error) {
       const message = axios.isAxiosError(error)
         ? ((error.response?.data as { error?: string } | undefined)?.error ?? 'Something went wrong. Please try again.')

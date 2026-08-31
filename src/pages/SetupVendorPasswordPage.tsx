@@ -8,8 +8,6 @@ import { Controller, useForm } from 'react-hook-form'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { setupVendorPassword } from '@/api/vendorAuth'
-import { useAppDispatch } from '@/app/hooks'
-import { setVendorCredentials } from '@/features/vendorAuth/vendorAuthSlice'
 
 const setupSchema = z
   .object({
@@ -26,7 +24,6 @@ type SetupFormValues = z.infer<typeof setupSchema>
 export function SetupVendorPasswordPage() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') ?? ''
-  const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -45,11 +42,10 @@ export function SetupVendorPasswordPage() {
     setSubmitError(null)
     setSubmitting(true)
     try {
-      const tokens = await setupVendorPassword(token, values.password, values.confirmPassword)
-      // The setup link doesn't carry the vendor's email, so the topbar shows it blank
-      // until their next real login -- a minor cosmetic gap, not worth a profile fetch here.
-      dispatch(setVendorCredentials({ ...tokens, email: '' }))
-      navigate('/vendor/orders', { replace: true })
+      // Discards the returned tokens rather than auto-logging the vendor in -- per request, a
+      // freshly-set-up account should land on the login screen, not straight into the portal.
+      await setupVendorPassword(token, values.password, values.confirmPassword)
+      navigate('/login', { replace: true, state: { passwordSetUp: true } })
     } catch (error) {
       const message = axios.isAxiosError(error)
         ? ((error.response?.data as { error?: string } | undefined)?.error ?? 'Something went wrong. Please try again.')

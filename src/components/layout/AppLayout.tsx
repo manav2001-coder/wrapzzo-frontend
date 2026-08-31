@@ -24,7 +24,10 @@ export function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onOpenMobileNav={() => setMobileNavOpen(true)} />
         <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto w-full max-w-7xl">
+          {/* max-w-7xl (1280px) left real MacBook screens with ~100px of dead margin on each
+              side once the sidebar's accounted for -- 1600px comfortably fills a 16" MacBook
+              Pro's content area while still capping on genuinely ultra-wide external monitors. */}
+          <div className="mx-auto w-full max-w-[1600px]">
             <Outlet />
           </div>
         </main>

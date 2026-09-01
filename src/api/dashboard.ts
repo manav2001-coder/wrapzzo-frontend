@@ -42,6 +42,8 @@ export interface ActivityItem {
   at: string
   /** Set when the activity is campaign-related -- the item links to /campaigns/{campaignId}. */
   campaignId: string | null
+  /** Set when the activity is Quick Gift-related -- the item opens that request's detail dialog. */
+  quickGiftId: string | null
 }
 
 export interface TrendPoint {

@@ -85,6 +85,7 @@ export function RecipientFormDialog({ visible, onHide, recipient }: { visible: b
       onShow={handleShow}
       onHide={handleHide}
       style={{ width: '32rem' }}
+      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
       modal
     >
       <div className="flex flex-col gap-3">

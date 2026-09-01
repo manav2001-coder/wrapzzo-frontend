@@ -5,7 +5,7 @@ import { MultiSelect } from 'primereact/multiselect'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { TabPanel, TabView } from 'primereact/tabview'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -28,6 +28,9 @@ export function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>()
   const campaignId = id ?? ''
   const navigate = useNavigate()
+  const location = useLocation()
+  const { tab } = (location.state as { tab?: 'submissions' } | null) ?? {}
+  const [activeIndex, setActiveIndex] = useState(tab === 'submissions' ? 1 : 0)
 
   const { data: campaign, isLoading } = useCampaign(campaignId)
   const { data: audienceOptions } = useAudienceOptions()
@@ -191,7 +194,7 @@ export function CampaignDetailPage() {
       </div>
 
       {canManage ? (
-        <TabView scrollable>
+        <TabView scrollable activeIndex={activeIndex} onTabChange={(e) => setActiveIndex(e.index)}>
           <TabPanel header="Audience">
             <p className="mb-3 text-sm text-text-muted">Who can submit recipients into this campaign.</p>
             <OrgUnitCascadeSelector orgUnits={audienceOptions?.orgUnits ?? []} selected={orgUnitIds} onChange={setOrgUnitIdsDraft} />

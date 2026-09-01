@@ -47,7 +47,14 @@ export function RecipientPickerDialog({
   }
 
   return (
-    <Dialog header="Browse existing recipients" visible={visible} onHide={handleHide} style={{ width: '48rem' }} modal>
+    <Dialog
+      header="Browse existing recipients"
+      visible={visible}
+      onHide={handleHide}
+      style={{ width: '48rem' }}
+      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+      modal
+    >
       <div className="mb-3">
         <IconField iconPosition="left">
           <InputIcon className="pi pi-search" />
@@ -58,23 +65,25 @@ export function RecipientPickerDialog({
       {!isLoading && (recipients ?? []).length === 0 ? (
         <EmptyState icon="pi-address-book" title="No recipients yet" description="Recipients you add or submit gifts to will show up here." />
       ) : (
-        <DataTable
-          value={filtered}
-          selectionMode="checkbox"
-          selection={selected}
-          onSelectionChange={(e) => setSelected(e.value as Recipient[])}
-          dataKey="id"
-          loading={isLoading}
-          scrollable
-          scrollHeight="360px"
-          emptyMessage="No recipients match your search."
-        >
-          <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
-          <Column header="Name" field="name" />
-          <Column header="Phone" field="phone" />
-          <Column header="Email" body={(r: Recipient) => r.email ?? '—'} />
-          <Column header="Date of birth" body={(r: Recipient) => (r.dateOfBirth ? format(parseDateOnly(r.dateOfBirth), 'dd MMM yyyy') : '—')} />
-        </DataTable>
+        <div className="overflow-x-auto">
+          <DataTable
+            value={filtered}
+            selectionMode="checkbox"
+            selection={selected}
+            onSelectionChange={(e) => setSelected(e.value as Recipient[])}
+            dataKey="id"
+            loading={isLoading}
+            scrollable
+            scrollHeight="360px"
+            emptyMessage="No recipients match your search."
+          >
+            <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
+            <Column header="Name" field="name" />
+            <Column header="Phone" field="phone" />
+            <Column header="Email" body={(r: Recipient) => r.email ?? '—'} />
+            <Column header="Date of birth" body={(r: Recipient) => (r.dateOfBirth ? format(parseDateOnly(r.dateOfBirth), 'dd MMM yyyy') : '—')} />
+          </DataTable>
+        </div>
       )}
 
       <div className="mt-4 flex justify-end gap-2">

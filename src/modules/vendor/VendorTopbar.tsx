@@ -29,7 +29,7 @@ export function VendorTopbar({ onOpenMobileNav }: { onOpenMobileNav: () => void 
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
       <button
         type="button"
-        className="grid h-9 w-9 place-items-center rounded-lg border-none bg-transparent text-text-muted transition-colors hover:bg-surface-muted lg:hidden"
+        className="grid h-10 w-10 place-items-center rounded-lg border-none bg-transparent text-text-muted transition-colors hover:bg-surface-muted lg:hidden"
         onClick={onOpenMobileNav}
         aria-label="Open navigation"
       >
@@ -40,7 +40,7 @@ export function VendorTopbar({ onOpenMobileNav }: { onOpenMobileNav: () => void 
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          className="grid h-9 w-9 place-items-center rounded-full border-none bg-transparent text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
+          className="grid h-10 w-10 place-items-center rounded-full border-none bg-transparent text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
           onClick={(event) => themeMenuRef.current?.toggle(event)}
           aria-label="Change theme"
         >

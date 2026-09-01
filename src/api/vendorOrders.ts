@@ -14,6 +14,8 @@ export interface VendorOrder {
   giftName: string | null
   recipientName: string | null
   recipientPhone: string | null
+  /** Shown so the vendor can produce a personalized gift correctly -- null until the recipient uploads one. */
+  recipientPhotoUrl: string | null
   price: number | null
   source: OrderSource
   status: OrderStatus

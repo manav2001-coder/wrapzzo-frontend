@@ -17,6 +17,9 @@ export interface Gift {
   moq: number | null
   leadTimeDays: number | null
   active: boolean
+  /** When true, ordering this gift needs a recipient photo -- enforced at request time by
+   * requiring either an uploaded photo or an email to send an upload link to. */
+  photoRequired: boolean
   /** Every gift is available in every commerce path -- always all three, no per-gift picker. */
   modules: GiftModule[]
   /** Base cost. Null until an admin/vendor sets one. */
@@ -43,6 +46,7 @@ export interface GiftInput {
   price: number
   markupFeePercentage?: number
   commissionFeePercentage?: number
+  photoRequired: boolean
 }
 
 interface PresignImageUploadResponse {

@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/axiosClient'
 import type { CampaignStatus } from '@/api/campaigns'
+import type { OrderStatus, StageEvent } from '@/api/orders'
 
 export interface TopGift {
   giftName: string
@@ -54,6 +55,22 @@ export interface TrendPoint {
   quickGiftRequests: number
 }
 
+export interface OrderTimelineItem {
+  id: string
+  displayId: string
+  giftName: string
+  /** Null if the gift has no image, or the order has no gift (a rare/legacy case). */
+  giftImageUrl: string | null
+  recipientName: string
+  requesterName: string
+  status: OrderStatus
+  /** 'CAMPAIGN' | 'QUICK_GIFT' | 'BULK_GIFT' */
+  source: string
+  createdAt: string
+  /** Every stage this order has actually passed through, oldest first, each with a real timestamp. */
+  history: StageEvent[]
+}
+
 export interface DashboardSummary {
   companyName: string
   /** true = Company Admin's company-wide view; false = scoped to just this Member's own activity. */
@@ -80,6 +97,7 @@ export interface DashboardSummary {
   upcomingDeadlines: UpcomingDeadline[]
   recentCampaigns: RecentCampaign[]
   recentActivity: ActivityItem[]
+  recentOrders: OrderTimelineItem[]
 }
 
 export async function getDashboard(): Promise<DashboardSummary> {

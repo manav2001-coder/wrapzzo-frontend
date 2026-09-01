@@ -1,14 +1,15 @@
 import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
 import { confirmDialog } from 'primereact/confirmdialog'
 import { MultiSelect } from 'primereact/multiselect'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { TabPanel, TabView } from 'primereact/tabview'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import type { Submission } from '@/api/submissions'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
+import { useActiveGifts } from '@/hooks/useGifts'
 import {
   useAudienceOptions,
   useCampaign,
@@ -16,13 +17,102 @@ import {
   useSetCampaignStatus,
   useUpdateCampaign,
 } from '@/hooks/useCampaigns'
-import { useCampaignSubmissions } from '@/hooks/useSubmissions'
-import { useActiveGifts } from '@/hooks/useGifts'
+import { useHasPermission } from '@/hooks/usePermissions'
+import { useCampaignSubmissions, useMySubmissions } from '@/hooks/useSubmissions'
 import { humanize } from '@/lib/format'
-import { ApiError } from '@/lib/axiosClient'
 import { showApiError, showToast } from '@/lib/toast'
-import { computeOrgUnitFrontier, OrgUnitCascadeSelector } from './OrgUnitCascadeSelector'
-import type { Submission } from '@/api/submissions'
+import { computeOrgUnitFrontier, OrgUnitCascadeSelector, type OrgUnitOption } from './OrgUnitCascadeSelector'
+
+/**
+ * The saved audience only stores the deepest checked org unit per branch (see
+ * computeOrgUnitFrontier) -- every ancestor is deliberately dropped from what's persisted,
+ * since it's implied by the leaf. OrgUnitCascadeSelector, though, needs every ancestor's id
+ * literally present in `selected`: it's what both reveals each deeper level in the tree and
+ * marks each row's own checkbox as checked. Re-derive that full set here by walking each
+ * saved id back up to the root via parentId, or every level above the one actually saved
+ * renders as an unchecked, invisible-until-expanded row instead of reflecting what was saved.
+ */
+function expandWithAncestors(orgUnitIds: string[], orgUnits: OrgUnitOption[]): Set<string> {
+  const byId = new Map(orgUnits.map((o) => [o.id, o]))
+  const expanded = new Set<string>()
+  for (const id of orgUnitIds) {
+    let current: string | null | undefined = id
+    while (current && !expanded.has(current)) {
+      expanded.add(current)
+      current = byId.get(current)?.parentId
+    }
+  }
+  return expanded
+}
+
+/** One submission's detail card -- shared by the manager "Submissions" tab (everyone's) and a
+ * Member's own-submissions view (just theirs, for this one campaign). */
+function SubmissionCard({ submission }: { submission: Submission }) {
+  return (
+    <div className="rounded-lg border border-border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <span className="font-medium text-text">{submission.submittedByName}</span>
+          <span className="ml-2 text-xs text-text-muted">
+            {submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : ''}
+          </span>
+        </div>
+        <StatusBadge status={submission.status} label={humanize(submission.status)} />
+      </div>
+      <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
+        {submission.giftName && (
+          <div>
+            <span className="text-text-muted">Gift: </span>
+            <span className="font-medium text-text">{submission.giftName}</span>
+          </div>
+        )}
+        {submission.values.map((v) => (
+          <div key={v.fieldKey}>
+            <span className="text-text-muted">{v.label}: </span>
+            <span className="text-text">{Array.isArray(v.value) ? v.value.join(', ') : String(v.value ?? '—')}</span>
+          </div>
+        ))}
+      </div>
+      {submission.attachments.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {submission.attachments.map((a) => (
+            <a key={a.fieldKey} href={a.url} target="_blank" rel="noreferrer" className="text-xs text-accent underline">
+              {a.label}: {a.fileName}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SubmissionList({
+  submissions,
+  isLoading,
+  emptyDescription,
+}: {
+  submissions: Submission[] | undefined
+  isLoading: boolean
+  emptyDescription: string
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-6">
+        <ProgressSpinner style={{ width: 32, height: 32 }} strokeWidth="4" />
+      </div>
+    )
+  }
+  if (!submissions || submissions.length === 0) {
+    return <EmptyState icon="pi-inbox" title="No submissions yet" description={emptyDescription} />
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {submissions.map((submission) => (
+        <SubmissionCard key={submission.id} submission={submission} />
+      ))}
+    </div>
+  )
+}
 
 export function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -30,23 +120,31 @@ export function CampaignDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { tab } = (location.state as { tab?: 'submissions' } | null) ?? {}
-  const [activeIndex, setActiveIndex] = useState(tab === 'submissions' ? 1 : 0)
+
+  // Mirrors the backend exactly: the Audience tab's endpoint requires campaign.manage
+  // specifically; the Submissions list accepts campaign.manage OR campaign.approve. Deciding
+  // this synchronously from the already-cached permission list -- instead of the old approach
+  // of optimistically showing both tabs and only discovering a 403 after the Submissions
+  // query failed -- is what stops the whole tab view from disappearing out from under a
+  // Member mid-click.
+  const canManageAudience = useHasPermission('campaign.manage')
+  const hasApprove = useHasPermission('campaign.approve')
+  const canReviewSubmissions = canManageAudience || hasApprove
+  const showManagerView = canManageAudience || canReviewSubmissions
+
+  const [activeIndex, setActiveIndex] = useState(tab === 'submissions' && canManageAudience ? 1 : 0)
 
   const { data: campaign, isLoading } = useCampaign(campaignId)
-  const { data: audienceOptions } = useAudienceOptions()
+  const { data: audienceOptions } = useAudienceOptions(canManageAudience)
   const { data: activeGifts } = useActiveGifts()
-  const submissionsQuery = useCampaignSubmissions(campaignId)
+  const submissionsQuery = useCampaignSubmissions(campaignId, canReviewSubmissions)
+  const mySubmissionsQuery = useMySubmissions()
   const setStatus = useSetCampaignStatus(campaignId)
   const replaceAudience = useReplaceCampaignAudience(campaignId)
   const updateCampaign = useUpdateCampaign(campaignId)
 
   const [orgUnitIdsDraft, setOrgUnitIdsDraft] = useState<Set<string> | null>(null)
   const [giftsDraft, setGiftsDraft] = useState<string[] | null>(null)
-
-  // No per-user permission profile on the frontend yet -- this endpoint is the one
-  // signal we have: it 403s for anyone without campaign.manage/campaign.approve, so a
-  // rejection here means "field rep view", not "campaign has no submissions yet".
-  const canManage = !(submissionsQuery.error instanceof ApiError && submissionsQuery.error.status === 403)
 
   if (isLoading || !campaign) {
     return (
@@ -56,10 +154,16 @@ export function CampaignDetailPage() {
     )
   }
 
+  const giftImageById = new Map((activeGifts ?? []).map((g) => [g.id, g.images[0]?.imageUrl]))
+
   const orgUnitIds =
     orgUnitIdsDraft ??
-    new Set(campaign.audiences.filter((a) => a.type === 'ORG_UNIT' && a.orgUnitId).map((a) => a.orgUnitId as string))
+    expandWithAncestors(
+      campaign.audiences.filter((a) => a.type === 'ORG_UNIT' && a.orgUnitId).map((a) => a.orgUnitId as string),
+      audienceOptions?.orgUnits ?? [],
+    )
   const audienceDirty = orgUnitIdsDraft !== null
+  const myCampaignSubmissions = (mySubmissionsQuery.data ?? []).filter((s) => s.campaignId === campaignId)
 
   function confirmActivate() {
     confirmDialog({
@@ -124,6 +228,33 @@ export function CampaignDetailPage() {
     }
   }
 
+  const panels = []
+  if (canManageAudience) {
+    panels.push(
+      <TabPanel key="audience" header="Audience">
+        <p className="mb-3 text-sm text-text-muted">Who can submit recipients into this campaign.</p>
+        <OrgUnitCascadeSelector orgUnits={audienceOptions?.orgUnits ?? []} selected={orgUnitIds} onChange={setOrgUnitIdsDraft} />
+        {audienceDirty && (
+          <div className="mt-4 flex gap-2">
+            <Button label="Save audience" icon="pi pi-check" loading={replaceAudience.isPending} onClick={saveAudience} />
+            <Button label="Cancel" text onClick={() => setOrgUnitIdsDraft(null)} />
+          </div>
+        )}
+      </TabPanel>,
+    )
+  }
+  if (canReviewSubmissions) {
+    panels.push(
+      <TabPanel key="submissions" header={`Submissions${submissionsQuery.data ? ` (${submissionsQuery.data.length})` : ''}`}>
+        <SubmissionList
+          submissions={submissionsQuery.data}
+          isLoading={submissionsQuery.isLoading}
+          emptyDescription="Recipients submitted by your team for this campaign will appear here."
+        />
+      </TabPanel>,
+    )
+  }
+
   return (
     <div>
       <PageHeader
@@ -133,11 +264,18 @@ export function CampaignDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge status={campaign.status} label={humanize(campaign.status)} />
-            {canManage && campaign.status === 'DRAFT' && (
+            {canManageAudience && campaign.status === 'DRAFT' && (
               <Button label="Activate" icon="pi pi-play" loading={setStatus.isPending} onClick={confirmActivate} />
             )}
-            {canManage && campaign.status === 'ACTIVE' && (
-              <Button label="Close campaign" icon="pi pi-lock" severity="danger" outlined loading={setStatus.isPending} onClick={confirmClose} />
+            {canManageAudience && campaign.status === 'ACTIVE' && (
+              <Button
+                label="Close campaign"
+                icon="pi pi-lock"
+                severity="danger"
+                outlined
+                loading={setStatus.isPending}
+                onClick={confirmClose}
+              />
             )}
             {campaign.status === 'ACTIVE' && (
               <Button label="Submit a recipient" icon="pi pi-send" onClick={() => navigate(`/campaigns/${campaignId}/submit`)} />
@@ -147,121 +285,106 @@ export function CampaignDetailPage() {
       />
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card className="p-0"><div className="p-3"><p className="text-xs text-text-muted">Purpose</p><p className="text-sm font-medium text-text">{humanize(campaign.purpose)}</p></div></Card>
-        <Card className="p-0"><div className="p-3"><p className="text-xs text-text-muted">Recipients</p><p className="text-sm font-medium text-text">{humanize(campaign.recipientCategory)}</p></div></Card>
-        <Card className="p-0">
-          <div className="p-3">
-            <div className="mb-1 flex items-center justify-between gap-1">
-              <p className="text-xs text-text-muted">Gift(s)</p>
-              {canManage && campaign.status === 'DRAFT' && giftsDraft === null && (
-                <button
-                  type="button"
-                  className="text-xs text-accent hover:underline"
-                  onClick={() => setGiftsDraft(campaign.gifts.map((g) => g.id))}
-                >
-                  Edit
-                </button>
-              )}
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <div className="mb-2.5 grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 text-accent">
+            <i className="pi pi-bullseye text-sm" />
+          </div>
+          <p className="text-xs text-text-muted">Purpose</p>
+          <p className="mt-0.5 text-sm font-semibold text-text">{humanize(campaign.purpose)}</p>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <div className="mb-2.5 grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-500">
+            <i className="pi pi-users text-sm" />
+          </div>
+          <p className="text-xs text-text-muted">Recipients</p>
+          <p className="mt-0.5 text-sm font-semibold text-text">{humanize(campaign.recipientCategory)}</p>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <div className="mb-2.5 flex items-center justify-between gap-1">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-500/5 text-amber-500">
+              <i className="pi pi-gift text-sm" />
             </div>
-            {giftsDraft !== null ? (
-              <div className="flex flex-col gap-2">
-                <MultiSelect
-                  value={giftsDraft}
-                  onChange={(e) => setGiftsDraft(e.value)}
-                  options={(activeGifts ?? []).map((g) => ({ label: g.name, value: g.id }))}
-                  display="chip"
-                  filter
-                  className="w-full text-sm"
-                  placeholder="Select at least one"
-                />
-                <div className="flex gap-2">
-                  <Button label="Save" size="small" loading={updateCampaign.isPending} disabled={giftsDraft.length === 0} onClick={saveGifts} />
-                  <Button label="Cancel" text size="small" onClick={() => setGiftsDraft(null)} />
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-1">
-                {campaign.gifts.map((g) => (
-                  <span key={g.id} className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text">
-                    {g.name}
-                  </span>
-                ))}
-              </div>
+            {canManageAudience && campaign.status === 'DRAFT' && giftsDraft === null && (
+              <button
+                type="button"
+                className="text-xs font-medium text-accent hover:underline"
+                onClick={() => setGiftsDraft(campaign.gifts.map((g) => g.id))}
+              >
+                Edit
+              </button>
             )}
           </div>
-        </Card>
-        <Card className="p-0"><div className="p-3"><p className="text-xs text-text-muted">Deadline</p><p className="text-sm font-medium text-text">{campaign.submissionDeadline ? new Date(campaign.submissionDeadline).toLocaleDateString() : '—'}</p></div></Card>
+          <p className="mb-1.5 text-xs text-text-muted">Gift(s)</p>
+          {giftsDraft !== null ? (
+            <div className="flex flex-col gap-2">
+              <MultiSelect
+                value={giftsDraft}
+                onChange={(e) => setGiftsDraft(e.value)}
+                options={(activeGifts ?? []).map((g) => ({ label: g.name, value: g.id }))}
+                display="chip"
+                filter
+                className="w-full text-sm"
+                placeholder="Select at least one"
+              />
+              <div className="flex gap-2">
+                <Button label="Save" size="small" loading={updateCampaign.isPending} disabled={giftsDraft.length === 0} onClick={saveGifts} />
+                <Button label="Cancel" text size="small" onClick={() => setGiftsDraft(null)} />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {campaign.gifts.map((g) => {
+                const imageUrl = giftImageById.get(g.id)
+                return (
+                  <div key={g.id} className="flex items-center gap-1.5 rounded-full bg-surface-muted py-1 pr-2.5 pl-1">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
+                    ) : (
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                        <i className="pi pi-gift text-[9px]" />
+                      </span>
+                    )}
+                    <span className="max-w-[110px] truncate text-xs font-medium text-text" title={g.name}>
+                      {g.name}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <div className="mb-2.5 grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-sky-500/15 to-sky-500/5 text-sky-500">
+            <i className="pi pi-calendar text-sm" />
+          </div>
+          <p className="text-xs text-text-muted">Deadline</p>
+          <p className="mt-0.5 text-sm font-semibold text-text">
+            {campaign.submissionDeadline ? new Date(campaign.submissionDeadline).toLocaleDateString() : '—'}
+          </p>
+        </div>
       </div>
 
-      {canManage ? (
+      {showManagerView ? (
         <TabView scrollable activeIndex={activeIndex} onTabChange={(e) => setActiveIndex(e.index)}>
-          <TabPanel header="Audience">
-            <p className="mb-3 text-sm text-text-muted">Who can submit recipients into this campaign.</p>
-            <OrgUnitCascadeSelector orgUnits={audienceOptions?.orgUnits ?? []} selected={orgUnitIds} onChange={setOrgUnitIdsDraft} />
-            {audienceDirty && (
-              <div className="mt-4 flex gap-2">
-                <Button label="Save audience" icon="pi pi-check" loading={replaceAudience.isPending} onClick={saveAudience} />
-                <Button label="Cancel" text onClick={() => setOrgUnitIdsDraft(null)} />
-              </div>
-            )}
-          </TabPanel>
-
-          <TabPanel header={`Submissions${submissionsQuery.data ? ` (${submissionsQuery.data.length})` : ''}`}>
-            {submissionsQuery.isLoading ? (
-              <ProgressSpinner style={{ width: 32, height: 32 }} strokeWidth="4" />
-            ) : submissionsQuery.data?.length === 0 ? (
-              <EmptyState
-                icon="pi-inbox"
-                title="No submissions yet"
-                description="Recipients submitted by your team for this campaign will appear here."
-              />
-            ) : (
-              <div className="flex flex-col gap-3">
-                {submissionsQuery.data?.map((submission: Submission) => (
-                  <div key={submission.id} className="rounded-lg border border-border p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <span className="font-medium text-text">{submission.submittedByName}</span>
-                        <span className="ml-2 text-xs text-text-muted">
-                          {submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : ''}
-                        </span>
-                      </div>
-                      <StatusBadge status={submission.status} label={humanize(submission.status)} />
-                    </div>
-                    <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
-                      {submission.giftName && (
-                        <div>
-                          <span className="text-text-muted">Gift: </span>
-                          <span className="font-medium text-text">{submission.giftName}</span>
-                        </div>
-                      )}
-                      {submission.values.map((v) => (
-                        <div key={v.fieldKey}>
-                          <span className="text-text-muted">{v.label}: </span>
-                          <span className="text-text">{Array.isArray(v.value) ? v.value.join(', ') : String(v.value ?? '—')}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {submission.attachments.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {submission.attachments.map((a) => (
-                          <a key={a.fieldKey} href={a.url} target="_blank" rel="noreferrer" className="text-xs text-accent underline">
-                            {a.label}: {a.fileName}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabPanel>
+          {panels}
         </TabView>
       ) : (
-        <p className="text-sm text-text-muted">
-          You're in the audience for this campaign.{' '}
-          {campaign.status === 'ACTIVE' ? 'Use "Submit a recipient" above to add one.' : 'It is not currently accepting submissions.'}
-        </p>
+        <div>
+          <p className="mb-3 text-sm text-text-muted">
+            You're in the audience for this campaign.{' '}
+            {campaign.status === 'ACTIVE'
+              ? 'Use "Submit a recipient" above to add one, or see what you\'ve already sent below.'
+              : 'It is not currently accepting submissions.'}
+          </p>
+          <SubmissionList
+            submissions={myCampaignSubmissions}
+            isLoading={mySubmissionsQuery.isLoading}
+            emptyDescription="Recipients you submit for this campaign will show up here."
+          />
+        </div>
       )}
     </div>
   )

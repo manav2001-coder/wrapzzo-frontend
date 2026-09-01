@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
+import { Checkbox } from 'primereact/checkbox'
 import { confirmDialog } from 'primereact/confirmdialog'
 import { Dropdown } from 'primereact/dropdown'
 import { FileUpload } from 'primereact/fileupload'
@@ -57,6 +58,7 @@ const giftSchema = z
     price: z.number().min(0, 'Price must be zero or more').nullable(),
     markupFeePercentage: z.number().min(0).optional().nullable(),
     commissionFeePercentage: z.number().min(0).optional().nullable(),
+    photoRequired: z.boolean(),
   })
   .refine((data) => data.price !== null, { message: 'Price is required', path: ['price'] })
 
@@ -105,6 +107,7 @@ export function GiftFormPage() {
       price: null,
       markupFeePercentage: null,
       commissionFeePercentage: null,
+      photoRequired: false,
     },
   })
 
@@ -127,6 +130,7 @@ export function GiftFormPage() {
         price: gift.price,
         markupFeePercentage: gift.markupFeePercentage,
         commissionFeePercentage: gift.commissionFeePercentage,
+        photoRequired: gift.photoRequired,
       })
     }
   }, [gift, reset])
@@ -164,6 +168,7 @@ export function GiftFormPage() {
       price: values.price ?? 0,
       markupFeePercentage: values.markupFeePercentage ?? undefined,
       commissionFeePercentage: values.commissionFeePercentage ?? undefined,
+      photoRequired: values.photoRequired,
     }
     try {
       if (isEdit && id) {
@@ -474,6 +479,23 @@ export function GiftFormPage() {
                   )}
                 />
               </div>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-lg border border-border bg-surface-muted px-3.5 py-2.5">
+              <Controller
+                name="photoRequired"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox inputId="photoRequired" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
+                )}
+              />
+              <label htmlFor="photoRequired" className="text-sm text-text">
+                <span className="font-medium">Require a recipient photo for this gift</span>
+                <p className="mt-0.5 text-xs text-text-muted">
+                  When ordering it (Quick Gift, or adding a recipient), the sender must upload a photo up front or provide the
+                  recipient's email so we can send them an upload link.
+                </p>
+              </label>
             </div>
 
             {totalPrice != null && (

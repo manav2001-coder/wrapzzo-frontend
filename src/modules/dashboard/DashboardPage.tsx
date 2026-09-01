@@ -1,5 +1,5 @@
 import { ProgressSpinner } from 'primereact/progressspinner'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BarChart } from '@/components/charts/BarChart'
 import { DonutChart } from '@/components/charts/DonutChart'
@@ -13,6 +13,7 @@ import { statusColor } from '@/lib/statusColors'
 import { UpcomingBirthdaysWidget } from '@/modules/recipients/UpcomingBirthdaysWidget'
 import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
 import { HeroSpendCard } from './HeroSpendCard'
+import { OrderTimeline } from './OrderTimeline'
 import { PipelineFlow } from './PipelineFlow'
 import { QuickGiftActivityDialog } from './QuickGiftActivityDialog'
 import { RecentActivityFeed } from './RecentActivityFeed'
@@ -32,6 +33,46 @@ export function DashboardPage() {
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
   const [selectedQuickGiftId, setSelectedQuickGiftId] = useState<string | null>(null)
 
+  // Memoized so a re-render from unrelated page state (opening a dialog, a drilldown
+  // selection) doesn't hand the donut charts a new slices array every time -- that
+  // would make Highcharts re-animate the chart for no data-related reason.
+  const sourceSlices = useMemo(
+    () =>
+      data
+        ? Object.entries(data.orderSourceBreakdown).map(([key, value]) => ({
+            key,
+            name: SOURCE_LABELS[key] ?? humanize(key),
+            value,
+            color: SOURCE_COLORS[key] ?? '#94a3b8',
+          }))
+        : [],
+    [data],
+  )
+  const quickGiftSlices = useMemo(
+    () =>
+      data
+        ? Object.entries(data.quickGiftStatusBreakdown).map(([key, value]) => ({
+            key,
+            name: humanize(key),
+            value,
+            color: statusColor(key),
+          }))
+        : [],
+    [data],
+  )
+  const submissionSlices = useMemo(
+    () =>
+      data
+        ? Object.entries(data.submissionStatusBreakdown).map(([key, value]) => ({
+            key,
+            name: humanize(key),
+            value,
+            color: key === 'PENDING' ? statusColor('SUBMITTED') : statusColor(key),
+          }))
+        : [],
+    [data],
+  )
+
   if (isLoading || !data) {
     return (
       <div className="flex justify-center py-20">
@@ -48,25 +89,6 @@ export function DashboardPage() {
     data.quickGiftsThisMonth > 0 ||
     data.recentCampaigns.length > 0 ||
     data.recentActivity.length > 0
-
-  const sourceSlices = Object.entries(data.orderSourceBreakdown).map(([key, value]) => ({
-    key,
-    name: SOURCE_LABELS[key] ?? humanize(key),
-    value,
-    color: SOURCE_COLORS[key] ?? '#94a3b8',
-  }))
-  const quickGiftSlices = Object.entries(data.quickGiftStatusBreakdown).map(([key, value]) => ({
-    key,
-    name: humanize(key),
-    value,
-    color: statusColor(key),
-  }))
-  const submissionSlices = Object.entries(data.submissionStatusBreakdown).map(([key, value]) => ({
-    key,
-    name: humanize(key),
-    value,
-    color: key === 'PENDING' ? statusColor('SUBMITTED') : statusColor(key),
-  }))
 
   return (
     <div>
@@ -107,6 +129,15 @@ export function DashboardPage() {
                 onSelectStage={(stage) => setDrilldown({ dimension: 'pipelineStage', value: stage })}
               />
             </div>
+          </div>
+
+          <div className="mb-8">
+            <SectionHeader
+              eyebrow="Fulfillment"
+              title="Order timeline"
+              subtitle={data.companyWide ? 'Every gift order in the company, ordered to delivered.' : 'Your gift orders, ordered to delivered.'}
+            />
+            <OrderTimeline orders={data.recentOrders} />
           </div>
 
           <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">

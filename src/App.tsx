@@ -9,7 +9,7 @@ function App() {
   return (
     <>
       <GlobalToast />
-      <ConfirmDialog />
+      <ConfirmDialog style={{ width: '28rem' }} breakpoints={{ '960px': '90vw', '640px': '95vw' }} />
       <AppRoutes />
     </>
   )

@@ -2,6 +2,12 @@ import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
 import type { ActivityItem } from '@/api/dashboard'
 
+/** "submitted/resubmitted a recipient for" and "approved/rejected a submission for" -- as opposed to
+ * "created campaign", which should land on the campaign's default (Audience) tab, not Submissions. */
+function isSubmissionActivity(verb: string): boolean {
+  return verb.includes('submission') || verb.includes('recipient for')
+}
+
 /** Maps an activity's verb to an icon + color so the feed reads at a glance -- an approval looks different
  * from a rejection, which looks different from something just being created or sent for review. */
 function activityStyle(verb: string): { icon: string; colorClass: string } {
@@ -15,7 +21,7 @@ function activityStyle(verb: string): { icon: string; colorClass: string } {
 
 /** A real icon-coded timeline (connected by a rail) instead of a flat list of blue dots -- what kind of
  * event each row is should be visible before reading a single word of the sentence. */
-export function RecentActivityFeed({ items }: { items: ActivityItem[] }) {
+export function RecentActivityFeed({ items, onSelectQuickGift }: { items: ActivityItem[]; onSelectQuickGift: (id: string) => void }) {
   return (
     <div className="flex h-[420px] flex-col rounded-2xl border border-border bg-surface p-5">
       <div className="mb-3 flex shrink-0 items-center gap-2">
@@ -51,11 +57,31 @@ export function RecentActivityFeed({ items }: { items: ActivityItem[] }) {
                   </div>
                 </>
               )
-              return item.campaignId ? (
-                <Link key={i} to={`/campaigns/${item.campaignId}`} className="-mx-1 flex gap-3 rounded-lg px-1 hover:bg-surface-muted">
-                  {content}
-                </Link>
-              ) : (
+              if (item.campaignId) {
+                return (
+                  <Link
+                    key={i}
+                    to={`/campaigns/${item.campaignId}`}
+                    state={isSubmissionActivity(item.verb) ? { tab: 'submissions' } : undefined}
+                    className="-mx-1 flex gap-3 rounded-lg px-1 hover:bg-surface-muted"
+                  >
+                    {content}
+                  </Link>
+                )
+              }
+              if (item.quickGiftId) {
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => onSelectQuickGift(item.quickGiftId!)}
+                    className="-mx-1 flex gap-3 rounded-lg border-none bg-transparent px-1 text-left hover:bg-surface-muted"
+                  >
+                    {content}
+                  </button>
+                )
+              }
+              return (
                 <div key={i} className="flex gap-3">
                   {content}
                 </div>

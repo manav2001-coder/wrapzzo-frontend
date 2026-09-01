@@ -61,7 +61,13 @@ export function DashboardDrilldownDialog({ selection, onHide }: { selection: Dri
       : null
 
   return (
-    <Dialog header={data?.title ?? 'Details'} visible={selection !== null} onHide={onHide} style={{ width: '34rem' }}>
+    <Dialog
+      header={data?.title ?? 'Details'}
+      visible={selection !== null}
+      onHide={onHide}
+      style={{ width: '34rem' }}
+      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+    >
       {isLoading ? (
         <div className="flex justify-center py-10">
           <ProgressSpinner style={{ width: 32, height: 32 }} strokeWidth="4" />

@@ -66,7 +66,7 @@ export function ApprovalQueuePage() {
                     </div>
                     <div>
                       <span className="font-semibold text-text">{request.giftName}</span>
-                      <span className="ml-2 text-xs text-text-muted">requested by someone on your team</span>
+                      <span className="ml-2 text-xs text-text-muted">requested by {request.requestedByName ?? 'a team member'}</span>
                     </div>
                   </div>
                   <StatusBadge status={request.status} label={humanize(request.status)} />
@@ -114,7 +114,13 @@ export function ApprovalQueuePage() {
         </div>
       )}
 
-      <Dialog header="Reject Quick Gift request" visible={rejectTarget !== null} onHide={() => setRejectTarget(null)} style={{ width: '28rem' }}>
+      <Dialog
+        header="Reject Quick Gift request"
+        visible={rejectTarget !== null}
+        onHide={() => setRejectTarget(null)}
+        style={{ width: '28rem' }}
+        breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+      >
         <div className="flex flex-col gap-3">
           <label htmlFor="approvalRejectReason" className="text-sm font-medium text-text">
             Reason (shown to the requester)

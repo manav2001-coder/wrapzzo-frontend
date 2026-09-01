@@ -11,6 +11,7 @@ export interface QuickGiftRequest {
   giftId: string
   giftName: string
   giftCategory: string
+  requestedByName: string | null
   recipientName: string
   recipientPhone: string
   recipientEmail: string | null

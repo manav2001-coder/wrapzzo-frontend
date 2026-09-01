@@ -67,7 +67,13 @@ function QuickGiftDetailDialog({
   requesting: boolean
 }) {
   return (
-    <Dialog header={request?.giftName} visible={request !== null} onHide={onHide} style={{ width: '32rem' }}>
+    <Dialog
+      header={request?.giftName}
+      visible={request !== null}
+      onHide={onHide}
+      style={{ width: '32rem' }}
+      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+    >
       {request && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">

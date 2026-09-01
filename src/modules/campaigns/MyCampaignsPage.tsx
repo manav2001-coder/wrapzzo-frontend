@@ -158,7 +158,13 @@ function SubmissionDetailDialog({
   const photo = submission?.attachments.find((a) => a.fieldKey === 'photo')
 
   return (
-    <Dialog header={submission?.campaignName} visible={submission !== null} onHide={onHide} style={{ width: '32rem' }}>
+    <Dialog
+      header={submission?.campaignName}
+      visible={submission !== null}
+      onHide={onHide}
+      style={{ width: '32rem' }}
+      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+    >
       {submission && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">

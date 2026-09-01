@@ -12,7 +12,13 @@ export interface RecipientPhotoLinkPrompt {
 /** Shown right after approving a submission that had no photo on file -- the recipient's already been emailed the link; this offers the approver a one-click way to also forward it themselves. */
 export function RecipientPhotoLinkDialog({ prompt, onHide }: { prompt: RecipientPhotoLinkPrompt | null; onHide: () => void }) {
   return (
-    <Dialog header="Recipient photo requested" visible={prompt !== null} onHide={onHide} style={{ width: '28rem' }}>
+    <Dialog
+      header="Recipient photo requested"
+      visible={prompt !== null}
+      onHide={onHide}
+      style={{ width: '28rem' }}
+      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+    >
       {prompt && (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-text-muted">

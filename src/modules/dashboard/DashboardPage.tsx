@@ -5,7 +5,6 @@ import { BarChart } from '@/components/charts/BarChart'
 import { DonutChart } from '@/components/charts/DonutChart'
 import { TrendChart } from '@/components/charts/TrendChart'
 import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
 import { SectionHeader } from '@/components/SectionHeader'
 import { StatCard } from '@/components/StatCard'
 import { useDashboard } from '@/hooks/useDashboard'
@@ -15,6 +14,7 @@ import { UpcomingBirthdaysWidget } from '@/modules/recipients/UpcomingBirthdaysW
 import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
 import { HeroSpendCard } from './HeroSpendCard'
 import { PipelineFlow } from './PipelineFlow'
+import { QuickGiftActivityDialog } from './QuickGiftActivityDialog'
 import { RecentActivityFeed } from './RecentActivityFeed'
 import { RecentCampaignsCard } from './RecentCampaignsCard'
 
@@ -30,6 +30,7 @@ export function DashboardPage() {
   const { data, isLoading } = useDashboard()
   const navigate = useNavigate()
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
+  const [selectedQuickGiftId, setSelectedQuickGiftId] = useState<string | null>(null)
 
   if (isLoading || !data) {
     return (
@@ -69,14 +70,16 @@ export function DashboardPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Dashboard"
-        subtitle={
-          data.companyWide
-            ? `Everything happening across ${data.companyName} — campaigns, orders, and Quick Gift requests, in one place.`
-            : 'Your campaigns, orders, and Quick Gift requests, in one place.'
-        }
-      />
+      <div className="relative mb-6 overflow-hidden rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5 sm:p-6">
+        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-accent via-accent/40 to-transparent" />
+        <p className="text-xs font-semibold tracking-wide text-accent uppercase">Welcome back</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-text sm:text-3xl">{data.companyName}</h1>
+        <p className="mt-1.5 text-sm text-text-muted">
+          {data.companyWide
+            ? "Here's everything happening across your campaigns, orders, and Quick Gift requests."
+            : "Here's what's happening with your campaigns, orders, and Quick Gift requests."}
+        </p>
+      </div>
 
       <UpcomingBirthdaysWidget />
 
@@ -221,13 +224,14 @@ export function DashboardPage() {
             <SectionHeader eyebrow="Recent" title="What's happening" />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <RecentCampaignsCard campaigns={data.recentCampaigns} />
-              <RecentActivityFeed items={data.recentActivity} />
+              <RecentActivityFeed items={data.recentActivity} onSelectQuickGift={setSelectedQuickGiftId} />
             </div>
           </div>
         </>
       )}
 
       <DashboardDrilldownDialog selection={drilldown} onHide={() => setDrilldown(null)} />
+      <QuickGiftActivityDialog quickGiftId={selectedQuickGiftId} onHide={() => setSelectedQuickGiftId(null)} />
     </div>
   )
 }

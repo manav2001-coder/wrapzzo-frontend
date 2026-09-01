@@ -69,11 +69,14 @@ function isBlankRow(row: DraftRecipient): boolean {
   return !row.recipientName && !row.recipientPhone && !row.recipientEmail && !row.deliveryAddress
 }
 
-function validateRow(row: DraftRecipient): Record<string, string> {
+function validateRow(row: DraftRecipient, photoRequired: boolean): Record<string, string> {
   const errors: Record<string, string> = {}
   if (!row.recipientName.trim()) errors.recipientName = 'Required.'
   if (!row.recipientPhone.trim()) errors.recipientPhone = 'Required.'
   if (!row.deliveryAddress.trim()) errors.deliveryAddress = 'Required.'
+  if (photoRequired && !row.photo && !row.recipientEmail.trim()) {
+    errors.photoOrEmail = "This gift needs a photo -- upload one now, or add the recipient's email so we can send them an upload link."
+  }
   return errors
 }
 
@@ -89,13 +92,16 @@ function RecipientRow({
   onUpdate,
   onRemove,
   canRemove,
+  photoRequired,
 }: {
   row: DraftRecipient
   onUpdate: (patch: Partial<DraftRecipient>) => void
   onRemove: () => void
   canRemove: boolean
+  photoRequired: boolean
 }) {
   const hasOptionalDetails = Boolean(row.recipientEmail || row.photo || row.giftMessage || row.internalNotes)
+  const needsPhotoOrEmail = photoRequired && !row.photo && !row.recipientEmail.trim()
 
   return (
     <div className={`rounded-lg border bg-surface p-3 ${row.errors.__submit ? 'border-red-500/50' : 'border-border'}`}>
@@ -140,10 +146,11 @@ function RecipientRow({
 
         <div className="flex items-center gap-1 sm:col-span-2 sm:justify-end">
           <Button
-            label={row.expanded ? 'Less' : hasOptionalDetails ? 'More •' : 'More'}
-            icon={row.expanded ? 'pi pi-chevron-up' : 'pi pi-chevron-down'}
+            label={row.expanded ? 'Less' : needsPhotoOrEmail ? 'Photo needed' : hasOptionalDetails ? 'More •' : 'More'}
+            icon={row.expanded ? 'pi pi-chevron-up' : needsPhotoOrEmail ? 'pi pi-exclamation-triangle' : 'pi pi-chevron-down'}
             iconPos="right"
             text
+            severity={needsPhotoOrEmail && !row.expanded ? 'warning' : undefined}
             size="small"
             onClick={() => onUpdate({ expanded: !row.expanded })}
           />
@@ -154,14 +161,22 @@ function RecipientRow({
       {row.expanded && (
         <div className="mt-3 grid grid-cols-1 gap-3 border-t border-border pt-3 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Email (optional)</label>
-            <InputText value={row.recipientEmail} onChange={(e) => onUpdate({ recipientEmail: e.target.value })} className="w-full" />
+            <label className="mb-1 block text-xs font-medium text-text-muted">
+              Email {photoRequired ? '(required if no photo)' : '(optional)'}
+            </label>
+            <InputText
+              value={row.recipientEmail}
+              onChange={(e) => onUpdate({ recipientEmail: e.target.value })}
+              className={`w-full ${row.errors.photoOrEmail ? 'p-invalid' : ''}`}
+            />
             <p className="mt-1 text-[11px] text-text-muted">
               No photo yet? We'll send this recipient a link to upload one themselves once approved.
             </p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Photo (optional)</label>
+            <label className="mb-1 block text-xs font-medium text-text-muted">
+              Photo {photoRequired ? '(required, or provide an email)' : '(optional)'}
+            </label>
             <div className="flex items-center gap-2">
               {row.photo && <span className="max-w-[120px] truncate text-xs text-text-muted">{row.photo.name}</span>}
               <FileUpload
@@ -201,6 +216,7 @@ function RecipientRow({
       {(row.errors.recipientName || row.errors.recipientPhone || row.errors.deliveryAddress) && (
         <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">Name, phone, and delivery address are required.</p>
       )}
+      {row.errors.photoOrEmail && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.photoOrEmail}</p>}
       {row.errors.__submit && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.__submit}</p>}
     </div>
   )
@@ -224,7 +240,9 @@ export function QuickGiftFormPage() {
   }
 
   function addRow() {
-    setRows((prev) => [...prev, emptyRow()])
+    // Auto-expand so a photo-required gift's requirement is visible right away, not
+    // discovered only after a failed submit.
+    setRows((prev) => [...prev, emptyRow(gift?.photoRequired)])
   }
 
   function removeRow(key: number) {
@@ -237,16 +255,22 @@ export function QuickGiftFormPage() {
     if (picked.length === 0) return
     setRows((prev) => {
       const base = prev.length === 1 && isBlankRow(prev[0]) ? [] : prev
-      return [...base, ...picked.map((r) => emptyRow(false, prefillFrom(r)))]
+      return [...base, ...picked.map((r) => emptyRow(gift?.photoRequired, prefillFrom(r)))]
     })
   }
 
   async function onSubmitAll() {
     if (!gift) return
-    const validated = rows.map((r) => ({ row: r, errors: validateRow(r) }))
+    const validated = rows.map((r) => ({ row: r, errors: validateRow(r, gift.photoRequired) }))
     if (validated.some((v) => Object.keys(v.errors).length > 0)) {
-      setRows(validated.map((v) => ({ ...v.row, errors: v.errors })))
-      showToast({ severity: 'error', summary: 'Fix the highlighted rows', detail: 'Every recipient needs a name, phone, and delivery address.' })
+      setRows(validated.map((v) => ({ ...v.row, errors: v.errors, expanded: v.row.expanded || Boolean(v.errors.photoOrEmail) })))
+      showToast({
+        severity: 'error',
+        summary: 'Fix the highlighted rows',
+        detail: gift.photoRequired
+          ? 'Every recipient needs a name, phone, delivery address, and either a photo or an email.'
+          : 'Every recipient needs a name, phone, and delivery address.',
+      })
       return
     }
 
@@ -342,6 +366,11 @@ export function QuickGiftFormPage() {
         <div className="min-w-0">
           <p className="font-medium text-text">{gift.name}</p>
           {gift.description && <p className="line-clamp-1 text-xs text-text-muted">{gift.description}</p>}
+          {gift.photoRequired && (
+            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+              <i className="pi pi-camera" /> Needs a recipient photo -- upload one, or add their email so we can request it.
+            </p>
+          )}
         </div>
       </div>
 
@@ -353,6 +382,7 @@ export function QuickGiftFormPage() {
             onUpdate={(patch) => updateRow(row.key, patch)}
             onRemove={() => removeRow(row.key)}
             canRemove={rows.length > 1}
+            photoRequired={gift.photoRequired}
           />
         ))}
       </div>

@@ -1,10 +1,18 @@
 import { Chart } from 'primereact/chart'
+import { memo } from 'react'
 import { useAppSelector } from '@/app/hooks'
 import { humanize } from '@/lib/format'
 import { resolveTheme } from '@/lib/theme'
 import { statusColor } from '@/lib/statusColors'
 
-export function StatusDonutChart({ counts }: { counts: Record<string, number> }) {
+/**
+ * Memoized because PrimeReact's <Chart> re-runs its create-chart effect on every render
+ * with no dependency array at all -- any unrelated re-render of the page (opening a
+ * dialog, typing in a search box) would otherwise destroy and recreate the Chart.js
+ * instance, visible as the whole donut "rebuilding" itself. Memo skips re-rendering this
+ * component (and therefore that effect) whenever `counts` hasn't actually changed.
+ */
+export const StatusDonutChart = memo(function StatusDonutChart({ counts }: { counts: Record<string, number> }) {
   const themePreference = useAppSelector((state) => state.ui.theme)
   const dark = resolveTheme(themePreference) === 'dark'
   const mutedColor = dark ? '#64748b' : '#94a3b8'
@@ -62,4 +70,4 @@ export function StatusDonutChart({ counts }: { counts: Record<string, number> })
       </div>
     </div>
   )
-}
+})

@@ -1,5 +1,6 @@
 import { Accordion, AccordionTab } from 'primereact/accordion'
 import { Button } from 'primereact/button'
+import { Dialog } from 'primereact/dialog'
 import { Dropdown } from 'primereact/dropdown'
 import { IconField } from 'primereact/iconfield'
 import { InputIcon } from 'primereact/inputicon'
@@ -7,16 +8,21 @@ import { InputText } from 'primereact/inputtext'
 import { useMemo, useState } from 'react'
 import type { Order } from '@/api/orders'
 import { EmptyState } from '@/components/EmptyState'
+import { GiftThumb, OrderProgressBar, OrderStepper, StageHistoryList } from '@/components/OrderFulfillmentStepper'
 import { PageHeader } from '@/components/PageHeader'
+import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
 import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDonutChart } from '@/components/StatusDonutChart'
 import {
   useAssignCampaignVendor,
   useAssignOrderVendor,
+  useAssignQuickGiftVendor,
   useAutoAssignCampaignVendor,
   useAutoAssignOrderVendor,
+  useAutoAssignQuickGiftVendor,
   usePlatformOrders,
+  useRequestPlatformOrderPhotoLink,
 } from '@/hooks/useOrders'
 import { useVendors } from '@/hooks/useVendors'
 import { formatCurrency, humanize } from '@/lib/format'
@@ -178,31 +184,191 @@ function CampaignBulkAssignControl({
   )
 }
 
-function OrderCard({ order }: { order: Order }) {
+/** Same bulk-assign convenience as CampaignBulkAssignControl, but for a company's Quick Gift
+ * orders -- those have no campaign to key off, so companyId stands in for it. */
+function QuickGiftBulkAssignControl({ companyId, companyName, unassignedCount }: { companyId: string; companyName: string; unassignedCount: number }) {
+  const { data: vendors } = useVendors()
+  const assignQuickGift = useAssignQuickGiftVendor()
+  const autoAssignQuickGift = useAutoAssignQuickGiftVendor()
+  const [picking, setPicking] = useState(false)
+  const [vendorId, setVendorId] = useState<string | undefined>(undefined)
+
+  const activeVendors = (vendors ?? []).filter((v) => v.status === 'ACTIVE')
+
+  async function handleAuto() {
+    try {
+      const result = await autoAssignQuickGift.mutateAsync(companyId)
+      if (result.skippedCount > 0) {
+        showToast({
+          severity: 'warn',
+          summary: `${result.assignedCount} auto-assigned, ${result.skippedCount} skipped`,
+          detail: 'No active vendor was available for the skipped order(s). Assign them manually.',
+        })
+      } else {
+        showToast({ severity: 'success', summary: `${result.assignedCount} order${result.assignedCount === 1 ? '' : 's'} auto-assigned` })
+      }
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  async function handleManual() {
+    if (!vendorId) return
+    try {
+      const result = await assignQuickGift.mutateAsync({ companyId, vendorId })
+      showToast({ severity: 'success', summary: `${result.assignedCount} order${result.assignedCount === 1 ? '' : 's'} assigned` })
+      setPicking(false)
+      setVendorId(undefined)
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-semibold text-text">{order.displayId}</p>
-        <StatusBadge status={order.status} label={humanize(order.status)} />
+    <div className="mb-3 flex flex-col gap-2 rounded-lg border border-dashed border-border bg-surface-muted p-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-xs text-text-muted">
+        {unassignedCount} Quick Gift order{unassignedCount === 1 ? '' : 's'} for {companyName} still need{unassignedCount === 1 ? 's' : ''} a vendor.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button label="Auto-assign all" icon="pi pi-bolt" size="small" loading={autoAssignQuickGift.isPending} onClick={handleAuto} />
+        {!picking ? (
+          <Button label="Assign all to..." icon="pi pi-truck" size="small" outlined onClick={() => setPicking(true)} />
+        ) : (
+          <>
+            <Dropdown
+              value={vendorId}
+              onChange={(e) => setVendorId(e.value)}
+              options={activeVendors.map((v) => ({ label: v.name, value: v.id }))}
+              placeholder="Choose vendor"
+              filter
+              className="w-48"
+            />
+            <Button label="Assign" size="small" loading={assignQuickGift.isPending} disabled={!vendorId} onClick={handleManual} />
+            <Button label="Cancel" text size="small" onClick={() => setPicking(false)} />
+          </>
+        )}
       </div>
+    </div>
+  )
+}
 
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <p className="text-xs text-text-muted">Recipient</p>
-          <p className="text-text">{order.recipientName ?? '—'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Gift</p>
-          <p className="text-text">{order.giftName ?? '—'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Price</p>
-          <p className="font-medium text-text">{formatCurrency(order.totalPrice)}</p>
+/** Same compact chip look as the Dashboard's order timeline widget -- a click opens the
+ * full detail (photo, "send link" action, and stage-by-stage timeline) in a dialog.
+ * AssignmentControl stays outside the chip, always visible, since routing a vendor is the
+ * primary action on this page, not a detail to tuck away. */
+function OrderChip({ order, onClick }: { order: Order; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full flex-col gap-2 rounded-2xl border border-border bg-surface p-3 text-left transition-transform hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
+    >
+      <div className="flex items-center gap-2">
+        <GiftThumb url={order.giftImageUrl} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-text">{order.giftName ?? order.displayId}</p>
+          <p className="truncate text-[11px] text-text-muted">{order.recipientName ?? '—'}</p>
         </div>
       </div>
+      <OrderProgressBar status={order.status} />
+      <p className="text-[10px] font-medium text-text-muted">{order.status === 'CANCELLED' ? 'Cancelled' : humanize(order.status)}</p>
+    </button>
+  )
+}
 
+function OrderCard({ order, onOpen }: { order: Order; onOpen: (order: Order) => void }) {
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <OrderChip order={order} onClick={() => onOpen(order)} />
       <AssignmentControl order={order} />
     </div>
+  )
+}
+
+function OrderDetailDialog({
+  order,
+  onHide,
+  onPhotoLinkSent,
+}: {
+  order: Order | null
+  onHide: () => void
+  onPhotoLinkSent: (order: Order, link: string) => void
+}) {
+  const requestPhotoLink = useRequestPlatformOrderPhotoLink()
+
+  async function handleSendPhotoLink() {
+    if (!order) return
+    try {
+      const result = await requestPhotoLink.mutateAsync(order.id)
+      showToast({ severity: 'success', summary: 'Link sent to the recipient' })
+      onPhotoLinkSent(order, result.recipientUploadUrl)
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  return (
+    <Dialog
+      header={order?.giftName ?? order?.displayId}
+      visible={order !== null}
+      onHide={onHide}
+      style={{ width: '32rem' }}
+      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+      modal
+    >
+      {order && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <GiftThumb url={order.giftImageUrl} size="h-14 w-14" />
+            <div className="min-w-0">
+              <p className="text-sm text-text-muted">
+                {order.displayId} · {order.companyName}
+              </p>
+              <p className="text-sm font-medium text-text">{order.recipientName ?? '—'}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-muted">{formatCurrency(order.totalPrice)}</span>
+            <StatusBadge status={order.status} label={humanize(order.status)} />
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="mb-1.5 text-xs text-text-muted">Recipient's photo</p>
+              {order.recipientPhotoUrl ? (
+                <a href={order.recipientPhotoUrl} target="_blank" rel="noreferrer" className="inline-block">
+                  <img src={order.recipientPhotoUrl} alt="" className="h-20 w-20 rounded-lg border border-border object-cover" />
+                </a>
+              ) : (
+                <div className="grid h-20 w-20 place-items-center rounded-lg border border-dashed border-border text-text-muted">
+                  <i className="pi pi-image text-xl" />
+                </div>
+              )}
+            </div>
+            {!order.recipientPhotoUrl && (
+              <Button
+                label="Send link for image"
+                icon="pi pi-send"
+                outlined
+                size="small"
+                loading={requestPhotoLink.isPending}
+                onClick={handleSendPhotoLink}
+              />
+            )}
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-border p-3">
+            <OrderStepper status={order.status} history={order.history} />
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold tracking-wide text-text-muted uppercase">Full history</p>
+            <StageHistoryList history={order.history} />
+          </div>
+        </div>
+      )}
+    </Dialog>
   )
 }
 
@@ -246,6 +412,8 @@ export function OrdersPage() {
   const { data: orders, isLoading } = usePlatformOrders()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [selected, setSelected] = useState<Order | null>(null)
+  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { PROCESSING: 0, PRODUCTION_QUEUE: 0, DISPATCHED: 0, DELIVERED: 0, CANCELLED: 0 }
@@ -338,24 +506,29 @@ export function OrdersPage() {
               <Accordion multiple>
                 {groups.map((group) => {
                   const unassignedInGroup = group.items.filter((o) => !o.assignedVendorId && o.status !== 'CANCELLED').length
-                  // Bulk campaign-assign only applies to real campaigns -- a Quick Gift's synthetic
-                  // group id isn't a campaign the platform assignment endpoint knows about.
                   const isRealCampaign = group.items[0]?.source === 'CAMPAIGN'
                   return (
                     <AccordionTab
                       key={group.campaignId}
                       header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}
                     >
-                      {isRealCampaign && unassignedInGroup > 0 && (
-                        <CampaignBulkAssignControl
-                          campaignId={group.campaignId}
-                          campaignName={group.campaignName}
-                          unassignedCount={unassignedInGroup}
-                        />
-                      )}
+                      {unassignedInGroup > 0 &&
+                        (isRealCampaign ? (
+                          <CampaignBulkAssignControl
+                            campaignId={group.campaignId}
+                            campaignName={group.campaignName}
+                            unassignedCount={unassignedInGroup}
+                          />
+                        ) : (
+                          <QuickGiftBulkAssignControl
+                            companyId={group.items[0].companyId}
+                            companyName={group.items[0].companyName}
+                            unassignedCount={unassignedInGroup}
+                          />
+                        ))}
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {group.items.map((order) => (
-                          <OrderCard key={order.id} order={order} />
+                          <OrderCard key={order.id} order={order} onOpen={setSelected} />
                         ))}
                       </div>
                     </AccordionTab>
@@ -366,6 +539,13 @@ export function OrdersPage() {
           )}
         </>
       )}
+
+      <OrderDetailDialog
+        order={selected}
+        onHide={() => setSelected(null)}
+        onPhotoLinkSent={(o, link) => setPhotoLinkPrompt({ link, recipientName: o.recipientName, phone: o.recipientPhone })}
+      />
+      <RecipientPhotoLinkDialog prompt={photoLinkPrompt} onHide={() => setPhotoLinkPrompt(null)} />
     </div>
   )
 }

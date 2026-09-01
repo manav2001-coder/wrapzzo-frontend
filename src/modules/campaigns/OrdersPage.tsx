@@ -1,18 +1,22 @@
 import { Accordion, AccordionTab } from 'primereact/accordion'
-import { format } from 'date-fns'
+import { Button } from 'primereact/button'
+import { Dialog } from 'primereact/dialog'
 import { IconField } from 'primereact/iconfield'
 import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
 import { useMemo, useState } from 'react'
+import type { Order } from '@/api/orders'
 import { EmptyState } from '@/components/EmptyState'
+import { GiftThumb, OrderProgressBar, OrderStepper, StageHistoryList } from '@/components/OrderFulfillmentStepper'
 import { PageHeader } from '@/components/PageHeader'
+import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
 import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDonutChart } from '@/components/StatusDonutChart'
-import { useOrders } from '@/hooks/useOrders'
+import { useOrders, useRequestOrderPhotoLink } from '@/hooks/useOrders'
 import { formatCurrency, humanize } from '@/lib/format'
 import { groupByCampaign } from '@/lib/groupByCampaign'
-import type { Order } from '@/api/orders'
+import { showApiError, showToast } from '@/lib/toast'
 
 function CampaignAccordionHeader({ campaignName, orders }: { campaignName: string; orders: Order[] }) {
   const statusCounts = useMemo(() => {
@@ -41,39 +45,121 @@ function CampaignAccordionHeader({ campaignName, orders }: { campaignName: strin
   )
 }
 
-function OrderCard({ order }: { order: Order }) {
+/** Same compact chip look as the Dashboard's order timeline widget -- a click opens the
+ * full detail (photo, "send link" action, and stage-by-stage timeline) in a dialog rather
+ * than growing the card in place. */
+function OrderChip({ order, onClick }: { order: Order; onClick: () => void }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-semibold text-text">{order.displayId}</p>
-        <StatusBadge status={order.status} label={humanize(order.status)} />
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <p className="text-xs text-text-muted">Recipient</p>
-          <p className="text-text">{order.recipientName ?? '—'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Gift</p>
-          <p className="text-text">{order.giftName ?? '—'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Source</p>
-          <p className="text-text">{humanize(order.source)}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Price</p>
-          <p className="font-medium text-text">{formatCurrency(order.totalPrice)}</p>
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full flex-col gap-2 rounded-2xl border border-border bg-surface p-3 text-left transition-transform hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
+    >
+      <div className="flex items-center gap-2">
+        <GiftThumb url={order.giftImageUrl} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-text">{order.giftName ?? order.displayId}</p>
+          <p className="truncate text-[11px] text-text-muted">{order.recipientName ?? '—'}</p>
         </div>
       </div>
-      <p className="text-xs text-text-muted">Created {format(new Date(order.createdAt), 'dd MMM yyyy')}</p>
-    </div>
+      <OrderProgressBar status={order.status} />
+      <p className="text-[10px] font-medium text-text-muted">{order.status === 'CANCELLED' ? 'Cancelled' : humanize(order.status)}</p>
+    </button>
+  )
+}
+
+function OrderDetailDialog({
+  order,
+  onHide,
+  onPhotoLinkSent,
+}: {
+  order: Order | null
+  onHide: () => void
+  onPhotoLinkSent: (order: Order, link: string) => void
+}) {
+  const requestPhotoLink = useRequestOrderPhotoLink()
+
+  async function handleSendPhotoLink() {
+    if (!order) return
+    try {
+      const result = await requestPhotoLink.mutateAsync(order.id)
+      showToast({ severity: 'success', summary: 'Link sent to the recipient' })
+      onPhotoLinkSent(order, result.recipientUploadUrl)
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  return (
+    <Dialog
+      header={order?.giftName ?? order?.displayId}
+      visible={order !== null}
+      onHide={onHide}
+      style={{ width: '32rem' }}
+      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+      modal
+    >
+      {order && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <GiftThumb url={order.giftImageUrl} size="h-14 w-14" />
+            <div className="min-w-0">
+              <p className="text-sm text-text-muted">
+                {order.displayId} · {humanize(order.source)}
+              </p>
+              <p className="text-sm font-medium text-text">{order.recipientName ?? '—'}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-muted">{formatCurrency(order.totalPrice)}</span>
+            <StatusBadge status={order.status} label={humanize(order.status)} />
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="mb-1.5 text-xs text-text-muted">Recipient's photo</p>
+              {order.recipientPhotoUrl ? (
+                <a href={order.recipientPhotoUrl} target="_blank" rel="noreferrer" className="inline-block">
+                  <img src={order.recipientPhotoUrl} alt="" className="h-20 w-20 rounded-lg border border-border object-cover" />
+                </a>
+              ) : (
+                <div className="grid h-20 w-20 place-items-center rounded-lg border border-dashed border-border text-text-muted">
+                  <i className="pi pi-image text-xl" />
+                </div>
+              )}
+            </div>
+            {!order.recipientPhotoUrl && (
+              <Button
+                label="Send link for image"
+                icon="pi pi-send"
+                outlined
+                size="small"
+                loading={requestPhotoLink.isPending}
+                onClick={handleSendPhotoLink}
+              />
+            )}
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-border p-3">
+            <OrderStepper status={order.status} history={order.history} />
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold tracking-wide text-text-muted uppercase">Full history</p>
+            <StageHistoryList history={order.history} />
+          </div>
+        </div>
+      )}
+    </Dialog>
   )
 }
 
 export function OrdersPage() {
   const { data: orders, isLoading } = useOrders()
   const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<Order | null>(null)
+  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { PROCESSING: 0, PRODUCTION_QUEUE: 0, DISPATCHED: 0, DELIVERED: 0, CANCELLED: 0 }
@@ -134,9 +220,11 @@ export function OrdersPage() {
               <Accordion multiple className="campaign-accordion">
                 {groups.map((group) => (
                   <AccordionTab key={group.campaignId} header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="flex flex-wrap gap-3">
                       {group.items.map((order) => (
-                        <OrderCard key={order.id} order={order} />
+                        <div key={order.id} className="w-[160px]">
+                          <OrderChip order={order} onClick={() => setSelected(order)} />
+                        </div>
                       ))}
                     </div>
                   </AccordionTab>
@@ -146,6 +234,13 @@ export function OrdersPage() {
           )}
         </>
       )}
+
+      <OrderDetailDialog
+        order={selected}
+        onHide={() => setSelected(null)}
+        onPhotoLinkSent={(o, link) => setPhotoLinkPrompt({ link, recipientName: o.recipientName, phone: o.recipientPhone })}
+      />
+      <RecipientPhotoLinkDialog prompt={photoLinkPrompt} onHide={() => setPhotoLinkPrompt(null)} />
     </div>
   )
 }

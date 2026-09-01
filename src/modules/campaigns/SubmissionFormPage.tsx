@@ -70,6 +70,17 @@ export function SubmissionFormPage() {
     return row.giftId ?? (campaign?.gifts.length === 1 ? campaign.gifts[0].id : undefined)
   }
 
+  /** True only if the campaign's form still has both fields under their default keys --
+   * mirrors the backend's same "quietly skip, never block" fallback for a renamed/removed field. */
+  function canCheckPhotoOrEmail(): boolean {
+    const fields = campaign?.fields ?? []
+    return fields.some((f) => f.fieldKey === 'photo') && fields.some((f) => f.fieldKey === 'recipientEmail')
+  }
+
+  function rowGift(row: DraftRow) {
+    return campaign?.gifts.find((g) => g.id === effectiveGiftId(row))
+  }
+
   function validateRow(row: DraftRow): Record<string, string> {
     const errors: Record<string, string> = {}
     if (!effectiveGiftId(row)) {
@@ -82,6 +93,13 @@ export function SubmissionFormPage() {
         errors[field.fieldKey] = `${field.label} is required.`
       }
     }
+
+    if (rowGift(row)?.photoRequired && canCheckPhotoOrEmail() && !row.values.photo && !row.values.recipientEmail) {
+      const message = "Upload a photo, or add the recipient's email so we can send an upload link."
+      errors.photo = message
+      errors.recipientEmail = message
+    }
+
     return errors
   }
 
@@ -315,6 +333,12 @@ export function SubmissionFormPage() {
                       placeholder="Choose"
                       className={`w-full min-w-[140px] ${row.errors.__gift ? 'p-invalid' : ''}`}
                     />
+                  )}
+                  {rowGift(row)?.photoRequired && (
+                    <small className="mt-0.5 block text-amber-600 dark:text-amber-400">
+                      <i className="pi pi-camera mr-0.5 text-[10px]" />
+                      Needs a photo or email
+                    </small>
                   )}
                 </td>
                 {campaign.fields.map((field) => (

@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createSubmission, listCampaignSubmissions, listMySubmissions, requestPhotoLink, type SubmissionValues } from '@/api/submissions'
 
-export function useCampaignSubmissions(campaignId: string | undefined) {
+export function useCampaignSubmissions(campaignId: string | undefined, enabled = true) {
   return useQuery({
     queryKey: ['submissions', 'campaign', campaignId],
     queryFn: () => listCampaignSubmissions(campaignId!),
-    enabled: Boolean(campaignId),
+    enabled: Boolean(campaignId) && enabled,
   })
 }
 

@@ -68,6 +68,7 @@ export interface CampaignAudience {
 export interface GiftSummary {
   id: string
   name: string
+  photoRequired: boolean
 }
 
 export interface Campaign {

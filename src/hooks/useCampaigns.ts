@@ -23,8 +23,8 @@ export function useCampaign(id: string | undefined) {
   return useQuery({ queryKey: campaignKey(id ?? ''), queryFn: () => getCampaign(id!), enabled: Boolean(id) })
 }
 
-export function useAudienceOptions() {
-  return useQuery({ queryKey: ['campaigns', 'audience-options'], queryFn: getAudienceOptions })
+export function useAudienceOptions(enabled = true) {
+  return useQuery({ queryKey: ['campaigns', 'audience-options'], queryFn: getAudienceOptions, enabled })
 }
 
 export function useCreateCampaign() {

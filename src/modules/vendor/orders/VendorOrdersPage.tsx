@@ -109,6 +109,17 @@ function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight
         </div>
       </div>
 
+      <div className="flex items-center gap-2">
+        <p className="text-xs text-text-muted">Recipient's photo</p>
+        {order.recipientPhotoUrl ? (
+          <a href={order.recipientPhotoUrl} target="_blank" rel="noreferrer">
+            <img src={order.recipientPhotoUrl} alt="" className="h-8 w-8 rounded-md border border-border object-cover" />
+          </a>
+        ) : (
+          <span className="text-xs text-text-muted">not uploaded yet</span>
+        )}
+      </div>
+
       {editable ? (
         <div className="flex flex-col gap-1">
           <label htmlFor={`status-${order.id}`} className="text-xs text-text-muted">

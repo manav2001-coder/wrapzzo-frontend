@@ -1,7 +1,10 @@
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
+import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
@@ -20,6 +23,18 @@ export function ApprovalQueuePage() {
   const [rejectTarget, setRejectTarget] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
+  const [search, setSearch] = useState('')
+
+  const filteredQuickGifts = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return quickGifts ?? []
+    return (quickGifts ?? []).filter(
+      (r) =>
+        r.giftName.toLowerCase().includes(q) ||
+        r.recipientName.toLowerCase().includes(q) ||
+        (r.requestedByName ?? '').toLowerCase().includes(q),
+    )
+  }, [quickGifts, search])
 
   async function handleApproveQuickGift(id: string) {
     try {
@@ -56,8 +71,22 @@ export function ApprovalQueuePage() {
       ) : (
         <div>
           <SectionHeader eyebrow={`${totalPending} pending`} title="Quick Gift requests" />
+          <div className="mb-4">
+            <IconField iconPosition="left">
+              <InputIcon className="pi pi-search" />
+              <InputText
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by gift, recipient, or requester"
+                className="w-full sm:w-80"
+              />
+            </IconField>
+          </div>
+          {filteredQuickGifts.length === 0 ? (
+            <EmptyState icon="pi-search" title="No requests match" />
+          ) : (
           <div className="flex flex-col gap-3">
-            {quickGifts?.map((request) => (
+            {filteredQuickGifts.map((request) => (
               <div key={request.id} className="rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
@@ -111,6 +140,7 @@ export function ApprovalQueuePage() {
               </div>
             ))}
           </div>
+          )}
         </div>
       )}
 

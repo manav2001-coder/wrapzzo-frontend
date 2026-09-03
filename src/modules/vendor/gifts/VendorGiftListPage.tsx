@@ -1,4 +1,8 @@
 import { Button } from 'primereact/button'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
+import { InputText } from 'primereact/inputtext'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Gift } from '@/api/gifts'
 import { EmptyState } from '@/components/EmptyState'
@@ -45,6 +49,18 @@ function VendorGiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) 
 export function VendorGiftListPage() {
   const { data: gifts, isLoading } = useVendorGifts()
   const navigate = useNavigate()
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'LISTED' | 'DELISTED'>('ALL')
+
+  const filtered = useMemo(() => {
+    return (gifts ?? []).filter((gift) => {
+      if (statusFilter === 'LISTED' && !gift.active) return false
+      if (statusFilter === 'DELISTED' && gift.active) return false
+      const q = search.trim().toLowerCase()
+      if (!q) return true
+      return gift.name.toLowerCase().includes(q) || gift.category.toLowerCase().includes(q)
+    })
+  }, [gifts, search, statusFilter])
 
   return (
     <div>
@@ -54,13 +70,7 @@ export function VendorGiftListPage() {
         actions={<Button label="Add gift" icon="pi pi-plus" onClick={() => navigate('/vendor/gifts/new')} />}
       />
 
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="aspect-[3/4] animate-pulse rounded-xl bg-surface-muted" />
-          ))}
-        </div>
-      ) : gifts?.length === 0 ? (
+      {!isLoading && gifts?.length === 0 ? (
         <EmptyState
           icon="pi-gift"
           title="No gifts yet"
@@ -68,11 +78,49 @@ export function VendorGiftListPage() {
           action={<Button label="Add gift" icon="pi pi-plus" onClick={() => navigate('/vendor/gifts/new')} />}
         />
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {gifts?.map((gift) => (
-            <VendorGiftCard key={gift.id} gift={gift} onClick={() => navigate(`/vendor/gifts/${gift.id}`)} />
-          ))}
-        </div>
+        <>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <IconField iconPosition="left">
+              <InputIcon className="pi pi-search" />
+              <InputText
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search gifts"
+                className="w-full sm:w-72"
+              />
+            </IconField>
+            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-border bg-surface p-1">
+              {(['ALL', 'LISTED', 'DELISTED'] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatusFilter(s)}
+                  className={`rounded-lg border-none px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                    statusFilter === s ? 'bg-accent text-white' : 'bg-transparent text-text-muted hover:text-text'
+                  }`}
+                >
+                  {s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="aspect-[3/4] animate-pulse rounded-xl bg-surface-muted" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState icon="pi-search" title="No gifts match" />
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {filtered.map((gift) => (
+                <VendorGiftCard key={gift.id} gift={gift} onClick={() => navigate(`/vendor/gifts/${gift.id}`)} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

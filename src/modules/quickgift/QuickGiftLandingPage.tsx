@@ -158,6 +158,8 @@ export function QuickGiftLandingPage() {
   const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('ALL')
+  const [requestSearch, setRequestSearch] = useState('')
+  const [requestStatusFilter, setRequestStatusFilter] = useState<'ALL' | QuickGiftRequest['status']>('ALL')
 
   const categories = useMemo(() => {
     const set = new Set((gifts ?? []).map((g) => g.category))
@@ -172,6 +174,15 @@ export function QuickGiftLandingPage() {
       return g.name.toLowerCase().includes(q) || g.category.toLowerCase().includes(q) || (g.description ?? '').toLowerCase().includes(q)
     })
   }, [gifts, search, category])
+
+  const filteredRequests = useMemo(() => {
+    return (requests ?? []).filter((r) => {
+      if (requestStatusFilter !== 'ALL' && r.status !== requestStatusFilter) return false
+      const q = requestSearch.trim().toLowerCase()
+      if (!q) return true
+      return r.giftName.toLowerCase().includes(q) || r.recipientName.toLowerCase().includes(q)
+    })
+  }, [requests, requestSearch, requestStatusFilter])
 
   async function handleRequestPhotoLink(request: QuickGiftRequest) {
     try {
@@ -235,26 +246,56 @@ export function QuickGiftLandingPage() {
       {!isLoading && requests?.length === 0 ? (
         <EmptyState icon="pi-bolt" title="No Quick Gift requests yet" description="Pick a gift above to send your first one — it goes straight to your Company Admin for approval." />
       ) : (
-        <div className="flex flex-col gap-3">
-          {requests?.map((request) => (
-            <button
-              key={request.id}
-              type="button"
-              onClick={() => setViewing(request)}
-              className="rounded-lg border border-border bg-surface p-4 text-left transition-colors hover:border-accent/50"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <span className="font-medium text-text">{request.giftName}</span>
-                  <span className="ml-2 text-xs text-text-muted">for {request.recipientName}</span>
-                </div>
-                <StatusBadge status={request.status} label={humanize(request.status)} />
-              </div>
-              <p className="mt-1 text-xs text-text-muted">{new Date(request.createdAt).toLocaleString()}</p>
-              {request.rejectionReason && <p className="mt-2 text-sm text-red-500 dark:text-red-400">Rejected: {request.rejectionReason}</p>}
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <InputText
+              value={requestSearch}
+              onChange={(e) => setRequestSearch(e.target.value)}
+              placeholder="Search by gift or recipient..."
+              className="w-full sm:w-72"
+            />
+            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-border bg-surface p-1">
+              {(['ALL', 'SUBMITTED', 'APPROVED', 'REJECTED'] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setRequestStatusFilter(s)}
+                  className={`rounded-lg border-none px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                    requestStatusFilter === s ? 'bg-accent text-white' : 'bg-transparent text-text-muted hover:text-text'
+                  }`}
+                >
+                  {s === 'ALL' ? 'All' : humanize(s)}
+                </button>
+              ))}
+            </div>
+          </div>
+          {filteredRequests.length === 0 ? (
+            <EmptyState icon="pi-search" title="No requests match" />
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filteredRequests.map((request) => (
+                <button
+                  key={request.id}
+                  type="button"
+                  onClick={() => setViewing(request)}
+                  className="rounded-lg border border-border bg-surface p-4 text-left transition-colors hover:border-accent/50"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="font-medium text-text">{request.giftName}</span>
+                      <span className="ml-2 text-xs text-text-muted">for {request.recipientName}</span>
+                    </div>
+                    <StatusBadge status={request.status} label={humanize(request.status)} />
+                  </div>
+                  <p className="mt-1 text-xs text-text-muted">{new Date(request.createdAt).toLocaleString()}</p>
+                  {request.rejectionReason && (
+                    <p className="mt-2 text-sm text-red-500 dark:text-red-400">Rejected: {request.rejectionReason}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <QuickGiftDetailDialog

@@ -1,5 +1,8 @@
 import { Button } from 'primereact/button'
 import { confirmDialog } from 'primereact/confirmdialog'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
+import { InputText } from 'primereact/inputtext'
 import { MultiSelect } from 'primereact/multiselect'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { TabPanel, TabView } from 'primereact/tabview'
@@ -89,10 +92,12 @@ function SubmissionCard({ submission }: { submission: Submission }) {
 function SubmissionList({
   submissions,
   isLoading,
+  emptyTitle = 'No submissions yet',
   emptyDescription,
 }: {
   submissions: Submission[] | undefined
   isLoading: boolean
+  emptyTitle?: string
   emptyDescription: string
 }) {
   if (isLoading) {
@@ -103,7 +108,7 @@ function SubmissionList({
     )
   }
   if (!submissions || submissions.length === 0) {
-    return <EmptyState icon="pi-inbox" title="No submissions yet" description={emptyDescription} />
+    return <EmptyState icon="pi-inbox" title={emptyTitle} description={emptyDescription} />
   }
   return (
     <div className="flex flex-col gap-3">
@@ -145,6 +150,7 @@ export function CampaignDetailPage() {
 
   const [orgUnitIdsDraft, setOrgUnitIdsDraft] = useState<Set<string> | null>(null)
   const [giftsDraft, setGiftsDraft] = useState<string[] | null>(null)
+  const [submissionSearch, setSubmissionSearch] = useState('')
 
   if (isLoading || !campaign) {
     return (
@@ -164,6 +170,14 @@ export function CampaignDetailPage() {
     )
   const audienceDirty = orgUnitIdsDraft !== null
   const myCampaignSubmissions = (mySubmissionsQuery.data ?? []).filter((s) => s.campaignId === campaignId)
+
+  const submissionSearchQuery = submissionSearch.trim().toLowerCase()
+  const filteredSubmissions = !submissionSearchQuery
+    ? submissionsQuery.data
+    : (submissionsQuery.data ?? []).filter((s) => {
+        const haystack = [s.submittedByName, ...s.values.map((v) => (Array.isArray(v.value) ? v.value.join(' ') : String(v.value ?? '')))]
+        return haystack.some((value) => value.toLowerCase().includes(submissionSearchQuery))
+      })
 
   function confirmActivate() {
     confirmDialog({
@@ -246,10 +260,28 @@ export function CampaignDetailPage() {
   if (canReviewSubmissions) {
     panels.push(
       <TabPanel key="submissions" header={`Submissions${submissionsQuery.data ? ` (${submissionsQuery.data.length})` : ''}`}>
+        {submissionsQuery.data && submissionsQuery.data.length > 0 && (
+          <div className="mb-4">
+            <IconField iconPosition="left">
+              <InputIcon className="pi pi-search" />
+              <InputText
+                value={submissionSearch}
+                onChange={(e) => setSubmissionSearch(e.target.value)}
+                placeholder="Search by submitter or recipient details"
+                className="w-full sm:w-80"
+              />
+            </IconField>
+          </div>
+        )}
         <SubmissionList
-          submissions={submissionsQuery.data}
+          submissions={filteredSubmissions}
           isLoading={submissionsQuery.isLoading}
-          emptyDescription="Recipients submitted by your team for this campaign will appear here."
+          emptyTitle={submissionSearchQuery ? 'No submissions match' : 'No submissions yet'}
+          emptyDescription={
+            submissionSearchQuery
+              ? 'Try a different name or search term.'
+              : 'Recipients submitted by your team for this campaign will appear here.'
+          }
         />
       </TabPanel>,
     )

@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { confirmDialog } from 'primereact/confirmdialog'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
+import { Checkbox } from 'primereact/checkbox'
 import { FileUpload } from 'primereact/fileupload'
 import { InputText } from 'primereact/inputtext'
 import { ProgressSpinner } from 'primereact/progressspinner'
@@ -14,7 +15,61 @@ import { uploadCompanyLogo } from '@/api/companies'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useCompany, useCreateCompany, useSetCompanyStatus, useUpdateCompany, useUploadCompanyLogo } from '@/hooks/useCompanies'
+import { useAssignCompanyVendor, useCompanyVendors, useUnassignCompanyVendor } from '@/hooks/useCompanyVendors'
+import { useVendors } from '@/hooks/useVendors'
 import { showApiError, showToast } from '@/lib/toast'
+
+/** Which vendors this company sees in its Gift Store -- see GiftBrowseController/company_vendors. */
+function VendorRosterCard({ companyId }: { companyId: string }) {
+  const { data: allVendors, isLoading: loadingVendors } = useVendors()
+  const { data: assigned, isLoading: loadingAssigned } = useCompanyVendors(companyId)
+  const assignVendor = useAssignCompanyVendor(companyId)
+  const unassignVendor = useUnassignCompanyVendor(companyId)
+
+  const assignedIds = useMemo(() => new Set((assigned ?? []).map((v) => v.vendorId)), [assigned])
+
+  async function handleToggle(vendorId: string, checked: boolean) {
+    try {
+      if (checked) {
+        await assignVendor.mutateAsync(vendorId)
+      } else {
+        await unassignVendor.mutateAsync(vendorId)
+      }
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  if (loadingVendors || loadingAssigned) {
+    return (
+      <Card title="Vendors">
+        <p className="text-sm text-text-muted">Loading...</p>
+      </Card>
+    )
+  }
+
+  return (
+    <Card title="Vendors" subTitle="Only gifts from checked vendors appear in this company's Gift Store.">
+      {!allVendors || allVendors.length === 0 ? (
+        <p className="text-sm text-text-muted">No vendors onboarded yet.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {allVendors.map((vendor) => (
+            <label key={vendor.id} className="flex items-center gap-2 text-sm text-text">
+              <Checkbox
+                checked={assignedIds.has(vendor.id)}
+                onChange={(e) => handleToggle(vendor.id, e.checked ?? false)}
+                disabled={assignVendor.isPending || unassignVendor.isPending}
+              />
+              {vendor.name}
+              {vendor.status === 'SUSPENDED' && <span className="text-xs text-text-muted">(suspended)</span>}
+            </label>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
 
 const companySchema = z.object({
   name: z.string().min(1, 'Company name is required'),
@@ -247,6 +302,8 @@ export function CompanyFormPage() {
               )}
             </div>
           </Card>
+
+          {isEdit && company && <VendorRosterCard companyId={company.id} />}
         </div>
       </div>
     </div>

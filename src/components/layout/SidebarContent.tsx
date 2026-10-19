@@ -14,6 +14,12 @@ function isLinkVisible(requiresPermission: string | string[] | undefined, permis
   return required.some((key) => permissions?.includes(key) ?? false)
 }
 
+/** A group with every one of its own links permission-gated out has nothing to show -- render nothing rather than an empty expandable header. */
+function isEntryVisible(entry: NavEntry, permissions: string[] | undefined): boolean {
+  if (entry.type === 'link') return isLinkVisible(entry.requiresPermission, permissions)
+  return entry.items.some((item) => isLinkVisible(item.requiresPermission, permissions))
+}
+
 /** True if the current path is exactly one of a group's links, or nested under one. */
 function isPathInGroup(pathname: string, items: NavEntry[]): boolean {
   return items.some((item) => item.type === 'link' && (pathname === item.to || pathname.startsWith(`${item.to}/`)))
@@ -87,7 +93,7 @@ function NavEntries({
   /** undefined while still loading -- gated links stay hidden until we've confirmed the key, rather than flashing then hiding. */
   permissions: string[] | undefined
 }) {
-  const visibleEntries = entries.filter((entry) => entry.type !== 'link' || isLinkVisible(entry.requiresPermission, permissions))
+  const visibleEntries = entries.filter((entry) => isEntryVisible(entry, permissions))
   const location = useLocation()
   return (
     <div className={depth > 0 ? 'mt-0.5 ml-3 space-y-0.5 border-l border-sidebar-border pl-2' : 'space-y-0.5'}>

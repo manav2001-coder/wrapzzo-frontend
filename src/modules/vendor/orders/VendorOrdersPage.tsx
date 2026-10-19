@@ -2,7 +2,7 @@ import { Dropdown } from 'primereact/dropdown'
 import { IconField } from 'primereact/iconfield'
 import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import type { OrderStatus } from '@/api/orders'
 import type { VendorOrder } from '@/api/vendorOrders'
 import { EmptyState } from '@/components/EmptyState'
@@ -11,8 +11,52 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useUpdateVendorOrderStatus, useVendorOrders } from '@/hooks/useVendorOrders'
+import { useUploadVendorOrderDesign, useVendorOrderDesigns } from '@/hooks/useVendorOrderDesigns'
 import { formatCurrency, humanize } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
+
+/** PEL process steps 5-6 (Design &amp; QC, Review &amp; rework): upload an artwork proof for this order, see the latest review verdict. */
+function DesignUploadSection({ orderId }: { orderId: string }) {
+  const { data: designs } = useVendorOrderDesigns(orderId)
+  const upload = useUploadVendorOrderDesign(orderId)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const latest = designs?.[0]
+
+  async function handleFileSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    try {
+      await upload.mutateAsync(file)
+      showToast({ severity: 'success', summary: 'Design uploaded for review' })
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-text-muted">Design proof</p>
+        {latest && <StatusBadge status={latest.status} label={humanize(latest.status)} />}
+      </div>
+      {latest?.status === 'REJECTED' && latest.reviewComment && (
+        <p className="text-xs text-text-muted">
+          <span className="font-medium text-text">Rework requested:</span> {latest.reviewComment}
+        </p>
+      )}
+      <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFileSelected} />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={upload.isPending}
+        className="self-start text-xs font-medium text-accent hover:underline disabled:opacity-50"
+      >
+        {upload.isPending ? 'Uploading...' : latest ? 'Upload new version' : 'Upload design proof'}
+      </button>
+    </div>
+  )
+}
 
 /** Mirrors OrderService's VENDOR_SELECTABLE_STATUSES / VENDOR_EDITABLE_SOURCE_STATUSES server-side. */
 const VENDOR_SELECTABLE_STATUSES: OrderStatus[] = ['PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED']
@@ -119,6 +163,8 @@ function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight
           <span className="text-xs text-text-muted">not uploaded yet</span>
         )}
       </div>
+
+      <DesignUploadSection orderId={order.id} />
 
       {editable ? (
         <div className="flex flex-col gap-1">

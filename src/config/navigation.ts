@@ -4,8 +4,8 @@ export interface NavLink {
   to: string
   icon: string
   end?: boolean
-  /** Hide this link unless the current user holds this access-control key (see useHasPermission). Omit to always show. */
-  requiresPermission?: string
+  /** Hide this link unless the current user holds this access-control key (see useHasPermission). An array means "any of" these. Omit to always show. */
+  requiresPermission?: string | string[]
 }
 
 /** A collapsible submenu nested one level inside a NavModule -- e.g. "Campaign Module" holding Create/Manage. */
@@ -77,7 +77,13 @@ const CAMPAIGNS_MODULE: NavModule = {
     { type: 'link', label: 'Gift Store', to: '/gift-store', icon: 'pi-shop', requiresPermission: 'quickgift.create' },
     { type: 'link', label: 'Recipients', to: '/recipients', icon: 'pi-address-book', requiresPermission: 'recipient.manage' },
     { type: 'link', label: 'Approvals', to: '/approvals', icon: 'pi-check-square', requiresPermission: 'campaign.manage' },
-    { type: 'link', label: 'Orders', to: '/orders', icon: 'pi-shopping-bag', requiresPermission: 'campaign.manage' },
+    {
+      type: 'link',
+      label: 'Orders',
+      to: '/orders',
+      icon: 'pi-shopping-bag',
+      requiresPermission: ['campaign.manage', 'order.track', 'order.design.review'],
+    },
     { type: 'link', label: 'Users', to: '/company/users', icon: 'pi-users', requiresPermission: 'user.manage' },
   ],
 }

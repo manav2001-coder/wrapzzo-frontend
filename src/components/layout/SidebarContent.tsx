@@ -7,6 +7,13 @@ import { getNavModules, type NavEntry, type NavModule } from '@/config/navigatio
 import { toggleModuleExpanded } from '@/features/ui/uiSlice'
 import { usePermissions } from '@/hooks/usePermissions'
 
+/** A link with no requiresPermission is always visible; an array means "holds any one of these". */
+function isLinkVisible(requiresPermission: string | string[] | undefined, permissions: string[] | undefined): boolean {
+  if (!requiresPermission) return true
+  const required = Array.isArray(requiresPermission) ? requiresPermission : [requiresPermission]
+  return required.some((key) => permissions?.includes(key) ?? false)
+}
+
 /** True if the current path is exactly one of a group's links, or nested under one. */
 function isPathInGroup(pathname: string, items: NavEntry[]): boolean {
   return items.some((item) => item.type === 'link' && (pathname === item.to || pathname.startsWith(`${item.to}/`)))
@@ -80,9 +87,7 @@ function NavEntries({
   /** undefined while still loading -- gated links stay hidden until we've confirmed the key, rather than flashing then hiding. */
   permissions: string[] | undefined
 }) {
-  const visibleEntries = entries.filter(
-    (entry) => entry.type !== 'link' || !entry.requiresPermission || (permissions?.includes(entry.requiresPermission) ?? false),
-  )
+  const visibleEntries = entries.filter((entry) => entry.type !== 'link' || isLinkVisible(entry.requiresPermission, permissions))
   const location = useLocation()
   return (
     <div className={depth > 0 ? 'mt-0.5 ml-3 space-y-0.5 border-l border-sidebar-border pl-2' : 'space-y-0.5'}>
@@ -95,7 +100,7 @@ function NavEntries({
           return (
             <div key={entry.key} className="space-y-0.5">
               {entry.items
-                .filter((item) => !item.requiresPermission || (permissions?.includes(item.requiresPermission) ?? false))
+                .filter((item) => isLinkVisible(item.requiresPermission, permissions))
                 .map((item) => (
                   <NavLeafLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
                 ))}

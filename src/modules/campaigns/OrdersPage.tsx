@@ -4,6 +4,7 @@ import { Dialog } from 'primereact/dialog'
 import { IconField } from 'primereact/iconfield'
 import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
+import { InputTextarea } from 'primereact/inputtextarea'
 import { useMemo, useState } from 'react'
 import type { Order } from '@/api/orders'
 import { EmptyState } from '@/components/EmptyState'
@@ -13,10 +14,100 @@ import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/compo
 import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDonutChart } from '@/components/StatusDonutChart'
+import { useApproveOrderDesign, useOrderDesigns, useRejectOrderDesign } from '@/hooks/useOrderDesigns'
 import { useOrders, useRequestOrderPhotoLink } from '@/hooks/useOrders'
+import { useHasPermission } from '@/hooks/usePermissions'
 import { formatCurrency, humanize } from '@/lib/format'
 import { groupByCampaign } from '@/lib/groupByCampaign'
 import { showApiError, showToast } from '@/lib/toast'
+
+/** PEL process steps 5-6 (Design &amp; QC, Review &amp; rework) -- only shown to a reviewer holding order.design.review. */
+function DesignReviewSection({ orderId }: { orderId: string }) {
+  const { data: designs, isLoading } = useOrderDesigns(orderId)
+  const approve = useApproveOrderDesign(orderId)
+  const reject = useRejectOrderDesign(orderId)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [comment, setComment] = useState('')
+
+  async function handleApprove(designId: string) {
+    try {
+      await approve.mutateAsync(designId)
+      showToast({ severity: 'success', summary: 'Design approved' })
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  async function handleReject() {
+    if (!rejectingId || !comment.trim()) return
+    try {
+      await reject.mutateAsync({ designId: rejectingId, comment: comment.trim() })
+      showToast({ severity: 'success', summary: 'Sent back for rework' })
+      setRejectingId(null)
+      setComment('')
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  if (isLoading) return null
+  if (!designs || designs.length === 0) {
+    return (
+      <div>
+        <p className="mb-2 text-xs font-semibold tracking-wide text-text-muted uppercase">Design review</p>
+        <p className="text-sm text-text-muted">No artwork proof uploaded by the vendor yet.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold tracking-wide text-text-muted uppercase">Design review</p>
+      <div className="flex flex-col gap-3">
+        {designs.map((design) => (
+          <div key={design.id} className="rounded-xl border border-border p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium text-text">Version {design.versionNo}</p>
+                <p className="text-xs text-text-muted">by {design.uploadedByVendorName}</p>
+              </div>
+              <StatusBadge status={design.status} label={humanize(design.status)} />
+            </div>
+            <a href={design.fileUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-accent hover:underline">
+              View file{design.fileName ? ` (${design.fileName})` : ''}
+            </a>
+            {design.status === 'REJECTED' && design.reviewComment && (
+              <p className="mt-2 text-xs text-text-muted">
+                <span className="font-medium text-text">Rework requested:</span> {design.reviewComment}
+              </p>
+            )}
+            {design.status === 'PENDING_REVIEW' && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Button label="Approve" icon="pi pi-check" size="small" loading={approve.isPending} onClick={() => handleApprove(design.id)} />
+                <Button
+                  label="Send back for rework"
+                  icon="pi pi-undo"
+                  size="small"
+                  outlined
+                  severity="danger"
+                  onClick={() => setRejectingId(design.id)}
+                />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <Dialog header="Send back for rework" visible={rejectingId !== null} onHide={() => setRejectingId(null)} style={{ width: '28rem' }} modal>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-text-muted">Tell the vendor what needs to change -- they'll see this and upload the next version.</p>
+          <InputTextarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} autoResize placeholder="E.g. logo too small, wrong color..." />
+          <Button label="Send" icon="pi pi-send" loading={reject.isPending} disabled={!comment.trim()} onClick={handleReject} />
+        </div>
+      </Dialog>
+    </div>
+  )
+}
 
 function CampaignAccordionHeader({ campaignName, orders }: { campaignName: string; orders: Order[] }) {
   const statusCounts = useMemo(() => {
@@ -78,6 +169,7 @@ function OrderDetailDialog({
   onPhotoLinkSent: (order: Order, link: string) => void
 }) {
   const requestPhotoLink = useRequestOrderPhotoLink()
+  const canReviewDesign = useHasPermission('order.design.review')
 
   async function handleSendPhotoLink() {
     if (!order) return
@@ -149,6 +241,8 @@ function OrderDetailDialog({
             <p className="mb-2 text-xs font-semibold tracking-wide text-text-muted uppercase">Full history</p>
             <StageHistoryList history={order.history} />
           </div>
+
+          {canReviewDesign && <DesignReviewSection orderId={order.id} />}
         </div>
       )}
     </Dialog>

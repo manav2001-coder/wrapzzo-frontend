@@ -5,6 +5,8 @@ export interface AddMyVendorInput {
   name: string
   contactEmail: string
   contactPhone?: string
+  /** Null/omitted = this vendor serves the whole company. Set = scoped to one org unit and everything beneath it. */
+  orgUnitId?: string | null
 }
 
 export async function listMyVendors(): Promise<CompanyVendor[]> {

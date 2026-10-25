@@ -44,7 +44,8 @@ export function OrderProgressBar({ status }: { status: OrderStatus }) {
  * reconstructed guess. There's no per-stage history for a stage the order hasn't reached
  * yet, so those just show their label with no date. CANCELLED is a distinct terminal badge
  * instead of a stepper position, since it doesn't map onto the Processing -> Delivered
- * sequence at any one point.
+ * sequence at any one point. Numbered circles (not icons) with a soft halo on the current
+ * step and a full-width connecting line -- a plain, legible wizard-step look.
  */
 export function OrderStepper({ status, history }: { status: OrderStatus; history: StageEvent[] }) {
   if (status === 'CANCELLED') {
@@ -60,27 +61,29 @@ export function OrderStepper({ status, history }: { status: OrderStatus; history
   return (
     <div className="flex items-start">
       {STAGES.map((stage, i) => {
-        const isComplete = i <= currentIndex
+        const isComplete = i < currentIndex
         const isCurrent = i === currentIndex
         const at = atByStatus.get(stage.key)
         return (
-          <div key={stage.key} className="flex shrink-0 items-start">
-            <div className="flex w-16 flex-col items-center gap-1 text-center sm:w-20">
+          <div key={stage.key} className="flex flex-1 items-start last:flex-none">
+            <div className="flex w-16 flex-col items-center gap-1.5 text-center sm:w-20">
               <div
-                className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 text-[11px] transition-colors ${
+                className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-semibold transition-shadow ${
                   isCurrent
-                    ? 'border-accent bg-accent text-white'
+                    ? 'bg-accent text-white ring-4 ring-accent/20'
                     : isComplete
-                      ? 'border-emerald-500 bg-emerald-500 text-white'
-                      : 'border-border bg-surface text-text-muted'
+                      ? 'bg-accent text-white'
+                      : 'bg-surface-muted text-text-muted'
                 }`}
               >
-                <i className={`pi ${stage.icon}`} />
+                {isComplete ? <i className="pi pi-check text-[13px]" /> : i + 1}
               </div>
-              <span className={`text-[10px] font-medium whitespace-nowrap ${isComplete ? 'text-text' : 'text-text-muted'}`}>{stage.label}</span>
+              <span className={`text-[11px] font-medium whitespace-nowrap ${isComplete || isCurrent ? 'text-text' : 'text-text-muted'}`}>
+                {stage.label}
+              </span>
               <span className="text-[9px] whitespace-nowrap text-text-muted">{at ? format(new Date(at), 'dd MMM') : '—'}</span>
             </div>
-            {i < STAGES.length - 1 && <div className={`mt-3.5 h-0.5 w-4 shrink-0 sm:w-8 ${i < currentIndex ? 'bg-emerald-500' : 'bg-border'}`} />}
+            {i < STAGES.length - 1 && <div className={`mt-4.5 h-0.5 flex-1 ${i < currentIndex ? 'bg-accent' : 'bg-border'}`} />}
           </div>
         )
       })}

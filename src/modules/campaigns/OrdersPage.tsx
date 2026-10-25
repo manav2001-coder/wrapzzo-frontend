@@ -224,24 +224,28 @@ function OrderDetailPanel({
       visible={order !== null}
       onHide={onHide}
       position="right"
-      className="w-full sm:w-[28rem] md:w-[34rem]"
-      pt={{ content: { className: 'p-0' } }}
+      className="w-full sm:w-[28rem] md:w-[36rem]"
+      header={
+        order ? (
+          <div className="flex items-center gap-3">
+            <GiftThumb url={order.giftImageUrl} size="h-10 w-10" />
+            <div className="min-w-0">
+              <h2 className="truncate text-base font-semibold text-text">{order.giftName ?? order.displayId}</h2>
+              <p className="truncate text-xs text-text-muted">
+                {order.displayId} · {humanize(order.source)}
+              </p>
+            </div>
+          </div>
+        ) : undefined
+      }
+      pt={{ content: { className: 'p-0' }, header: { className: 'border-b border-border px-6 py-4' } }}
     >
       {order && (
         <div className="flex h-full flex-col">
-          <div className="border-b border-border bg-surface-muted/50 px-6 py-5">
-            <div className="flex items-start gap-3.5">
-              <GiftThumb url={order.giftImageUrl} size="h-16 w-16" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-text-muted">
-                  {order.displayId} · {humanize(order.source)}
-                </p>
-                <h2 className="truncate text-lg font-semibold text-text">{order.giftName ?? order.displayId}</h2>
-                <p className="truncate text-sm text-text-muted">{order.recipientName ?? '—'}</p>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-text">{formatCurrency(order.totalPrice)}</span>
+          <div className="flex items-center justify-between border-b border-border px-6 py-3.5">
+            <span className="text-sm text-text-muted">{order.recipientName ?? '—'}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-text tabular-nums">{formatCurrency(order.totalPrice)}</span>
               <StatusBadge status={order.status} label={humanize(order.status)} />
             </div>
           </div>
@@ -254,7 +258,12 @@ function OrderDetailPanel({
               </div>
             )}
 
-            <div className="mb-6 flex items-start justify-between gap-3">
+            <div className="mb-7 overflow-x-auto">
+              <p className="mb-4 text-xs font-semibold tracking-wide text-text-muted uppercase">Fulfillment status</p>
+              <OrderStepper status={order.status} history={order.history} />
+            </div>
+
+            <div className="mb-7 flex items-start justify-between gap-3 border-t border-border pt-5">
               <div>
                 <p className="mb-1.5 text-xs text-text-muted">Recipient's photo</p>
                 {order.recipientPhotoUrl ? (
@@ -279,22 +288,18 @@ function OrderDetailPanel({
               )}
             </div>
 
-            <div className="mb-6 overflow-x-auto rounded-xl border border-border p-3">
-              <OrderStepper status={order.status} history={order.history} />
-            </div>
-
             {canReviewDesign && (
-              <div className="mb-6">
+              <div className="mb-7 border-t border-border pt-5">
                 <DesignReviewSection orderId={order.id} />
               </div>
             )}
 
-            <details className="group">
+            <details className="group border-t border-border pt-5">
               <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold tracking-wide text-text-muted uppercase">
                 <i className="pi pi-chevron-right text-[10px] transition-transform group-open:rotate-90" />
                 Full history
               </summary>
-              <div className="mt-2">
+              <div className="mt-3">
                 <StageHistoryList history={order.history} />
               </div>
             </details>
@@ -305,20 +310,52 @@ function OrderDetailPanel({
   )
 }
 
-/** The main, scalable view: a proper paginated/sortable/filterable table -- cards don't hold up once a company has hundreds of orders. */
+/** Downloads the currently-visible rows as a CSV -- the "Export" affordance matching real ops-table conventions. */
+function exportOrdersCsv(orders: Order[]) {
+  const header = ['Order ID', 'Gift', 'Recipient', 'Source', 'Vendor', 'Status', 'Price', 'Created']
+  const rows = orders.map((o) => [
+    o.displayId,
+    o.giftName ?? '',
+    o.recipientName ?? '',
+    o.source === 'CAMPAIGN' ? (o.campaignName ?? '') : humanize(o.source),
+    o.assignedVendorName ?? '',
+    humanize(o.status),
+    o.totalPrice ?? '',
+    new Date(o.createdAt).toLocaleDateString(),
+  ])
+  const csv = [header, ...rows].map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', `orders-${new Date().toISOString().slice(0, 10)}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+/** The main, scalable view: a proper paginated/sortable/filterable table with per-column
+ * filters, not cards -- cards don't hold up once a company has hundreds of orders. */
 function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Order) => void }) {
-  const [search, setSearch] = useState('')
+  const [globalSearch, setGlobalSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL')
+  const [vendorFilter, setVendorFilter] = useState<string | 'ALL'>('ALL')
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false)
   const canReviewDesign = useHasPermission('order.design.review')
 
   const needsReviewCount = useMemo(() => orders.filter((o) => o.hasPendingDesignReview).length, [orders])
+  const vendorOptions = useMemo(() => {
+    const names = [...new Set(orders.map((o) => o.assignedVendorName).filter((v): v is string => Boolean(v)))].sort()
+    return [{ label: 'All vendors', value: 'ALL' }, ...names.map((name) => ({ label: name, value: name }))]
+  }, [orders])
 
   const filtered = useMemo(() => {
     let result = orders
     if (statusFilter !== 'ALL') result = result.filter((o) => o.status === statusFilter)
+    if (vendorFilter !== 'ALL') result = result.filter((o) => o.assignedVendorName === vendorFilter)
     if (onlyNeedsReview) result = result.filter((o) => o.hasPendingDesignReview)
-    const query = search.trim().toLowerCase()
+    const query = globalSearch.trim().toLowerCase()
     if (query) {
       result = result.filter((order) =>
         [order.displayId, order.giftName, order.recipientName, order.campaignName, order.assignedVendorName, humanize(order.source)]
@@ -327,21 +364,15 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
       )
     }
     return result
-  }, [orders, search, statusFilter, onlyNeedsReview])
+  }, [orders, globalSearch, statusFilter, vendorFilter, onlyNeedsReview])
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <IconField iconPosition="left">
           <InputIcon className="pi pi-search" />
-          <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders" className="w-full sm:w-72" />
+          <InputText value={globalSearch} onChange={(e) => setGlobalSearch(e.target.value)} placeholder="Search..." className="w-full sm:w-72" />
         </IconField>
-        <Dropdown
-          value={statusFilter}
-          options={STATUS_OPTIONS}
-          onChange={(e) => setStatusFilter(e.value)}
-          className="w-full sm:w-52"
-        />
         {canReviewDesign && needsReviewCount > 0 && (
           <button
             type="button"
@@ -353,13 +384,16 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
             <i className="pi pi-eye" /> {needsReviewCount} need{needsReviewCount === 1 ? 's' : ''} design review
           </button>
         )}
-        <span className="ml-auto text-xs text-text-muted">
-          {filtered.length} of {orders.length} order{orders.length === 1 ? '' : 's'}
-        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-text-muted">
+            {filtered.length} of {orders.length}
+          </span>
+          <Button label="Export" icon="pi pi-upload" outlined size="small" onClick={() => exportOrdersCsv(filtered)} />
+        </div>
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState icon="pi-search" title="No orders match" description="Try a different search term or status filter." />
+      {filtered.length === 0 && globalSearch === '' && statusFilter === 'ALL' && vendorFilter === 'ALL' && !onlyNeedsReview ? (
+        <EmptyState icon="pi-shopping-bag" title="No orders yet" description="Orders appear here once a submission is approved." />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <DataTable
@@ -368,10 +402,15 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
             paginator
             rows={15}
             rowsPerPageOptions={[15, 30, 50]}
+            paginatorTemplate="RowsPerPageDropdown CurrentPageReport FirstPageLink PrevPageLink NextPageLink LastPageLink"
+            currentPageReportTemplate="{first}-{last} of {totalRecords}"
             sortMode="multiple"
             onRowClick={(e) => onOpen(e.data as Order)}
             rowClassName={() => 'cursor-pointer'}
-            className="min-w-[860px]"
+            emptyMessage="No orders match your filters."
+            filterDisplay="row"
+            filters={{ assignedVendorName: { value: null, matchMode: 'equals' }, status: { value: null, matchMode: 'equals' } }}
+            className="min-w-[920px]"
           >
             <Column
               header="Gift"
@@ -399,12 +438,43 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               sortable
               body={(row: Order) => (row.source === 'CAMPAIGN' ? row.campaignName : humanize(row.source))}
             />
-            <Column header="Vendor" field="assignedVendorName" sortable body={(row: Order) => row.assignedVendorName ?? '—'} />
+            <Column
+              header="Vendor"
+              field="assignedVendorName"
+              sortable
+              body={(row: Order) => row.assignedVendorName ?? '—'}
+              filter
+              filterField="assignedVendorName"
+              showFilterMenu={false}
+              filterHeaderClassName="pt-2 pb-2.5"
+              filterElement={() => (
+                <Dropdown
+                  value={vendorFilter}
+                  options={vendorOptions}
+                  onChange={(e) => setVendorFilter(e.value)}
+                  className="w-full"
+                  panelClassName="text-sm"
+                />
+              )}
+            />
             <Column
               header="Status"
               field="status"
               sortable
               body={(row: Order) => <StatusBadge status={row.status} label={humanize(row.status)} />}
+              filter
+              filterField="status"
+              showFilterMenu={false}
+              filterHeaderClassName="pt-2 pb-2.5"
+              filterElement={() => (
+                <Dropdown
+                  value={statusFilter}
+                  options={STATUS_OPTIONS}
+                  onChange={(e) => setStatusFilter(e.value)}
+                  className="w-full"
+                  panelClassName="text-sm"
+                />
+              )}
             />
             <Column
               header="Price"
@@ -420,7 +490,22 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               sortable
               body={(row: Order) => new Date(row.createdAt).toLocaleDateString()}
             />
-            <Column header="" body={() => <i className="pi pi-chevron-right text-xs text-text-muted" />} style={{ width: '2.5rem' }} />
+            <Column
+              header=""
+              body={(row: Order) => (
+                <Button
+                  icon="pi pi-eye"
+                  text
+                  rounded
+                  aria-label="View order"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onOpen(row)
+                  }}
+                />
+              )}
+              style={{ width: '3.5rem' }}
+            />
           </DataTable>
         </div>
       )}

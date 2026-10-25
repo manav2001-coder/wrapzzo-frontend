@@ -39,6 +39,8 @@ export interface Order {
   createdAt: string
   /** Every stage this order has actually passed through, oldest first, each with a real timestamp. */
   history: StageEvent[]
+  /** True if an artwork version is sitting in PENDING_REVIEW right now -- drives the "needs design review" indicator. */
+  hasPendingDesignReview: boolean
 }
 
 export async function listOrders(): Promise<Order[]> {

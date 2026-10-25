@@ -6,13 +6,18 @@ import { Dialog } from 'primereact/dialog'
 import { IconField } from 'primereact/iconfield'
 import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { Recipient } from '@/api/recipients'
 import { EmptyState } from '@/components/EmptyState'
-import { useRecipients } from '@/hooks/useRecipients'
+import { useRecipientSearch } from '@/hooks/useRecipients'
 import { parseDateOnly } from '@/lib/format'
 
-/** Browse the shared recipient directory and pick several at once -- e.g. to add them straight into a Quick Gift/submission form instead of retyping their details. */
+/**
+ * Search the shared recipient directory (an existing doctor) and pick several at once --
+ * e.g. to add them straight into a Quick Gift form instead of retyping their details. Live
+ * search, not a full-directory load: works for anyone who can send a gift (quickgift.create),
+ * not just recipient.manage holders -- see RecipientController.search.
+ */
 export function RecipientPickerDialog({
   visible,
   onHide,
@@ -22,17 +27,10 @@ export function RecipientPickerDialog({
   onHide: () => void
   onConfirm: (recipients: Recipient[]) => void
 }) {
-  const { data: recipients, isLoading } = useRecipients()
   const [search, setSearch] = useState('')
+  const { data: results, isLoading, isFetching } = useRecipientSearch(search)
   const [selected, setSelected] = useState<Recipient[]>([])
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return recipients ?? []
-    return (recipients ?? []).filter(
-      (r) => r.name.toLowerCase().includes(q) || r.phone.toLowerCase().includes(q) || (r.email ?? '').toLowerCase().includes(q),
-    )
-  }, [recipients, search])
+  const filtered = results ?? []
 
   function handleHide() {
     setSelected([])
@@ -48,7 +46,7 @@ export function RecipientPickerDialog({
 
   return (
     <Dialog
-      header="Browse existing recipients"
+      header="Pick an existing doctor"
       visible={visible}
       onHide={handleHide}
       style={{ width: '48rem' }}
@@ -58,12 +56,20 @@ export function RecipientPickerDialog({
       <div className="mb-3">
         <IconField iconPosition="left">
           <InputIcon className="pi pi-search" />
-          <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, phone, or email" className="w-full" />
+          <InputText
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by doctor name or phone"
+            className="w-full"
+            autoFocus
+          />
         </IconField>
       </div>
 
-      {!isLoading && (recipients ?? []).length === 0 ? (
-        <EmptyState icon="pi-address-book" title="No recipients yet" description="Recipients you add or submit gifts to will show up here." />
+      {search.trim().length === 0 ? (
+        <EmptyState icon="pi-search" title="Start typing to search" description="Find a doctor already in your directory by name or phone." />
+      ) : !isLoading && filtered.length === 0 ? (
+        <EmptyState icon="pi-address-book" title="No matches" description="No doctor matches that search -- add them as a new recipient instead." />
       ) : (
         <DataTable
           value={filtered}
@@ -71,7 +77,7 @@ export function RecipientPickerDialog({
           selection={selected}
           onSelectionChange={(e) => setSelected(e.value as Recipient[])}
           dataKey="id"
-          loading={isLoading}
+          loading={isFetching}
           scrollable
           scrollHeight="360px"
           tableStyle={{ minWidth: '36rem' }}

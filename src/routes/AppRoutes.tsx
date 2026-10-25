@@ -20,6 +20,7 @@ import { CampaignWizardPage } from '@/modules/campaigns/CampaignWizardPage'
 import { MyCampaignsPage } from '@/modules/campaigns/MyCampaignsPage'
 import { OrdersPage as CampaignOrdersPage } from '@/modules/campaigns/OrdersPage'
 import { SubmissionFormPage } from '@/modules/campaigns/SubmissionFormPage'
+import { VendorsPage as CompanyVendorsPage } from '@/modules/campaigns/VendorsPage'
 import { DashboardPage } from '@/modules/dashboard/DashboardPage'
 import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
 import { QuickGiftFormPage } from '@/modules/quickgift/QuickGiftFormPage'
@@ -82,6 +83,7 @@ export function AppRoutes() {
           <Route path="/recipients" element={<RecipientsPage />} />
           <Route path="/approvals" element={<ApprovalQueuePage />} />
           <Route path="/orders" element={<CampaignOrdersPage />} />
+          <Route path="/company/vendors" element={<CompanyVendorsPage />} />
 
           {/* Company Admin's own roster -- same Users pages as the platform-admin route above, just resolving "my company" instead of an :id param. */}
           <Route path="/company/users" element={<CompanyUsersPage />} />

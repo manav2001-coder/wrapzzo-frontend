@@ -85,6 +85,7 @@ const CAMPAIGNS_MODULE: NavModule = {
       requiresPermission: ['campaign.manage', 'order.track', 'order.design.review'],
     },
     { type: 'link', label: 'Users', to: '/company/users', icon: 'pi-users', requiresPermission: 'user.manage' },
+    { type: 'link', label: 'Vendors', to: '/company/vendors', icon: 'pi-truck', requiresPermission: 'company.vendor.manage' },
   ],
 }
 

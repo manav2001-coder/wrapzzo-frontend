@@ -1,10 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createRecipient, listRecipients, listUpcomingBirthdays, updateRecipient, type CreateRecipientInput } from '@/api/recipients'
+import {
+  createRecipient,
+  listRecipients,
+  listUpcomingBirthdays,
+  searchRecipients,
+  updateRecipient,
+  type CreateRecipientInput,
+} from '@/api/recipients'
 import { useHasPermission } from '@/hooks/usePermissions'
 
 export function useRecipients() {
   const canView = useHasPermission('recipient.manage')
   return useQuery({ queryKey: ['recipients'], queryFn: listRecipients, enabled: canView })
+}
+
+/** "Pick an existing doctor" -- works for anyone who can send a gift, not just recipient.manage holders. Empty query returns nothing (no full-directory dump). */
+export function useRecipientSearch(query: string) {
+  const trimmed = query.trim()
+  return useQuery({
+    queryKey: ['recipients', 'search', trimmed],
+    queryFn: () => searchRecipients(trimmed),
+    enabled: trimmed.length > 0,
+  })
 }
 
 export function useCreateRecipient() {

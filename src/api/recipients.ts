@@ -34,6 +34,12 @@ export async function listRecipients(): Promise<Recipient[]> {
   return data
 }
 
+/** "Pick an existing doctor" search -- unlike listRecipients(), this works for anyone who can send a gift (quickgift.create), not just recipient.manage holders. */
+export async function searchRecipients(query: string): Promise<Recipient[]> {
+  const { data } = await apiClient.get<Recipient[]>('/api/recipients/search', { params: { q: query } })
+  return data
+}
+
 export async function createRecipient(input: CreateRecipientInput): Promise<Recipient> {
   const { data } = await apiClient.post<Recipient>('/api/recipients', input)
   return data

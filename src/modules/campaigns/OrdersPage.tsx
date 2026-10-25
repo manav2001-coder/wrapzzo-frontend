@@ -1,17 +1,20 @@
-import { Accordion, AccordionTab } from 'primereact/accordion'
 import { Button } from 'primereact/button'
+import { Column } from 'primereact/column'
+import { DataTable } from 'primereact/datatable'
 import { Dialog } from 'primereact/dialog'
+import { Dropdown } from 'primereact/dropdown'
 import { IconField } from 'primereact/iconfield'
 import { Image } from 'primereact/image'
 import { InputIcon } from 'primereact/inputicon'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { Sidebar } from 'primereact/sidebar'
+import { TabPanel, TabView } from 'primereact/tabview'
 import { useMemo, useState } from 'react'
-import type { Order } from '@/api/orders'
+import type { Order, OrderStatus } from '@/api/orders'
 import type { OrderDesign } from '@/api/orderDesigns'
 import { EmptyState } from '@/components/EmptyState'
-import { GiftThumb, OrderProgressBar, OrderStepper, StageHistoryList } from '@/components/OrderFulfillmentStepper'
+import { GiftThumb, OrderStepper, StageHistoryList } from '@/components/OrderFulfillmentStepper'
 import { PageHeader } from '@/components/PageHeader'
 import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
 import { StatCard } from '@/components/StatCard'
@@ -21,8 +24,16 @@ import { useApproveOrderDesign, useOrderDesigns, useRejectOrderDesign } from '@/
 import { useOrders, useRequestOrderPhotoLink } from '@/hooks/useOrders'
 import { useHasPermission } from '@/hooks/usePermissions'
 import { formatCurrency, humanize } from '@/lib/format'
-import { groupByCampaign } from '@/lib/groupByCampaign'
 import { showApiError, showToast } from '@/lib/toast'
+
+const STATUS_OPTIONS: { label: string; value: OrderStatus | 'ALL' }[] = [
+  { label: 'All statuses', value: 'ALL' },
+  { label: 'Processing', value: 'PROCESSING' },
+  { label: 'In production', value: 'PRODUCTION_QUEUE' },
+  { label: 'Dispatched', value: 'DISPATCHED' },
+  { label: 'Delivered', value: 'DELIVERED' },
+  { label: 'Cancelled', value: 'CANCELLED' },
+]
 
 /** One artwork version in the review timeline -- a connected dot/line node, same visual language as OrderStepper. */
 function DesignVersionNode({
@@ -185,70 +196,6 @@ function DesignReviewSection({ orderId }: { orderId: string }) {
   )
 }
 
-function CampaignAccordionHeader({ campaignName, orders }: { campaignName: string; orders: Order[] }) {
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    orders.forEach((o) => (counts[o.status] = (counts[o.status] ?? 0) + 1))
-    return counts
-  }, [orders])
-  const needingReview = useMemo(() => orders.filter((o) => o.hasPendingDesignReview).length, [orders])
-
-  return (
-    <div className="flex w-full flex-wrap items-center justify-between gap-2 pr-2">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 text-accent">
-          <i className="pi pi-megaphone text-sm" />
-        </div>
-        <span className="truncate font-semibold text-text">{campaignName}</span>
-        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-muted">
-          {orders.length} order{orders.length > 1 ? 's' : ''}
-        </span>
-        {needingReview > 0 && (
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-white">
-            <i className="pi pi-eye text-[10px]" /> {needingReview} need{needingReview === 1 ? 's' : ''} review
-          </span>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-1.5">
-        {Object.entries(statusCounts).map(([status, count]) => (
-          <StatusBadge key={status} status={status} label={`${count} ${humanize(status)}`} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/** Same compact chip look as the Dashboard's order timeline widget -- a click opens the
- * full detail (photo, "send link" action, stage-by-stage timeline, and design review) in a
- * slide-over panel. A glowing ring + badge surfaces "this one needs your attention" at a
- * glance, without anyone having to open every order to find out. */
-function OrderChip({ order, onClick }: { order: Order; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`relative flex w-full flex-col gap-2 rounded-2xl border bg-surface p-3 text-left transition-transform hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5 ${
-        order.hasPendingDesignReview ? 'border-accent/50 ring-2 ring-accent/15' : 'border-border'
-      }`}
-    >
-      {order.hasPendingDesignReview && (
-        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white shadow-sm">
-          <i className="pi pi-eye text-[10px]" />
-        </span>
-      )}
-      <div className="flex items-center gap-2">
-        <GiftThumb url={order.giftImageUrl} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold text-text">{order.giftName ?? order.displayId}</p>
-          <p className="truncate text-[11px] text-text-muted">{order.recipientName ?? '—'}</p>
-        </div>
-      </div>
-      <OrderProgressBar status={order.status} />
-      <p className="text-[10px] font-medium text-text-muted">{order.status === 'CANCELLED' ? 'Cancelled' : humanize(order.status)}</p>
-    </button>
-  )
-}
-
 function OrderDetailPanel({
   order,
   onHide,
@@ -358,38 +305,201 @@ function OrderDetailPanel({
   )
 }
 
-export function OrdersPage() {
-  const { data: orders, isLoading } = useOrders()
+/** The main, scalable view: a proper paginated/sortable/filterable table -- cards don't hold up once a company has hundreds of orders. */
+function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Order) => void }) {
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL')
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false)
-  const [selected, setSelected] = useState<Order | null>(null)
-  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
   const canReviewDesign = useHasPermission('order.design.review')
 
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { PROCESSING: 0, PRODUCTION_QUEUE: 0, DISPATCHED: 0, DELIVERED: 0, CANCELLED: 0 }
-    orders?.forEach((o) => (counts[o.status] = (counts[o.status] ?? 0) + 1))
-    return counts
-  }, [orders])
+  const needsReviewCount = useMemo(() => orders.filter((o) => o.hasPendingDesignReview).length, [orders])
 
-  const needsReviewCount = useMemo(() => orders?.filter((o) => o.hasPendingDesignReview).length ?? 0, [orders])
-
-  const filteredOrders = useMemo(() => {
-    if (!orders) return []
+  const filtered = useMemo(() => {
     let result = orders
+    if (statusFilter !== 'ALL') result = result.filter((o) => o.status === statusFilter)
     if (onlyNeedsReview) result = result.filter((o) => o.hasPendingDesignReview)
     const query = search.trim().toLowerCase()
     if (query) {
       result = result.filter((order) =>
-        [order.displayId, order.giftName, order.recipientName, order.campaignName, humanize(order.source), humanize(order.status)]
+        [order.displayId, order.giftName, order.recipientName, order.campaignName, order.assignedVendorName, humanize(order.source)]
           .filter(Boolean)
           .some((value) => value!.toLowerCase().includes(query)),
       )
     }
     return result
-  }, [orders, search, onlyNeedsReview])
+  }, [orders, search, statusFilter, onlyNeedsReview])
 
-  const groups = useMemo(() => groupByCampaign(filteredOrders), [filteredOrders])
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <IconField iconPosition="left">
+          <InputIcon className="pi pi-search" />
+          <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders" className="w-full sm:w-72" />
+        </IconField>
+        <Dropdown
+          value={statusFilter}
+          options={STATUS_OPTIONS}
+          onChange={(e) => setStatusFilter(e.value)}
+          className="w-full sm:w-52"
+        />
+        {canReviewDesign && needsReviewCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setOnlyNeedsReview((v) => !v)}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              onlyNeedsReview ? 'border-accent bg-accent text-white' : 'border-accent/40 bg-accent-soft text-accent-ink hover:border-accent'
+            }`}
+          >
+            <i className="pi pi-eye" /> {needsReviewCount} need{needsReviewCount === 1 ? 's' : ''} design review
+          </button>
+        )}
+        <span className="ml-auto text-xs text-text-muted">
+          {filtered.length} of {orders.length} order{orders.length === 1 ? '' : 's'}
+        </span>
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState icon="pi-search" title="No orders match" description="Try a different search term or status filter." />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+          <DataTable
+            value={filtered}
+            dataKey="id"
+            paginator
+            rows={15}
+            rowsPerPageOptions={[15, 30, 50]}
+            sortMode="multiple"
+            onRowClick={(e) => onOpen(e.data as Order)}
+            rowClassName={() => 'cursor-pointer'}
+            className="min-w-[860px]"
+          >
+            <Column
+              header="Gift"
+              sortField="giftName"
+              sortable
+              body={(row: Order) => (
+                <div className="flex items-center gap-2.5">
+                  <GiftThumb url={row.giftImageUrl} size="h-9 w-9" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-text">{row.giftName ?? row.displayId}</p>
+                    <p className="truncate text-xs text-text-muted">{row.displayId}</p>
+                  </div>
+                  {row.hasPendingDesignReview && (
+                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-ink">
+                      <i className="pi pi-eye text-[9px]" /> review
+                    </span>
+                  )}
+                </div>
+              )}
+            />
+            <Column header="Recipient" field="recipientName" sortable body={(row: Order) => row.recipientName ?? '—'} />
+            <Column
+              header="Source"
+              sortField="campaignName"
+              sortable
+              body={(row: Order) => (row.source === 'CAMPAIGN' ? row.campaignName : humanize(row.source))}
+            />
+            <Column header="Vendor" field="assignedVendorName" sortable body={(row: Order) => row.assignedVendorName ?? '—'} />
+            <Column
+              header="Status"
+              field="status"
+              sortable
+              body={(row: Order) => <StatusBadge status={row.status} label={humanize(row.status)} />}
+            />
+            <Column
+              header="Price"
+              field="totalPrice"
+              sortable
+              body={(row: Order) => formatCurrency(row.totalPrice)}
+              style={{ textAlign: 'right' }}
+              className="tabular-nums"
+            />
+            <Column
+              header="Created"
+              field="createdAt"
+              sortable
+              body={(row: Order) => new Date(row.createdAt).toLocaleDateString()}
+            />
+            <Column header="" body={() => <i className="pi pi-chevron-right text-xs text-text-muted" />} style={{ width: '2.5rem' }} />
+          </DataTable>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Charts and roll-ups, split off from the working table so the main tab stays fast and scannable at real data volumes. */
+function OrdersAnalytics({ orders }: { orders: Order[] }) {
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { PROCESSING: 0, PRODUCTION_QUEUE: 0, DISPATCHED: 0, DELIVERED: 0, CANCELLED: 0 }
+    orders.forEach((o) => (counts[o.status] = (counts[o.status] ?? 0) + 1))
+    return counts
+  }, [orders])
+
+  const needsReviewCount = useMemo(() => orders.filter((o) => o.hasPendingDesignReview).length, [orders])
+
+  const byVendor = useMemo(() => {
+    const counts = new Map<string, number>()
+    orders.forEach((o) => {
+      const key = o.assignedVendorName ?? 'Unassigned'
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    })
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])
+  }, [orders])
+
+  const totalValue = useMemo(() => orders.reduce((sum, o) => sum + (o.totalPrice ?? 0), 0), [orders])
+
+  return (
+    <div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <StatCard label="Total orders" value={orders.length} icon="pi-shopping-bag" />
+        <StatCard label="In production" value={statusCounts.PRODUCTION_QUEUE} icon="pi-cog" accent="warning" />
+        <StatCard label="Dispatched" value={statusCounts.DISPATCHED} icon="pi-send" accent="warning" />
+        <StatCard label="Delivered" value={statusCounts.DELIVERED} icon="pi-check-circle" accent="success" />
+        <StatCard label="Needs review" value={needsReviewCount} icon="pi-eye" accent={needsReviewCount > 0 ? 'danger' : 'success'} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <p className="mb-2 text-sm font-medium text-text">Orders by status</p>
+          <StatusDonutChart counts={statusCounts} />
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <p className="mb-3 text-sm font-medium text-text">Orders by vendor</p>
+          {byVendor.length === 0 ? (
+            <p className="text-sm text-text-muted">No orders yet.</p>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {byVendor.map(([vendor, count]) => (
+                <div key={vendor} className="flex items-center gap-3">
+                  <span className="w-28 shrink-0 truncate text-xs text-text-muted">{vendor}</span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="h-full rounded-full bg-accent"
+                      style={{ width: `${orders.length ? (count / orders.length) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="w-6 shrink-0 text-right text-xs font-medium text-text tabular-nums">{count}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-border bg-surface p-5">
+        <p className="text-sm text-text-muted">Total value across {orders.length} order{orders.length === 1 ? '' : 's'}</p>
+        <p className="mt-1 text-2xl font-semibold text-text tabular-nums">{formatCurrency(totalValue)}</p>
+      </div>
+    </div>
+  )
+}
+
+export function OrdersPage() {
+  const { data: orders, isLoading } = useOrders()
+  const [selected, setSelected] = useState<Order | null>(null)
+  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
 
   return (
     <div>
@@ -398,65 +508,14 @@ export function OrdersPage() {
       {!isLoading && orders?.length === 0 ? (
         <EmptyState icon="pi-shopping-bag" title="No orders yet" description="Orders appear here once a submission is approved." />
       ) : (
-        <>
-          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="Total orders" value={orders?.length ?? 0} icon="pi-shopping-bag" />
-            <StatCard label="In production" value={statusCounts.PRODUCTION_QUEUE} icon="pi-cog" accent="warning" />
-            <StatCard label="Dispatched" value={statusCounts.DISPATCHED} icon="pi-send" accent="warning" />
-            <StatCard label="Delivered" value={statusCounts.DELIVERED} icon="pi-check-circle" accent="success" />
-          </div>
-
-          <div className="mb-6 rounded-2xl border border-border bg-surface p-5">
-            <p className="mb-2 text-sm font-medium text-text">Orders by status</p>
-            <StatusDonutChart counts={statusCounts} />
-          </div>
-
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <IconField iconPosition="left">
-              <InputIcon className="pi pi-search" />
-              <InputText
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search orders"
-                className="w-full sm:w-80"
-              />
-            </IconField>
-            {canReviewDesign && needsReviewCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setOnlyNeedsReview((v) => !v)}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  onlyNeedsReview
-                    ? 'border-accent bg-accent text-white'
-                    : 'border-accent/40 bg-accent-soft text-accent-ink hover:border-accent'
-                }`}
-              >
-                <i className="pi pi-eye" /> {needsReviewCount} need{needsReviewCount === 1 ? 's' : ''} design review
-              </button>
-            )}
-          </div>
-
-          {groups.length === 0 ? (
-            <EmptyState icon="pi-search" title="No orders match" description="Try a different order id, gift, recipient, or campaign name." />
-          ) : (
-            <>
-              <p className="mb-2 text-xs text-text-muted">Each row groups orders by campaign, or by Quick Gift for one-off requests.</p>
-              <Accordion multiple className="campaign-accordion">
-                {groups.map((group) => (
-                  <AccordionTab key={group.campaignId} header={<CampaignAccordionHeader campaignName={group.campaignName} orders={group.items} />}>
-                    <div className="flex flex-wrap gap-3">
-                      {group.items.map((order) => (
-                        <div key={order.id} className="w-[160px]">
-                          <OrderChip order={order} onClick={() => setSelected(order)} />
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionTab>
-                ))}
-              </Accordion>
-            </>
-          )}
-        </>
+        <TabView>
+          <TabPanel header="Orders">
+            <OrdersTable orders={orders ?? []} onOpen={setSelected} />
+          </TabPanel>
+          <TabPanel header="Analytics">
+            <OrdersAnalytics orders={orders ?? []} />
+          </TabPanel>
+        </TabView>
       )}
 
       <OrderDetailPanel

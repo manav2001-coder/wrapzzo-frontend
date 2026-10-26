@@ -1,227 +1,162 @@
-import { Mail } from 'lucide-react'
-import { Button } from 'primereact/button'
-import { Navigate, useNavigate } from 'react-router-dom'
+import {
+  ArrowRight,
+  Award,
+  Briefcase,
+  CalendarDays,
+  Handshake,
+  Mail,
+  Package,
+  Stethoscope,
+  Truck,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Link, Navigate } from 'react-router-dom'
+
 import { useAppSelector } from '@/app/hooks'
+import { Button } from '@/components/ui/button'
+import { WrapzzoLogo } from '@/components/wrapzzo-logo'
 
-const ACCENT = '#4f46e5'
+const CONTACT_EMAIL = 'hello@wrappzo.com'
 
-const SOLUTIONS = [
-  {
-    title: 'Employee Gifting',
-    description: 'Onboarding kits, milestones, and everyday recognition for your team.',
-    caption: 'New-hire welcome kits, delivered the day an offer is accepted.',
-  },
-  {
-    title: 'Client Gifting',
-    description: 'Thoughtful gifting that scales with your client base.',
-    caption: 'Renewal and anniversary gifts, sent on schedule.',
-  },
-  {
-    title: 'Distributor / Dealer Gifting',
-    description: 'Recognition programs for your distribution and dealer network.',
-    caption: 'Nationwide dealer incentive gifting, tracked by territory.',
-  },
-  {
-    title: 'Pharma / HCP Gifting',
-    description: 'Compliant gifting and engagement for healthcare professionals.',
-    caption: 'Doctor engagement gifting, handled with the care the sector needs.',
-  },
-  {
-    title: 'Events & Conferences',
-    description: 'Welcome gifts and merchandise for conferences and field events.',
-    caption: 'Conference welcome kits, ready for attendees on day one.',
-  },
-  {
-    title: 'Welcome Kits',
-    description: 'Onboarding and induction kits for new employees or partners.',
-    caption: 'Branded welcome kits, shipped nationwide on your timeline.',
-  },
-  {
-    title: 'Rewards & Recognition',
-    description: 'Performance-tied gifting for milestones and achievements.',
-    caption: 'Quarterly recognition gifting, delivered on time, every time.',
-  },
-  {
-    title: 'Partner Gifting',
-    description: 'Gifting for the partners and vendors who help your business run.',
-    caption: 'Year-end appreciation gifting for your partner network.',
-  },
+/** Icon + translation key + tint, the same tinted-tile language the sign-in hero uses. */
+const SOLUTIONS: { key: string; icon: LucideIcon; tone: string }[] = [
+  { key: 'employee', icon: Users, tone: 'text-sky-600 bg-sky-500/10 dark:text-sky-300' },
+  { key: 'client', icon: Briefcase, tone: 'text-violet-600 bg-violet-500/10 dark:text-violet-300' },
+  { key: 'dealer', icon: Truck, tone: 'text-amber-600 bg-amber-500/10 dark:text-amber-300' },
+  { key: 'pharma', icon: Stethoscope, tone: 'text-emerald-600 bg-emerald-500/10 dark:text-emerald-300' },
+  { key: 'events', icon: CalendarDays, tone: 'text-rose-600 bg-rose-500/10 dark:text-rose-300' },
+  { key: 'welcome', icon: Package, tone: 'text-cyan-600 bg-cyan-500/10 dark:text-cyan-300' },
+  { key: 'rewards', icon: Award, tone: 'text-orange-600 bg-orange-500/10 dark:text-orange-300' },
+  { key: 'partner', icon: Handshake, tone: 'text-indigo-600 bg-indigo-500/10 dark:text-indigo-300' },
 ]
 
-const FOOTER_PLATFORM_LINKS = ['Gift Store', 'Quick Gifts', 'Bulk Gifting', 'Campaigns']
+const FOOTER_LINKS = ['giftStore', 'quickGifts', 'bulkGifting', 'campaigns'] as const
 
-function GridBackdrop({ dark }: { dark: boolean }) {
-  const line = dark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)'
+const GRID =
+  '[background-image:linear-gradient(rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.05)_1px,transparent_1px)] [background-size:44px_44px]'
+
+/** The navy hero band the sign-in screen sits on: gradient, glow and a faint grid. */
+function HeroBand({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className="pointer-events-none absolute inset-0"
-      style={{
-        backgroundImage: `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`,
-        backgroundSize: '48px 48px',
-      }}
-    />
+    <section className={`hero-gradient relative isolate overflow-hidden text-white ${className ?? ''}`}>
+      <div aria-hidden className="hero-glow absolute inset-0 -z-10" />
+      <div
+        aria-hidden
+        className={`absolute inset-0 -z-10 ${GRID} [mask-image:radial-gradient(ellipse_75%_70%_at_50%_45%,black,transparent)]`}
+      />
+      {children}
+    </section>
   )
 }
 
+/**
+ * The public front door. A signed-in visitor never sees it: they are sent to their own side
+ * (ProtectedRoute corrects platform staff vs company users from there).
+ */
 export function LandingPage() {
-  const navigate = useNavigate()
+  const { t } = useTranslation('public')
   const accessToken = useAppSelector((state) => state.auth.accessToken)
   const vendorAccessToken = useAppSelector((state) => state.vendorAuth.accessToken)
 
-  if (accessToken) {
-    return <Navigate to="/admin/companies" replace />
-  }
-  if (vendorAccessToken) {
-    return <Navigate to="/vendor" replace />
-  }
+  if (accessToken) return <Navigate to="/admin/companies" replace />
+  if (vendorAccessToken) return <Navigate to="/vendor" replace />
 
   return (
-    <div className="min-h-svh bg-white text-neutral-900">
-      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold" style={{ color: ACCENT }}>
-              W
-            </span>
-            <span className="text-lg font-semibold tracking-tight text-neutral-900">Wrappzo</span>
-          </div>
+    <div className="min-h-svh bg-background text-foreground">
+      <HeroBand>
+        <header className="mx-auto flex w-full max-w-screen-xl items-center justify-between px-6 pt-6 sm:px-10">
+          <WrapzzoLogo height={32} />
+          <nav className="flex items-center gap-6">
+            <a href="#solutions" className="hidden text-sm font-medium text-white/75 hover:text-white sm:inline">
+              {t('landing.nav.solutions')}
+            </a>
+            <Button asChild size="sm" variant="secondary" className="rounded-full px-4">
+              <Link to="/login">{t('landing.nav.login')}</Link>
+            </Button>
+          </nav>
+        </header>
 
-          <a href="#solutions" className="hidden text-sm font-medium text-neutral-600 hover:text-neutral-900 sm:inline">
-            Solutions
-          </a>
-
-          <Button
-            label="Log in"
-            onClick={() => navigate('/login')}
-            className="rounded-full border-none bg-black px-5 py-2.5 font-medium text-white hover:bg-neutral-800"
-          />
-        </div>
-      </header>
-
-      <section className="relative isolate overflow-hidden bg-neutral-50">
-        <GridBackdrop dark={false} />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: `radial-gradient(ellipse 60% 50% at 50% 0%, ${ACCENT}1a, transparent 60%)` }}
-        />
-
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-24 text-center sm:px-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-sm text-neutral-600 shadow-sm">
-            <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} />
-            Corporate gifting platform
-          </div>
-
-          <h1 className="text-balance text-5xl font-bold tracking-tight text-neutral-950 sm:text-6xl">
-            A gifting platform for every relationship you manage.
-          </h1>
-          <p className="max-w-xl text-balance text-lg text-neutral-500">
-            Campaigns, vendors, orders, and every recipient roster &mdash; Wrappzo runs the whole corporate gifting
-            workflow, in one place.
+        <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-6 pt-20 pb-28 text-center">
+          <p className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/80 backdrop-blur">
+            <span className="size-1.5 rounded-full bg-sky-300" />
+            {t('landing.hero.badge')}
           </p>
-
-          <Button
-            label="Log in"
-            onClick={() => navigate('/login')}
-            className="mt-2 rounded-full border-none bg-black px-6 py-3 font-medium text-white hover:bg-neutral-800"
-          />
+          <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-6xl">{t('landing.hero.title')}</h1>
+          <p className="max-w-xl text-balance text-lg text-white/70">{t('landing.hero.body')}</p>
+          <Button asChild size="lg" className="mt-2 rounded-full px-7">
+            <Link to="/login">
+              {t('landing.hero.cta')}
+              <ArrowRight />
+            </Link>
+          </Button>
         </div>
-      </section>
+      </HeroBand>
 
-      <section id="solutions" className="mx-auto max-w-5xl px-4 py-20 sm:px-6">
+      <section id="solutions" className="mx-auto max-w-6xl px-6 py-20">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-balance text-3xl font-semibold tracking-tight text-neutral-950">
-            Built for every kind of corporate gifting
-          </h2>
-          <p className="mt-3 text-base text-neutral-500">
-            Whoever you&apos;re gifting &mdash; employees, clients, distributors, healthcare professionals, or
-            partners &mdash; it runs through the same platform.
-          </p>
+          <h2 className="text-balance text-3xl font-bold tracking-tight">{t('landing.solutions.title')}</h2>
+          <p className="mt-3 text-muted-foreground">{t('landing.solutions.body')}</p>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2">
-          {SOLUTIONS.map(({ title, description, caption }) => (
-            <div key={title} className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-8">
-              <span className="h-1 w-8 rounded-full" style={{ backgroundColor: ACCENT }} />
-              <p className="text-lg font-semibold text-neutral-950">{title}</p>
-              <p className="text-sm text-neutral-500">{description}</p>
-              <div className="mt-2 border-t border-neutral-200 pt-3">
-                <p className="text-sm text-neutral-400">{caption}</p>
-              </div>
-            </div>
+        <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {SOLUTIONS.map(({ key, icon: Icon, tone }) => (
+            <li key={key} className="flex flex-col gap-3 rounded-xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
+              <span className={`grid size-10 place-items-center rounded-lg ${tone}`}>
+                <Icon className="size-5" />
+              </span>
+              <h3 className="font-semibold">{t(`landing.solutions.${key}.title`)}</h3>
+              <p className="text-sm text-muted-foreground">{t(`landing.solutions.${key}.description`)}</p>
+              <p className="mt-auto border-t pt-3 text-xs text-muted-foreground">{t(`landing.solutions.${key}.caption`)}</p>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
-      <section className="relative isolate overflow-hidden bg-neutral-950 text-white">
-        <GridBackdrop dark />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: `radial-gradient(ellipse 60% 50% at 50% 30%, ${ACCENT}40, transparent 60%)` }}
-        />
-
-        <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-24 text-center sm:px-6">
-          <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Ready to manage your next gifting program?
-          </h2>
-          <p className="text-base text-neutral-400">
-            Log in to see campaigns, orders, and rosters for every company on Wrappzo.
-          </p>
-
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-6">
-            <Button
-              label="Log in"
-              onClick={() => navigate('/login')}
-              className="rounded-full border-none bg-white px-6 py-3 font-medium text-black hover:bg-neutral-200"
-            />
-            <a href="mailto:hello@wrappzo.com" className="flex items-center gap-2 text-sm text-neutral-300 hover:text-white">
-              <Mail className="size-4" strokeWidth={1.75} />
-              hello@wrappzo.com
+      <HeroBand>
+        <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-6 py-24 text-center">
+          <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">{t('landing.cta.title')}</h2>
+          <p className="text-white/70">{t('landing.cta.body')}</p>
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <Button asChild size="lg" className="rounded-full px-7">
+              <Link to="/login">{t('landing.hero.cta')}</Link>
+            </Button>
+            <a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-2 text-sm text-white/75 hover:text-white">
+              <Mail className="size-4" />
+              {CONTACT_EMAIL}
             </a>
           </div>
         </div>
-      </section>
+      </HeroBand>
 
-      <footer className="bg-neutral-950 pt-16 pb-8 text-neutral-400">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:grid-cols-3 sm:px-6">
+      <footer className="bg-sidebar pt-14 pb-8 text-white/60">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 sm:grid-cols-3">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold" style={{ color: ACCENT }}>
-                W
-              </span>
-              <span className="text-base font-semibold text-white">Wrappzo</span>
-            </div>
-            <p className="max-w-xs text-sm text-neutral-500">
-              Corporate gifting and custom merchandise, sourced and delivered by Wrappzo.
-            </p>
+            <WrapzzoLogo height={26} />
+            <p className="max-w-xs text-sm">{t('landing.footer.blurb')}</p>
           </div>
-
-          <div className="flex flex-col gap-3">
-            <p className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Platform</p>
-            {FOOTER_PLATFORM_LINKS.map((label) => (
-              <span key={label} className="text-sm text-neutral-400">
-                {label}
+          <div className="flex flex-col gap-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-white/40">{t('landing.footer.platform')}</p>
+            {FOOTER_LINKS.map((key) => (
+              <span key={key} className="text-sm">
+                {t(`landing.footer.links.${key}`)}
               </span>
             ))}
           </div>
-
-          <div className="flex flex-col gap-3">
-            <p className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Account</p>
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="w-fit border-0 bg-transparent p-0 text-left text-sm text-neutral-400 hover:text-white"
-            >
-              Log in
-            </button>
-            <a href="mailto:hello@wrappzo.com" className="w-fit text-sm text-neutral-400 hover:text-white">
-              hello@wrappzo.com
+          <div className="flex flex-col gap-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-white/40">{t('landing.footer.account')}</p>
+            <Link to="/login" className="w-fit text-sm hover:text-white">
+              {t('landing.nav.login')}
+            </Link>
+            <a href={`mailto:${CONTACT_EMAIL}`} className="w-fit text-sm hover:text-white">
+              {CONTACT_EMAIL}
             </a>
           </div>
         </div>
-
-        <div className="mx-auto mt-12 max-w-6xl border-t border-neutral-800 px-4 pt-6 text-xs text-neutral-500 sm:px-6">
-          &copy; {new Date().getFullYear()} Wrappzo. Operated by Orange Dot Solutions. All rights reserved.
-        </div>
+        <p className="mx-auto mt-12 max-w-6xl border-t border-white/10 px-6 pt-6 text-xs text-white/40">
+          {t('landing.footer.rights', { year: new Date().getFullYear() })}
+        </p>
       </footer>
     </div>
   )

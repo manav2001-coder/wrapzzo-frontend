@@ -6,10 +6,12 @@ import admin_en from '@/locales/en/admin.json'
 import auth_en from '@/locales/en/auth.json'
 import common_en from '@/locales/en/common.json'
 import orders_en from '@/locales/en/orders.json'
+import public_en from '@/locales/en/public.json'
 import admin_hi from '@/locales/hi/admin.json'
 import auth_hi from '@/locales/hi/auth.json'
 import common_hi from '@/locales/hi/common.json'
 import orders_hi from '@/locales/hi/orders.json'
+import public_hi from '@/locales/hi/public.json'
 
 /**
  * i18n for the app's UI, set up the way MobixFL's is: one namespace per area (a namespace is the
@@ -36,8 +38,8 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 export const defaultNS = 'common'
 
 export const resources = {
-  en: { common: common_en, auth: auth_en, admin: admin_en, orders: orders_en },
-  hi: { common: common_hi, auth: auth_hi, admin: admin_hi, orders: orders_hi },
+  en: { common: common_en, auth: auth_en, admin: admin_en, orders: orders_en, public: public_en },
+  hi: { common: common_hi, auth: auth_hi, admin: admin_hi, orders: orders_hi, public: public_hi },
 } as const
 
 export function isSupportedLocale(value: unknown): value is Locale {

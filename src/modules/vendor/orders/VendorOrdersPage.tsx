@@ -61,7 +61,12 @@ function DesignUploadSection({ orderId }: { orderId: string }) {
 /** Mirrors OrderService's VENDOR_SELECTABLE_STATUSES / VENDOR_EDITABLE_SOURCE_STATUSES server-side. */
 const VENDOR_SELECTABLE_STATUSES: OrderStatus[] = ['PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED']
 const VENDOR_EDITABLE_STATUSES: OrderStatus[] = ['PRODUCTION_QUEUE', 'DISPATCHED']
-const STATUS_OPTIONS = VENDOR_SELECTABLE_STATUSES.map((status) => ({ label: humanize(status), value: status }))
+const STATUS_OPTIONS: { label: string; value: OrderStatus; disabled?: boolean }[] = VENDOR_SELECTABLE_STATUSES.map((status) => ({
+  label: humanize(status),
+  value: status,
+}))
+/** Closed to an artwork-required order until one of its proofs is approved (enforced server-side too). */
+const ARTWORK_GATED_STATUSES: OrderStatus[] = ['DISPATCHED', 'DELIVERED']
 const STATUS_ORDER: OrderStatus[] = ['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED']
 const STATUS_COLORS: Record<string, string> = {
   PROCESSING: '#6366f1',
@@ -103,6 +108,13 @@ function StatusBreakdownBar({ counts }: { counts: Record<string, number> }) {
 function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight?: boolean }) {
   const updateStatus = useUpdateVendorOrderStatus()
   const editable = VENDOR_EDITABLE_STATUSES.includes(order.status)
+  // Mirrors the server's gate: an artwork-required order can't leave until a proof is approved.
+  const awaitingArtwork = order.artworkRequired && !order.artworkApproved
+  const statusOptions = awaitingArtwork
+    ? STATUS_OPTIONS.map((o) => (ARTWORK_GATED_STATUSES.includes(o.value) ? { ...o, disabled: true } : o))
+    : STATUS_OPTIONS
+  const doctor = order.doctor
+  const hasDoctorDetails = Boolean(doctor && (doctor.registrationNumber || doctor.qualification || doctor.speciality || doctor.clinicName))
 
   async function handleStatusChange(newStatus: OrderStatus) {
     if (newStatus === order.status) return
@@ -151,7 +163,35 @@ function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight
           <p className="text-xs text-text-muted">Price</p>
           <p className="font-medium text-text">{formatCurrency(order.price)}</p>
         </div>
+        <div>
+          <p className="text-xs text-text-muted">Quantity</p>
+          <p className="font-medium text-text">{order.quantity}</p>
+        </div>
+        {order.deliveryAddress && (
+          <div className="col-span-2">
+            <p className="text-xs text-text-muted">Deliver to</p>
+            <p className="text-text">{order.deliveryAddress}</p>
+          </div>
+        )}
       </div>
+
+      {hasDoctorDetails && doctor && (
+        <div className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm">
+          <p className="mb-1 text-xs font-medium text-text-muted">Print details</p>
+          <p className="font-medium text-text">
+            {order.recipientName}
+            {doctor.qualification && <span className="font-normal text-text-muted">, {doctor.qualification}</span>}
+          </p>
+          {doctor.speciality && <p className="text-text">{doctor.speciality}</p>}
+          {doctor.registrationNumber && <p className="text-text">Reg. no. {doctor.registrationNumber}</p>}
+          {doctor.clinicName && <p className="text-text">{doctor.clinicName}</p>}
+        </div>
+      )}
+      {order.giftMessage && (
+        <p className="text-xs text-text-muted">
+          Message: <span className="text-text">{order.giftMessage}</span>
+        </p>
+      )}
 
       <div className="flex items-center gap-2">
         <p className="text-xs text-text-muted">Recipient's photo</p>
@@ -174,11 +214,15 @@ function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight
           <Dropdown
             inputId={`status-${order.id}`}
             value={order.status}
-            options={STATUS_OPTIONS}
+            options={statusOptions}
+            optionDisabled="disabled"
             onChange={(e) => handleStatusChange(e.value)}
             disabled={updateStatus.isPending}
             className="w-full"
           />
+          {awaitingArtwork && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">Upload a proof and wait for it to be approved before dispatching.</p>
+          )}
         </div>
       ) : (
         <p className="text-center text-xs text-text-muted">

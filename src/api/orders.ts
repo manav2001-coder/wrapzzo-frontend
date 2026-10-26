@@ -30,6 +30,11 @@ export interface Order {
   recipientPhotoUrl: string | null
   /** Snapshotted off the gift's total price at approval time -- null if the gift had no price set then. */
   totalPrice: number | null
+  quantity: number
+  /** The org unit the order was raised from. */
+  orgUnitName: string | null
+  /** The vendor may not dispatch until a proof is approved. */
+  artworkRequired: boolean
   source: OrderSource
   status: OrderStatus
   assignedVendorId: string | null

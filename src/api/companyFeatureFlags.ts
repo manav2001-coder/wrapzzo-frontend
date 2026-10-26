@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/axiosClient'
 
-export type CompanyFeatureKey = 'WAREHOUSE_LOGISTICS' | 'MARKETING_DESIGN_APPROVAL'
+export type CompanyFeatureKey = 'WAREHOUSE_LOGISTICS' | 'MARKETING_DESIGN_APPROVAL' | 'DIRECT_VENDOR_ORDERING'
 
 export interface CompanyFeatureFlag {
   flagKey: CompanyFeatureKey

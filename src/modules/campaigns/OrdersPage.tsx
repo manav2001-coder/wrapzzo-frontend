@@ -243,7 +243,11 @@ function OrderDetailPanel({
       {order && (
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-border px-6 py-3.5">
-            <span className="text-sm text-text-muted">{order.recipientName ?? '—'}</span>
+            <span className="text-sm text-text-muted">
+              {order.recipientName ?? '—'}
+              {order.quantity > 1 && <span> · Qty {order.quantity}</span>}
+              {order.orgUnitName && <span> · {order.orgUnitName}</span>}
+            </span>
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-text tabular-nums">{formatCurrency(order.totalPrice)}</span>
               <StatusBadge status={order.status} label={humanize(order.status)} />
@@ -256,6 +260,9 @@ function OrderDetailPanel({
                 <i className="pi pi-eye text-accent" />
                 <p className="text-sm font-medium text-accent-ink">An artwork version is waiting on your review.</p>
               </div>
+            )}
+            {order.artworkRequired && !order.hasPendingDesignReview && order.status === 'PRODUCTION_QUEUE' && (
+              <p className="mb-5 text-xs text-text-muted">The vendor can dispatch this order only after you approve its artwork.</p>
             )}
 
             <div className="mb-7 overflow-x-auto">

@@ -38,6 +38,7 @@ function GiftCard({ gift, canQuickGift, canLaunchCampaign }: { gift: Gift; canQu
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <p className="font-semibold text-text">{gift.name}</p>
+        {gift.vendorName && <p className="text-xs text-text-muted">by {gift.vendorName}</p>}
         {gift.description && <p className="line-clamp-2 text-xs text-text-muted">{gift.description}</p>}
         {gift.leadTimeDays != null && (
           <p className="flex items-center gap-1 text-xs text-text-muted">
@@ -76,20 +77,33 @@ export function GiftStorePage() {
   const canLaunchCampaign = useHasAccess('campaign.manage')
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<string>('ALL')
+  // Choosing a vendor's product is choosing the vendor -- this narrows the store to one of the vendors serving the user.
+  const [vendor, setVendor] = useState<string>('ALL')
 
   const categories = useMemo(() => {
     const set = new Set((gifts ?? []).map((g) => g.category))
     return ['ALL', ...Array.from(set).sort()]
   }, [gifts])
 
+  const vendors = useMemo(() => {
+    const set = new Set((gifts ?? []).map((g) => g.vendorName).filter((name): name is string => Boolean(name)))
+    return ['ALL', ...Array.from(set).sort()]
+  }, [gifts])
+
   const filtered = useMemo(() => {
     return (gifts ?? []).filter((g) => {
       if (category !== 'ALL' && g.category !== category) return false
+      if (vendor !== 'ALL' && g.vendorName !== vendor) return false
       const q = search.trim().toLowerCase()
       if (!q) return true
-      return g.name.toLowerCase().includes(q) || g.category.toLowerCase().includes(q) || (g.description ?? '').toLowerCase().includes(q)
+      return (
+        g.name.toLowerCase().includes(q) ||
+        g.category.toLowerCase().includes(q) ||
+        (g.description ?? '').toLowerCase().includes(q) ||
+        (g.vendorName ?? '').toLowerCase().includes(q)
+      )
     })
-  }, [gifts, search, category])
+  }, [gifts, search, category, vendor])
 
   return (
     <div>
@@ -113,6 +127,15 @@ export function GiftStorePage() {
               options={categories.map((c) => ({ label: c === 'ALL' ? 'All categories' : c, value: c }))}
               className="w-full sm:w-56"
             />
+            {vendors.length > 2 && (
+              <Dropdown
+                value={vendor}
+                onChange={(e) => setVendor(e.value)}
+                options={vendors.map((v) => ({ label: v === 'ALL' ? 'All vendors' : v, value: v }))}
+                aria-label="Vendor"
+                className="w-full sm:w-56"
+              />
+            )}
           </div>
 
           {isLoading ? (

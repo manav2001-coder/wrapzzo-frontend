@@ -208,6 +208,8 @@
       "commission": "Commission fee (%)",
       "photoRequired": "Needs a recipient photo",
       "photoRequiredHelp": "An order for this gift needs a photo of the recipient, or their email so they can upload one.",
+      "artworkRequired": "Needs artwork approval",
+      "artworkRequiredHelp": "Personalised items such as prescription pads: the vendor can't dispatch until the orderer approves a proof.",
       "total": "Total price",
       "create": "Create gift",
       "save": "Save changes",

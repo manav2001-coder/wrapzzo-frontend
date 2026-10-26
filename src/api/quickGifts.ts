@@ -1,3 +1,4 @@
+import type { DoctorDetails } from '@/api/recipients'
 import { apiClient } from '@/lib/axiosClient'
 
 export type QuickGiftStatus = 'SUBMITTED' | 'APPROVED' | 'REJECTED'
@@ -17,6 +18,10 @@ export interface QuickGiftRequest {
   recipientEmail: string | null
   deliveryAddress: string
   recipientDob: string | null
+  doctor: DoctorDetails
+  quantity: number
+  vendorName: string | null
+  orgUnitName: string | null
   giftMessage: string | null
   internalNotes: string | null
   photoUrl: string | null
@@ -46,6 +51,10 @@ export interface CreateQuickGiftInput {
   giftMessage?: string
   internalNotes?: string
   photo?: QuickGiftPhotoValue
+  /** Print details for a new doctor -- ignored server-side when an existing one (recipientId) was picked. */
+  doctor?: Partial<DoctorDetails>
+  /** Units to order; omitted means 1. */
+  quantity?: number
 }
 
 interface PresignPhotoResponse {

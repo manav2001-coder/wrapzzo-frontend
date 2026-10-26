@@ -125,6 +125,57 @@ body {
 }
 
 /*
+ * Orders table -- scoped override, not a change to the app-wide DataTable look above.
+ * Flat on the page (no card border/radius), bold black headers with the sort glyph intact,
+ * a thin single-line row separator instead of a full cell grid, and a quiet row hover --
+ * matches a reference ops table exactly rather than this app's denser default.
+ */
+.orders-table .p-datatable-wrapper {
+  border: none;
+}
+
+.orders-table .p-datatable-thead > tr:first-child > th {
+  background: var(--color-surface);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.875rem 1rem;
+}
+
+.orders-table .p-datatable-thead > tr:nth-child(2) > th {
+  background: var(--color-surface);
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.5rem 1rem 0.75rem;
+}
+
+.orders-table .p-datatable-tbody > tr > td {
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+}
+
+.orders-table .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.orders-table .p-datatable-tbody > tr:hover > td {
+  background: var(--color-surface-muted);
+}
+
+.orders-table .p-paginator {
+  justify-content: space-between;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  padding: 0.75rem 0.25rem 0.25rem;
+}
+
+/*
  * PrimeReact's Password wraps its <input> in an internal .p-icon-field div
  * (for the eye-toggle icon). That wrapper is a flex item inside the
  * .p-password flex container but has no flex-grow, so it shrinks to the

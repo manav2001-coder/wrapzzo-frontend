@@ -339,6 +339,7 @@ function exportOrdersCsv(orders: Order[]) {
  * filters, not cards -- cards don't hold up once a company has hundreds of orders. */
 function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Order) => void }) {
   const [globalSearch, setGlobalSearch] = useState('')
+  const [giftSearch, setGiftSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL')
   const [vendorFilter, setVendorFilter] = useState<string | 'ALL'>('ALL')
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false)
@@ -355,6 +356,12 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
     if (statusFilter !== 'ALL') result = result.filter((o) => o.status === statusFilter)
     if (vendorFilter !== 'ALL') result = result.filter((o) => o.assignedVendorName === vendorFilter)
     if (onlyNeedsReview) result = result.filter((o) => o.hasPendingDesignReview)
+    const giftQuery = giftSearch.trim().toLowerCase()
+    if (giftQuery) {
+      result = result.filter(
+        (o) => o.giftName?.toLowerCase().includes(giftQuery) || o.recipientName?.toLowerCase().includes(giftQuery),
+      )
+    }
     const query = globalSearch.trim().toLowerCase()
     if (query) {
       result = result.filter((order) =>
@@ -364,11 +371,11 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
       )
     }
     return result
-  }, [orders, globalSearch, statusFilter, vendorFilter, onlyNeedsReview])
+  }, [orders, globalSearch, giftSearch, statusFilter, vendorFilter, onlyNeedsReview])
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <IconField iconPosition="left">
           <InputIcon className="pi pi-search" />
           <InputText value={globalSearch} onChange={(e) => setGlobalSearch(e.target.value)} placeholder="Search..." className="w-full sm:w-72" />
@@ -384,24 +391,21 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
             <i className="pi pi-eye" /> {needsReviewCount} need{needsReviewCount === 1 ? 's' : ''} design review
           </button>
         )}
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-text-muted">
-            {filtered.length} of {orders.length}
-          </span>
+        <div className="ml-auto">
           <Button label="Export" icon="pi pi-upload" outlined size="small" onClick={() => exportOrdersCsv(filtered)} />
         </div>
       </div>
 
-      {filtered.length === 0 && globalSearch === '' && statusFilter === 'ALL' && vendorFilter === 'ALL' && !onlyNeedsReview ? (
+      {filtered.length === 0 && globalSearch === '' && giftSearch === '' && statusFilter === 'ALL' && vendorFilter === 'ALL' && !onlyNeedsReview ? (
         <EmptyState icon="pi-shopping-bag" title="No orders yet" description="Orders appear here once a submission is approved." />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+        <div className="overflow-x-auto">
           <DataTable
             value={filtered}
             dataKey="id"
             paginator
-            rows={15}
-            rowsPerPageOptions={[15, 30, 50]}
+            rows={10}
+            rowsPerPageOptions={[10, 25, 50]}
             paginatorTemplate="RowsPerPageDropdown CurrentPageReport FirstPageLink PrevPageLink NextPageLink LastPageLink"
             currentPageReportTemplate="{first}-{last} of {totalRecords}"
             sortMode="multiple"
@@ -409,13 +413,31 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
             rowClassName={() => 'cursor-pointer'}
             emptyMessage="No orders match your filters."
             filterDisplay="row"
-            filters={{ assignedVendorName: { value: null, matchMode: 'equals' }, status: { value: null, matchMode: 'equals' } }}
-            className="min-w-[920px]"
+            filters={{
+              giftName: { value: null, matchMode: 'contains' },
+              assignedVendorName: { value: null, matchMode: 'equals' },
+              status: { value: null, matchMode: 'equals' },
+            }}
+            className="orders-table min-w-[920px]"
           >
             <Column
               header="Gift"
               sortField="giftName"
               sortable
+              filter
+              filterField="giftName"
+              showFilterMenu={false}
+              filterElement={() => (
+                <IconField iconPosition="left" className="w-full">
+                  <InputIcon className="pi pi-search text-xs" />
+                  <InputText
+                    value={giftSearch}
+                    onChange={(e) => setGiftSearch(e.target.value)}
+                    placeholder="Search gift or recipient"
+                    className="w-full !py-1.5 text-sm"
+                  />
+                </IconField>
+              )}
               body={(row: Order) => (
                 <div className="flex items-center gap-2.5">
                   <GiftThumb url={row.giftImageUrl} size="h-9 w-9" />
@@ -446,7 +468,6 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               filter
               filterField="assignedVendorName"
               showFilterMenu={false}
-              filterHeaderClassName="pt-2 pb-2.5"
               filterElement={() => (
                 <Dropdown
                   value={vendorFilter}
@@ -465,7 +486,6 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               filter
               filterField="status"
               showFilterMenu={false}
-              filterHeaderClassName="pt-2 pb-2.5"
               filterElement={() => (
                 <Dropdown
                   value={statusFilter}
@@ -491,12 +511,11 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               body={(row: Order) => new Date(row.createdAt).toLocaleDateString()}
             />
             <Column
-              header=""
+              header="Actions"
               body={(row: Order) => (
                 <Button
                   icon="pi pi-eye"
                   text
-                  rounded
                   aria-label="View order"
                   onClick={(e) => {
                     e.stopPropagation()

@@ -9,7 +9,7 @@ import type { Gift } from '@/api/gifts'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { useActiveGifts } from '@/hooks/useGifts'
-import { useHasPermission } from '@/hooks/usePermissions'
+import { useHasAccess } from '@/hooks/use-permission'
 import { formatCurrency } from '@/lib/format'
 
 function GiftCard({ gift, canQuickGift, canLaunchCampaign }: { gift: Gift; canQuickGift: boolean; canLaunchCampaign: boolean }) {
@@ -72,8 +72,8 @@ function GiftCard({ gift, canQuickGift, canLaunchCampaign }: { gift: Gift; canQu
 
 export function GiftStorePage() {
   const { data: gifts, isLoading } = useActiveGifts()
-  const canQuickGift = useHasPermission('quickgift.create')
-  const canLaunchCampaign = useHasPermission('campaign.manage')
+  const canQuickGift = useHasAccess('quickgift.create')
+  const canLaunchCampaign = useHasAccess('campaign.manage')
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<string>('ALL')
 

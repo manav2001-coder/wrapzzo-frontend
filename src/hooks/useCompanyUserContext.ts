@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { useCompany } from '@/hooks/useCompanies'
-import { useCurrentUser } from '@/hooks/usePermissions'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 /**
  * The Users pages (list/add/import) are reachable two ways: a platform admin managing one

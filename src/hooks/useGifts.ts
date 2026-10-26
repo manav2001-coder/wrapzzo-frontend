@@ -47,12 +47,13 @@ export function useUpdateGift(id: string) {
   })
 }
 
-export function useSetGiftStatus(id: string) {
+/** Put any gift in or out of stock -- the id travels with the call, so one hook serves a whole list. */
+export function useSetGiftStatus() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (active: boolean) => (active ? activateGift(id) : deactivateGift(id)),
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => (active ? activateGift(id) : deactivateGift(id)),
     onSuccess: (data) => {
-      queryClient.setQueryData(giftKey(id), data)
+      queryClient.setQueryData(giftKey(data.id), data)
       queryClient.invalidateQueries({ queryKey: giftsKey })
     },
   })

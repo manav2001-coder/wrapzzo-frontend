@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs'
 import type { BulkImportUserRow } from '@/api/users'
+import { downloadBlob } from '@/lib/download'
 
 // Generic on purpose -- works for any client's shape, not just a pharma-style
 // Division/Zone/Region/Area rollout. Org Level 1 is required for every row;
@@ -49,6 +50,11 @@ export async function generateEmployeeTemplateBlob(): Promise<Blob> {
 
   const buffer = await workbook.xlsx.writeBuffer()
   return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+}
+
+/** Builds the roster template and saves it -- the Users and Import pages both offer it. */
+export async function downloadEmployeeTemplate(): Promise<void> {
+  downloadBlob(await generateEmployeeTemplateBlob(), 'wrapzzo-employee-template.xlsx')
 }
 
 export interface ParsedEmployeeSheet {

@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addVendor,
   editVendor,
-  getVendor,
   listVendors,
   reactivateVendor,
   resendVendorInvite,
@@ -12,14 +11,9 @@ import {
 } from '@/api/vendors'
 
 const vendorsKey = ['vendors'] as const
-const vendorKey = (id: string) => ['vendors', id] as const
 
 export function useVendors() {
   return useQuery({ queryKey: vendorsKey, queryFn: listVendors })
-}
-
-export function useVendor(id: string | undefined) {
-  return useQuery({ queryKey: vendorKey(id ?? ''), queryFn: () => getVendor(id!), enabled: Boolean(id) })
 }
 
 export function useAddVendor() {
@@ -30,28 +24,24 @@ export function useAddVendor() {
   })
 }
 
-export function useEditVendor(id: string) {
+/** Edit any vendor -- the id travels with the call, so the list's drawer serves every row. */
+export function useEditVendor() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: EditVendorInput) => editVendor(id, input),
-    onSuccess: (data) => {
-      queryClient.setQueryData(vendorKey(id), data)
-      queryClient.invalidateQueries({ queryKey: vendorsKey })
-    },
+    mutationFn: ({ id, input }: { id: string; input: EditVendorInput }) => editVendor(id, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: vendorsKey }),
   })
 }
 
-export function useSetVendorStatus(id: string) {
+/** Suspend or reactivate any vendor. */
+export function useSetVendorStatus() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (active: boolean) => (active ? reactivateVendor(id) : suspendVendor(id)),
-    onSuccess: (data) => {
-      queryClient.setQueryData(vendorKey(id), data)
-      queryClient.invalidateQueries({ queryKey: vendorsKey })
-    },
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => (active ? reactivateVendor(id) : suspendVendor(id)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: vendorsKey }),
   })
 }
 
-export function useResendVendorInvite(id: string) {
-  return useMutation({ mutationFn: () => resendVendorInvite(id) })
+export function useResendVendorInvite() {
+  return useMutation({ mutationFn: (id: string) => resendVendorInvite(id) })
 }

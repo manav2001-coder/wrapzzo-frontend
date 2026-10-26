@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { bulkImportUsers, deleteUser, listCompanyUsers, makeCompanyAdmin, removeCompanyAdmin, type BulkImportUserRow } from '@/api/users'
-import { CURRENT_USER_QUERY_KEY } from '@/hooks/usePermissions'
+import { CURRENT_USER_QUERY_KEY } from '@/hooks/use-current-user'
 
 export function useCompanyUsers(companyId: string | undefined) {
   return useQuery({

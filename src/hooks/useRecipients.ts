@@ -8,10 +8,10 @@ import {
   updateRecipient,
   type CreateRecipientInput,
 } from '@/api/recipients'
-import { useHasPermission } from '@/hooks/usePermissions'
+import { useHasAccess } from '@/hooks/use-permission'
 
 export function useRecipients() {
-  const canView = useHasPermission('recipient.manage')
+  const canView = useHasAccess('recipient.manage')
   return useQuery({ queryKey: ['recipients'], queryFn: listRecipients, enabled: canView })
 }
 
@@ -53,7 +53,7 @@ export function useUpdateRecipient() {
 }
 
 export function useUpcomingBirthdays(days = 30) {
-  const canView = useHasPermission('recipient.manage')
+  const canView = useHasAccess('recipient.manage')
   return useQuery({
     queryKey: ['recipients', 'upcoming-birthdays', days],
     queryFn: () => listUpcomingBirthdays(days),

@@ -39,12 +39,13 @@ export function useUpdateCompany(id: string) {
   })
 }
 
-export function useSetCompanyStatus(id: string) {
+/** Activate or deactivate any company -- the id travels with the call, so one hook serves a whole list. */
+export function useSetCompanyStatus() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (active: boolean) => (active ? activateCompany(id) : deactivateCompany(id)),
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => (active ? activateCompany(id) : deactivateCompany(id)),
     onSuccess: (data) => {
-      queryClient.setQueryData(companyKey(id), data)
+      queryClient.setQueryData(companyKey(data.id), data)
       queryClient.invalidateQueries({ queryKey: companiesKey })
     },
   })

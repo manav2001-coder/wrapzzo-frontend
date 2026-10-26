@@ -1,0 +1,1252 @@
+{
+  "_comment": "Shared by packages/types/src/form-layout.test.ts and mobixfl-mobile test/core/config/form_layout_test.dart. Keep the two copies byte-identical: a case added here is added there.",
+  "resolve": [
+    {
+      "name": "no override renders the default unchanged",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "identity",
+            "labelKey": "masters:user.sections.identity",
+            "sections": [
+              {
+                "id": "identity",
+                "labelKey": "masters:user.sections.identity",
+                "fields": ["name", "email"]
+              }
+            ]
+          },
+          {
+            "id": "access",
+            "labelKey": "masters:user.sections.access",
+            "sections": [
+              {
+                "id": "access",
+                "fields": ["roleIds"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": null,
+      "fieldIds": ["name", "email", "roleIds"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "identity",
+            "label": null,
+            "labelKey": "masters:user.sections.identity",
+            "sections": [
+              {
+                "id": "identity",
+                "label": null,
+                "labelKey": "masters:user.sections.identity",
+                "fields": ["name", "email"]
+              }
+            ]
+          },
+          {
+            "id": "access",
+            "label": null,
+            "labelKey": "masters:user.sections.access",
+            "sections": [
+              {
+                "id": "access",
+                "label": null,
+                "labelKey": null,
+                "fields": ["roleIds"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "an override that is not valid JSON falls back to the default",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "a",
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": "{not json",
+      "fieldIds": ["name"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "s1",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "a",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "an override breaking the schema (two sections with one id) falls back to the default",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "a",
+                "fields": ["name", "email"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": {
+        "steps": [
+          {
+            "id": "x",
+            "sections": [
+              {
+                "id": "dup",
+                "fields": ["email"]
+              },
+              {
+                "id": "dup",
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "email"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "s1",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "a",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name", "email"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "an override stored as a JSON string is read",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "a",
+                "fields": ["name", "email"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": "{\"steps\":[{\"id\":\"s1\",\"sections\":[{\"id\":\"a\",\"fields\":[\"email\",\"name\"]}]}]}",
+      "fieldIds": ["name", "email"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "s1",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "a",
+                "label": null,
+                "labelKey": null,
+                "fields": ["email", "name"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "four steps with half the fields hidden collapse to the two that still hold any",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "one",
+            "sections": [
+              {
+                "id": "s1",
+                "fields": ["a", "b", "c", "d", "e"]
+              }
+            ]
+          },
+          {
+            "id": "two",
+            "sections": [
+              {
+                "id": "s2",
+                "fields": ["f", "g", "h", "i", "j"]
+              }
+            ]
+          },
+          {
+            "id": "three",
+            "sections": [
+              {
+                "id": "s3",
+                "fields": ["k", "l", "m", "n", "o"]
+              }
+            ]
+          },
+          {
+            "id": "four",
+            "sections": [
+              {
+                "id": "s4",
+                "fields": ["p", "q", "r", "s", "t"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t"
+      ],
+      "hidden": ["f", "g", "h", "i", "j", "p", "q", "r", "s", "t"],
+      "expected": {
+        "steps": [
+          {
+            "id": "one",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "s1",
+                "label": null,
+                "labelKey": null,
+                "fields": ["a", "b", "c", "d", "e"]
+              }
+            ]
+          },
+          {
+            "id": "three",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "s3",
+                "label": null,
+                "labelKey": null,
+                "fields": ["k", "l", "m", "n", "o"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "an empty section drops out of a step that keeps others",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "one",
+            "sections": [
+              {
+                "id": "basic",
+                "fields": ["a"]
+              },
+              {
+                "id": "personal",
+                "fields": ["b"]
+              },
+              {
+                "id": "extra",
+                "fields": ["c"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["a", "b", "c"],
+      "hidden": ["b"],
+      "expected": {
+        "steps": [
+          {
+            "id": "one",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "basic",
+                "label": null,
+                "labelKey": null,
+                "fields": ["a"]
+              },
+              {
+                "id": "extra",
+                "label": null,
+                "labelKey": null,
+                "fields": ["c"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "everything hidden leaves no step at all",
+      "defaultLayout": null,
+      "override": null,
+      "fieldIds": ["a", "b"],
+      "hidden": ["a", "b"],
+      "expected": {
+        "steps": []
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "several titled sections in one step: a Field Configuration translation wins, English is the fallback",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "one",
+            "label": "Basic details",
+            "sections": [
+              {
+                "id": "basic",
+                "label": "Basic details",
+                "fields": ["name", "email"]
+              },
+              {
+                "id": "personal",
+                "label": "Personal details",
+                "fields": ["dateOfBirth"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "email", "dateOfBirth"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "one",
+            "label": "मूल विवरण",
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "basic",
+                "label": "मूल विवरण",
+                "labelKey": null,
+                "fields": ["name", "email"]
+              },
+              {
+                "id": "personal",
+                "label": "Personal details",
+                "labelKey": null,
+                "fields": ["dateOfBirth"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {
+        "step:one": "मूल विवरण",
+        "section:basic": "मूल विवरण"
+      },
+      "hiddenLayout": []
+    },
+    {
+      "name": "a section the admin did not rename keeps the default's i18n key by id",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "identity",
+            "labelKey": "k.step",
+            "sections": [
+              {
+                "id": "identity",
+                "labelKey": "k.section",
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": {
+        "steps": [
+          {
+            "id": "identity",
+            "sections": [
+              {
+                "id": "identity",
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "identity",
+            "label": null,
+            "labelKey": "k.step",
+            "sections": [
+              {
+                "id": "identity",
+                "label": null,
+                "labelKey": "k.section",
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "unknown ids are ignored and an id placed twice keeps its first place",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "one",
+            "sections": [
+              {
+                "id": "a",
+                "fields": ["ghost", "name", "email"]
+              },
+              {
+                "id": "b",
+                "fields": ["name", "phone"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "email", "phone"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "one",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "a",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name", "email"]
+              },
+              {
+                "id": "b",
+                "label": null,
+                "labelKey": null,
+                "fields": ["phone"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "a field the override does not place goes to its default section when that section still exists",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "identity",
+                "fields": ["name", "email", "dateOfBirth"]
+              },
+              {
+                "id": "notes",
+                "fields": ["notes"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "notes",
+                "fields": ["notes"]
+              },
+              {
+                "id": "identity",
+                "fields": ["email", "name"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "email", "dateOfBirth", "notes"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "s1",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "notes",
+                "label": null,
+                "labelKey": null,
+                "fields": ["notes"]
+              },
+              {
+                "id": "identity",
+                "label": null,
+                "labelKey": null,
+                "fields": ["email", "name", "dateOfBirth"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "a field whose default section is gone (or a new custom field) goes to the end of the last section",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "identity",
+                "fields": ["name"]
+              },
+              {
+                "id": "notes",
+                "fields": ["notes"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": {
+        "steps": [
+          {
+            "id": "a",
+            "sections": [
+              {
+                "id": "first",
+                "fields": ["notes"]
+              }
+            ]
+          },
+          {
+            "id": "b",
+            "sections": [
+              {
+                "id": "second",
+                "fields": []
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "notes", "cf_bloodGroup"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "a",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "first",
+                "label": null,
+                "labelKey": null,
+                "fields": ["notes"]
+              }
+            ]
+          },
+          {
+            "id": "b",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "second",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name", "cf_bloodGroup"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "a flat form (no default) given two steps by the admin renders two steps",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "details",
+            "label": "Details",
+            "sections": [
+              {
+                "id": "d",
+                "fields": ["code", "name"]
+              }
+            ]
+          },
+          {
+            "id": "more",
+            "label": "More",
+            "sections": [
+              {
+                "id": "m",
+                "fields": ["notes"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["code", "name", "notes", "active"],
+      "hidden": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "details",
+            "label": "Details",
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "d",
+                "label": null,
+                "labelKey": null,
+                "fields": ["code", "name"]
+              }
+            ]
+          },
+          {
+            "id": "more",
+            "label": "More",
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "m",
+                "label": null,
+                "labelKey": null,
+                "fields": ["notes", "active"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "no default and no override: one untitled step and section in the screen's order",
+      "defaultLayout": null,
+      "override": "",
+      "fieldIds": ["code", "name", "active"],
+      "hidden": ["name"],
+      "expected": {
+        "steps": [
+          {
+            "id": "main",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "main",
+                "label": null,
+                "labelKey": null,
+                "fields": ["code", "active"]
+              }
+            ]
+          }
+        ]
+      },
+      "translations": {},
+      "hiddenLayout": []
+    },
+    {
+      "name": "a translation for a step whose layout has no English name still names it (a renamed default)",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "identity",
+            "labelKey": "k.step",
+            "sections": [
+              {
+                "id": "identity",
+                "labelKey": "k.section",
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": null,
+      "fieldIds": ["name"],
+      "hidden": [],
+      "translations": {
+        "step:identity": "पहचान"
+      },
+      "hiddenLayout": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "identity",
+            "label": "पहचान",
+            "labelKey": "k.step",
+            "sections": [
+              {
+                "id": "identity",
+                "label": null,
+                "labelKey": "k.section",
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a section Field Configuration hides is dropped with its fields, the rest of the step stays",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "basic",
+            "label": "Basic details",
+            "sections": [
+              {
+                "id": "identity",
+                "label": "Identity",
+                "fields": ["name", "email"]
+              },
+              {
+                "id": "contact",
+                "label": "Contact",
+                "fields": ["phone"]
+              }
+            ]
+          },
+          {
+            "id": "access",
+            "label": "Access",
+            "sections": [
+              {
+                "id": "roles",
+                "fields": ["roleIds"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "email", "phone", "roleIds"],
+      "hidden": [],
+      "translations": {},
+      "hiddenLayout": ["section:contact"],
+      "expected": {
+        "steps": [
+          {
+            "id": "basic",
+            "label": "Basic details",
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "identity",
+                "label": "Identity",
+                "labelKey": null,
+                "fields": ["name", "email"]
+              }
+            ]
+          },
+          {
+            "id": "access",
+            "label": "Access",
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "roles",
+                "label": null,
+                "labelKey": null,
+                "fields": ["roleIds"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a hidden step is dropped with every field in it",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "basic",
+            "label": "Basic details",
+            "sections": [
+              {
+                "id": "identity",
+                "label": "Identity",
+                "fields": ["name", "email"]
+              },
+              {
+                "id": "contact",
+                "label": "Contact",
+                "fields": ["phone"]
+              }
+            ]
+          },
+          {
+            "id": "access",
+            "label": "Access",
+            "sections": [
+              {
+                "id": "roles",
+                "fields": ["roleIds"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "email", "phone", "roleIds"],
+      "hidden": [],
+      "translations": {},
+      "hiddenLayout": ["step:access"],
+      "expected": {
+        "steps": [
+          {
+            "id": "basic",
+            "label": "Basic details",
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "identity",
+                "label": "Identity",
+                "labelKey": null,
+                "fields": ["name", "email"]
+              },
+              {
+                "id": "contact",
+                "label": "Contact",
+                "labelKey": null,
+                "fields": ["phone"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "hiding every section of a step collapses the step",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "basic",
+            "label": "Basic details",
+            "sections": [
+              {
+                "id": "identity",
+                "label": "Identity",
+                "fields": ["name", "email"]
+              },
+              {
+                "id": "contact",
+                "label": "Contact",
+                "fields": ["phone"]
+              }
+            ]
+          },
+          {
+            "id": "access",
+            "label": "Access",
+            "sections": [
+              {
+                "id": "roles",
+                "fields": ["roleIds"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "email", "phone", "roleIds"],
+      "hidden": [],
+      "translations": {},
+      "hiddenLayout": ["section:roles"],
+      "expected": {
+        "steps": [
+          {
+            "id": "basic",
+            "label": "Basic details",
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "identity",
+                "label": "Identity",
+                "labelKey": null,
+                "fields": ["name", "email"]
+              },
+              {
+                "id": "contact",
+                "label": "Contact",
+                "labelKey": null,
+                "fields": ["phone"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a field the layout misses, whose default section is hidden, is hidden with that section",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "a",
+                "fields": ["name"]
+              },
+              {
+                "id": "b",
+                "fields": ["notes"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "a",
+                "fields": ["name"]
+              },
+              {
+                "id": "b",
+                "fields": []
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name", "notes"],
+      "hidden": [],
+      "translations": {},
+      "hiddenLayout": ["section:b"],
+      "expected": {
+        "steps": [
+          {
+            "id": "s1",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "a",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a name stored per language (an early development shape) is read as its English",
+      "defaultLayout": null,
+      "override": {
+        "steps": [
+          {
+            "id": "one",
+            "label": {
+              "en": "Details",
+              "hi": "विवरण"
+            },
+            "sections": [
+              {
+                "id": "d",
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "fieldIds": ["name"],
+      "hidden": [],
+      "translations": {},
+      "hiddenLayout": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "one",
+            "label": "Details",
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "d",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a field taken off the form stays off, even though its default section still exists",
+      "defaultLayout": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "a",
+                "fields": ["name", "email", "notes"]
+              }
+            ]
+          }
+        ]
+      },
+      "override": {
+        "steps": [
+          {
+            "id": "s1",
+            "sections": [
+              {
+                "id": "a",
+                "fields": ["email", "name", "notes"]
+              }
+            ]
+          }
+        ],
+        "offForm": ["notes"]
+      },
+      "fieldIds": ["name", "email", "notes"],
+      "hidden": [],
+      "translations": {},
+      "hiddenLayout": [],
+      "expected": {
+        "steps": [
+          {
+            "id": "s1",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "a",
+                "label": null,
+                "labelKey": null,
+                "fields": ["email", "name"]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "summarize": [
+    {
+      "name": "errors are grouped by the step that shows them, in step and display order",
+      "layout": {
+        "steps": [
+          {
+            "id": "identity",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "identity",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name", "email"]
+              }
+            ]
+          },
+          {
+            "id": "access",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "access",
+                "label": null,
+                "labelKey": null,
+                "fields": ["roleIds"]
+              }
+            ]
+          },
+          {
+            "id": "validity",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "validity",
+                "label": null,
+                "labelKey": null,
+                "fields": ["effectiveFrom", "effectiveTo"]
+              },
+              {
+                "id": "notes",
+                "label": null,
+                "labelKey": null,
+                "fields": ["notes"]
+              }
+            ]
+          }
+        ]
+      },
+      "errorKeys": ["effectiveTo", "name", "effectiveFrom", "notes"],
+      "expected": {
+        "steps": [
+          {
+            "stepIndex": 0,
+            "stepId": "identity",
+            "fieldIds": ["name"]
+          },
+          {
+            "stepIndex": 2,
+            "stepId": "validity",
+            "fieldIds": ["effectiveFrom", "effectiveTo", "notes"]
+          }
+        ],
+        "general": []
+      }
+    },
+    {
+      "name": "a key no rendered field owns is a general row",
+      "layout": {
+        "steps": [
+          {
+            "id": "one",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "a",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "errorKeys": ["root", "name"],
+      "expected": {
+        "steps": [
+          {
+            "stepIndex": 0,
+            "stepId": "one",
+            "fieldIds": ["name"]
+          }
+        ],
+        "general": ["root"]
+      }
+    },
+    {
+      "name": "no errors, no rows",
+      "layout": {
+        "steps": [
+          {
+            "id": "one",
+            "label": null,
+            "labelKey": null,
+            "sections": [
+              {
+                "id": "a",
+                "label": null,
+                "labelKey": null,
+                "fields": ["name"]
+              }
+            ]
+          }
+        ]
+      },
+      "errorKeys": [],
+      "expected": {
+        "steps": [],
+        "general": []
+      }
+    }
+  ]
+}

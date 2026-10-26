@@ -1,38 +1,29 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
-import { Checkbox } from 'primereact/checkbox'
-import { confirmDialog } from 'primereact/confirmdialog'
-import { Dropdown } from 'primereact/dropdown'
-import { FileUpload } from 'primereact/fileupload'
-import { InputNumber } from 'primereact/inputnumber'
-import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea'
-import { ProgressSpinner } from 'primereact/progressspinner'
+import { ArrowLeft, Power, RotateCcw, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
-import { z } from 'zod'
-import { uploadGiftImage } from '@/api/gifts'
-import { PageHeader } from '@/components/PageHeader'
-import { StatusBadge } from '@/components/StatusBadge'
-import {
-  useCreateGift,
-  useDeleteGiftImage,
-  useGift,
-  useGifts,
-  useSetGiftStatus,
-  useUpdateGift,
-  useUploadGiftImage,
-} from '@/hooks/useGifts'
-import { formatCurrency } from '@/lib/format'
-import { showApiError, showToast } from '@/lib/toast'
+import { toast } from 'sonner'
+import type { z } from 'zod'
 
-// Only one image per gift for now -- raise this (and reintroduce a carousel
-// in the Gift Store grid) if multi-image support is turned back on later.
+import { uploadGiftImage, type GiftInput } from '@/api/gifts'
+import { AppDialog } from '@/components/app-dialog'
+import { FormGenerator } from '@/components/fields/form-generator'
+import { FileDropzone } from '@/components/file-dropzone'
+import { IconButton } from '@/components/icon-button'
+import { decimalField, numberField, selectField, switchField, textField } from '@/components/masters/master-fields'
+import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
+import { SectionCard } from '@/components/section-card'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useCreateGift, useDeleteGiftImage, useGift, useGifts, useSetGiftStatus, useUpdateGift, useUploadGiftImage } from '@/hooks/useGifts'
+import { formatCurrency } from '@/lib/format'
+import { GiftThumbnail } from './GiftThumbnail'
+
+/** One image per gift for now -- raise this (and bring back a carousel in the Gift Store) to allow more. */
 export const MAX_GIFT_IMAGES = 1
 
-/** A sane starting set -- the real list grows over time as admins add "Other" categories, which then show up here too. */
+/** A starting set; every category a gift already uses joins it, so a new "Other" becomes a real option. */
 const FIXED_CATEGORIES = [
   'Drinkware',
   'Stationery & Desk',
@@ -45,579 +36,291 @@ const FIXED_CATEGORIES = [
   'Electronics',
   'Food & Beverages',
 ]
+const OTHER = '__other__'
+const IMAGE_ACCEPT = { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'], 'image/svg+xml': ['.svg'] }
 
-const OTHER_OPTION = '__other__'
+const num = (value: unknown) => (value === '' || value == null ? undefined : Number(value))
+const asString = (value: number | null | undefined) => (value == null ? '' : String(value))
 
-const giftSchema = z
-  .object({
-    name: z.string().min(1, 'Gift name is required'),
-    category: z.string().min(1, 'Category is required'),
-    description: z.string().optional(),
-    moq: z.number().positive().optional().nullable(),
-    leadTimeDays: z.number().positive().optional().nullable(),
-    price: z.number().min(0, 'Price must be zero or more').nullable(),
-    markupFeePercentage: z.number().min(0).optional().nullable(),
-    commissionFeePercentage: z.number().min(0).optional().nullable(),
-    photoRequired: z.boolean(),
-  })
-  .refine((data) => data.price !== null, { message: 'Price is required', path: ['price'] })
-
-type GiftFormValues = z.infer<typeof giftSchema>
+/** price + price × markup% + price × commission%, as the backend computes it. */
+function totalOf(values: Record<string, unknown>): number | null {
+  const price = num(values.price)
+  if (price === undefined || Number.isNaN(price)) return null
+  const markup = num(values.markupFeePercentage) ?? 0
+  const commission = num(values.commissionFeePercentage) ?? 0
+  return price + (price * markup) / 100 + (price * commission) / 100
+}
 
 export function GiftFormPage() {
+  const { t } = useTranslation('admin')
   const { id } = useParams<{ id: string }>()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
+  const showError = useApiErrorToast()
 
-  const { data: gift, isLoading: isLoadingGift } = useGift(id)
+  const { data: gift, isLoading } = useGift(id)
   const { data: allGifts } = useGifts()
   const createGift = useCreateGift()
   const updateGift = useUpdateGift(id ?? '')
-  const setStatus = useSetGiftStatus(id ?? '')
+  const setStatus = useSetGiftStatus()
   const uploadImage = useUploadGiftImage(id ?? '')
   const deleteImage = useDeleteGiftImage(id ?? '')
+  const [confirmingStatus, setConfirmingStatus] = useState(false)
+  const [total, setTotal] = useState<number | null>(null)
 
-  // A vendor-submitted gift's content is theirs -- an admin can only view it and delist it.
-  const isVendorOwned = isEdit && Boolean(gift?.vendorId)
+  // Create mode: the image is held until the gift exists, then uploaded right after the create.
+  const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const pendingPreview = useMemo(() => (pendingImage ? URL.createObjectURL(pendingImage) : null), [pendingImage])
+  useEffect(() => () => void (pendingPreview && URL.revokeObjectURL(pendingPreview)), [pendingPreview])
 
-  // Create mode only -- staged locally since a gift needs to exist (an id)
-  // before the backend's presign/attach endpoints have anywhere to point.
-  // Uploaded for real right after the gift record is created.
-  const [pendingFiles, setPendingFiles] = useState<File[]>([])
-  const [isUploadingPending, setIsUploadingPending] = useState(false)
-  const pendingPreviews = useMemo(() => pendingFiles.map((file) => URL.createObjectURL(file)), [pendingFiles])
-  useEffect(() => {
-    return () => pendingPreviews.forEach((url) => URL.revokeObjectURL(url))
-  }, [pendingPreviews])
+  // A vendor's own submission: the backend refuses edits to its content, so the form is read-only.
+  const vendorOwned = Boolean(gift?.vendorId)
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors, isDirty },
-  } = useForm<GiftFormValues>({
-    resolver: zodResolver(giftSchema),
-    defaultValues: {
-      name: '',
-      category: '',
-      description: '',
-      moq: null,
-      leadTimeDays: null,
-      price: null,
-      markupFeePercentage: null,
-      commissionFeePercentage: null,
-      photoRequired: false,
-    },
-  })
-
-  const [price, markupFeePercentage, commissionFeePercentage] = watch(['price', 'markupFeePercentage', 'commissionFeePercentage'])
-  const totalPrice = useMemo(() => {
-    if (price == null) return null
-    const markup = (price * (markupFeePercentage ?? 0)) / 100
-    const commission = (price * (commissionFeePercentage ?? 0)) / 100
-    return price + markup + commission
-  }, [price, markupFeePercentage, commissionFeePercentage])
-
-  useEffect(() => {
-    if (gift) {
-      reset({
-        name: gift.name,
-        category: gift.category,
-        description: gift.description ?? '',
-        moq: gift.moq,
-        leadTimeDays: gift.leadTimeDays,
-        price: gift.price,
-        markupFeePercentage: gift.markupFeePercentage,
-        commissionFeePercentage: gift.commissionFeePercentage,
-        photoRequired: gift.photoRequired,
-      })
-    }
-  }, [gift, reset])
-
-  // The fixed starting set, plus every category any gift already uses -- so once someone
-  // picks "Other" and types a new one, it's a real option for everyone from then on.
-  const knownCategories = useMemo(() => {
+  const categories = useMemo(() => {
     const set = new Set(FIXED_CATEGORIES)
-    ;(allGifts ?? []).forEach((g) => {
-      if (g.category) set.add(g.category)
-    })
-    return Array.from(set).sort()
+    for (const g of allGifts ?? []) if (g.category) set.add(g.category)
+    return [...set].sort()
   }, [allGifts])
 
-  // Dropdown selection is separate from the actual category value being submitted: it's
-  // either one of the known categories, or the OTHER_OPTION sentinel while a custom one is
-  // being typed into the field revealed below.
-  const [categorySelect, setCategorySelect] = useState<string>('')
-  useEffect(() => {
-    if (!gift) return
-    setCategorySelect(knownCategories.includes(gift.category) ? gift.category : OTHER_OPTION)
-    // Only re-derive when the gift itself (re)loads -- not on every knownCategories recompute,
-    // which would fight the admin's own in-progress "Other" selection.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gift])
+  const fields = useMemo(
+    () => [
+      textField({ id: 'name', label: t('gifts.detail.name'), required: true, spanToFullRow: true }),
+      selectField({
+        id: 'category',
+        label: t('gifts.detail.category'),
+        required: true,
+        options: [...categories.map((value) => ({ value, label: value })), { value: OTHER, label: t('gifts.detail.otherOption') }],
+      }),
+      textField({
+        id: 'otherCategory',
+        label: t('gifts.detail.otherCategory'),
+        max: 150,
+        hidden: (values) => values.category !== OTHER,
+      }),
+      textField({ id: 'description', label: t('gifts.detail.description'), multiline: true, max: 2000, spanToFullRow: true }),
+      numberField({ id: 'moq', label: t('gifts.detail.moq'), min: 1, max: 1_000_000 }),
+      numberField({ id: 'leadTimeDays', label: t('gifts.detail.leadTime'), min: 1, max: 365 }),
+      decimalField({ id: 'price', label: t('gifts.detail.price'), required: true, max: 10_000_000, scale: 2 }),
+      decimalField({ id: 'markupFeePercentage', label: t('gifts.detail.markup'), max: 100, scale: 2 }),
+      decimalField({ id: 'commissionFeePercentage', label: t('gifts.detail.commission'), max: 100, scale: 2 }),
+      switchField({
+        id: 'photoRequired',
+        label: t('gifts.detail.photoRequired'),
+        description: t('gifts.detail.photoRequiredHelp'),
+      }),
+    ],
+    [t, categories],
+  )
 
-  async function onSubmit(values: GiftFormValues) {
-    const input = {
-      name: values.name,
-      category: values.category,
-      description: values.description || undefined,
-      moq: values.moq ?? undefined,
-      leadTimeDays: values.leadTimeDays ?? undefined,
-      // Validated non-null by the schema's refine before onSubmit can ever fire.
-      price: values.price ?? 0,
-      markupFeePercentage: values.markupFeePercentage ?? undefined,
-      commissionFeePercentage: values.commissionFeePercentage ?? undefined,
-      photoRequired: values.photoRequired,
+  const values = useMemo(
+    () =>
+      gift
+        ? {
+            name: gift.name,
+            category: gift.category,
+            description: gift.description ?? '',
+            moq: gift.moq ?? '',
+            leadTimeDays: gift.leadTimeDays ?? '',
+            price: asString(gift.price),
+            markupFeePercentage: asString(gift.markupFeePercentage),
+            commissionFeePercentage: asString(gift.commissionFeePercentage),
+            photoRequired: gift.photoRequired,
+          }
+        : undefined,
+    [gift],
+  )
+
+  const refine = useMemo(
+    () => (submitted: Record<string, unknown>, ctx: z.RefinementCtx) => {
+      if (submitted.category === OTHER && !String(submitted.otherCategory ?? '').trim()) {
+        ctx.addIssue({ code: 'custom', path: ['otherCategory'], message: t('errors.required', { ns: 'common' }) })
+      }
+    },
+    [t],
+  )
+
+  async function onSubmit(submitted: Record<string, unknown>) {
+    const input: GiftInput = {
+      name: String(submitted.name).trim(),
+      category: submitted.category === OTHER ? String(submitted.otherCategory).trim() : String(submitted.category),
+      description: String(submitted.description ?? '').trim() || undefined,
+      moq: num(submitted.moq),
+      leadTimeDays: num(submitted.leadTimeDays),
+      price: Number(submitted.price),
+      markupFeePercentage: num(submitted.markupFeePercentage),
+      commissionFeePercentage: num(submitted.commissionFeePercentage),
+      photoRequired: Boolean(submitted.photoRequired),
     }
     try {
-      if (isEdit && id) {
+      if (isEdit) {
         await updateGift.mutateAsync(input)
-        showToast({ severity: 'success', summary: 'Gift updated' })
+        toast.success(t('gifts.detail.updated'))
         return
       }
-
       const created = await createGift.mutateAsync(input)
-
-      if (pendingFiles.length > 0) {
-        setIsUploadingPending(true)
+      if (pendingImage) {
         try {
-          for (let index = 0; index < pendingFiles.length; index += 1) {
-            await uploadGiftImage(created.id, pendingFiles[index], index)
-          }
-        } catch (error) {
-          showApiError(error, 'Gift created, but one or more images failed to upload. Add them from the gift page.')
-          navigate(`/admin/gifts/${created.id}`, { replace: true })
-          return
-        } finally {
-          setIsUploadingPending(false)
+          await uploadGiftImage(created.id, pendingImage, 0)
+        } catch {
+          toast.error(t('gifts.detail.imageFailedAfterCreate'))
         }
       }
-
-      showToast({ severity: 'success', summary: 'Gift created' })
+      toast.success(t('gifts.detail.created'))
       navigate(`/admin/gifts/${created.id}`, { replace: true })
     } catch (error) {
-      showApiError(error)
+      showError(error)
     }
   }
 
-  function confirmStatusToggle() {
-    if (!gift) return
-    const activating = !gift.active
-    confirmDialog({
-      header: activating ? 'Mark in stock' : 'Mark out of stock',
-      message: activating
-        ? `${gift.name} will become visible in the Gift Store again.`
-        : `${gift.name} will be hidden from the Gift Store as out of stock. This can be reversed later.`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: activating ? undefined : 'p-button-danger',
-      accept: async () => {
-        try {
-          await setStatus.mutateAsync(activating)
-          showToast({ severity: 'success', summary: activating ? 'Gift marked in stock' : 'Gift marked out of stock' })
-        } catch (error) {
-          showApiError(error)
-        }
-      },
-    })
-  }
-
-  async function handleImageUpload(event: { files: File[] }) {
-    const file = event.files[0]
-    if (!file || !gift) return
-    try {
-      await uploadImage.mutateAsync({ file, displayOrder: gift.images.length })
-      showToast({ severity: 'success', summary: 'Image added' })
-    } catch (error) {
-      showApiError(error)
-    }
-  }
-
-  function handleStageFile(event: { files: File[] }) {
-    const file = event.files[0]
+  async function onImagePicked(file: File | null) {
     if (!file) return
-    setPendingFiles((prev) => (prev.length >= MAX_GIFT_IMAGES ? prev : [...prev, file]))
+    if (!isEdit) {
+      setPendingImage(file)
+      return
+    }
+    try {
+      await uploadImage.mutateAsync({ file, displayOrder: gift?.images.length ?? 0 })
+      toast.success(t('gifts.detail.imageAdded'))
+    } catch (error) {
+      showError(error)
+    }
   }
 
-  function removePendingFile(index: number) {
-    setPendingFiles((prev) => prev.filter((_, i) => i !== index))
+  async function removeImage(imageId: string) {
+    try {
+      await deleteImage.mutateAsync(imageId)
+      toast.success(t('gifts.detail.imageRemoved'))
+    } catch (error) {
+      showError(error)
+    }
   }
 
-  function confirmRemoveImage(imageId: string) {
-    confirmDialog({
-      header: 'Remove image',
-      message: 'This image will be removed from the gift.',
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: 'p-button-danger',
-      accept: async () => {
-        try {
-          await deleteImage.mutateAsync(imageId)
-          showToast({ severity: 'success', summary: 'Image removed' })
-        } catch (error) {
-          showApiError(error)
-        }
-      },
-    })
+  async function confirmStatus() {
+    if (!gift) return
+    try {
+      await setStatus.mutateAsync({ id: gift.id, active: !gift.active })
+      toast.success(gift.active ? t('gifts.markedOut') : t('gifts.markedIn'))
+    } catch (error) {
+      showError(error)
+    } finally {
+      setConfirmingStatus(false)
+    }
   }
 
-  if (isEdit && isLoadingGift) {
+  if (isEdit && isLoading) {
     return (
-      <div className="flex justify-center py-20">
-        <ProgressSpinner style={{ width: 40, height: 40 }} strokeWidth="4" />
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-72" />
+        <Skeleton className="h-64 w-full" />
       </div>
     )
   }
 
-  const submitting = createGift.isPending || updateGift.isPending || isUploadingPending
-  const existingImageCount = isEdit && gift ? gift.images.length : pendingFiles.length
-  const atImageCap = existingImageCount >= MAX_GIFT_IMAGES
+  const images = [...(gift?.images ?? [])].sort((a, b) => a.displayOrder - b.displayOrder)
+  const atCap = isEdit ? images.length >= MAX_GIFT_IMAGES : Boolean(pendingImage)
+  const shownTotal = total ?? gift?.totalPrice ?? null
 
   return (
-    <div>
-      <PageHeader
-        title={isEdit ? gift?.name ?? 'Gift' : 'Add gift'}
-        subtitle={
-          isEdit && gift
-            ? isVendorOwned
-              ? `Submitted by ${gift.vendorName}. You can view it and manage its catalogue visibility, but not edit its content.`
-              : 'Update gift details and manage its catalogue visibility.'
-            : 'Add a new gift to the catalogue.'
+    <div className="space-y-6">
+      <MasterPageHeader
+        lead={
+          <>
+            <IconButton icon={ArrowLeft} label={t('gifts.detail.back')} onClick={() => navigate('/admin/gifts')} />
+            {gift && <GiftThumbnail gift={gift} />}
+          </>
         }
-        backTo="/admin/gifts"
-        actions={
-          isEdit && gift ? (
-            <StatusBadge status={gift.active ? 'ACTIVE' : 'INACTIVE'} label={gift.active ? 'In stock' : 'Out of stock'} />
-          ) : undefined
+        title={isEdit ? (gift?.name ?? '') : t('gifts.detail.newTitle')}
+        description={
+          vendorOwned
+            ? t('gifts.detail.vendorOwned', { vendor: gift?.vendorName })
+            : isEdit
+              ? t('gifts.detail.editSubtitle')
+              : t('gifts.detail.newSubtitle')
+        }
+        extra={
+          gift && (
+            <div className="flex items-center gap-2">
+              <StatusCell active={gift.active} label={gift.active ? t('gifts.inStock') : t('gifts.outOfStock')} />
+              <Button size="sm" variant={gift.active ? 'outline' : 'default'} onClick={() => setConfirmingStatus(true)}>
+                {gift.active ? <Power /> : <RotateCcw />}
+                {gift.active ? t('gifts.markOut') : t('gifts.markIn')}
+              </Button>
+            </div>
+          )
         }
       />
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        <Card title="Gift details" className="lg:col-span-2">
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-          <fieldset disabled={isVendorOwned} className="contents">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="name" className="text-sm font-medium text-text">
-                Gift name
-              </label>
-              <Controller
-                name="name"
-                control={control}
-                render={({ field }) => (
-                  <InputText
-                    id="name"
-                    {...field}
-                    className={errors.name ? 'p-invalid' : ''}
-                    placeholder="Premium Diary Set"
-                  />
-                )}
-              />
-              {errors.name && <small className="text-red-500 dark:text-red-400">{errors.name.message}</small>}
+      <div className="grid grid-cols-1 items-start gap-6 pb-4 lg:grid-cols-3">
+        <SectionCard
+          title={t('gifts.detail.details')}
+          className="lg:col-span-2"
+          footer={
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{t('gifts.detail.total')}</span>
+              <span className="text-base font-semibold">{formatCurrency(shownTotal)}</span>
             </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="category" className="text-sm font-medium text-text">
-                Category
-              </label>
-              <Controller
-                name="category"
-                control={control}
-                render={({ field }) => (
-                  <>
-                    <Dropdown
-                      inputId="category"
-                      value={categorySelect}
-                      onChange={(e) => {
-                        setCategorySelect(e.value)
-                        if (e.value !== OTHER_OPTION) {
-                          field.onChange(e.value)
-                        } else if (knownCategories.includes(field.value)) {
-                          // Switching away from a known category into "Other" -- start blank, not with the old value.
-                          field.onChange('')
-                        }
-                      }}
-                      options={[...knownCategories.map((c) => ({ label: c, value: c })), { label: 'Other', value: OTHER_OPTION }]}
-                      placeholder="Select a category"
-                      filter
-                      className={errors.category ? 'p-invalid' : ''}
-                    />
-                    {categorySelect === OTHER_OPTION && (
-                      <InputText
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        placeholder="Type the new category"
-                        className={`mt-1.5 ${errors.category ? 'p-invalid' : ''}`}
-                        autoFocus
-                      />
-                    )}
-                  </>
-                )}
-              />
-              {errors.category && <small className="text-red-500 dark:text-red-400">{errors.category.message}</small>}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="description" className="text-sm font-medium text-text">
-                Description
-              </label>
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <InputTextarea id="description" {...field} rows={3} placeholder="Optional" className="w-full" />
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="moq" className="text-sm font-medium text-text">
-                  MOQ
-                </label>
-                <Controller
-                  name="moq"
-                  control={control}
-                  render={({ field }) => (
-                    <InputNumber
-                      inputId="moq"
-                      value={field.value ?? null}
-                      onValueChange={(event) => field.onChange(event.value)}
-                      min={1}
-                      placeholder="Optional"
-                      className="w-full"
-                    />
-                  )}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="leadTimeDays" className="text-sm font-medium text-text">
-                  Lead time (days)
-                </label>
-                <Controller
-                  name="leadTimeDays"
-                  control={control}
-                  render={({ field }) => (
-                    <InputNumber
-                      inputId="leadTimeDays"
-                      value={field.value ?? null}
-                      onValueChange={(event) => field.onChange(event.value)}
-                      min={1}
-                      placeholder="Optional"
-                      className="w-full"
-                    />
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="price" className="text-sm font-medium text-text">
-                  Price
-                </label>
-                <Controller
-                  name="price"
-                  control={control}
-                  render={({ field }) => (
-                    <InputNumber
-                      inputId="price"
-                      value={field.value ?? null}
-                      onValueChange={(event) => field.onChange(event.value)}
-                      mode="currency"
-                      currency="INR"
-                      locale="en-IN"
-                      min={0}
-                      placeholder="0.00"
-                      className={errors.price ? 'p-invalid w-full' : 'w-full'}
-                    />
-                  )}
-                />
-                {errors.price && <small className="text-red-500 dark:text-red-400">{errors.price.message}</small>}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="markupFeePercentage" className="text-sm font-medium text-text">
-                  Markup fee %
-                </label>
-                <Controller
-                  name="markupFeePercentage"
-                  control={control}
-                  render={({ field }) => (
-                    <InputNumber
-                      inputId="markupFeePercentage"
-                      value={field.value ?? null}
-                      onValueChange={(event) => field.onChange(event.value)}
-                      mode="decimal"
-                      minFractionDigits={0}
-                      maxFractionDigits={2}
-                      suffix="%"
-                      min={0}
-                      placeholder="0"
-                      className="w-full"
-                    />
-                  )}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="commissionFeePercentage" className="text-sm font-medium text-text">
-                  Commission fee %
-                </label>
-                <Controller
-                  name="commissionFeePercentage"
-                  control={control}
-                  render={({ field }) => (
-                    <InputNumber
-                      inputId="commissionFeePercentage"
-                      value={field.value ?? null}
-                      onValueChange={(event) => field.onChange(event.value)}
-                      mode="decimal"
-                      minFractionDigits={0}
-                      maxFractionDigits={2}
-                      suffix="%"
-                      min={0}
-                      placeholder="0"
-                      className="w-full"
-                    />
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 rounded-lg border border-border bg-surface-muted px-3.5 py-2.5">
-              <Controller
-                name="photoRequired"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox inputId="photoRequired" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
-                )}
-              />
-              <label htmlFor="photoRequired" className="text-sm text-text">
-                <span className="font-medium">Require a recipient photo for this gift</span>
-                <p className="mt-0.5 text-xs text-text-muted">
-                  When ordering it (Quick Gift, or adding a recipient), the sender must upload a photo up front or provide the
-                  recipient's email so we can send them an upload link.
-                </p>
-              </label>
-            </div>
-
-            {totalPrice != null && (
-              <div className="flex items-center justify-between rounded-lg border border-border bg-surface-muted px-3.5 py-2.5">
-                <span className="text-sm text-text-muted">Total price shown to companies</span>
-                <span className="text-base font-semibold text-text">{formatCurrency(totalPrice)}</span>
-              </div>
-            )}
-
-            {isEdit && gift && (
-              <p className="text-xs text-text-muted">Added on {new Date(gift.createdAt).toLocaleDateString()}</p>
-            )}
-          </fieldset>
-
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              {!isVendorOwned && (
-                <Button
-                  type="submit"
-                  label={isEdit ? 'Save changes' : isUploadingPending ? 'Uploading images...' : 'Create gift'}
-                  loading={submitting}
-                  disabled={isEdit && !isDirty}
-                />
-              )}
-              {isEdit && gift && (
-                <Button
-                  type="button"
-                  label={gift.active ? 'Mark out of stock' : 'Mark in stock'}
-                  severity={gift.active ? 'danger' : 'success'}
-                  outlined
-                  loading={setStatus.isPending}
-                  onClick={confirmStatusToggle}
-                />
-              )}
-            </div>
-          </form>
-        </Card>
-
-        <Card
-          title="Images"
-          subTitle={`${existingImageCount} of ${MAX_GIFT_IMAGES} used${isEdit ? '. Shown in this order in the Gift Store.' : '. Optional — add now or after creating.'}`}
-          className="lg:col-span-1"
+          }
         >
-          <div className="flex flex-wrap gap-3">
-            {isEdit && gift ? (
-              <>
-                {[...gift.images]
-                  .sort((a, b) => a.displayOrder - b.displayOrder)
-                  .map((image) => (
-                    <div
-                      key={image.id}
-                      className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border"
-                    >
-                      <img src={image.imageUrl} alt="" className="h-full w-full object-cover" />
-                      {!isVendorOwned && (
-                        <button
-                          type="button"
-                          onClick={() => confirmRemoveImage(image.id)}
-                          aria-label="Remove image"
-                          className="absolute top-1 right-1 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                        >
-                          <i className="pi pi-times text-[10px]" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+          <FormGenerator
+            fields={fields}
+            values={values}
+            mode={vendorOwned ? 'view' : isEdit ? 'edit' : 'create'}
+            maxWidgetsPerRow={2}
+            refine={refine}
+            submitPermission="gift.manage"
+            submitLabel={isEdit ? t('gifts.detail.save') : t('gifts.detail.create')}
+            onChange={(live) => setTotal(totalOf(live))}
+            onSubmit={onSubmit}
+            hideCardWrapper
+          />
+        </SectionCard>
 
-                {!atImageCap && !isVendorOwned && (
-                  <FileUpload
-                    mode="basic"
-                    name="image"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    maxFileSize={5_000_000}
-                    customUpload
-                    uploadHandler={handleImageUpload}
-                    auto
-                    chooseLabel={uploadImage.isPending ? 'Uploading...' : 'Add image'}
-                    disabled={uploadImage.isPending}
+        <SectionCard title={t('gifts.detail.image')} description={isEdit ? t('gifts.detail.imageHelp') : t('gifts.detail.imageHelpNew')}>
+          <div className="space-y-4">
+            {images.map((image) => (
+              <div key={image.id} className="relative">
+                <img src={image.imageUrl} alt="" className="aspect-square w-full rounded-md border object-cover" />
+                {!vendorOwned && (
+                  <IconButton
+                    icon={Trash2}
+                    tone="destructive"
+                    label={t('gifts.detail.removeImage')}
+                    className="absolute right-2 top-2 bg-background/90"
+                    onClick={() => void removeImage(image.id)}
                   />
                 )}
-              </>
-            ) : (
-              <>
-                {pendingFiles.map((file, index) => (
-                  <div
-                    key={`${file.name}-${index}`}
-                    className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border"
-                  >
-                    <img src={pendingPreviews[index]} alt="" className="h-full w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removePendingFile(index)}
-                      aria-label="Remove image"
-                      className="absolute top-1 right-1 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      <i className="pi pi-times text-[10px]" />
-                    </button>
-                  </div>
-                ))}
-
-                {!atImageCap && (
-                  <FileUpload
-                    // Force a fresh instance per file: PrimeReact's basic mode
-                    // unmounts its native <input> after the first selection, so
-                    // the same instance can't be used to pick a second file.
-                    key={pendingFiles.length}
-                    mode="basic"
-                    name="image"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    maxFileSize={5_000_000}
-                    chooseLabel="Add image"
-                    onSelect={handleStageFile}
-                    disabled={submitting}
-                  />
-                )}
-              </>
+              </div>
+            ))}
+            {!isEdit && pendingPreview && (
+              <img src={pendingPreview} alt="" className="aspect-square w-full rounded-md border object-cover" />
+            )}
+            {!vendorOwned && (!atCap || !isEdit) && (
+              <FileDropzone
+                file={isEdit ? null : pendingImage}
+                onChange={(file) => (file ? void onImagePicked(file) : setPendingImage(null))}
+                accept={IMAGE_ACCEPT}
+                disabled={uploadImage.isPending}
+                prompt={t('gifts.detail.imageDrop')}
+              />
             )}
           </div>
-          {atImageCap && (
-            <p className="mt-3 text-xs text-text-muted">Maximum of {MAX_GIFT_IMAGES} images reached.</p>
-          )}
-        </Card>
+        </SectionCard>
       </div>
+
+      {gift && (
+        <AppDialog
+          open={confirmingStatus}
+          onOpenChange={setConfirmingStatus}
+          size="sm"
+          title={gift.active ? t('gifts.outTitle') : t('gifts.markIn')}
+          description={gift.active ? t('gifts.outBody') : undefined}
+          confirmLabel={gift.active ? t('gifts.markOut') : t('gifts.markIn')}
+          cancelLabel={t('action.cancel', { ns: 'common' })}
+          confirmVariant={gift.active ? 'destructive' : 'default'}
+          loading={setStatus.isPending}
+          onConfirm={confirmStatus}
+        />
+      )}
     </div>
   )
 }

@@ -1,0 +1,159 @@
+import * as React from "react";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+export interface DateTimePickerProps {
+  value: Date | null;
+  onChange?: (value: Date | null) => void;
+  onChangeUTC?: (isoString: string | null) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  fromDate?: Date;
+  toDate?: Date;
+  /** Skips the time input; stores the value at local midnight (e.g. date-of-birth fields). */
+  dateOnly?: boolean;
+  className?: string;
+  /**
+   * Injected by `FormControl`, which clones its child with `id`/`aria-describedby`/
+   * `aria-invalid`. They must land on the FOCUSABLE element, not on a wrapper `<div>`:
+   * `FormLabel`'s `htmlFor` points at that id, and a `<div>` is not a labelable element — so
+   * clicking the label focused nothing and `getByLabelText` could not find the field. See the
+   * same note on `phone-field.tsx`, the one field that already solved this.
+   */
+  id?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
+}
+
+function timeString(date: Date | undefined): string {
+  if (!date) return "";
+  return format(date, "HH:mm");
+}
+
+function withTime(date: Date, time: string): Date {
+  const [hours, minutes] = time.split(":").map(Number);
+  const next = new Date(date);
+  next.setHours(hours || 0, minutes || 0, 0, 0);
+  return next;
+}
+
+export function DateTimePicker({
+  value,
+  onChange,
+  onChangeUTC,
+  disabled,
+  placeholder = "Pick a date and time",
+  fromDate,
+  toDate,
+  dateOnly,
+  className,
+  id,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
+}: DateTimePickerProps) {
+  useUserTimezone();
+  const [open, setOpen] = React.useState(false);
+  const [pending, setPending] = React.useState<Date | undefined>(value ?? undefined);
+
+  React.useEffect(() => {
+    if (open) setPending(value ?? undefined);
+  }, [open, value]);
+
+  const commit = (date: Date | null) => {
+    onChange?.(date);
+    onChangeUTC?.(date ? date.toISOString() : null);
+    setOpen(false);
+  };
+
+  const handleSelectDay = (day: Date | undefined) => {
+    if (!day) {
+      setPending(undefined);
+      return;
+    }
+    setPending(dateOnly ? day : withTime(day, timeString(pending) || "00:00"));
+  };
+
+  const handleTimeChange = (time: string) => {
+    if (!pending) return;
+    setPending(withTime(pending, time));
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          id={id}
+          aria-describedby={ariaDescribedBy}
+          aria-invalid={ariaInvalid}
+          variant="outline"
+          disabled={disabled}
+          className={cn(
+            "w-full min-w-0 justify-start text-left font-normal",
+            !value && "text-muted-foreground",
+            className,
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+          {/* `Button` is `whitespace-nowrap`, so an untruncated value spills outside the
+              border instead of clipping — "August 27th, 2026 at 3:45 PM" in a half-width
+              drawer column is guaranteed to. */}
+          <span className="truncate">
+            {value ? format(value, dateOnly ? "PPP" : "PPP p") : placeholder}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="flex w-auto flex-col p-0">
+        <Calendar
+          mode="single"
+          selected={pending}
+          // Bound the month/year dropdowns to the field's OWN allowed range, so a date of
+          // birth (`toDate` = today) offers no future years at all rather than 30 of them.
+          // Unset falls back to the Calendar's wide default.
+          startMonth={fromDate}
+          endMonth={toDate}
+          onSelect={handleSelectDay}
+          disabled={
+            fromDate && toDate
+              ? { before: fromDate, after: toDate }
+              : fromDate
+                ? { before: fromDate }
+                : toDate
+                  ? { after: toDate }
+                  : undefined
+          }
+          className="max-h-80 overflow-y-auto"
+        />
+        {!dateOnly && (
+          <div className="border-t p-3">
+            <Input
+              type="time"
+              value={timeString(pending)}
+              onChange={(e) => handleTimeChange(e.target.value)}
+            />
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-2 border-t p-2">
+          <Button type="button" variant="ghost" size="sm" onClick={() => commit(null)}>
+            Clear
+          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" size="sm" onClick={() => commit(pending ?? null)}>
+              Apply
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}

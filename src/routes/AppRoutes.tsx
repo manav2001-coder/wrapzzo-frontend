@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { AppLayout } from '@/components/layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
 import { AccessControlPage } from '@/modules/admin/access-control/AccessControlPage'
@@ -11,7 +11,6 @@ import { CompanyUsersPage } from '@/modules/admin/companies/CompanyUsersPage'
 import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
 import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
 import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
-import { VendorFormPage } from '@/modules/admin/vendors/VendorFormPage'
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
 import { ApprovalQueuePage } from '@/modules/campaigns/ApprovalQueuePage'
 import { CampaignDetailPage } from '@/modules/campaigns/CampaignDetailPage'
@@ -27,7 +26,6 @@ import { QuickGiftFormPage } from '@/modules/quickgift/QuickGiftFormPage'
 import { QuickGiftLandingPage } from '@/modules/quickgift/QuickGiftLandingPage'
 import { MyDoctorsPage } from '@/modules/recipients/MyDoctorsPage'
 import { RecipientsPage } from '@/modules/recipients/RecipientsPage'
-import { VendorLayout } from '@/modules/vendor/VendorLayout'
 import { VendorGiftFormPage } from '@/modules/vendor/gifts/VendorGiftFormPage'
 import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
 import { VendorOrdersPage } from '@/modules/vendor/orders/VendorOrdersPage'
@@ -35,6 +33,8 @@ import { LandingPage } from '@/pages/LandingPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RecipientUploadPage } from '@/pages/RecipientUploadPage'
+import ComponentsPage from '@/pages/Components'
+import SettingsPage from '@/pages/Settings'
 import { SetupPasswordPage } from '@/pages/SetupPasswordPage'
 import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
 
@@ -50,7 +50,11 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          {/* Admin module -- add a new module by adding its route tree here and its entry in config/navigation.ts */}
+          {/* Shared by every signed-in user. */}
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/components" element={<ComponentsPage />} />
+
+          {/* Admin module -- add a new module by adding its route tree here and its entry in components/sidebar-nav-config.tsx */}
           <Route path="/admin" element={<Navigate to="/admin/companies" replace />} />
           <Route path="/admin/companies" element={<CompanyListPage />} />
           <Route path="/admin/companies/new" element={<CompanyFormPage />} />
@@ -60,8 +64,7 @@ export function AppRoutes() {
           <Route path="/admin/companies/:id/import-users" element={<CompanyUsersImportPage />} />
 
           <Route path="/admin/vendors" element={<VendorListPage />} />
-          <Route path="/admin/vendors/new" element={<VendorFormPage />} />
-          <Route path="/admin/vendors/:id" element={<VendorFormPage />} />
+          <Route path="/admin/vendors/:id" element={<VendorListPage />} />
 
           <Route path="/admin/gifts" element={<GiftListPage />} />
           <Route path="/admin/gifts/new" element={<GiftFormPage />} />
@@ -95,12 +98,13 @@ export function AppRoutes() {
       </Route>
 
       <Route element={<VendorProtectedRoute />}>
-        <Route element={<VendorLayout />}>
+        <Route element={<AppLayout portal="vendor" />}>
           <Route path="/vendor" element={<Navigate to="/vendor/gifts" replace />} />
           <Route path="/vendor/gifts" element={<VendorGiftListPage />} />
           <Route path="/vendor/gifts/new" element={<VendorGiftFormPage />} />
           <Route path="/vendor/gifts/:id" element={<VendorGiftFormPage />} />
           <Route path="/vendor/orders" element={<VendorOrdersPage />} />
+          <Route path="/vendor/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 

@@ -20,7 +20,7 @@ import {
   useSetCampaignStatus,
   useUpdateCampaign,
 } from '@/hooks/useCampaigns'
-import { useHasPermission } from '@/hooks/usePermissions'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useCampaignSubmissions, useMySubmissions } from '@/hooks/useSubmissions'
 import { humanize } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
@@ -132,8 +132,8 @@ export function CampaignDetailPage() {
   // of optimistically showing both tabs and only discovering a 403 after the Submissions
   // query failed -- is what stops the whole tab view from disappearing out from under a
   // Member mid-click.
-  const canManageAudience = useHasPermission('campaign.manage')
-  const hasApprove = useHasPermission('campaign.approve')
+  const canManageAudience = useHasAccess('campaign.manage')
+  const hasApprove = useHasAccess('campaign.approve')
   const canReviewSubmissions = canManageAudience || hasApprove
   const showManagerView = canManageAudience || canReviewSubmissions
 

@@ -1,234 +1,184 @@
-import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
-import { InputText } from 'primereact/inputtext'
-import { Message } from 'primereact/message'
+import { ArrowLeft, Check, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import type { ApiError } from '@/lib/axiosClient'
+import { toast } from 'sonner'
+
 import type { BulkImportUserRow } from '@/api/users'
-import { PageHeader } from '@/components/PageHeader'
+import { TextField } from '@/components/fields/text-field'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { SectionCard } from '@/components/section-card'
+import { Button } from '@/components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useBulkImportUsers } from '@/hooks/useUsers'
-import { showToast } from '@/lib/toast'
+import { ApiError } from '@/lib/axiosClient'
+import { ErrorList } from './ErrorList'
 
-interface DraftRow {
-  key: number
-  name: string
-  email: string
-  mobile: string
-  designation: string
-  employeeCode: string
-  reportsToEmail: string
-  orgUnit: string
-}
+type Column = 'name' | 'email' | 'mobile' | 'designation' | 'employeeCode' | 'reportsToEmail' | 'orgUnit'
+type DraftRow = Record<Column, string> & { key: number }
 
-function emptyRow(key: number): DraftRow {
-  return { key, name: '', email: '', mobile: '', designation: '', employeeCode: '', reportsToEmail: '', orgUnit: '' }
-}
-
-// Manual quick-add only goes one org level deep -- a company that needs a full
-// Division/Zone/Region hierarchy is better served by the spreadsheet import,
-// which supports up to four.
-const FIELD_COLUMNS: { key: keyof Omit<DraftRow, 'key'>; label: string; required: boolean; placeholder: string }[] = [
-  { key: 'name', label: 'Name', required: true, placeholder: 'Jane Doe' },
-  { key: 'email', label: 'Email', required: true, placeholder: 'jane@company.com' },
-  { key: 'mobile', label: 'Mobile', required: true, placeholder: '9876543210' },
-  { key: 'designation', label: 'Designation', required: true, placeholder: 'Sales Exec' },
-  { key: 'employeeCode', label: 'Employee Code', required: true, placeholder: 'E001' },
-  { key: 'reportsToEmail', label: 'Reports To Email', required: false, placeholder: 'Optional' },
-  { key: 'orgUnit', label: 'Org Unit', required: true, placeholder: 'North Zone' },
+/**
+ * Quick-add goes one org level deep; a company that needs a full Division/Zone/Region hierarchy
+ * is better served by the spreadsheet import, which supports four.
+ */
+const COLUMNS: { key: Column; labelKey: string; required: boolean; placeholder: string }[] = [
+  { key: 'name', labelKey: 'users.column.name', required: true, placeholder: 'Jane Doe' },
+  { key: 'email', labelKey: 'users.column.email', required: true, placeholder: 'jane@company.com' },
+  { key: 'mobile', labelKey: 'users.column.mobile', required: true, placeholder: '9876543210' },
+  { key: 'designation', labelKey: 'users.column.designation', required: true, placeholder: 'Sales Exec' },
+  { key: 'employeeCode', labelKey: 'users.column.employeeCode', required: true, placeholder: 'E001' },
+  { key: 'reportsToEmail', labelKey: 'users.addPage.reportsToEmail', required: false, placeholder: '' },
+  { key: 'orgUnit', labelKey: 'users.column.orgUnit', required: true, placeholder: 'North Zone' },
 ]
 
 let nextKey = 1
+const emptyRow = (): DraftRow => ({
+  key: nextKey++,
+  name: '',
+  email: '',
+  mobile: '',
+  designation: '',
+  employeeCode: '',
+  reportsToEmail: '',
+  orgUnit: '',
+})
+const isBlank = (row: DraftRow) => COLUMNS.every((col) => !row[col.key].trim())
 
 export function CompanyUsersAddPage() {
-  const { companyId, companyName, basePath } = useCompanyUserContext()
+  const { t } = useTranslation('admin')
+  const { companyId, basePath } = useCompanyUserContext()
   const navigate = useNavigate()
-
   const bulkImport = useBulkImportUsers(companyId)
+  const showError = useApiErrorToast()
 
-  const [rows, setRows] = useState<DraftRow[]>([emptyRow(nextKey++)])
-  const [rowErrors, setRowErrors] = useState<string[]>([])
-  const [importErrors, setImportErrors] = useState<string[]>([])
-  const [resultSummary, setResultSummary] = useState<{ created: number; updated: number } | null>(null)
+  const [rows, setRows] = useState<DraftRow[]>(() => [emptyRow()])
+  const [missing, setMissing] = useState<Set<string>>(new Set())
+  const [serverErrors, setServerErrors] = useState<string[]>([])
 
-  function updateCell(key: number, field: keyof Omit<DraftRow, 'key'>, value: string) {
-    setRows((prev) => prev.map((row) => (row.key === key ? { ...row, [field]: value } : row)))
-  }
-
-  function addRow() {
-    setRows((prev) => [...prev, emptyRow(nextKey++)])
-  }
-
-  function removeRow(key: number) {
-    setRows((prev) => (prev.length > 1 ? prev.filter((row) => row.key !== key) : prev))
-  }
-
-  function isRowBlank(row: DraftRow) {
-    return !row.name && !row.email && !row.mobile && !row.designation && !row.employeeCode && !row.reportsToEmail && !row.orgUnit
-  }
-
-  async function handleSave() {
-    setRowErrors([])
-    setImportErrors([])
-    setResultSummary(null)
-
-    const nonBlankRows = rows.filter((row) => !isRowBlank(row))
-    if (nonBlankRows.length === 0) {
-      setRowErrors(['Add at least one user before saving.'])
-      return
-    }
-
-    const errors: string[] = []
-    const payload: BulkImportUserRow[] = []
-    nonBlankRows.forEach((row, index) => {
-      const missing: string[] = []
-      if (!row.name) missing.push('Name')
-      if (!row.email) missing.push('Email')
-      if (!row.mobile) missing.push('Mobile')
-      if (!row.designation) missing.push('Designation')
-      if (!row.employeeCode) missing.push('Employee Code')
-      if (!row.orgUnit) missing.push('Org Unit')
-      if (missing.length > 0) {
-        errors.push(`Row ${index + 1}: missing required field(s): ${missing.join(', ')}.`)
-        return
-      }
-      payload.push({
-        name: row.name,
-        email: row.email,
-        mobile: row.mobile,
-        designation: row.designation,
-        employeeCode: row.employeeCode,
-        reportsToEmail: row.reportsToEmail || undefined,
-        orgUnitPath: [row.orgUnit],
-      })
+  function update(key: number, column: Column, value: string) {
+    setRows((prev) => prev.map((row) => (row.key === key ? { ...row, [column]: value } : row)))
+    setMissing((prev) => {
+      const next = new Set(prev)
+      next.delete(`${key}.${column}`)
+      return next
     })
+  }
 
-    if (errors.length > 0) {
-      setRowErrors(errors)
+  async function save() {
+    setServerErrors([])
+    const filled = rows.filter((row) => !isBlank(row))
+    if (filled.length === 0) {
+      toast.error(t('users.addPage.none'))
       return
     }
+    const gaps = new Set<string>()
+    for (const row of filled) {
+      for (const col of COLUMNS) if (col.required && !row[col.key].trim()) gaps.add(`${row.key}.${col.key}`)
+    }
+    setMissing(gaps)
+    if (gaps.size > 0) return
 
+    const payload: BulkImportUserRow[] = filled.map((row) => ({
+      name: row.name.trim(),
+      email: row.email.trim(),
+      mobile: row.mobile.trim(),
+      designation: row.designation.trim(),
+      employeeCode: row.employeeCode.trim(),
+      reportsToEmail: row.reportsToEmail.trim() || undefined,
+      orgUnitPath: [row.orgUnit.trim()],
+    }))
     try {
       const result = await bulkImport.mutateAsync(payload)
-      setResultSummary({ created: result.createdCount, updated: result.updatedCount })
-      setRows([emptyRow(nextKey++)])
-      showToast({ severity: 'success', summary: 'Users saved', detail: `${result.createdCount} added, ${result.updatedCount} updated.` })
+      toast.success(t('users.addPage.saved', { created: result.createdCount, updated: result.updatedCount }))
+      setRows([emptyRow()])
     } catch (error) {
-      const apiError = error as ApiError
-      const details = (apiError.data as { details?: string[] } | undefined)?.details
-      if (details && details.length > 0) {
-        setImportErrors(details)
-      } else {
-        showToast({ severity: 'error', summary: 'Save failed', detail: apiError.message ?? 'Something went wrong.' })
-      }
+      // The backend checks the whole batch first and names each bad row.
+      const details = error instanceof ApiError ? (error.data as { details?: string[] } | undefined)?.details : undefined
+      if (details?.length) setServerErrors(details)
+      else showError(error)
     }
   }
 
   return (
-    <div>
-      <PageHeader
-        title="Add users"
-        subtitle={companyName ? `Add employees to ${companyName} directly, one row per person.` : 'Add employees directly, one row per person.'}
-        backTo={`${basePath}/users`}
+    <div className="space-y-4">
+      <MasterPageHeader
+        lead={<IconButton icon={ArrowLeft} label={t('users.back')} onClick={() => navigate(`${basePath}/users`)} />}
+        title={t('users.addPage.title')}
+        description={t('users.addPage.subtitle')}
+        extra={
+          <Button size="sm" variant="outline" className="h-9" onClick={() => navigate(`${basePath}/import-users`)}>
+            {t('users.addPage.toImport')}
+          </Button>
+        }
       />
-
-      <Card title="New users">
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-text-muted">
-            Every column is required except Reports To Email. Need a deeper org hierarchy or a bigger batch? Use{' '}
-            <button
-              type="button"
-              className="text-accent underline-offset-2 hover:underline"
-              onClick={() => navigate(`${basePath}/import-users`)}
-            >
-              spreadsheet import
-            </button>{' '}
-            instead.
-          </p>
-
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full min-w-[1000px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border bg-surface-muted">
-                  {FIELD_COLUMNS.map((col) => (
-                    <th key={col.key} className="px-3 py-2 text-left text-xs font-medium text-text-muted">
-                      {col.label}
-                      {col.required && <span className="text-red-500 dark:text-red-400"> *</span>}
-                    </th>
+      <SectionCard description={t('users.addPage.help')}>
+        <div className="space-y-4">
+          <div className="overflow-x-auto rounded-md border">
+            <Table className="min-w-[1050px]">
+              <TableHeader>
+                <TableRow>
+                  {COLUMNS.map((col) => (
+                    <TableHead key={col.key} className="text-left">
+                      {t(col.labelKey)}
+                      {col.required && <span className="text-destructive"> *</span>}
+                    </TableHead>
                   ))}
-                  <th className="w-10 px-2 py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.key} className="border-b border-border last:border-b-0">
-                    {FIELD_COLUMNS.map((col) => (
-                      <td key={col.key} className="p-1.5">
-                        <InputText
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row, index) => (
+                  <TableRow key={row.key}>
+                    {COLUMNS.map((col) => (
+                      <TableCell key={col.key} className="p-1.5">
+                        <TextField
+                          size="sm"
+                          aria-label={`${t(col.labelKey)} ${index + 1}`}
                           value={row[col.key]}
-                          onChange={(e) => updateCell(row.key, col.key, e.target.value)}
                           placeholder={col.placeholder}
-                          className="w-full"
+                          error={missing.has(`${row.key}.${col.key}`)}
+                          aria-invalid={missing.has(`${row.key}.${col.key}`)}
+                          onChange={(event) => update(row.key, col.key, event.target.value)}
                         />
-                      </td>
+                      </TableCell>
                     ))}
-                    <td className="p-1.5 text-center">
-                      <Button
-                        icon="pi pi-trash"
-                        text
-                        severity="danger"
+                    <TableCell className="p-1.5 text-center">
+                      <IconButton
+                        icon={Trash2}
+                        size="sm"
+                        tone="destructive"
+                        label={t('a11y.removeRow', { ns: 'common' })}
                         disabled={rows.length === 1}
-                        aria-label="Remove row"
-                        onClick={() => removeRow(row.key)}
+                        onClick={() => setRows((prev) => prev.filter((r) => r.key !== row.key))}
                       />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
-          <div>
-            <Button label="Add row" icon="pi pi-plus" outlined onClick={addRow} />
-          </div>
+          <Button variant="outline" size="sm" onClick={() => setRows((prev) => [...prev, emptyRow()])}>
+            <Plus />
+            {t('users.addPage.addRow')}
+          </Button>
 
-          {rowErrors.length > 0 && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-              <p className="mb-2 text-sm font-medium text-red-500 dark:text-red-400">Fix these rows before saving:</p>
-              <ul className="ml-4 list-disc space-y-1 text-xs text-red-500 dark:text-red-400">
-                {rowErrors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {importErrors.length > 0 && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-              <p className="mb-2 text-sm font-medium text-red-500 dark:text-red-400">Save failed. Fix these rows and try again:</p>
-              <ul className="ml-4 list-disc space-y-1 text-xs text-red-500 dark:text-red-400">
-                {importErrors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {resultSummary && (
-            <Message
-              severity="success"
-              className="w-full justify-start sm:w-auto"
-              text={`Saved: ${resultSummary.created} added, ${resultSummary.updated} updated.`}
-            />
-          )}
+          {serverErrors.length > 0 && <ErrorList title={t('users.addPage.serverErrors')} errors={serverErrors} />}
 
           <div className="flex items-center gap-2">
-            <Button label="Save users" icon="pi pi-check" loading={bulkImport.isPending} onClick={handleSave} />
-            <Button label="View users" text onClick={() => navigate(`${basePath}/users`)} />
+            <Button onClick={() => void save()} disabled={bulkImport.isPending}>
+              {bulkImport.isPending ? <Loader2 className="animate-spin" /> : <Check />}
+              {t('users.addPage.save')}
+            </Button>
+            <Button variant="ghost" onClick={() => navigate(`${basePath}/users`)}>
+              {t('users.addPage.view')}
+            </Button>
           </div>
         </div>
-      </Card>
+      </SectionCard>
     </div>
   )
 }

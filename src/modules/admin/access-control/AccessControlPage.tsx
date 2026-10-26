@@ -1,104 +1,101 @@
-import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
-import { Checkbox } from 'primereact/checkbox'
-import { Dropdown } from 'primereact/dropdown'
+import { Loader2, ShieldCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+
 import type { AccessControlItem } from '@/api/accessControls'
 import type { DesignationAccess } from '@/api/designations'
-import { PageHeader } from '@/components/PageHeader'
+import { EmptyState } from '@/components/empty-state'
+import { CheckboxField } from '@/components/fields/checkbox-field'
+import { Combobox } from '@/components/fields/combobox'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { SectionCard } from '@/components/section-card'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanies } from '@/hooks/useCompanies'
 import { useAccessControlCatalog, useDesignationAccess, useDesignations, useReplaceDesignationAccess } from '@/hooks/useDesignations'
-import { showApiError, showToast } from '@/lib/toast'
 
 function groupByCategory(items: AccessControlItem[]): [string, AccessControlItem[]][] {
   const groups = new Map<string, AccessControlItem[]>()
-  for (const item of items) {
-    const bucket = groups.get(item.category)
-    if (bucket) {
-      bucket.push(item)
-    } else {
-      groups.set(item.category, [item])
-    }
-  }
+  for (const item of items) groups.set(item.category, [...(groups.get(item.category) ?? []), item])
   return [...groups.entries()]
 }
 
-function setsEqual(a: Set<string>, b: Set<string>): boolean {
-  if (a.size !== b.size) return false
-  for (const value of a) {
-    if (!b.has(value)) return false
-  }
-  return true
-}
+const sameSet = (a: Set<string>, b: Set<string>) => a.size === b.size && [...a].every((value) => b.has(value))
 
+/** One designation's grants, a checkbox per key grouped by category; Save replaces the whole set. */
 function DesignationEditor({
   companyId,
   access,
-  catalogByCategory,
+  groups,
 }: {
   companyId: string
   access: DesignationAccess
-  catalogByCategory: [string, AccessControlItem[]][]
+  groups: [string, AccessControlItem[]][]
 }) {
+  const { t } = useTranslation('admin')
   const replaceAccess = useReplaceDesignationAccess(companyId)
-  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set(access.accessControlIds))
+  const showError = useApiErrorToast()
+  const saved = useMemo(() => new Set(access.accessControlIds), [access])
+  const [checked, setChecked] = useState<Set<string>>(saved)
+  const total = groups.reduce((sum, [, items]) => sum + items.length, 0)
 
-  const dirty = !setsEqual(checkedIds, new Set(access.accessControlIds))
-
-  function toggleAccessControl(accessControlId: string, checked: boolean) {
-    setCheckedIds((current) => {
+  function toggle(id: string, on: boolean) {
+    setChecked((current) => {
       const next = new Set(current)
-      if (checked) {
-        next.add(accessControlId)
-      } else {
-        next.delete(accessControlId)
-      }
+      if (on) next.add(id)
+      else next.delete(id)
       return next
     })
   }
 
-  async function handleSave() {
+  async function save() {
     try {
-      await replaceAccess.mutateAsync({ designation: access.designation, accessControlIds: [...checkedIds] })
-      showToast({
-        severity: 'success',
-        summary: 'Access updated',
-        detail: `${access.designation} now has ${checkedIds.size} permission${checkedIds.size === 1 ? '' : 's'}.`,
-      })
+      await replaceAccess.mutateAsync({ designation: access.designation, accessControlIds: [...checked] })
+      toast.success(t('access.updated', { designation: access.designation, count: checked.size }))
     } catch (error) {
-      showApiError(error)
+      showError(error)
     }
   }
 
   return (
-    <Card className="mt-6 border border-border">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3">
-          {catalogByCategory.map(([category, items]) => (
-            <div key={category} className="flex flex-col gap-2 rounded-lg border border-border p-3">
-              <p className="text-xs font-semibold tracking-wide text-text-muted uppercase">{category}</p>
-              {items.map((item) => (
-                <label key={item.id} className="flex items-start gap-2 text-sm text-text">
-                  <Checkbox checked={checkedIds.has(item.id)} onChange={(e) => toggleAccessControl(item.id, Boolean(e.checked))} />
-                  <span>
-                    {item.name}
-                    {item.description && <span className="block text-xs text-text-muted">{item.description}</span>}
-                  </span>
-                </label>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex justify-end">
-          <Button label="Save" loading={replaceAccess.isPending} disabled={!dirty} onClick={handleSave} />
-        </div>
+    <SectionCard
+      title={access.designation}
+      description={t('access.granted', { count: checked.size, total })}
+      actions={
+        <Button size="sm" onClick={() => void save()} disabled={sameSet(checked, saved) || replaceAccess.isPending}>
+          {replaceAccess.isPending && <Loader2 className="animate-spin" />}
+          {t('access.save')}
+        </Button>
+      }
+    >
+      <div className="grid gap-4 md:grid-cols-2">
+        {groups.map(([category, items]) => (
+          <div key={category} className="space-y-3 rounded-md border p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</p>
+            {items.map((item) => (
+              <CheckboxField
+                key={item.id}
+                label={item.name}
+                helperText={item.description ?? undefined}
+                checked={checked.has(item.id)}
+                onCheckedChange={(on) => toggle(item.id, on)}
+              />
+            ))}
+          </div>
+        ))}
       </div>
-    </Card>
+    </SectionCard>
   )
 }
 
+/**
+ * Designation-level access: every user with a given designation in a company gets these keys on
+ * top of their role's (the backend unions the two, see AccessControlCacheService).
+ */
 export function AccessControlPage() {
+  const { t } = useTranslation('admin')
   const { data: companies } = useCompanies()
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [designation, setDesignation] = useState<string | null>(null)
@@ -106,52 +103,52 @@ export function AccessControlPage() {
   const { data: designations } = useDesignations(companyId ?? undefined)
   const { data: catalog } = useAccessControlCatalog()
   const { data: access } = useDesignationAccess(companyId ?? undefined, designation ?? undefined)
+  const groups = useMemo(() => groupByCategory(catalog ?? []), [catalog])
 
-  const catalogByCategory = useMemo(() => groupByCategory(catalog ?? []), [catalog])
-
-  function handleCompanyChange(value: string) {
-    setCompanyId(value)
-    setDesignation(null)
-  }
+  const companyOptions = useMemo(() => (companies ?? []).map((c) => ({ value: c.id, label: c.name })), [companies])
+  const designationOptions = useMemo(() => (designations ?? []).map((d) => ({ value: d, label: d })), [designations])
 
   return (
-    <div>
-      <PageHeader
-        title="Access Control"
-        subtitle="Choose a company and a designation, then grant the access-control keys it should have."
-      />
+    <div className="space-y-6">
+      <MasterPageHeader title={t('access.title')} description={t('access.subtitle')} />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-        <div className="flex w-full max-w-sm flex-col gap-1.5">
-          <label className="text-sm font-medium text-text">Company</label>
-          <Dropdown
-            value={companyId}
-            onChange={(e) => handleCompanyChange(e.value)}
-            options={(companies ?? []).map((c) => ({ label: c.name, value: c.id }))}
-            placeholder="Choose a company"
-            filter
-            className="w-full"
+      <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="access-company">{t('access.company')}</Label>
+          <Combobox
+            id="access-company"
+            options={companyOptions}
+            displayValue={(option) => option.label}
+            getOptionKey={(option) => option.value}
+            value={companyOptions.find((option) => option.value === companyId) ?? null}
+            placeholder={t('access.pickCompany')}
+            onChange={(next) => {
+              setCompanyId((next as { value: string } | null)?.value ?? null)
+              setDesignation(null)
+            }}
           />
         </div>
-        <div className="flex w-full max-w-sm flex-col gap-1.5">
-          <label className="text-sm font-medium text-text">Designation</label>
-          <Dropdown
-            value={designation}
-            onChange={(e) => setDesignation(e.value)}
-            options={(designations ?? []).map((d) => ({ label: d, value: d }))}
-            placeholder="Choose a designation"
+        <div className="space-y-1.5">
+          <Label htmlFor="access-designation">{t('access.designation')}</Label>
+          <Combobox
+            id="access-designation"
+            options={designationOptions}
+            displayValue={(option) => option.label}
+            getOptionKey={(option) => option.value}
+            value={designationOptions.find((option) => option.value === designation) ?? null}
+            placeholder={t('access.pickDesignation')}
             disabled={!companyId}
-            className="w-full"
+            onChange={(next) => setDesignation((next as { value: string } | null)?.value ?? null)}
           />
         </div>
       </div>
 
-      {companyId && designations && designations.length === 0 && (
-        <p className="mt-4 text-sm text-text-muted">This company has no users with a designation set yet.</p>
-      )}
-
-      {companyId && access && (
-        <DesignationEditor key={`${companyId}:${access.designation}`} companyId={companyId} access={access} catalogByCategory={catalogByCategory} />
+      {companyId && designations?.length === 0 ? (
+        <EmptyState icon={ShieldCheck} size="sm" title={t('access.noDesignations')} />
+      ) : companyId && access ? (
+        <DesignationEditor key={`${companyId}:${access.designation}`} companyId={companyId} access={access} groups={groups} />
+      ) : (
+        <EmptyState icon={ShieldCheck} size="sm" title={t('access.pickBoth')} />
       )}
     </div>
   )

@@ -1,25 +1,32 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAppSelector } from '@/app/hooks'
-import { isSuperAdmin } from '@/config/auth'
+import { usePermissions } from '@/hooks/use-permission'
 
+/** Screens every signed-in user has, platform staff and company users alike. */
+const SHARED_PATHS = ['/settings', '/components']
+
+/**
+ * The signed-in gate for platform and company users. Also keeps each audience on its own side --
+ * platform staff (no company on the profile) in /admin, company users out of it -- the same signal
+ * the sidebar uses to pick its tree. Not the security boundary: every endpoint still enforces its
+ * own access-control key.
+ */
 export function ProtectedRoute() {
   const accessToken = useAppSelector((state) => state.auth.accessToken)
-  const email = useAppSelector((state) => state.auth.user?.email)
+  const { isPlatformStaff, loading } = usePermissions()
   const location = useLocation()
 
   if (!accessToken) {
     return <Navigate to="/login" replace state={{ from: location }} />
   }
 
-  // Not the security boundary (every endpoint still enforces its own access-control key)
-  // -- just keeps a superadmin off the company nav and vice versa. See config/auth.ts.
-  const superAdmin = isSuperAdmin(email)
-  if (superAdmin && !location.pathname.startsWith('/admin')) {
-    return <Navigate to="/admin" replace />
-  }
-  if (!superAdmin && location.pathname.startsWith('/admin')) {
-    return <Navigate to="/campaigns" replace />
-  }
+  // Until the profile says which side this user is on, there is nothing to correct.
+  const shared = SHARED_PATHS.some((path) => location.pathname.startsWith(path))
+  if (loading || shared) return <Outlet />
+
+  const inAdmin = location.pathname.startsWith('/admin')
+  if (isPlatformStaff && !inAdmin) return <Navigate to="/admin" replace />
+  if (!isPlatformStaff && inAdmin) return <Navigate to="/dashboard" replace />
 
   return <Outlet />
 }

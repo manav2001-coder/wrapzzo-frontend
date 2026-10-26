@@ -1,17 +1,15 @@
-import { Toast } from 'primereact/toast'
-import { createRef } from 'react'
+import { toast } from 'sonner'
 
-export const toastRef = createRef<Toast>()
-
+/**
+ * MIGRATION SHIM -- delete once every page calls sonner's `toast` and `useApiErrorToast` directly
+ * (the MobixFL idiom). Until then the not-yet-migrated pages keep their old calls and get the new
+ * toasts.
+ */
 export function showToast(options: { severity: 'success' | 'error' | 'info' | 'warn'; summary: string; detail?: string }) {
-  toastRef.current?.show({ ...options, life: 4000 })
+  const show = { success: toast.success, error: toast.error, info: toast.info, warn: toast.warning }[options.severity]
+  show(options.summary, { description: options.detail })
 }
 
 export function showApiError(error: unknown, fallback = 'Something went wrong. Please try again.') {
-  const detail = error instanceof Error ? error.message : fallback
-  showToast({ severity: 'error', summary: 'Error', detail })
-}
-
-export function GlobalToast() {
-  return <Toast ref={toastRef} position="top-right" />
+  toast.error(error instanceof Error ? error.message : fallback)
 }

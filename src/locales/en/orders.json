@@ -1,0 +1,81 @@
+{
+  "status": {
+    "PROCESSING": "Processing",
+    "PRODUCTION_QUEUE": "Production",
+    "DISPATCHED": "Dispatched",
+    "DELIVERED": "Delivered",
+    "CANCELLED": "Cancelled"
+  },
+  "source": {
+    "CAMPAIGN": "Campaign",
+    "QUICK_GIFT": "Quick Gift",
+    "BULK_GIFT": "Bulk gift"
+  },
+  "column": {
+    "order": "Order",
+    "company": "Company",
+    "campaign": "Campaign",
+    "recipient": "Recipient",
+    "gift": "Gift",
+    "total": "Total",
+    "vendor": "Vendor",
+    "status": "Status",
+    "placed": "Placed"
+  },
+  "unassigned": "Unassigned",
+  "auto": "Auto",
+  "needsReview": "Artwork to review",
+  "noHistory": "No history recorded yet.",
+  "detail": {
+    "title": "Order {{id}}",
+    "recipient": "Recipient",
+    "phone": "Phone",
+    "company": "Company",
+    "campaign": "Campaign",
+    "source": "Source",
+    "vendor": "Vendor",
+    "total": "Total",
+    "placed": "Placed",
+    "progress": "Progress",
+    "history": "History",
+    "photo": "Recipient photo",
+    "noPhoto": "No photo uploaded yet.",
+    "sendLink": "Send photo upload link",
+    "linkSent": "Link sent to the recipient"
+  },
+  "photoLink": {
+    "title": "Recipient photo requested",
+    "body": "{{name}} has been emailed a link to upload a photo. You can also forward it yourself.",
+    "someone": "This recipient",
+    "whatsapp": "Share via WhatsApp",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "message": "Hi! We just need a quick photo from you to send your gift. Please upload it here: {{link}}"
+  },
+  "platform": {
+    "title": "Orders",
+    "subtitle": "Every company's orders, and which vendor fulfils each.",
+    "stats": {
+      "total": "Total orders",
+      "unassigned": "Needs a vendor",
+      "production": "In production",
+      "delivered": "Delivered"
+    },
+    "emptyTitle": "No orders yet",
+    "emptyBody": "Orders appear here as companies submit campaign recipients and approve Quick Gifts.",
+    "assign": "Assign vendor",
+    "reassign": "Reassign vendor",
+    "autoAssign": "Auto-assign",
+    "pickVendor": "Choose a vendor",
+    "assignTitle": "Assign a vendor",
+    "assignSelected": "Assign selected",
+    "autoAssignSelected": "Auto-assign selected",
+    "assignBody_one": "Route {{count}} order to this vendor.",
+    "assignBody_other": "Route {{count}} orders to this vendor.",
+    "assigned_one": "{{count}} order assigned",
+    "assigned_other": "{{count}} orders assigned",
+    "autoAssigned_one": "{{count}} order auto-assigned",
+    "autoAssigned_other": "{{count}} orders auto-assigned",
+    "skipped": "{{count}} could not be assigned"
+  }
+}

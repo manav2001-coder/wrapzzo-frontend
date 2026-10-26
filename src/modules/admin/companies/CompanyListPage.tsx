@@ -1,111 +1,113 @@
-import { format } from 'date-fns'
-import { Button } from 'primereact/button'
-import { Column } from 'primereact/column'
-import { DataTable } from 'primereact/datatable'
-import { IconField } from 'primereact/iconfield'
-import { InputIcon } from 'primereact/inputicon'
-import { InputText } from 'primereact/inputtext'
-import { useMemo, useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Building2, Users } from 'lucide-react'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+
 import type { Company } from '@/api/companies'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
-import { StatusBadge } from '@/components/StatusBadge'
-import { useCompanies } from '@/hooks/useCompanies'
+import { DataTable } from '@/components/data-table'
+import { listEmptyBody } from '@/components/data-table/list-body'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useCompanies, useSetCompanyStatus } from '@/hooks/useCompanies'
+import { formatDate } from '@/lib/datetime'
+import type { ListFieldMap } from '@/lib/list-fields'
+import { CompanyAvatar } from './CompanyAvatar'
+
+const LIST_FIELDS: ListFieldMap = { name: 'text', displayId: 'text', createdAt: 'date' }
 
 export function CompanyListPage() {
-  const { data: companies, isLoading } = useCompanies()
-  const [search, setSearch] = useState('')
+  const { t } = useTranslation('admin')
   const navigate = useNavigate()
+  const { data: companies, isLoading, error, refetch } = useCompanies()
+  const setStatus = useSetCompanyStatus()
+  const showError = useApiErrorToast()
 
-  const filtered = useMemo(() => {
-    if (!companies) return []
-    const query = search.trim().toLowerCase()
-    if (!query) return companies
-    return companies.filter((company) => company.name.toLowerCase().includes(query))
-  }, [companies, search])
+  async function changeStatus(company: Company, active: boolean) {
+    try {
+      await setStatus.mutateAsync({ id: company.id, active })
+      toast.success(active ? t('companies.activated') : t('companies.deactivated'))
+    } catch (err) {
+      showError(err)
+    }
+  }
+
+  const { statusColumn, actionsColumn, deactivateDialog } = useMasterColumns<Company>({
+    isActive: (company) => company.status === 'ACTIVE',
+    onEdit: (company) => navigate(`/admin/companies/${company.id}`),
+    onActivate: (company) => changeStatus(company, true),
+    onDeactivate: (company) => changeStatus(company, false),
+    editPermission: 'company.manage',
+    deletePermission: 'company.manage',
+    deactivateCopy: {
+      label: t('action.deactivate', { ns: 'common' }),
+      title: t('companies.deactivateTitle'),
+      body: t('companies.deactivateBody'),
+    },
+    extraActions: (company) => (
+      <IconButton icon={Users} label={t('companies.users')} onClick={() => navigate(`/admin/companies/${company.id}/users`)} />
+    ),
+  })
+
+  const columns = useMemo<ColumnDef<Company, unknown>[]>(
+    () => [
+      {
+        id: 'name',
+        accessorKey: 'name',
+        header: t('companies.column.company'),
+        meta: { className: 'min-w-[220px]', align: 'left' },
+        cell: ({ row }) => (
+          <Link to={`/admin/companies/${row.original.id}`} className="flex items-center gap-2.5 font-medium hover:underline">
+            <CompanyAvatar company={row.original} />
+            <span className="truncate">{row.original.name}</span>
+          </Link>
+        ),
+      },
+      { id: 'displayId', accessorKey: 'displayId', header: t('companies.column.id'), meta: { className: 'min-w-[110px]' } },
+      statusColumn,
+      {
+        id: 'createdAt',
+        accessorKey: 'createdAt',
+        header: t('companies.column.onboarded'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[140px]' },
+        cell: ({ row }) => formatDate(row.original.createdAt),
+      },
+      actionsColumn,
+    ],
+    [t, statusColumn, actionsColumn],
+  )
 
   return (
     <div>
-      <PageHeader
-        title="Companies"
-        subtitle="Onboard and manage the corporates that buy through Wrapzzo."
-        actions={
-          <Button label="Add company" icon="pi pi-plus" onClick={() => navigate('/admin/companies/new')} />
-        }
+      <MasterPageHeader
+        title={t('companies.title')}
+        description={t('companies.subtitle')}
+        createLabel={t('companies.add')}
+        createPermission="company.manage"
+        onCreate={() => navigate('/admin/companies/new')}
       />
-
-      <div className="mb-4">
-        <IconField iconPosition="left">
-          <InputIcon className="pi pi-search" />
-          <InputText
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search companies"
-            className="w-full sm:w-80"
-          />
-        </IconField>
-      </div>
-
-      {!isLoading && companies?.length === 0 ? (
-        <EmptyState
-          icon="pi-building"
-          title="No companies yet"
-          description="Onboard your first corporate customer to get started."
-          action={<Button label="Add company" icon="pi pi-plus" onClick={() => navigate('/admin/companies/new')} />}
-        />
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-          <DataTable
-            value={filtered}
-            loading={isLoading}
-            dataKey="id"
-            paginator
-            rows={10}
-            rowsPerPageOptions={[10, 25, 50]}
-            emptyMessage="No companies match your search."
-            className="min-w-[640px]"
-            onRowClick={(event) => navigate(`/admin/companies/${(event.data as Company).id}`)}
-            rowClassName={() => 'cursor-pointer'}
-          >
-            <Column
-              header="Company"
-              body={(row: Company) => (
-                <div className="flex items-center gap-3">
-                  {row.logoUrl ? (
-                    <img src={row.logoUrl} alt="" className="h-8 w-8 rounded-md object-cover" />
-                  ) : (
-                    <div className="grid h-8 w-8 place-items-center rounded-md bg-surface-muted text-xs font-semibold text-text-muted">
-                      {row.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <span className="font-medium text-text">{row.name}</span>
-                </div>
-              )}
-            />
-            <Column header="Status" body={(row: Company) => <StatusBadge status={row.status} />} style={{ width: '140px' }} />
-            <Column
-              header="Onboarded"
-              body={(row: Company) => format(new Date(row.createdAt), 'dd MMM yyyy')}
-              style={{ width: '160px' }}
-            />
-            <Column
-              header=""
-              body={(row: Company) => (
-                <div className="flex items-center justify-end gap-1">
-                  <Link to={`/admin/companies/${row.id}/users`} onClick={(event) => event.stopPropagation()}>
-                    <Button icon="pi pi-users" label="Users" text aria-label="View users" />
-                  </Link>
-                  <Link to={`/admin/companies/${row.id}`} onClick={(event) => event.stopPropagation()}>
-                    <Button icon="pi pi-arrow-right" text rounded aria-label="View company" />
-                  </Link>
-                </div>
-              )}
-              style={{ width: '140px' }}
-            />
-          </DataTable>
-        </div>
-      )}
+      <DataTable<Company>
+        columns={columns}
+        data={companies ?? []}
+        isLoading={isLoading}
+        listFields={LIST_FIELDS}
+        searchable
+        showRowSelectionColumn={false}
+        tableId="admin-companies"
+        configNamespace="admin-companies"
+        getRowId={(company) => company.id}
+        emptyState={listEmptyBody({
+          error,
+          onRetry: () => void refetch(),
+          icon: <Building2 className="h-8 w-8 opacity-50" />,
+          message: t('companies.emptyTitle'),
+          description: t('companies.emptyBody'),
+        })}
+      />
+      {deactivateDialog}
     </div>
   )
 }

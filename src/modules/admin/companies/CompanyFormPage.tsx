@@ -1,354 +1,303 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { format } from 'date-fns'
-import { confirmDialog } from 'primereact/confirmdialog'
-import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
-import { Checkbox } from 'primereact/checkbox'
-import { FileUpload } from 'primereact/fileupload'
-import { InputSwitch } from 'primereact/inputswitch'
-import { InputText } from 'primereact/inputtext'
-import { ProgressSpinner } from 'primereact/progressspinner'
-import { Controller, useForm } from 'react-hook-form'
+import { ArrowLeft, Power, RotateCcw, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
-import { z } from 'zod'
+import { toast } from 'sonner'
+
 import { uploadCompanyLogo } from '@/api/companies'
 import type { CompanyFeatureKey } from '@/api/companyFeatureFlags'
-import { PageHeader } from '@/components/PageHeader'
-import { StatusBadge } from '@/components/StatusBadge'
+import { AppDialog } from '@/components/app-dialog'
+import { CheckboxField } from '@/components/fields/checkbox-field'
+import { FormGenerator } from '@/components/fields/form-generator'
+import { SwitchField } from '@/components/fields/switch-field'
+import { FileDropzone } from '@/components/file-dropzone'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
+import { textField } from '@/components/masters/master-fields'
+import { SectionCard } from '@/components/section-card'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompany, useCreateCompany, useSetCompanyStatus, useUpdateCompany, useUploadCompanyLogo } from '@/hooks/useCompanies'
 import { useCompanyFeatureFlags, useSetCompanyFeatureFlag } from '@/hooks/useCompanyFeatureFlags'
 import { useAssignCompanyVendor, useCompanyVendors, useUnassignCompanyVendor } from '@/hooks/useCompanyVendors'
 import { useVendors } from '@/hooks/useVendors'
-import { showApiError, showToast } from '@/lib/toast'
+import { formatDate } from '@/lib/datetime'
+import { CompanyAvatar } from './CompanyAvatar'
 
-/** Optional workflow changes this company has turned on -- off by default, so nothing changes for a company until they explicitly opt in. */
+const LOGO_ACCEPT = { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'], 'image/svg+xml': ['.svg'] }
+
+/** Optional workflow changes this company has turned on -- off by default, so nothing changes until a company opts in. */
 function FeatureFlagsCard({ companyId }: { companyId: string }) {
+  const { t } = useTranslation('admin')
   const { data: flags, isLoading } = useCompanyFeatureFlags(companyId)
   const setFlag = useSetCompanyFeatureFlag(companyId)
+  const showError = useApiErrorToast()
 
-  async function handleToggle(flagKey: CompanyFeatureKey, enabled: boolean) {
+  async function toggle(flagKey: CompanyFeatureKey, enabled: boolean) {
     try {
       await setFlag.mutateAsync({ flagKey, enabled })
-      showToast({ severity: 'success', summary: enabled ? 'Feature enabled' : 'Feature disabled' })
+      toast.success(enabled ? t('companies.detail.featureEnabled') : t('companies.detail.featureDisabled'))
     } catch (error) {
-      showApiError(error)
+      showError(error)
     }
   }
 
-  if (isLoading) {
-    return (
-      <Card title="Feature flags">
-        <p className="text-sm text-text-muted">Loading...</p>
-      </Card>
-    )
-  }
-
   return (
-    <Card title="Feature flags" subTitle="Optional workflow changes -- off by default. Existing behavior is unaffected until turned on.">
-      <div className="flex flex-col gap-4">
+    <SectionCard title={t('companies.detail.features')} description={t('companies.detail.featuresHelp')} loading={isLoading}>
+      <div className="space-y-4">
         {flags?.map((flag) => (
-          <div key={flag.flagKey} className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-text">{flag.displayName}</p>
-              <p className="text-xs text-text-muted">{flag.description}</p>
-            </div>
-            <InputSwitch checked={flag.enabled} onChange={(e) => handleToggle(flag.flagKey, e.value)} disabled={setFlag.isPending} />
-          </div>
+          <SwitchField
+            key={flag.flagKey}
+            label={flag.displayName}
+            helperText={flag.description}
+            checked={flag.enabled}
+            disabled={setFlag.isPending}
+            onCheckedChange={(enabled) => void toggle(flag.flagKey, enabled)}
+          />
         ))}
       </div>
-    </Card>
+    </SectionCard>
   )
 }
 
-/** Which vendors this company sees in its Gift Store -- see GiftBrowseController/company_vendors. */
+/** Which vendors this company sees in its Gift Store (company_vendors). */
 function VendorRosterCard({ companyId }: { companyId: string }) {
+  const { t } = useTranslation('admin')
   const { data: allVendors, isLoading: loadingVendors } = useVendors()
   const { data: assigned, isLoading: loadingAssigned } = useCompanyVendors(companyId)
   const assignVendor = useAssignCompanyVendor(companyId)
   const unassignVendor = useUnassignCompanyVendor(companyId)
-
+  const showError = useApiErrorToast()
   const assignedIds = useMemo(() => new Set((assigned ?? []).map((v) => v.vendorId)), [assigned])
+  const busy = assignVendor.isPending || unassignVendor.isPending
 
-  async function handleToggle(vendorId: string, checked: boolean) {
+  async function toggle(vendorId: string, checked: boolean) {
     try {
-      if (checked) {
-        await assignVendor.mutateAsync(vendorId)
-      } else {
-        await unassignVendor.mutateAsync(vendorId)
-      }
+      await (checked ? assignVendor.mutateAsync(vendorId) : unassignVendor.mutateAsync(vendorId))
     } catch (error) {
-      showApiError(error)
+      showError(error)
     }
   }
 
-  if (loadingVendors || loadingAssigned) {
-    return (
-      <Card title="Vendors">
-        <p className="text-sm text-text-muted">Loading...</p>
-      </Card>
-    )
-  }
-
   return (
-    <Card title="Vendors" subTitle="Only gifts from checked vendors appear in this company's Gift Store.">
-      {!allVendors || allVendors.length === 0 ? (
-        <p className="text-sm text-text-muted">No vendors onboarded yet.</p>
+    <SectionCard
+      title={t('companies.detail.vendors')}
+      description={t('companies.detail.vendorsHelp')}
+      loading={loadingVendors || loadingAssigned}
+    >
+      {!allVendors?.length ? (
+        <p className="text-sm text-muted-foreground">{t('companies.detail.noVendors')}</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="space-y-2">
           {allVendors.map((vendor) => (
-            <label key={vendor.id} className="flex items-center gap-2 text-sm text-text">
-              <Checkbox
-                checked={assignedIds.has(vendor.id)}
-                onChange={(e) => handleToggle(vendor.id, e.checked ?? false)}
-                disabled={assignVendor.isPending || unassignVendor.isPending}
-              />
-              {vendor.name}
-              {vendor.status === 'SUSPENDED' && <span className="text-xs text-text-muted">(suspended)</span>}
-            </label>
+            <CheckboxField
+              key={vendor.id}
+              label={
+                <span className="flex items-center gap-2">
+                  {vendor.name}
+                  {vendor.status === 'SUSPENDED' && (
+                    <span className="text-xs text-muted-foreground">({t('companies.detail.suspended')})</span>
+                  )}
+                </span>
+              }
+              checked={assignedIds.has(vendor.id)}
+              disabled={busy}
+              onCheckedChange={(checked) => void toggle(vendor.id, checked)}
+            />
           ))}
         </div>
       )}
-    </Card>
+    </SectionCard>
   )
 }
 
-const companySchema = z.object({
-  name: z.string().min(1, 'Company name is required'),
-})
-
-type CompanyFormValues = z.infer<typeof companySchema>
-
 export function CompanyFormPage() {
+  const { t } = useTranslation('admin')
   const { id } = useParams<{ id: string }>()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
+  const showError = useApiErrorToast()
 
-  const { data: company, isLoading: isLoadingCompany } = useCompany(id)
+  const { data: company, isLoading } = useCompany(id)
   const createCompany = useCreateCompany()
   const updateCompany = useUpdateCompany(id ?? '')
-  const setStatus = useSetCompanyStatus(id ?? '')
+  const setStatus = useSetCompanyStatus()
   const uploadLogo = useUploadCompanyLogo(id ?? '')
+  const [confirmingStatus, setConfirmingStatus] = useState(false)
 
-  // Create mode only -- staged locally since a company needs to exist (an
-  // id) before the backend's presign/attach endpoints have anywhere to
-  // point. Uploaded for real right after the company record is created.
+  // Create mode only: a company needs an id before the backend's presign/attach endpoints have
+  // anywhere to put a logo, so the pick is held here and uploaded right after the create.
   const [pendingLogo, setPendingLogo] = useState<File | null>(null)
-  const [isUploadingPendingLogo, setIsUploadingPendingLogo] = useState(false)
-  const pendingLogoPreview = useMemo(() => (pendingLogo ? URL.createObjectURL(pendingLogo) : null), [pendingLogo])
-  useEffect(() => {
-    return () => {
-      if (pendingLogoPreview) URL.revokeObjectURL(pendingLogoPreview)
-    }
-  }, [pendingLogoPreview])
+  const pendingPreview = useMemo(() => (pendingLogo ? URL.createObjectURL(pendingLogo) : null), [pendingLogo])
+  useEffect(() => () => void (pendingPreview && URL.revokeObjectURL(pendingPreview)), [pendingPreview])
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors, isDirty },
-  } = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema),
-    defaultValues: { name: '' },
-  })
+  const fields = useMemo(
+    () => [textField({ id: 'name', label: t('companies.detail.name'), placeholder: t('companies.detail.namePlaceholder'), required: true })],
+    [t],
+  )
+  const values = useMemo(() => (company ? { name: company.name } : undefined), [company])
 
-  useEffect(() => {
-    if (company) reset({ name: company.name })
-  }, [company, reset])
-
-  async function onSubmit(values: CompanyFormValues) {
+  async function onSubmit(submitted: Record<string, unknown>) {
+    const name = String(submitted.name).trim()
     try {
-      if (isEdit && id) {
-        await updateCompany.mutateAsync(values.name)
-        showToast({ severity: 'success', summary: 'Company updated' })
+      if (isEdit) {
+        await updateCompany.mutateAsync(name)
+        toast.success(t('companies.detail.updated'))
         return
       }
-
-      const created = await createCompany.mutateAsync(values.name)
-
+      const created = await createCompany.mutateAsync(name)
       if (pendingLogo) {
-        setIsUploadingPendingLogo(true)
         try {
           await uploadCompanyLogo(created.id, pendingLogo)
-        } catch (error) {
-          showApiError(error, 'Company created, but the logo failed to upload. Add it from the company page.')
-          navigate(`/admin/companies/${created.id}`, { replace: true })
-          return
-        } finally {
-          setIsUploadingPendingLogo(false)
+        } catch {
+          toast.error(t('companies.detail.logoFailedAfterCreate'))
         }
       }
-
-      showToast({ severity: 'success', summary: 'Company created' })
+      toast.success(t('companies.detail.created'))
       navigate(`/admin/companies/${created.id}`, { replace: true })
     } catch (error) {
-      showApiError(error)
+      showError(error)
     }
   }
 
-  function confirmStatusToggle() {
-    if (!company) return
-    const activating = company.status === 'INACTIVE'
-    confirmDialog({
-      header: activating ? 'Activate company' : 'Deactivate company',
-      message: activating
-        ? `${company.name} will regain access to the platform.`
-        : `${company.name} and its users will lose access to the platform. This can be reversed later.`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: activating ? undefined : 'p-button-danger',
-      accept: async () => {
-        try {
-          await setStatus.mutateAsync(activating)
-          showToast({ severity: 'success', summary: activating ? 'Company activated' : 'Company deactivated' })
-        } catch (error) {
-          showApiError(error)
-        }
-      },
-    })
-  }
-
-  async function handleLogoUpload(event: { files: File[] }) {
-    const file = event.files[0]
+  async function onLogoPicked(file: File | null) {
     if (!file) return
+    if (!isEdit) {
+      setPendingLogo(file)
+      return
+    }
     try {
       await uploadLogo.mutateAsync(file)
-      showToast({ severity: 'success', summary: 'Logo updated' })
+      toast.success(t('companies.detail.logoUploaded'))
     } catch (error) {
-      showApiError(error)
+      showError(error)
     }
   }
 
-  if (isEdit && isLoadingCompany) {
+  async function confirmStatus() {
+    if (!company) return
+    const activating = company.status !== 'ACTIVE'
+    try {
+      await setStatus.mutateAsync({ id: company.id, active: activating })
+      toast.success(activating ? t('companies.activated') : t('companies.deactivated'))
+    } catch (error) {
+      showError(error)
+    } finally {
+      setConfirmingStatus(false)
+    }
+  }
+
+  if (isEdit && isLoading) {
     return (
-      <div className="flex justify-center py-20">
-        <ProgressSpinner style={{ width: 40, height: 40 }} strokeWidth="4" />
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-72" />
+        <Skeleton className="h-48 w-full" />
       </div>
     )
   }
 
-  const submitting = createCompany.isPending || updateCompany.isPending || isUploadingPendingLogo
+  const active = company?.status === 'ACTIVE'
 
   return (
-    <div>
-      <PageHeader
-        title={isEdit ? company?.name ?? 'Company' : 'Add company'}
-        subtitle={
-          isEdit && company
-            ? 'Update company details and manage status.'
-            : 'Onboard a new corporate customer.'
+    <div className="space-y-6">
+      <MasterPageHeader
+        lead={
+          <>
+            <IconButton icon={ArrowLeft} label={t('companies.detail.back')} onClick={() => navigate('/admin/companies')} />
+            {company && <CompanyAvatar company={company} size={36} />}
+          </>
         }
-        backTo="/admin/companies"
-        actions={isEdit && company ? <StatusBadge status={company.status} /> : undefined}
+        title={isEdit ? (company?.name ?? '') : t('companies.detail.newTitle')}
+        description={isEdit ? t('companies.detail.editSubtitle') : t('companies.detail.newSubtitle')}
+        extra={
+          company && (
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusCell active={active} />
+              <Button size="sm" variant="outline" onClick={() => navigate(`/admin/companies/${company.id}/users`)}>
+                <Users />
+                {t('companies.users')}
+              </Button>
+              <Button size="sm" variant={active ? 'outline' : 'default'} onClick={() => setConfirmingStatus(true)}>
+                {active ? <Power /> : <RotateCcw />}
+                {active ? t('action.deactivate', { ns: 'common' }) : t('action.activate', { ns: 'common' })}
+              </Button>
+            </div>
+          )
+        }
       />
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        <Card title="Company details" className="lg:col-span-2">
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="name" className="text-sm font-medium text-text">
-                Company name
-              </label>
-              <Controller
-                name="name"
-                control={control}
-                render={({ field }) => (
-                  <InputText id="name" {...field} className={errors.name ? 'p-invalid' : ''} placeholder="Acme Pharma" />
-                )}
-              />
-              {errors.name && <small className="text-red-500 dark:text-red-400">{errors.name.message}</small>}
-            </div>
+      <div className="grid grid-cols-1 items-start gap-6 pb-4 lg:grid-cols-3">
+        <SectionCard
+          title={t('companies.detail.details')}
+          className="lg:col-span-2"
+          footer={
+            company && (
+              <span className="text-xs text-muted-foreground">
+                {t('companies.detail.onboardedOn', { date: formatDate(company.createdAt) })}
+              </span>
+            )
+          }
+        >
+          <FormGenerator
+            fields={fields}
+            values={values}
+            mode={isEdit ? 'edit' : 'create'}
+            maxWidgetsPerRow={1}
+            submitPermission="company.manage"
+            submitLabel={isEdit ? t('companies.detail.save') : t('companies.detail.create')}
+            onSubmit={onSubmit}
+            hideCardWrapper
+          />
+        </SectionCard>
 
-            {isEdit && company && (
-              <p className="text-xs text-text-muted">
-                Onboarded on {format(new Date(company.createdAt), 'dd MMM yyyy, HH:mm')}
-              </p>
-            )}
-
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Button
-                type="submit"
-                label={isEdit ? 'Save changes' : isUploadingPendingLogo ? 'Uploading logo...' : 'Create company'}
-                loading={submitting}
-                disabled={isEdit && !isDirty}
-              />
-              {isEdit && company && (
-                <Button
-                  type="button"
-                  label={company.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                  severity={company.status === 'ACTIVE' ? 'danger' : 'success'}
-                  outlined
-                  loading={setStatus.isPending}
-                  onClick={confirmStatusToggle}
+        <div className="flex flex-col gap-6">
+          <SectionCard
+            title={t('companies.detail.logo')}
+            description={isEdit ? t('companies.detail.logoHelp') : t('companies.detail.logoHelpNew')}
+          >
+            <div className="flex items-center gap-4">
+              {company?.logoUrl || pendingPreview ? (
+                <img
+                  src={company?.logoUrl ?? pendingPreview ?? undefined}
+                  alt=""
+                  className="h-16 w-16 shrink-0 rounded-lg border object-cover"
                 />
-              )}
-              {isEdit && company && (
-                <Button
-                  type="button"
-                  label="Users"
-                  icon="pi pi-users"
-                  outlined
-                  onClick={() => navigate(`/admin/companies/${company.id}/users`)}
-                />
-              )}
-            </div>
-          </form>
-        </Card>
-
-        <div className="flex flex-col gap-6 lg:col-span-1">
-          <Card title="Logo" subTitle={isEdit ? undefined : 'Optional. Add now, or come back after creating the company.'}>
-            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              {isEdit && company ? (
-                <>
-                  {company.logoUrl ? (
-                    <img src={company.logoUrl} alt="" className="h-16 w-16 rounded-lg border border-border object-cover" />
-                  ) : (
-                    <div className="grid h-16 w-16 place-items-center rounded-lg border border-dashed border-border text-xs text-text-muted">
-                      No logo
-                    </div>
-                  )}
-                  <FileUpload
-                    mode="basic"
-                    name="logo"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    maxFileSize={5_000_000}
-                    customUpload
-                    uploadHandler={handleLogoUpload}
-                    auto
-                    chooseLabel={uploadLogo.isPending ? 'Uploading...' : 'Upload logo'}
-                    disabled={uploadLogo.isPending}
-                  />
-                </>
               ) : (
-                <>
-                  {pendingLogoPreview ? (
-                    <img src={pendingLogoPreview} alt="" className="h-16 w-16 rounded-lg border border-border object-cover" />
-                  ) : (
-                    <div className="grid h-16 w-16 place-items-center rounded-lg border border-dashed border-border text-xs text-text-muted">
-                      No logo
-                    </div>
-                  )}
-                  <FileUpload
-                    // Force a fresh instance if the user replaces their pick:
-                    // PrimeReact's basic mode unmounts its native <input> after
-                    // the first selection.
-                    key={pendingLogo?.name ?? 'empty'}
-                    mode="basic"
-                    name="logo"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    maxFileSize={5_000_000}
-                    chooseLabel={pendingLogo ? 'Replace logo' : 'Choose logo'}
-                    onSelect={(event) => setPendingLogo(event.files[0] ?? null)}
-                    disabled={submitting}
-                  />
-                </>
+                <div className="grid h-16 w-16 shrink-0 place-items-center rounded-lg border border-dashed text-xs text-muted-foreground">
+                  {t('companies.detail.noLogo')}
+                </div>
               )}
+              <FileDropzone
+                file={isEdit ? null : pendingLogo}
+                onChange={(file) => void onLogoPicked(file)}
+                accept={LOGO_ACCEPT}
+                disabled={uploadLogo.isPending}
+                prompt={t('companies.detail.logoDrop')}
+                className="min-w-0 flex-1"
+              />
             </div>
-          </Card>
+          </SectionCard>
 
-          {isEdit && company && <VendorRosterCard companyId={company.id} />}
-          {isEdit && company && <FeatureFlagsCard companyId={company.id} />}
+          {company && <VendorRosterCard companyId={company.id} />}
+          {company && <FeatureFlagsCard companyId={company.id} />}
         </div>
       </div>
+
+      {company && (
+        <AppDialog
+          open={confirmingStatus}
+          onOpenChange={setConfirmingStatus}
+          size="sm"
+          title={active ? t('companies.deactivateTitle') : t('action.activate', { ns: 'common' })}
+          description={active ? t('companies.deactivateBody') : undefined}
+          confirmLabel={active ? t('action.deactivate', { ns: 'common' }) : t('action.activate', { ns: 'common' })}
+          cancelLabel={t('action.cancel', { ns: 'common' })}
+          confirmVariant={active ? 'destructive' : 'default'}
+          loading={setStatus.isPending}
+          onConfirm={confirmStatus}
+        />
+      )}
     </div>
   )
 }

@@ -8,7 +8,7 @@ import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDonutChart } from '@/components/StatusDonutChart'
 import { useCampaigns } from '@/hooks/useCampaigns'
-import { useHasPermission } from '@/hooks/usePermissions'
+import { useHasAccess } from '@/hooks/use-permission'
 import { humanize } from '@/lib/format'
 
 const PURPOSE_ICON: Record<string, string> = {
@@ -105,7 +105,7 @@ export function CampaignListPage() {
     return campaigns.filter((c) => c.status === statusFilter)
   }, [campaigns, statusFilter])
 
-  const canManage = useHasPermission('campaign.manage')
+  const canManage = useHasAccess('campaign.manage')
   const newCampaignAction = canManage ? (
     <Button label="New campaign" icon="pi pi-plus" onClick={() => navigate('/campaigns/new')} />
   ) : undefined

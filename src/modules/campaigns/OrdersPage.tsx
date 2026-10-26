@@ -22,7 +22,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDonutChart } from '@/components/StatusDonutChart'
 import { useApproveOrderDesign, useOrderDesigns, useRejectOrderDesign } from '@/hooks/useOrderDesigns'
 import { useOrders, useRequestOrderPhotoLink } from '@/hooks/useOrders'
-import { useHasPermission } from '@/hooks/usePermissions'
+import { useHasAccess } from '@/hooks/use-permission'
 import { formatCurrency, humanize } from '@/lib/format'
 import { showApiError, showToast } from '@/lib/toast'
 
@@ -206,7 +206,7 @@ function OrderDetailPanel({
   onPhotoLinkSent: (order: Order, link: string) => void
 }) {
   const requestPhotoLink = useRequestOrderPhotoLink()
-  const canReviewDesign = useHasPermission('order.design.review')
+  const canReviewDesign = useHasAccess('order.design.review')
 
   async function handleSendPhotoLink() {
     if (!order) return
@@ -343,7 +343,7 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL')
   const [vendorFilter, setVendorFilter] = useState<string | 'ALL'>('ALL')
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false)
-  const canReviewDesign = useHasPermission('order.design.review')
+  const canReviewDesign = useHasAccess('order.design.review')
 
   const needsReviewCount = useMemo(() => orders.filter((o) => o.hasPendingDesignReview).length, [orders])
   const vendorOptions = useMemo(() => {

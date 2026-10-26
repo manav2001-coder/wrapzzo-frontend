@@ -14,7 +14,7 @@ import { uploadSubmissionAttachment, type AttachmentValue, type SubmissionValues
 import { PageHeader } from '@/components/PageHeader'
 import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
 import { useCampaign } from '@/hooks/useCampaigns'
-import { useHasPermission } from '@/hooks/usePermissions'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useCreateSubmission } from '@/hooks/useSubmissions'
 import { showApiError, showToast } from '@/lib/toast'
 
@@ -38,7 +38,7 @@ export function SubmissionFormPage() {
   const navigate = useNavigate()
   // A Member can't edit/manage a campaign, so the near-empty read-only Campaign Detail page
   // is a dead end for them -- send them back to their own board instead.
-  const canManageCampaigns = useHasPermission('campaign.manage')
+  const canManageCampaigns = useHasAccess('campaign.manage')
   const backTarget = canManageCampaigns ? `/campaigns/${campaignId}` : '/my-campaigns'
 
   const { data: campaign, isLoading } = useCampaign(campaignId)

@@ -1,14 +1,10 @@
 import { ConfirmDialog } from 'primereact/confirmdialog'
-import { useThemeSync } from '@/hooks/useThemeSync'
 import { AppRoutes } from '@/routes/AppRoutes'
-import { GlobalToast } from '@/lib/toast'
 
 function App() {
-  useThemeSync()
-
   return (
     <>
-      <GlobalToast />
+      {/* MIGRATION: only for pages still calling PrimeReact's confirmDialog(); goes with the last of them. */}
       <ConfirmDialog style={{ width: '28rem' }} breakpoints={{ '960px': '90vw', '640px': '95vw' }} />
       <AppRoutes />
     </>

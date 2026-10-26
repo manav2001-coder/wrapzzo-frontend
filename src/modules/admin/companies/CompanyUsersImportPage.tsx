@@ -1,262 +1,219 @@
-import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
-import { Column } from 'primereact/column'
-import { DataTable } from 'primereact/datatable'
-import { Dropdown } from 'primereact/dropdown'
-import { FileUpload, type FileUploadSelectEvent } from 'primereact/fileupload'
-import { Message } from 'primereact/message'
-import { useEffect, useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
+import { ArrowLeft, ArrowRight, Download, Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
-import type { ApiError } from '@/lib/axiosClient'
+import { toast } from 'sonner'
+
 import type { BulkImportUserRow } from '@/api/users'
-import { PageHeader } from '@/components/PageHeader'
+import { DataTable } from '@/components/data-table'
+import { Combobox } from '@/components/fields/combobox'
+import { FileDropzone } from '@/components/file-dropzone'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { SectionCard } from '@/components/section-card'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useBulkImportUsers } from '@/hooks/useUsers'
+import { ApiError } from '@/lib/axiosClient'
 import {
   EMPLOYEE_FIELDS,
   buildAutoMapping,
-  generateEmployeeTemplateBlob,
+  downloadEmployeeTemplate,
   getUnmappedRequiredFields,
   getWorkbookHeaders,
   parseEmployeeWorkbook,
   type ColumnMapping,
 } from '@/lib/employeeTemplate'
-import { showToast } from '@/lib/toast'
+import { ErrorList } from './ErrorList'
+
+const XLSX_ACCEPT = { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
 
 export function CompanyUsersImportPage() {
-  const { companyId, companyName, basePath } = useCompanyUserContext()
+  const { t } = useTranslation('admin')
+  const { companyId, basePath } = useCompanyUserContext()
   const navigate = useNavigate()
   const location = useLocation()
-
   const bulkImport = useBulkImportUsers(companyId)
+  const showError = useApiErrorToast()
 
+  const [file, setFile] = useState<File | null>(null)
   const [parsedRows, setParsedRows] = useState<BulkImportUserRow[]>([])
   const [parseErrors, setParseErrors] = useState<string[]>([])
-  const [fileName, setFileName] = useState<string | null>(null)
-  // PrimeReact's basic FileUpload unmounts its native <input> once a file is selected,
-  // so re-clicking "Choose file" to pick a replacement silently does nothing -- remounting
-  // on every pick (via this key) gives it a fresh input each time.
-  const [uploadKey, setUploadKey] = useState(0)
-  const [importErrors, setImportErrors] = useState<string[]>([])
-  const [resultSummary, setResultSummary] = useState<{ created: number; updated: number } | null>(null)
-
-  // Set only when the sheet doesn't already use our template's own header names --
-  // holds the picked file and its headers while the user maps our fields to theirs.
-  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [serverErrors, setServerErrors] = useState<string[]>([])
+  const [result, setResult] = useState<{ created: number; updated: number } | null>(null)
+  // Set only when the sheet does not already use the template's header names.
+  const [mappingFor, setMappingFor] = useState<File | null>(null)
   const [sheetHeaders, setSheetHeaders] = useState<string[]>([])
   const [mapping, setMapping] = useState<ColumnMapping>({})
 
-  async function handleDownloadTemplate() {
-    const blob = await generateEmployeeTemplateBlob()
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'wrapzzo-employee-template.xlsx'
-    link.click()
-    URL.revokeObjectURL(url)
+  async function parse(source: File, columnMapping: ColumnMapping) {
+    const parsed = await parseEmployeeWorkbook(source, columnMapping)
+    setParsedRows(parsed.rows)
+    setParseErrors(parsed.errors)
+    setMappingFor(null)
   }
 
-  async function runParse(file: File, columnMapping: ColumnMapping) {
-    const { rows, errors } = await parseEmployeeWorkbook(file, columnMapping)
-    setParsedRows(rows)
-    setParseErrors(errors)
-    setPendingFile(null)
-  }
-
-  async function selectFile(file: File) {
-    setFileName(file.name)
-    setUploadKey((key) => key + 1)
-    setImportErrors([])
-    setResultSummary(null)
+  async function select(picked: File | null) {
+    setFile(picked)
     setParsedRows([])
     setParseErrors([])
+    setServerErrors([])
+    setResult(null)
+    setMappingFor(null)
+    if (!picked) return
 
-    const headers = await getWorkbookHeaders(file)
+    const headers = await getWorkbookHeaders(picked)
     if (headers.length === 0) {
-      setParseErrors(['This sheet has no header row to read. Download the template to check the expected layout.'])
+      setParseErrors([t('users.importPage.noHeader')])
       return
     }
-
-    const autoMapping = buildAutoMapping(headers)
-    if (getUnmappedRequiredFields(autoMapping).length === 0) {
-      // Already uses our own header names (or close enough) -- skip the mapping step entirely.
-      await runParse(file, autoMapping)
+    const auto = buildAutoMapping(headers)
+    if (getUnmappedRequiredFields(auto).length === 0) {
+      await parse(picked, auto)
       return
     }
-
     setSheetHeaders(headers)
-    setMapping(autoMapping)
-    setPendingFile(file)
+    setMapping(auto)
+    setMappingFor(picked)
   }
 
-  // Arrives already picked -- the file chooser opens straight from the Users
-  // page's "Import employees" button, so by the time we land here there's
-  // nothing left for the user to click except this parse.
+  // Arrives already picked: the Users page's "Import employees" opens the chooser itself.
   useEffect(() => {
     const preselected = (location.state as { file?: File } | null)?.file
     if (preselected) {
-      selectFile(preselected)
+      void select(preselected)
       navigate(location.pathname, { replace: true, state: null })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handleFileSelect(event: FileUploadSelectEvent) {
-    const file = event.files[0]
-    if (!file) return
-    await selectFile(file)
-  }
-
-  function updateMapping(fieldKey: string, headerText: string | null) {
-    setMapping((prev) => ({ ...prev, [fieldKey]: headerText ?? undefined }))
-  }
-
-  const unmappedRequired = getUnmappedRequiredFields(mapping)
-
-  async function handleImport() {
-    setImportErrors([])
+  async function runImport() {
+    setServerErrors([])
     try {
-      const result = await bulkImport.mutateAsync(parsedRows)
-      setResultSummary({ created: result.createdCount, updated: result.updatedCount })
+      const imported = await bulkImport.mutateAsync(parsedRows)
+      setResult({ created: imported.createdCount, updated: imported.updatedCount })
+      toast.success(t('users.importPage.imported', { created: imported.createdCount, updated: imported.updatedCount }))
       setParsedRows([])
-      setFileName(null)
-      showToast({ severity: 'success', summary: 'Import complete', detail: `${result.createdCount} added, ${result.updatedCount} updated.` })
+      setFile(null)
     } catch (error) {
-      const apiError = error as ApiError
-      const details = (apiError.data as { details?: string[] } | undefined)?.details
-      if (details && details.length > 0) {
-        setImportErrors(details)
-      } else {
-        showToast({ severity: 'error', summary: 'Import failed', detail: apiError.message ?? 'Something went wrong.' })
-      }
+      const details = error instanceof ApiError ? (error.data as { details?: string[] } | undefined)?.details : undefined
+      if (details?.length) setServerErrors(details)
+      else showError(error)
     }
   }
 
+  const unmapped = getUnmappedRequiredFields(mapping)
+  const headerOptions = useMemo(() => sheetHeaders.map((header) => ({ value: header })), [sheetHeaders])
+
+  const previewColumns = useMemo<ColumnDef<BulkImportUserRow, unknown>[]>(
+    () => [
+      { accessorKey: 'name', header: t('users.column.name') },
+      { accessorKey: 'email', header: t('users.column.email') },
+      { accessorKey: 'mobile', header: t('users.column.mobile') },
+      { accessorKey: 'designation', header: t('users.column.designation') },
+      { accessorKey: 'employeeCode', header: t('users.column.employeeCode') },
+      { accessorFn: (row) => row.reportsToEmail ?? '', id: 'reportsToEmail', header: t('users.addPage.reportsToEmail') },
+      { accessorFn: (row) => row.orgUnitPath.join(' → '), id: 'orgPath', header: t('users.importPage.orgPath') },
+    ],
+    [t],
+  )
+
   return (
-    <div>
-      <PageHeader
-        title="Import employees"
-        subtitle={companyName ? `Bulk-add ${companyName}'s roster from a spreadsheet.` : 'Bulk-add a roster from a spreadsheet.'}
-        backTo={`${basePath}/users`}
+    <div className="space-y-4">
+      <MasterPageHeader
+        lead={<IconButton icon={ArrowLeft} label={t('users.back')} onClick={() => navigate(`${basePath}/users`)} />}
+        title={t('users.importPage.title')}
+        description={t('users.importPage.subtitle')}
+        extra={
+          <Button size="sm" variant="outline" className="h-9" onClick={() => void downloadEmployeeTemplate()}>
+            <Download />
+            {t('users.downloadTemplate')}
+          </Button>
+        }
       />
 
-      <Card title="Upload roster">
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-text-muted">
-            {pendingFile
-              ? "This sheet doesn't use our template's column names. Match your columns to ours below."
-              : fileName
-                ? 'Review the parsed rows below, then import.'
-                : "Use our template, or upload your own sheet and we'll ask you to match its columns. Every field is required except Reports To Email."}
-          </p>
+      <SectionCard
+        title={t('users.importPage.upload')}
+        description={parsedRows.length ? t('users.importPage.review') : t('users.importPage.intro')}
+      >
+        <div className="space-y-4">
+          <FileDropzone file={file} onChange={(picked) => void select(picked)} accept={XLSX_ACCEPT} prompt={t('users.importPage.drop')} />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button label="Download template" icon="pi pi-download" outlined onClick={handleDownloadTemplate} />
-            <FileUpload
-              key={uploadKey}
-              mode="basic"
-              name="roster"
-              accept=".xlsx"
-              maxFileSize={10_000_000}
-              chooseLabel={fileName ?? 'Choose file'}
-              onSelect={handleFileSelect}
-            />
-          </div>
-
-          {pendingFile && (
-            <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-muted p-4">
-              <p className="text-sm font-medium text-text">Match "{pendingFile.name}"'s columns to our fields</p>
+          {mappingFor && (
+            <div className="space-y-3 rounded-md border bg-muted/40 p-4">
+              <div>
+                <p className="text-sm font-medium">{t('users.importPage.mapTitle', { file: mappingFor.name })}</p>
+                <p className="text-xs text-muted-foreground">{t('users.importPage.mapHelp')}</p>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {EMPLOYEE_FIELDS.map((field) => (
-                  <div key={field.key} className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-text-muted">
+                  <div key={field.key} className="space-y-1.5">
+                    <Label htmlFor={`map-${field.key}`}>
                       {field.label}
-                      {field.required && <span className="text-red-500 dark:text-red-400"> *</span>}
-                    </label>
-                    <Dropdown
-                      value={mapping[field.key] ?? null}
-                      options={sheetHeaders}
-                      onChange={(e) => updateMapping(field.key, e.value)}
-                      placeholder={field.required ? 'Select a column' : 'Not in my sheet'}
-                      showClear={!field.required}
-                      filter
-                      className="w-full"
+                      {field.required && <span className="text-destructive"> *</span>}
+                    </Label>
+                    <Combobox
+                      id={`map-${field.key}`}
+                      options={headerOptions}
+                      displayValue={(option) => option.value}
+                      getOptionKey={(option) => option.value}
+                      value={headerOptions.find((option) => option.value === mapping[field.key]) ?? null}
+                      placeholder={field.required ? t('users.importPage.pickColumn') : t('users.importPage.notInSheet')}
+                      onChange={(next) =>
+                        setMapping((prev) => ({ ...prev, [field.key]: (next as { value: string } | null)?.value }))
+                      }
                     />
                   </div>
                 ))}
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  label="Use this mapping"
-                  icon="pi pi-check"
-                  disabled={unmappedRequired.length > 0}
-                  onClick={() => runParse(pendingFile, mapping)}
-                />
-                <Button label="Choose a different file" text onClick={() => setPendingFile(null)} />
+              <div className="flex flex-wrap items-center gap-3">
+                <Button disabled={unmapped.length > 0} onClick={() => void parse(mappingFor, mapping)}>
+                  {t('users.importPage.useMapping')}
+                </Button>
+                {unmapped.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {t('users.importPage.stillNeed', { fields: unmapped.map((field) => field.label).join(', ') })}
+                  </span>
+                )}
               </div>
-              {unmappedRequired.length > 0 && (
-                <p className="text-xs text-text-muted">
-                  Still need: {unmappedRequired.map((f) => f.label).join(', ')}
-                </p>
-              )}
             </div>
           )}
 
           {parseErrors.length > 0 && (
-            <Message
-              severity="error"
-              className="w-full justify-start"
-              text={`This sheet has ${parseErrors.length} row problem(s): ${parseErrors.slice(0, 3).join(' ')}${parseErrors.length > 3 ? ' ...' : ''}`}
-            />
+            <ErrorList title={t('users.importPage.rowProblems', { count: parseErrors.length })} errors={parseErrors} />
           )}
+          {serverErrors.length > 0 && <ErrorList title={t('users.importPage.serverErrors')} errors={serverErrors} />}
 
-          {importErrors.length > 0 && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-              <p className="mb-2 text-sm font-medium text-red-500 dark:text-red-400">
-                Import validation failed. Fix these rows in the sheet and re-upload:
-              </p>
-              <ul className="ml-4 list-disc space-y-1 text-xs text-red-500 dark:text-red-400">
-                {importErrors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {resultSummary && (
-            <div className="flex flex-wrap items-center gap-3">
-              <Message
-                severity="success"
-                className="w-full justify-start sm:w-auto"
-                text={`Imported: ${resultSummary.created} added, ${resultSummary.updated} updated.`}
-              />
-              <Button label="View users" icon="pi pi-arrow-right" text onClick={() => navigate(`${basePath}/users`)} />
+          {result && (
+            <div role="status" className="flex flex-wrap items-center gap-3 rounded-md border border-success/30 bg-success/5 p-3 text-sm">
+              {t('users.importPage.imported', { created: result.created, updated: result.updated })}
+              <Button size="sm" variant="ghost" onClick={() => navigate(`${basePath}/users`)}>
+                {t('users.addPage.view')}
+                <ArrowRight />
+              </Button>
             </div>
           )}
 
           {parsedRows.length > 0 && (
-            <>
-              <div className="max-h-96 overflow-y-auto rounded-lg border border-border">
-                <DataTable value={parsedRows.slice(0, 200)} size="small" scrollable>
-                  <Column header="Name" field="name" />
-                  <Column header="Email" field="email" />
-                  <Column header="Mobile" field="mobile" />
-                  <Column header="Designation" field="designation" />
-                  <Column header="Employee code" field="employeeCode" />
-                  <Column header="Reports to" field="reportsToEmail" />
-                  <Column header="Org path" body={(row: BulkImportUserRow) => row.orgUnitPath?.join(' -> ') ?? '—'} />
-                </DataTable>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button label={`Import ${parsedRows.length} employee(s)`} loading={bulkImport.isPending} onClick={handleImport} />
-                {parsedRows.length > 200 && (
-                  <span className="text-xs text-text-muted">Showing first 200 rows of {parsedRows.length}.</span>
-                )}
-              </div>
-            </>
+            <div className="frame-free space-y-3">
+              <DataTable<BulkImportUserRow>
+                columns={previewColumns}
+                data={parsedRows}
+                showRowSelectionColumn={false}
+                pageSize={25}
+                tableId="users-import-preview"
+              />
+              <Button onClick={() => void runImport()} disabled={bulkImport.isPending}>
+                {bulkImport.isPending && <Loader2 className="animate-spin" />}
+                {t('users.importPage.importCount', { count: parsedRows.length })}
+              </Button>
+            </div>
           )}
         </div>
-      </Card>
+      </SectionCard>
     </div>
   )
 }

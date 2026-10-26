@@ -1,111 +1,148 @@
-import { Button } from 'primereact/button'
-import { IconField } from 'primereact/iconfield'
-import { InputIcon } from 'primereact/inputicon'
-import { InputText } from 'primereact/inputtext'
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Gift as GiftIcon } from 'lucide-react'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+
 import type { Gift } from '@/api/gifts'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
-import { StatusBadge } from '@/components/StatusBadge'
-import { useGifts } from '@/hooks/useGifts'
+import { DataTable } from '@/components/data-table'
+import { listEmptyBody } from '@/components/data-table/list-body'
+import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
+import { Badge } from '@/components/ui/badge'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useGifts, useSetGiftStatus } from '@/hooks/useGifts'
 import { formatCurrency } from '@/lib/format'
+import type { ListFieldMap } from '@/lib/list-fields'
+import { GiftThumbnail } from './GiftThumbnail'
 
-function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
-  const cover = [...gift.images].sort((a, b) => a.displayOrder - b.displayOrder)[0]
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-surface text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
-    >
-      <div className="relative aspect-square w-full overflow-hidden bg-surface-muted">
-        {cover ? (
-          <img
-            src={cover.imageUrl}
-            alt={gift.name}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-          />
-        ) : (
-          <div className="grid h-full w-full place-items-center text-text-muted">
-            <i className="pi pi-image text-2xl" />
-          </div>
-        )}
-        <div className="absolute top-2 left-2">
-          <StatusBadge status={gift.active ? 'ACTIVE' : 'INACTIVE'} label={gift.active ? 'In stock' : 'Out of stock'} />
-        </div>
-      </div>
-      <div className="flex flex-1 flex-col gap-1 p-3.5">
-        <span className="truncate font-medium text-text">{gift.name}</span>
-        <span className="truncate text-xs text-text-muted">{gift.category}</span>
-        <span className="text-sm font-semibold text-text">{formatCurrency(gift.totalPrice)}</span>
-        {gift.moq && <span className="text-xs text-text-muted">MOQ {gift.moq}</span>}
-        {gift.vendorName && (
-          <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[11px] text-text-muted">
-            <i className="pi pi-truck text-[10px]" />
-            {gift.vendorName}
-          </span>
-        )}
-      </div>
-    </button>
-  )
+const LIST_FIELDS: ListFieldMap = {
+  name: 'text',
+  displayId: 'text',
+  category: 'enum',
+  vendorName: 'text',
+  price: 'number',
+  totalPrice: 'number',
 }
 
 export function GiftListPage() {
-  const { data: gifts, isLoading } = useGifts()
-  const [search, setSearch] = useState('')
+  const { t } = useTranslation('admin')
   const navigate = useNavigate()
+  const showError = useApiErrorToast()
+  const { data: gifts, isLoading, error, refetch } = useGifts()
+  const setStatus = useSetGiftStatus()
 
-  const filtered = useMemo(() => {
-    if (!gifts) return []
-    const query = search.trim().toLowerCase()
-    if (!query) return gifts
-    return gifts.filter((gift) => gift.name.toLowerCase().includes(query) || gift.category.toLowerCase().includes(query))
-  }, [gifts, search])
+  async function changeStatus(gift: Gift, active: boolean) {
+    try {
+      await setStatus.mutateAsync({ id: gift.id, active })
+      toast.success(active ? t('gifts.markedIn') : t('gifts.markedOut'))
+    } catch (err) {
+      showError(err)
+    }
+  }
+
+  const { statusColumn, actionsColumn, deactivateDialog } = useMasterColumns<Gift>({
+    isActive: (gift) => gift.active,
+    statusLabels: { active: t('gifts.inStock'), inactive: t('gifts.outOfStock') },
+    onEdit: (gift) => navigate(`/admin/gifts/${gift.id}`),
+    onActivate: (gift) => changeStatus(gift, true),
+    onDeactivate: (gift) => changeStatus(gift, false),
+    editPermission: 'gift.manage',
+    deletePermission: 'gift.manage',
+    deactivateCopy: { label: t('gifts.markOut'), title: t('gifts.outTitle'), body: t('gifts.outBody') },
+  })
+
+  const categoryOptions = useMemo(
+    () => [...new Set((gifts ?? []).map((gift) => gift.category))].sort().map((value) => ({ value, label: value })),
+    [gifts],
+  )
+
+  const columns = useMemo<ColumnDef<Gift, unknown>[]>(
+    () => [
+      {
+        id: 'name',
+        accessorKey: 'name',
+        header: t('gifts.column.gift'),
+        meta: { className: 'min-w-[240px]', align: 'left' },
+        cell: ({ row }) => (
+          <Link to={`/admin/gifts/${row.original.id}`} className="flex items-center gap-2.5 font-medium hover:underline">
+            <GiftThumbnail gift={row.original} />
+            <span className="truncate">{row.original.name}</span>
+          </Link>
+        ),
+      },
+      { id: 'displayId', accessorKey: 'displayId', header: t('gifts.column.id'), meta: { className: 'min-w-[100px]' } },
+      {
+        id: 'category',
+        accessorKey: 'category',
+        header: t('gifts.column.category'),
+        filterFn: 'equals',
+        meta: { className: 'min-w-[160px]', filterVariant: 'select', filterOptions: categoryOptions },
+      },
+      {
+        id: 'vendorName',
+        accessorFn: (gift) => gift.vendorName ?? t('gifts.wrapzzo'),
+        header: t('gifts.column.vendor'),
+        meta: { className: 'min-w-[160px]' },
+      },
+      {
+        id: 'price',
+        accessorKey: 'price',
+        header: t('gifts.column.price'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[120px]', align: 'right' },
+        cell: ({ row }) => formatCurrency(row.original.price),
+      },
+      {
+        id: 'totalPrice',
+        accessorKey: 'totalPrice',
+        header: t('gifts.column.total'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[120px]', align: 'right' },
+        cell: ({ row }) => <span className="font-semibold">{formatCurrency(row.original.totalPrice)}</span>,
+      },
+      {
+        id: 'photoRequired',
+        accessorKey: 'photoRequired',
+        header: t('gifts.column.photo'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[100px]' },
+        cell: ({ row }) => (row.original.photoRequired ? <Badge variant="secondary">{t('gifts.photoRequired')}</Badge> : '-'),
+      },
+      statusColumn,
+      actionsColumn,
+    ],
+    [t, categoryOptions, statusColumn, actionsColumn],
+  )
 
   return (
     <div>
-      <PageHeader
-        title="Gift Store"
-        subtitle="The shared catalogue every company browses when sending a gift."
-        actions={<Button label="Add gift" icon="pi pi-plus" onClick={() => navigate('/admin/gifts/new')} />}
+      <MasterPageHeader
+        title={t('gifts.title')}
+        description={t('gifts.subtitle')}
+        createLabel={t('gifts.add')}
+        createPermission="gift.manage"
+        onCreate={() => navigate('/admin/gifts/new')}
       />
-
-      <div className="mb-4">
-        <IconField iconPosition="left">
-          <InputIcon className="pi pi-search" />
-          <InputText
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search gifts"
-            className="w-full sm:w-80"
-          />
-        </IconField>
-      </div>
-
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <div key={index} className="aspect-[3/4] animate-pulse rounded-xl bg-surface-muted" />
-          ))}
-        </div>
-      ) : gifts?.length === 0 ? (
-        <EmptyState
-          icon="pi-gift"
-          title="No gifts yet"
-          description="Add your first gift to start building the catalogue companies browse from."
-          action={<Button label="Add gift" icon="pi pi-plus" onClick={() => navigate('/admin/gifts/new')} />}
-        />
-      ) : filtered.length === 0 ? (
-        <EmptyState icon="pi-search" title="No gifts match your search" />
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {filtered.map((gift) => (
-            <GiftCard key={gift.id} gift={gift} onClick={() => navigate(`/admin/gifts/${gift.id}`)} />
-          ))}
-        </div>
-      )}
+      <DataTable<Gift>
+        columns={columns}
+        data={gifts ?? []}
+        isLoading={isLoading}
+        listFields={LIST_FIELDS}
+        searchable
+        showRowSelectionColumn={false}
+        tableId="admin-gifts"
+        configNamespace="admin-gifts"
+        getRowId={(gift) => gift.id}
+        emptyState={listEmptyBody({
+          error,
+          onRetry: () => void refetch(),
+          icon: <GiftIcon className="h-8 w-8 opacity-50" />,
+          message: t('gifts.emptyTitle'),
+          description: t('gifts.emptyBody'),
+        })}
+      />
+      {deactivateDialog}
     </div>
   )
 }

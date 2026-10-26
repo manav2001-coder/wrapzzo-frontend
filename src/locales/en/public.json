@@ -1,0 +1,57 @@
+{
+  "landing": {
+    "nav": { "solutions": "Solutions", "login": "Log in" },
+    "hero": {
+      "badge": "Corporate gifting platform",
+      "title": "A gifting platform for every relationship you manage.",
+      "body": "Campaigns, vendors, orders and every recipient roster: Wrapzzo runs the whole corporate gifting workflow in one place.",
+      "cta": "Log in"
+    },
+    "solutions": {
+      "title": "Built for every kind of corporate gifting",
+      "body": "Whoever you're gifting (employees, clients, distributors, healthcare professionals or partners), it runs through the same platform.",
+      "employee": { "title": "Employee Gifting", "description": "Onboarding kits, milestones and everyday recognition for your team.", "caption": "New-hire welcome kits, delivered the day an offer is accepted." },
+      "client": { "title": "Client Gifting", "description": "Thoughtful gifting that scales with your client base.", "caption": "Renewal and anniversary gifts, sent on schedule." },
+      "dealer": { "title": "Distributor / Dealer Gifting", "description": "Recognition programs for your distribution and dealer network.", "caption": "Nationwide dealer incentive gifting, tracked by territory." },
+      "pharma": { "title": "Pharma / HCP Gifting", "description": "Compliant gifting and engagement for healthcare professionals.", "caption": "Doctor engagement gifting, handled with the care the sector needs." },
+      "events": { "title": "Events & Conferences", "description": "Welcome gifts and merchandise for conferences and field events.", "caption": "Conference welcome kits, ready for attendees on day one." },
+      "welcome": { "title": "Welcome Kits", "description": "Onboarding and induction kits for new employees or partners.", "caption": "Branded welcome kits, shipped nationwide on your timeline." },
+      "rewards": { "title": "Rewards & Recognition", "description": "Performance-tied gifting for milestones and achievements.", "caption": "Quarterly recognition gifting, delivered on time, every time." },
+      "partner": { "title": "Partner Gifting", "description": "Gifting for the partners and vendors who help your business run.", "caption": "Year-end appreciation gifting for your partner network." }
+    },
+    "cta": {
+      "title": "Ready to manage your next gifting program?",
+      "body": "Log in to see campaigns, orders and rosters for every company on Wrapzzo."
+    },
+    "footer": {
+      "blurb": "Corporate gifting and custom merchandise, sourced and delivered by Wrapzzo.",
+      "platform": "Platform",
+      "account": "Account",
+      "links": { "giftStore": "Gift Store", "quickGifts": "Quick Gifts", "bulkGifting": "Bulk Gifting", "campaigns": "Campaigns" },
+      "rights": "© {{year}} Wrapzzo. Operated by Orange Dot Solutions. All rights reserved."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you're looking for doesn't exist or has been moved.",
+    "home": "Go to home"
+  },
+  "upload": {
+    "loading": "Loading your gift",
+    "invalidTitle": "This link isn't valid anymore",
+    "missingToken": "This link is missing its upload token.",
+    "expired": "It may have expired or already been used.",
+    "failed": "Something went wrong. Please try again.",
+    "thanksTitle": "Thank you!",
+    "thanksBody": "Your photo is in. {{company}} will use it to get your {{gift}} ready for you.",
+    "yourGift": "gift",
+    "title": "{{company}} has a gift for you!",
+    "titleNamed": "{{company}} has a gift for you, {{name}}!",
+    "subtitle": "We just need a quick photo from you to get it ready.",
+    "photoLabel": "Please share a photo of yourself",
+    "dropHint": "Tap to choose a photo, or drag one in",
+    "preview": "Preview",
+    "change": "Choose a different photo",
+    "send": "Send my photo"
+  }
+}

@@ -1,38 +1,29 @@
-import { format } from 'date-fns'
-import { Button } from 'primereact/button'
-import { Calendar } from 'primereact/calendar'
-import { FileUpload } from 'primereact/fileupload'
-import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea'
-import { ProgressSpinner } from 'primereact/progressspinner'
-import { useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { AlertTriangle, ArrowLeft, Camera, ChevronDown, ChevronUp, Contact, Gift as GiftIcon, Palette, Plus, Send, Trash2 } from 'lucide-react'
+import { useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
+
 import { uploadQuickGiftPhoto, type QuickGiftPhotoValue } from '@/api/quickGifts'
 import type { DoctorDetails, Recipient, UpcomingBirthday } from '@/api/recipients'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
+import { EmptyState } from '@/components/empty-state'
+import { DatePicker } from '@/components/fields/date-picker'
+import { FormSkeleton } from '@/components/fields/form-skeleton'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useCreateQuickGiftRequest } from '@/hooks/useQuickGifts'
-import { parseDateOnly } from '@/lib/format'
-import { showApiError, showToast } from '@/lib/toast'
+import { fromDateOnly, toDateOnly } from '@/lib/datetime'
+import { cn } from '@/lib/utils'
+import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
 import { RecipientPickerDialog } from '@/modules/recipients/RecipientPickerDialog'
 
-interface DraftRecipient {
-  key: number
-  recipientName: string
-  recipientPhone: string
-  recipientEmail: string
-  deliveryAddress: string
-  dateOfBirth?: Date
-  giftMessage: string
-  internalNotes: string
-  photo?: File
-  /** Units to order, as typed -- validated to a whole number from 1 on submit. */
-  quantity: string
-  doctor: DoctorFields
-  expanded: boolean
-  errors: Record<string, string>
-}
+const MAX_QUANTITY = 100_000
 
 /** The prescription-pad print details, as typed (empty string = not given). */
 interface DoctorFields {
@@ -42,7 +33,24 @@ interface DoctorFields {
   clinicName: string
 }
 
-const MAX_QUANTITY = 100_000
+interface DraftRecipient {
+  key: number
+  recipientName: string
+  recipientPhone: string
+  recipientEmail: string
+  deliveryAddress: string
+  dateOfBirth: Date | null
+  giftMessage: string
+  internalNotes: string
+  photo?: File
+  /** Units to order, as typed -- validated to a whole number from 1 on submit. */
+  quantity: string
+  doctor: DoctorFields
+  expanded: boolean
+  errors: Partial<Record<RowErrorKey, string>>
+}
+
+type RowErrorKey = 'recipientName' | 'recipientPhone' | 'deliveryAddress' | 'photoOrEmail' | 'quantity' | 'registrationNumber' | 'submit'
 
 interface RecipientPrefill {
   recipientName?: string
@@ -58,8 +66,8 @@ function prefillFrom(recipient: Recipient | UpcomingBirthday): RecipientPrefill 
     recipientName: recipient.name,
     recipientPhone: recipient.phone,
     recipientEmail: recipient.email ?? undefined,
-    deliveryAddress: 'address' in recipient ? (recipient.address ?? undefined) : undefined,
-    dateOfBirth: recipient.dateOfBirth ? parseDateOnly(recipient.dateOfBirth) : undefined,
+    deliveryAddress: recipient.address ?? undefined,
+    dateOfBirth: fromDateOnly(recipient.dateOfBirth),
     doctor: 'doctor' in recipient ? recipient.doctor : undefined,
   }
 }
@@ -72,7 +80,7 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
     recipientPhone: prefill?.recipientPhone ?? '',
     recipientEmail: prefill?.recipientEmail ?? '',
     deliveryAddress: prefill?.deliveryAddress ?? '',
-    dateOfBirth: prefill?.dateOfBirth,
+    dateOfBirth: prefill?.dateOfBirth ?? null,
     giftMessage: '',
     internalNotes: '',
     quantity: '1',
@@ -93,7 +101,7 @@ function isBlankRow(row: DraftRecipient): boolean {
 
 function parseQuantity(value: string): number | null {
   const n = Number(value)
-  return Number.isInteger(n) && n >= 1 && n <= MAX_QUANTITY ? n : null
+  return value.trim() !== '' && Number.isInteger(n) && n >= 1 && n <= MAX_QUANTITY ? n : null
 }
 
 /** Only the fields actually filled in -- the server stores an absent one as "not given". */
@@ -104,33 +112,26 @@ function doctorInput(doctor: DoctorFields): Partial<DoctorDetails> | undefined {
   return entries.length > 0 ? Object.fromEntries(entries) : undefined
 }
 
-function validateRow(row: DraftRecipient, photoRequired: boolean, artworkRequired: boolean): Record<string, string> {
-  const errors: Record<string, string> = {}
-  if (!row.recipientName.trim()) errors.recipientName = 'Required.'
-  if (!row.recipientPhone.trim()) errors.recipientPhone = 'Required.'
-  if (!row.deliveryAddress.trim()) errors.deliveryAddress = 'Required.'
-  if (photoRequired && !row.photo && !row.recipientEmail.trim()) {
-    errors.photoOrEmail = "This gift needs a photo -- upload one now, or add the recipient's email so we can send them an upload link."
-  }
-  if (parseQuantity(row.quantity) === null) {
-    errors.quantity = `Quantity must be a whole number from 1 to ${MAX_QUANTITY.toLocaleString()}.`
-  }
-  // A printed prescription pad has to carry the doctor's registration number.
-  if (artworkRequired && !row.doctor.registrationNumber.trim()) {
-    errors.registrationNumber = "Add the doctor's registration number -- it is printed on the pad."
-  }
-  return errors
+/** One labelled input with its error -- the label is a real <label>, so the field is found by its name. */
+function Field({ id, label, hint, error, className, children }: { id: string; label: ReactNode; hint?: string; error?: string; className?: string; children: ReactNode }) {
+  return (
+    <div className={cn('flex min-w-0 flex-col gap-1.5', className)}>
+      <Label htmlFor={id} className="text-xs">
+        {label}
+      </Label>
+      {children}
+      {error ? (
+        <p className="text-xs text-destructive">{error}</p>
+      ) : (
+        hint && <p className="text-[11px] text-muted-foreground">{hint}</p>
+      )}
+    </div>
+  )
 }
 
-/**
- * One recipient, collapsed to a single compact row by default (name/phone/address --
- * everything needed for most gifts) so many recipients fit on screen without scrolling.
- * "More details" reveals email/photo/message/notes only when actually needed -- a plain
- * responsive grid, not an HTML table, so it reflows to a stacked card on narrow screens
- * instead of forcing horizontal scroll.
- */
-function RecipientRow({
+function RecipientCard({
   row,
+  index,
   onUpdate,
   onRemove,
   canRemove,
@@ -138,6 +139,7 @@ function RecipientRow({
   artworkRequired,
 }: {
   row: DraftRecipient
+  index: number
   onUpdate: (patch: Partial<DraftRecipient>) => void
   onRemove: () => void
   canRemove: boolean
@@ -145,172 +147,189 @@ function RecipientRow({
   /** A personalised item (prescription pad): ask for the doctor details it is printed with. */
   artworkRequired: boolean
 }) {
+  const { t } = useTranslation('gifts')
+  const fileInput = useRef<HTMLInputElement>(null)
+  const id = (field: string) => `r${row.key}-${field}`
   const setDoctor = (patch: Partial<DoctorFields>) => onUpdate({ doctor: { ...row.doctor, ...patch } })
-  const hasOptionalDetails = Boolean(row.recipientEmail || row.photo || row.giftMessage || row.internalNotes)
   const needsPhotoOrEmail = photoRequired && !row.photo && !row.recipientEmail.trim()
+  const hasErrors = Object.keys(row.errors).length > 0
 
   return (
-    <div className={`rounded-lg border bg-surface p-3 ${row.errors.__submit ? 'border-red-500/50' : 'border-border'}`}>
-      <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-12 sm:items-center sm:gap-3">
-        <div className="sm:col-span-3">
-          <InputText
+    <section
+      aria-label={t('form.recipientN', { n: index + 1 })}
+      className={cn('rounded-lg border bg-card shadow-sm', hasErrors && 'border-destructive/50')}
+    >
+      <header className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
+        <h3 className="text-sm font-semibold">{t('form.recipientN', { n: index + 1 })}</h3>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => onUpdate({ expanded: !row.expanded })}>
+            {needsPhotoOrEmail && !row.expanded ? (
+              <>
+                <AlertTriangle className="text-warning" />
+                {t('form.photoNeeded')}
+              </>
+            ) : row.expanded ? (
+              <>
+                <ChevronUp />
+                {t('form.less')}
+              </>
+            ) : (
+              <>
+                <ChevronDown />
+                {t('form.more')}
+              </>
+            )}
+          </Button>
+          <IconButton icon={Trash2} label={t('form.remove')} onClick={onRemove} disabled={!canRemove} />
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Field id={id('name')} label={`${t('form.name')} *`} error={row.errors.recipientName}>
+          <Input
+            id={id('name')}
             value={row.recipientName}
+            aria-invalid={Boolean(row.errors.recipientName)}
             onChange={(e) => onUpdate({ recipientName: e.target.value })}
-            placeholder="Recipient name *"
-            className={`w-full ${row.errors.recipientName ? 'p-invalid' : ''}`}
           />
-        </div>
-
-        <div className="sm:col-span-2">
-          <InputText
+        </Field>
+        <Field id={id('phone')} label={`${t('form.phone')} *`} error={row.errors.recipientPhone}>
+          <Input
+            id={id('phone')}
+            type="tel"
             value={row.recipientPhone}
+            aria-invalid={Boolean(row.errors.recipientPhone)}
             onChange={(e) => onUpdate({ recipientPhone: e.target.value })}
-            placeholder="Phone *"
-            className={`w-full ${row.errors.recipientPhone ? 'p-invalid' : ''}`}
           />
-        </div>
-
-        <div className="sm:col-span-2">
-          <Calendar
-            value={row.dateOfBirth ?? null}
-            onChange={(e) => onUpdate({ dateOfBirth: (e.value as Date) ?? undefined })}
-            dateFormat="dd M yy"
-            placeholder="Date of birth"
-            showIcon
-            className="w-full"
+        </Field>
+        <Field id={id('dob')} label={t('form.dob')}>
+          <DatePicker id={id('dob')} value={row.dateOfBirth} onChange={(value) => onUpdate({ dateOfBirth: value })} toDate={new Date()} />
+        </Field>
+        <Field id={id('quantity')} label={`${t('form.quantity')} *`} error={row.errors.quantity}>
+          <Input
+            id={id('quantity')}
+            inputMode="numeric"
+            value={row.quantity}
+            aria-invalid={Boolean(row.errors.quantity)}
+            onChange={(e) => onUpdate({ quantity: e.target.value })}
           />
-        </div>
-
-        <div className="sm:col-span-3">
-          <InputText
+        </Field>
+        <Field id={id('address')} label={`${t('form.address')} *`} error={row.errors.deliveryAddress} className="sm:col-span-2 lg:col-span-4">
+          <Input
+            id={id('address')}
             value={row.deliveryAddress}
+            aria-invalid={Boolean(row.errors.deliveryAddress)}
             onChange={(e) => onUpdate({ deliveryAddress: e.target.value })}
-            placeholder="Delivery address *"
-            className={`w-full ${row.errors.deliveryAddress ? 'p-invalid' : ''}`}
           />
-        </div>
+        </Field>
 
-        <div className="flex items-center gap-1 sm:col-span-2 sm:justify-end">
-          <Button
-            label={row.expanded ? 'Less' : needsPhotoOrEmail ? 'Photo needed' : hasOptionalDetails ? 'More •' : 'More'}
-            icon={row.expanded ? 'pi pi-chevron-up' : needsPhotoOrEmail ? 'pi pi-exclamation-triangle' : 'pi pi-chevron-down'}
-            iconPos="right"
-            text
-            severity={needsPhotoOrEmail && !row.expanded ? 'warning' : undefined}
-            size="small"
-            onClick={() => onUpdate({ expanded: !row.expanded })}
-          />
-          <Button icon="pi pi-trash" text severity="danger" size="small" aria-label="Remove recipient" disabled={!canRemove} onClick={onRemove} />
-        </div>
-      </div>
-
-      {row.expanded && (
-        <div className="mt-3 grid grid-cols-1 gap-3 border-t border-border pt-3 sm:grid-cols-2">
-          {artworkRequired && (
-            <div className="grid grid-cols-1 gap-3 sm:col-span-2 sm:grid-cols-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-text-muted">Registration no. *</label>
-                <InputText
-                  value={row.doctor.registrationNumber}
-                  onChange={(e) => setDoctor({ registrationNumber: e.target.value })}
-                  placeholder="e.g. MH-12345"
-                  className={`w-full ${row.errors.registrationNumber ? 'p-invalid' : ''}`}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-text-muted">Qualification</label>
-                <InputText
-                  value={row.doctor.qualification}
-                  onChange={(e) => setDoctor({ qualification: e.target.value })}
-                  placeholder="e.g. MBBS, MD"
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-text-muted">Speciality</label>
-                <InputText value={row.doctor.speciality} onChange={(e) => setDoctor({ speciality: e.target.value })} className="w-full" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-text-muted">Clinic / hospital</label>
-                <InputText value={row.doctor.clinicName} onChange={(e) => setDoctor({ clinicName: e.target.value })} className="w-full" />
-              </div>
-            </div>
-          )}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Quantity *</label>
-            <InputText
-              value={row.quantity}
-              onChange={(e) => onUpdate({ quantity: e.target.value })}
-              inputMode="numeric"
-              className={`w-full ${row.errors.quantity ? 'p-invalid' : ''}`}
-            />
-          </div>
-          <div className="hidden sm:block" aria-hidden />
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">
-              Email {photoRequired ? '(required if no photo)' : '(optional)'}
-            </label>
-            <InputText
-              value={row.recipientEmail}
-              onChange={(e) => onUpdate({ recipientEmail: e.target.value })}
-              className={`w-full ${row.errors.photoOrEmail ? 'p-invalid' : ''}`}
-            />
-            <p className="mt-1 text-[11px] text-text-muted">
-              No photo yet? We'll send this recipient a link to upload one themselves once approved.
+        {artworkRequired && (
+          <div className="grid grid-cols-1 gap-3 rounded-md border border-primary/20 bg-primary/5 p-3 sm:col-span-2 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-primary sm:col-span-2 lg:col-span-4">
+              <Palette className="h-3.5 w-3.5" />
+              {t('form.doctorSection')}
             </p>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">
-              Photo {photoRequired ? '(required, or provide an email)' : '(optional)'}
-            </label>
-            <div className="flex items-center gap-2">
-              {row.photo && <span className="max-w-[120px] truncate text-xs text-text-muted">{row.photo.name}</span>}
-              <FileUpload
-                key={row.photo ? row.photo.name + row.photo.size : 'empty'}
-                mode="basic"
-                chooseLabel={row.photo ? 'Change' : 'Choose'}
-                accept="image/*"
-                maxFileSize={10_000_000}
-                auto={false}
-                onSelect={(e) => onUpdate({ photo: e.files[0] })}
+            <Field id={id('reg')} label={`${t('form.registrationNumber')} *`} error={row.errors.registrationNumber}>
+              <Input
+                id={id('reg')}
+                value={row.doctor.registrationNumber}
+                placeholder={t('form.registrationPlaceholder')}
+                aria-invalid={Boolean(row.errors.registrationNumber)}
+                onChange={(e) => setDoctor({ registrationNumber: e.target.value })}
               />
-            </div>
+            </Field>
+            <Field id={id('qualification')} label={t('form.qualification')}>
+              <Input
+                id={id('qualification')}
+                value={row.doctor.qualification}
+                placeholder={t('form.qualificationPlaceholder')}
+                onChange={(e) => setDoctor({ qualification: e.target.value })}
+              />
+            </Field>
+            <Field id={id('speciality')} label={t('form.speciality')}>
+              <Input id={id('speciality')} value={row.doctor.speciality} onChange={(e) => setDoctor({ speciality: e.target.value })} />
+            </Field>
+            <Field id={id('clinic')} label={t('form.clinicName')}>
+              <Input id={id('clinic')} value={row.doctor.clinicName} onChange={(e) => setDoctor({ clinicName: e.target.value })} />
+            </Field>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Gift Message (optional)</label>
-            <InputTextarea
-              value={row.giftMessage}
-              onChange={(e) => onUpdate({ giftMessage: e.target.value })}
-              rows={2}
-              placeholder="A short note to include with the gift"
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Internal notes (optional)</label>
-            <InputTextarea
-              value={row.internalNotes}
-              onChange={(e) => onUpdate({ internalNotes: e.target.value })}
-              rows={2}
-              placeholder="Visible to your team only — never shown to the recipient."
-              className="w-full"
-            />
-          </div>
-        </div>
-      )}
+        )}
 
-      {(row.errors.recipientName || row.errors.recipientPhone || row.errors.deliveryAddress) && (
-        <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">Name, phone, and delivery address are required.</p>
-      )}
-      {row.errors.photoOrEmail && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.photoOrEmail}</p>}
-      {row.errors.registrationNumber && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.registrationNumber}</p>}
-      {row.errors.quantity && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.quantity}</p>}
-      {row.errors.__submit && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.__submit}</p>}
-    </div>
+        {row.expanded && (
+          <>
+            <Field
+              id={id('email')}
+              label={`${t('form.email')} (${photoRequired ? t('form.requiredIfNoPhoto') : t('form.optional')})`}
+              hint={t('form.emailHelp')}
+              error={row.errors.photoOrEmail}
+              className="sm:col-span-1 lg:col-span-2"
+            >
+              <Input
+                id={id('email')}
+                type="email"
+                value={row.recipientEmail}
+                aria-invalid={Boolean(row.errors.photoOrEmail)}
+                onChange={(e) => onUpdate({ recipientEmail: e.target.value })}
+              />
+            </Field>
+            <Field
+              id={id('photo')}
+              label={`${t('form.photo')} (${photoRequired ? t('form.requiredIfNoEmail') : t('form.optional')})`}
+              className="sm:col-span-1 lg:col-span-2"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <Button id={id('photo')} type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
+                  <Camera />
+                  {row.photo ? t('form.changePhoto') : t('form.choosePhoto')}
+                </Button>
+                {row.photo && <span className="truncate text-xs text-muted-foreground">{row.photo.name}</span>}
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  data-testid={id('photo-input')}
+                  onChange={(e) => e.target.files?.[0] && onUpdate({ photo: e.target.files[0] })}
+                />
+              </div>
+            </Field>
+            <Field id={id('message')} label={t('form.message')} className="sm:col-span-1 lg:col-span-2">
+              <Textarea
+                id={id('message')}
+                rows={2}
+                value={row.giftMessage}
+                placeholder={t('form.messagePlaceholder')}
+                onChange={(e) => onUpdate({ giftMessage: e.target.value })}
+              />
+            </Field>
+            <Field id={id('notes')} label={t('form.notes')} className="sm:col-span-1 lg:col-span-2">
+              <Textarea
+                id={id('notes')}
+                rows={2}
+                value={row.internalNotes}
+                placeholder={t('form.notesPlaceholder')}
+                onChange={(e) => onUpdate({ internalNotes: e.target.value })}
+              />
+            </Field>
+          </>
+        )}
+
+        {row.errors.submit && (
+          <p role="alert" className="text-sm text-destructive sm:col-span-2 lg:col-span-4">
+            {row.errors.submit}
+          </p>
+        )}
+      </div>
+    </section>
   )
 }
 
+/**
+ * Send one gift to as many recipients as needed. Each recipient becomes its own request -- or,
+ * when the company orders directly from vendors, its own order with the gift's vendor.
+ */
 export function QuickGiftFormPage() {
+  const { t } = useTranslation('gifts')
   const { giftId } = useParams<{ giftId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -320,28 +339,22 @@ export function QuickGiftFormPage() {
   const createRequest = useCreateQuickGiftRequest()
 
   const [rows, setRows] = useState<DraftRecipient[]>([emptyRow(true, prefillRecipient ? prefillFrom(prefillRecipient) : undefined)])
-  // Expanded up front when the gift needs more than name/phone/address, so the extra fields are seen, not found by failing.
-  const startExpanded = Boolean(gift?.photoRequired || gift?.artworkRequired)
   const [submitting, setSubmitting] = useState(false)
-  const [pickerVisible, setPickerVisible] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  // Expanded up front when the gift needs more than the basics, so the extra fields are seen, not found by failing.
+  const startExpanded = Boolean(gift?.photoRequired)
 
   function updateRow(key: number, patch: Partial<DraftRecipient>) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch, errors: {} } : r)))
-  }
-
-  function addRow() {
-    // Auto-expand so a photo-required gift's requirement is visible right away, not
-    // discovered only after a failed submit.
-    setRows((prev) => [...prev, emptyRow(startExpanded)])
   }
 
   function removeRow(key: number) {
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.key !== key) : prev))
   }
 
-  /** If the only row so far is still untouched, the picked recipients replace it instead of leaving a stray blank row alongside them. */
-  function handlePickRecipients(picked: Recipient[]) {
-    setPickerVisible(false)
+  /** If the only row is still untouched, the picked recipients replace it instead of leaving a stray blank one. */
+  function handlePick(picked: Recipient[]) {
+    setPickerOpen(false)
     if (picked.length === 0) return
     setRows((prev) => {
       const base = prev.length === 1 && isBlankRow(prev[0]) ? [] : prev
@@ -349,152 +362,132 @@ export function QuickGiftFormPage() {
     })
   }
 
+  function validate(row: DraftRecipient): DraftRecipient['errors'] {
+    if (!gift) return {}
+    const errors: DraftRecipient['errors'] = {}
+    const required = t('form.error.required')
+    if (!row.recipientName.trim()) errors.recipientName = required
+    if (!row.recipientPhone.trim()) errors.recipientPhone = required
+    if (!row.deliveryAddress.trim()) errors.deliveryAddress = required
+    if (gift.photoRequired && !row.photo && !row.recipientEmail.trim()) errors.photoOrEmail = t('form.error.photoOrEmail')
+    if (parseQuantity(row.quantity) === null) errors.quantity = t('form.error.quantity', { max: MAX_QUANTITY.toLocaleString() })
+    // A printed prescription pad has to carry the doctor's registration number.
+    if (gift.artworkRequired && !row.doctor.registrationNumber.trim()) errors.registrationNumber = t('form.error.registrationNumber')
+    return errors
+  }
+
   async function onSubmitAll() {
     if (!gift) return
-    const validated = rows.map((r) => ({ row: r, errors: validateRow(r, gift.photoRequired, gift.artworkRequired) }))
+    const validated = rows.map((row) => ({ row, errors: validate(row) }))
     if (validated.some((v) => Object.keys(v.errors).length > 0)) {
-      setRows(
-        validated.map((v) => ({
-          ...v.row,
-          errors: v.errors,
-          expanded: v.row.expanded || Boolean(v.errors.photoOrEmail || v.errors.quantity || v.errors.registrationNumber),
-        })),
-      )
-      showToast({
-        severity: 'error',
-        summary: 'Fix the highlighted rows',
-        detail: gift.photoRequired
-          ? 'Every recipient needs a name, phone, delivery address, and either a photo or an email.'
-          : 'Every recipient needs a name, phone, and delivery address.',
-      })
+      setRows(validated.map(({ row, errors }) => ({ ...row, errors, expanded: row.expanded || Boolean(errors.photoOrEmail) })))
+      toast.error(t('form.error.fixRows'))
       return
     }
 
     setSubmitting(true)
-    const succeededKeys: number[] = []
+    const succeeded: number[] = []
     let placedAsOrders = 0
-    const failures: { key: number; message: string }[] = []
+    const failures = new Map<number, string>()
 
     for (const row of rows) {
       try {
         let photo: QuickGiftPhotoValue | undefined
-        if (row.photo) {
-          photo = await uploadQuickGiftPhoto(row.photo)
-        }
+        if (row.photo) photo = await uploadQuickGiftPhoto(row.photo)
         const created = await createRequest.mutateAsync({
           giftId: gift.id,
           recipientName: row.recipientName.trim(),
           recipientPhone: row.recipientPhone.trim(),
           recipientEmail: row.recipientEmail.trim() || undefined,
           deliveryAddress: row.deliveryAddress.trim(),
-          recipientDob: row.dateOfBirth ? format(row.dateOfBirth, 'yyyy-MM-dd') : undefined,
+          recipientDob: toDateOnly(row.dateOfBirth) ?? undefined,
           giftMessage: row.giftMessage.trim() || undefined,
           internalNotes: row.internalNotes.trim() || undefined,
           photo,
-          doctor: doctorInput(row.doctor),
+          doctor: gift.artworkRequired ? doctorInput(row.doctor) : undefined,
           quantity: parseQuantity(row.quantity) ?? 1,
         })
-        succeededKeys.push(row.key)
+        succeeded.push(row.key)
         // Direct vendor ordering approves on creation -- the order already went to the vendor.
         if (created.orderId) placedAsOrders++
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to send.'
-        failures.push({ key: row.key, message })
+      } catch (err) {
+        failures.set(row.key, err instanceof Error ? err.message : t('form.error.nothingSent'))
       }
     }
     setSubmitting(false)
 
-    if (failures.length === 0) {
-      const direct = placedAsOrders === succeededKeys.length
-      showToast({
-        severity: 'success',
-        summary: direct
-          ? succeededKeys.length > 1
-            ? `${succeededKeys.length} orders placed`
-            : 'Order placed'
-          : succeededKeys.length > 1
-            ? `${succeededKeys.length} Quick Gift requests sent`
-            : 'Quick Gift request sent',
-        detail: direct
-          ? `Sent to ${gift.vendorName ?? 'the vendor'}. You'll review the artwork when they upload it.`
-          : 'Sent for approval.',
-      })
+    if (failures.size === 0) {
+      const count = succeeded.length
+      if (placedAsOrders === count) {
+        toast.success(t('form.success.orderPlaced', { count }), {
+          description: t('form.success.orderPlacedDetail', { vendor: gift.vendorName ?? t('form.success.theVendor') }),
+        })
+      } else {
+        toast.success(t('form.success.requestSent', { count }), { description: t('form.success.requestSentDetail') })
+      }
       navigate('/quick-gift')
       return
     }
 
     setRows((prev) =>
       prev
-        .filter((r) => !succeededKeys.includes(r.key))
-        .map((r) => {
-          const failure = failures.find((f) => f.key === r.key)
-          return failure ? { ...r, errors: { __submit: failure.message } } : r
-        }),
+        .filter((r) => !succeeded.includes(r.key))
+        .map((r) => (failures.has(r.key) ? { ...r, errors: { submit: failures.get(r.key) } } : r)),
     )
-    if (succeededKeys.length > 0) {
-      showApiError(new Error(`${succeededKeys.length} sent, ${failures.length} failed. See the remaining row(s) below.`))
-    } else {
-      showApiError(new Error('Nothing could be sent. See the row error(s) below.'))
-    }
+    toast.error(succeeded.length > 0 ? t('form.error.partial', { ok: succeeded.length, failed: failures.size }) : t('form.error.nothingSent'))
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-20">
-        <ProgressSpinner style={{ width: 40, height: 40 }} strokeWidth="4" />
-      </div>
-    )
-  }
+  if (isLoading) return <FormSkeleton fieldCount={6} />
 
   if (!gift) {
     return (
-      <div>
-        <PageHeader title="Quick Gift" backTo="/quick-gift" />
-        <EmptyState icon="pi-exclamation-circle" title="Gift not available" description="This gift isn't available for Quick Gift right now." />
-      </div>
+      <EmptyState
+        icon={GiftIcon}
+        title={t('form.notAvailableTitle')}
+        description={t('form.notAvailableBody')}
+        action={{ label: t('landing.title'), to: '/quick-gift', icon: ArrowLeft }}
+      />
     )
   }
 
   return (
-    <div>
-      <PageHeader
-        title={`Quick Gift — ${gift.name}`}
-        subtitle="Add as many recipients as you like, then send. No campaign needed."
-        backTo="/quick-gift"
+    <div className="frame-free">
+      <MasterPageHeader
+        lead={<GiftThumbnail gift={gift} size={40} />}
+        title={t('form.title', { gift: gift.name })}
+        description={t('form.subtitle')}
+        extra={
+          <Button asChild variant="outline" size="sm" className="h-9">
+            <Link to="/quick-gift">
+              <ArrowLeft />
+              {t('landing.title')}
+            </Link>
+          </Button>
+        }
       />
 
-      <div className="mb-4 flex items-center gap-3 rounded-xl border border-border bg-surface p-4">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-muted">
-          {gift.images[0] ? (
-            <img src={gift.images[0].imageUrl} alt={gift.name} className="h-full w-full object-cover" />
-          ) : (
-            <div className="grid h-full w-full place-items-center text-text-muted">
-              <i className="pi pi-gift" />
-            </div>
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="font-medium text-text">{gift.name}</p>
-          {gift.vendorName && <p className="text-xs text-text-muted">Supplied by {gift.vendorName}</p>}
-          {gift.description && <p className="line-clamp-1 text-xs text-text-muted">{gift.description}</p>}
-          {gift.artworkRequired && (
-            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-sky-600 dark:text-sky-400">
-              <i className="pi pi-palette" /> Personalised -- the vendor sends you artwork to approve before printing.
-            </p>
-          )}
-          {gift.photoRequired && (
-            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-              <i className="pi pi-camera" /> Needs a recipient photo -- upload one, or add their email so we can request it.
-            </p>
-          )}
-        </div>
+      <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+        {gift.vendorName && <Badge variant="secondary-soft">{t('form.suppliedBy', { vendor: gift.vendorName })}</Badge>}
+        {gift.artworkRequired && (
+          <Badge variant="primary-soft" className="gap-1">
+            <Palette className="h-3 w-3" />
+            {t('form.personalisedNote')}
+          </Badge>
+        )}
+        {gift.photoRequired && (
+          <Badge variant="warning-soft" className="gap-1">
+            <Camera className="h-3 w-3" />
+            {t('form.photoNote')}
+          </Badge>
+        )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        {rows.map((row) => (
-          <RecipientRow
+      <div className="flex flex-col gap-3">
+        {rows.map((row, index) => (
+          <RecipientCard
             key={row.key}
             row={row}
+            index={index}
             onUpdate={(patch) => updateRow(row.key, patch)}
             onRemove={() => removeRow(row.key)}
             canRemove={rows.length > 1}
@@ -504,18 +497,22 @@ export function QuickGiftFormPage() {
         ))}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Button label="Add another recipient" icon="pi pi-plus" outlined onClick={addRow} />
-        <Button label="Browse existing recipients" icon="pi pi-address-book" outlined onClick={() => setPickerVisible(true)} />
-        <Button
-          label={rows.length > 1 ? `Send all ${rows.length}` : 'Send request'}
-          icon="pi pi-send"
-          loading={submitting}
-          onClick={onSubmitAll}
-        />
+      <div className="sticky bottom-0 mt-4 flex flex-wrap items-center gap-2 border-t bg-background/95 py-3 backdrop-blur">
+        <Button variant="outline" onClick={() => setRows((prev) => [...prev, emptyRow(startExpanded)])}>
+          <Plus />
+          {t('form.addRecipient')}
+        </Button>
+        <Button variant="outline" onClick={() => setPickerOpen(true)}>
+          <Contact />
+          {t('form.browse')}
+        </Button>
+        <Button className="ml-auto" loading={submitting} onClick={() => void onSubmitAll()}>
+          <Send />
+          {rows.length > 1 ? t('form.sendAll', { count: rows.length }) : t('form.send')}
+        </Button>
       </div>
 
-      <RecipientPickerDialog visible={pickerVisible} onHide={() => setPickerVisible(false)} onConfirm={handlePickRecipients} />
+      <RecipientPickerDialog visible={pickerOpen} onHide={() => setPickerOpen(false)} onConfirm={handlePick} />
     </div>
   )
 }

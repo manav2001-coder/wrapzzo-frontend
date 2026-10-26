@@ -1,310 +1,199 @@
-import { format } from 'date-fns'
-import { Button } from 'primereact/button'
-import { Dialog } from 'primereact/dialog'
-import { Dropdown } from 'primereact/dropdown'
-import { InputText } from 'primereact/inputtext'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Eye, Send, Zap } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
-import type { Gift } from '@/api/gifts'
+import { toast } from 'sonner'
+
 import type { QuickGiftRequest } from '@/api/quickGifts'
 import type { Recipient, UpcomingBirthday } from '@/api/recipients'
-import { parseDateOnly } from '@/lib/format'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
-import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
-import { StatusBadge } from '@/components/StatusBadge'
+import { AppTabs } from '@/components/app-tabs'
+import { DataTable } from '@/components/data-table'
+import { listEmptyBody } from '@/components/data-table/list-body'
+import { GiftCatalogue } from '@/components/gifts/gift-catalogue'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
+import { Button } from '@/components/ui/button'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useMyQuickGiftRequests, useRequestQuickGiftPhotoLink } from '@/hooks/useQuickGifts'
-import { formatCurrency, humanize } from '@/lib/format'
-import { showApiError, showToast } from '@/lib/toast'
+import { formatDate } from '@/lib/datetime'
+import type { ListFieldMap } from '@/lib/list-fields'
+import { QuickGiftRequestSheet, QuickGiftStatusBadge } from './QuickGiftRequestSheet'
 
-function GiftPickCard({ gift, onPick }: { gift: Gift; onPick: () => void }) {
-  const image = gift.images[0]?.imageUrl
-
-  return (
-    <button
-      type="button"
-      onClick={onPick}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-surface text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
-    >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-muted">
-        {image ? (
-          <img src={image} alt={gift.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-        ) : (
-          <div className="grid h-full w-full place-items-center text-text-muted">
-            <i className="pi pi-gift text-3xl" />
-          </div>
-        )}
-        <span className="absolute top-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs font-medium text-text shadow-sm backdrop-blur-sm">
-          {gift.category}
-        </span>
-        {gift.totalPrice != null && (
-          <span className="absolute right-2 bottom-2 rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-white shadow-sm">
-            {formatCurrency(gift.totalPrice)}
-          </span>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <p className="truncate text-sm font-semibold text-text">{gift.name}</p>
-        {gift.description && <p className="line-clamp-2 text-xs text-text-muted">{gift.description}</p>}
-        <span className="mt-auto flex items-center gap-1 pt-1 text-xs font-medium text-accent">
-          <i className="pi pi-bolt" /> Quick Gift this
-        </span>
-      </div>
-    </button>
-  )
+const LIST_FIELDS: ListFieldMap = {
+  displayId: 'text',
+  giftName: 'text',
+  recipientName: 'text',
+  vendorName: 'text',
+  quantity: 'number',
+  status: 'enum',
 }
 
-function QuickGiftDetailDialog({
-  request,
-  onHide,
-  onRequestPhotoLink,
-  requesting,
-}: {
-  request: QuickGiftRequest | null
-  onHide: () => void
-  onRequestPhotoLink: (request: QuickGiftRequest) => void
-  requesting: boolean
-}) {
-  return (
-    <Dialog
-      header={request?.giftName}
-      visible={request !== null}
-      onHide={onHide}
-      style={{ width: '32rem' }}
-      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
-    >
-      {request && (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-text-muted">{new Date(request.createdAt).toLocaleString()}</span>
-            <StatusBadge status={request.status} label={humanize(request.status)} />
-          </div>
+const STATUSES = ['SUBMITTED', 'APPROVED', 'REJECTED'] as const
 
-          <div className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-            <div>
-              <p className="text-xs text-text-muted">Recipient</p>
-              <p className="text-text">{request.recipientName}</p>
-            </div>
-            <div>
-              <p className="text-xs text-text-muted">Phone</p>
-              <p className="text-text">{request.recipientPhone}</p>
-            </div>
-            <div className="sm:col-span-2">
-              <p className="text-xs text-text-muted">Delivery address</p>
-              <p className="text-text">{request.deliveryAddress}</p>
-            </div>
-            {request.recipientDob && (
-              <div>
-                <p className="text-xs text-text-muted">Date of birth</p>
-                <p className="text-text">{format(parseDateOnly(request.recipientDob), 'dd MMM yyyy')}</p>
-              </div>
-            )}
-            {request.giftMessage && (
-              <div className="sm:col-span-2">
-                <p className="text-xs text-text-muted">Gift message</p>
-                <p className="text-text">{request.giftMessage}</p>
-              </div>
-            )}
-            {request.orderDisplayId && (
-              <div>
-                <p className="text-xs text-text-muted">Order</p>
-                <p className="text-text">{request.orderDisplayId}</p>
-              </div>
-            )}
-          </div>
+type Tab = 'send' | 'requests'
 
-          {request.rejectionReason && <p className="text-sm text-red-500 dark:text-red-400">Rejected: {request.rejectionReason}</p>}
-
-          <div>
-            <p className="mb-2 text-xs text-text-muted">Recipient's photo</p>
-            {request.photoUrl ? (
-              <a href={request.photoUrl} target="_blank" rel="noreferrer" className="inline-block">
-                <img src={request.photoUrl} alt={request.photoFileName ?? ''} className="h-32 w-32 rounded-lg border border-border object-cover" />
-              </a>
-            ) : (
-              <div className="grid h-32 w-32 place-items-center rounded-lg border border-dashed border-border text-text-muted">
-                <i className="pi pi-image text-2xl" />
-              </div>
-            )}
-          </div>
-
-          {request.status === 'APPROVED' && (
-            <Button
-              label={request.photoUrl ? "Photo not right? Send the link again" : 'Request a photo from the recipient'}
-              icon="pi pi-send"
-              outlined
-              size="small"
-              className="self-start"
-              loading={requesting}
-              onClick={() => onRequestPhotoLink(request)}
-            />
-          )}
-        </div>
-      )}
-    </Dialog>
-  )
-}
-
+/**
+ * Quick Gift's home: pick a gift to send (optionally for a recipient carried in from the
+ * birthdays widget), and follow every request the user has sent.
+ */
 export function QuickGiftLandingPage() {
+  const { t } = useTranslation('gifts')
   const navigate = useNavigate()
   const location = useLocation()
+  const showError = useApiErrorToast()
   const { prefillRecipient } = (location.state as { prefillRecipient?: Recipient | UpcomingBirthday } | null) ?? {}
   const { data: gifts, isLoading: giftsLoading } = useActiveGifts()
-  const { data: requests, isLoading } = useMyQuickGiftRequests()
+  const { data: requests, isLoading, error, refetch } = useMyQuickGiftRequests()
   const requestPhotoLink = useRequestQuickGiftPhotoLink()
 
-  const [viewing, setViewing] = useState<QuickGiftRequest | null>(null)
-  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('ALL')
-  const [requestSearch, setRequestSearch] = useState('')
-  const [requestStatusFilter, setRequestStatusFilter] = useState<'ALL' | QuickGiftRequest['status']>('ALL')
-
-  const categories = useMemo(() => {
-    const set = new Set((gifts ?? []).map((g) => g.category))
-    return ['ALL', ...Array.from(set).sort()]
-  }, [gifts])
-
-  const filteredGifts = useMemo(() => {
-    return (gifts ?? []).filter((g) => {
-      if (category !== 'ALL' && g.category !== category) return false
-      const q = search.trim().toLowerCase()
-      if (!q) return true
-      return g.name.toLowerCase().includes(q) || g.category.toLowerCase().includes(q) || (g.description ?? '').toLowerCase().includes(q)
-    })
-  }, [gifts, search, category])
-
-  const filteredRequests = useMemo(() => {
-    return (requests ?? []).filter((r) => {
-      if (requestStatusFilter !== 'ALL' && r.status !== requestStatusFilter) return false
-      const q = requestSearch.trim().toLowerCase()
-      if (!q) return true
-      return r.giftName.toLowerCase().includes(q) || r.recipientName.toLowerCase().includes(q)
-    })
-  }, [requests, requestSearch, requestStatusFilter])
+  const [tab, setTab] = useState<Tab>('send')
+  const [viewingId, setViewingId] = useState<string | null>(null)
+  const [photoPrompt, setPhotoPrompt] = useState<PhotoLinkPrompt | null>(null)
+  const viewing = requests?.find((request) => request.id === viewingId) ?? null
 
   async function handleRequestPhotoLink(request: QuickGiftRequest) {
     try {
       const result = await requestPhotoLink.mutateAsync(request.id)
-      setPhotoLinkPrompt({ link: result.recipientUploadUrl, phone: request.recipientPhone, recipientName: request.recipientName })
-      showToast({ severity: 'success', summary: 'Link sent to the recipient' })
-    } catch (error) {
-      showApiError(error)
+      setPhotoPrompt({ link: result.recipientUploadUrl, phone: request.recipientPhone, recipientName: request.recipientName })
+      toast.success(t('detail.linkSent'))
+    } catch (err) {
+      showError(err)
     }
   }
 
+  const columns = useMemo<ColumnDef<QuickGiftRequest, unknown>[]>(
+    () => [
+      {
+        id: 'giftName',
+        accessorKey: 'giftName',
+        header: t('landing.column.gift'),
+        meta: { className: 'min-w-[200px]', align: 'left' },
+        cell: ({ row }) => (
+          <button type="button" className="truncate font-medium hover:underline" onClick={() => setViewingId(row.original.id)}>
+            {row.original.giftName}
+          </button>
+        ),
+      },
+      { id: 'displayId', accessorKey: 'displayId', header: t('landing.column.request'), meta: { className: 'min-w-[100px]' } },
+      { id: 'recipientName', accessorKey: 'recipientName', header: t('landing.column.recipient'), meta: { className: 'min-w-[160px]' } },
+      {
+        id: 'quantity',
+        accessorKey: 'quantity',
+        header: t('landing.column.quantity'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[70px]', align: 'right' },
+      },
+      {
+        id: 'vendorName',
+        accessorFn: (request) => request.vendorName ?? '',
+        header: t('landing.column.vendor'),
+        meta: { className: 'min-w-[150px]' },
+      },
+      {
+        id: 'status',
+        accessorKey: 'status',
+        header: t('landing.column.status'),
+        filterFn: 'equals',
+        meta: {
+          className: 'min-w-[140px]',
+          filterVariant: 'select',
+          filterOptions: STATUSES.map((value) => ({ value, label: t(`status.${value}`) })),
+        },
+        cell: ({ row }) => <QuickGiftStatusBadge status={row.original.status} />,
+      },
+      {
+        id: 'createdAt',
+        accessorKey: 'createdAt',
+        header: t('landing.column.sent'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[110px]' },
+        cell: ({ row }) => formatDate(row.original.createdAt),
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableColumnFilter: false,
+        enableSorting: false,
+        meta: { className: 'w-[56px]', pin: 'right' },
+        cell: ({ row }) => (
+          <IconButton icon={Eye} label={row.original.displayId} onClick={() => setViewingId(row.original.id)} />
+        ),
+      },
+    ],
+    [t],
+  )
+
   return (
     <div>
-      <PageHeader
-        title="Quick Gift"
-        subtitle={
-          prefillRecipient
-            ? `Pick a gift below to send to ${prefillRecipient.name} — their details are already filled in.`
-            : 'Pick a gift below to request it for one recipient — no campaign, no waiting.'
-        }
+      <MasterPageHeader
+        title={t('landing.title')}
+        description={prefillRecipient ? t('landing.subtitleFor', { name: prefillRecipient.name }) : t('landing.subtitle')}
       />
 
-      <h2 className="mb-3 text-sm font-semibold text-text-muted uppercase">Choose a gift</h2>
-      {!giftsLoading && (gifts ?? []).length === 0 ? (
-        <EmptyState icon="pi-gift" title="No gifts available yet" description="Your Wrapzzo account manager hasn't added any gifts to the catalogue yet." />
-      ) : (
-        <div className="mb-8">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search gifts..." className="w-full sm:w-72" />
-            <Dropdown
-              value={category}
-              onChange={(e) => setCategory(e.value)}
-              options={categories.map((c) => ({ label: c === 'ALL' ? 'All categories' : c, value: c }))}
-              className="w-full sm:w-56"
-            />
-          </div>
+      <AppTabs
+        value={tab}
+        onValueChange={(value) => setTab(value as Tab)}
+        className="frame-free"
+        tabs={[
+          {
+            value: 'send',
+            label: t('landing.tabSend'),
+            icon: Zap,
+            content: (
+              <GiftCatalogue
+                gifts={gifts}
+                isLoading={giftsLoading}
+                renderActions={(gift) => (
+                  <Button
+                    size="sm"
+                    onClick={() => navigate(`/quick-gift/new/${gift.id}`, prefillRecipient ? { state: { prefillRecipient } } : undefined)}
+                  >
+                    <Send />
+                    {t('landing.send')}
+                  </Button>
+                )}
+              />
+            ),
+          },
+          {
+            value: 'requests',
+            label: t('landing.tabRequests'),
+            badge: requests?.length || undefined,
+            content: (
+              <DataTable<QuickGiftRequest>
+                columns={columns}
+                data={requests ?? []}
+                isLoading={isLoading}
+                listFields={LIST_FIELDS}
+                searchable
+                showRowSelectionColumn={false}
+                defaultSort={{ id: 'createdAt', desc: true }}
+                getRowId={(request) => request.id}
+                tableId="my-quick-gifts"
+                configNamespace="my-quick-gifts"
+                emptyState={listEmptyBody({
+                  error,
+                  onRetry: () => void refetch(),
+                  icon: <Zap className="h-8 w-8 opacity-50" />,
+                  message: t('landing.emptyTitle'),
+                  description: t('landing.emptyBody'),
+                })}
+              />
+            ),
+          },
+        ]}
+      />
 
-          {giftsLoading ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-56 animate-pulse rounded-xl bg-surface-muted" />
-              ))}
-            </div>
-          ) : filteredGifts.length === 0 ? (
-            <EmptyState icon="pi-search" title="No gifts match your search" />
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {filteredGifts.map((gift) => (
-                <GiftPickCard
-                  key={gift.id}
-                  gift={gift}
-                  onPick={() => navigate(`/quick-gift/new/${gift.id}`, prefillRecipient ? { state: { prefillRecipient } } : undefined)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      <h2 className="mb-3 text-sm font-semibold text-text-muted uppercase">Recent requests</h2>
-      {!isLoading && requests?.length === 0 ? (
-        <EmptyState icon="pi-bolt" title="No Quick Gift requests yet" description="Pick a gift above to send your first one — it goes straight to your Company Admin for approval." />
-      ) : (
-        <>
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <InputText
-              value={requestSearch}
-              onChange={(e) => setRequestSearch(e.target.value)}
-              placeholder="Search by gift or recipient..."
-              className="w-full sm:w-72"
-            />
-            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-border bg-surface p-1">
-              {(['ALL', 'SUBMITTED', 'APPROVED', 'REJECTED'] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setRequestStatusFilter(s)}
-                  className={`rounded-lg border-none px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
-                    requestStatusFilter === s ? 'bg-accent text-white' : 'bg-transparent text-text-muted hover:text-text'
-                  }`}
-                >
-                  {s === 'ALL' ? 'All' : humanize(s)}
-                </button>
-              ))}
-            </div>
-          </div>
-          {filteredRequests.length === 0 ? (
-            <EmptyState icon="pi-search" title="No requests match" />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {filteredRequests.map((request) => (
-                <button
-                  key={request.id}
-                  type="button"
-                  onClick={() => setViewing(request)}
-                  className="rounded-lg border border-border bg-surface p-4 text-left transition-colors hover:border-accent/50"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <span className="font-medium text-text">{request.giftName}</span>
-                      <span className="ml-2 text-xs text-text-muted">for {request.recipientName}</span>
-                    </div>
-                    <StatusBadge status={request.status} label={humanize(request.status)} />
-                  </div>
-                  <p className="mt-1 text-xs text-text-muted">{new Date(request.createdAt).toLocaleString()}</p>
-                  {request.rejectionReason && (
-                    <p className="mt-2 text-sm text-red-500 dark:text-red-400">Rejected: {request.rejectionReason}</p>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      <QuickGiftDetailDialog
+      <QuickGiftRequestSheet
         request={viewing}
-        onHide={() => setViewing(null)}
+        onClose={() => setViewingId(null)}
         onRequestPhotoLink={handleRequestPhotoLink}
-        requesting={requestPhotoLink.isPending}
+        requestingPhotoLink={requestPhotoLink.isPending}
       />
-      <RecipientPhotoLinkDialog prompt={photoLinkPrompt} onHide={() => setPhotoLinkPrompt(null)} />
+      <PhotoLinkDialog prompt={photoPrompt} onClose={() => setPhotoPrompt(null)} />
     </div>
   )
 }

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { OrderStatus } from '@/api/orders'
-import { getVendorOrder, listVendorOrders, updateVendorOrderStatus } from '@/api/vendorOrders'
+import { getMyVendorProfile, getVendorOrder, listVendorOrders, updateVendorOrderStatus } from '@/api/vendorOrders'
 
-const vendorOrdersKey = ['vendorOrders'] as const
+/** Exported so a proof upload can refresh the orders it changes the artwork state of. */
+export const vendorOrdersKey = ['vendorOrders'] as const
 const vendorOrderKey = (id: string) => ['vendorOrders', id] as const
 
 export function useVendorOrders() {
@@ -11,6 +12,10 @@ export function useVendorOrders() {
 
 export function useVendorOrder(id: string | undefined) {
   return useQuery({ queryKey: vendorOrderKey(id ?? ''), queryFn: () => getVendorOrder(id!), enabled: Boolean(id) })
+}
+
+export function useMyVendorProfile() {
+  return useQuery({ queryKey: ['vendorProfile'], queryFn: getMyVendorProfile, staleTime: 5 * 60_000 })
 }
 
 export function useUpdateVendorOrderStatus() {

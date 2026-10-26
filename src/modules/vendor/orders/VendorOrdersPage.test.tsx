@@ -1,58 +1,58 @@
+import userEvent from '@testing-library/user-event'
+import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { VendorOrder } from '@/api/vendorOrders'
-import { renderWithProviders, screen } from '@/test/test-utils'
+import { renderWithProviders, screen, within } from '@/test/test-utils'
+import { vendorOrder } from '../vendor-fixtures'
 import { VendorOrdersPage } from './VendorOrdersPage'
 
 const listVendorOrders = vi.hoisted(() => vi.fn())
 vi.mock('@/api/vendorOrders', async (importOriginal) => ({ ...(await importOriginal<object>()), listVendorOrders }))
-vi.mock('@/api/vendorOrderDesigns', () => ({ listVendorOrderDesigns: vi.fn().mockResolvedValue([]), uploadVendorOrderDesign: vi.fn() }))
 
-const PAD_ORDER: VendorOrder = {
-  id: 'o-1',
-  displayId: 'ORD-101',
-  companyName: 'Alembic',
-  campaignName: null,
-  giftName: 'Prescription Pad',
-  recipientName: 'Dr. Asha Shah',
-  recipientPhone: '9800000001',
-  recipientPhotoUrl: null,
-  price: 40,
-  quantity: 5,
-  deliveryAddress: '12 MG Road, Pune',
-  giftMessage: null,
-  doctor: { qualification: 'MBBS, MD', registrationNumber: 'MH-12345', speciality: 'Cardiology', clinicName: 'Shah Heart Clinic' },
-  artworkRequired: true,
-  artworkApproved: false,
-  source: 'QUICK_GIFT',
-  status: 'PRODUCTION_QUEUE',
-  assignedAt: '2026-10-20T10:00:00Z',
-  createdAt: '2026-10-20T10:00:00Z',
+const ORDERS = [
+  vendorOrder({ id: 'a', displayId: 'ORD-1' }),
+  vendorOrder({ id: 'b', displayId: 'ORD-2', latestDesignStatus: 'REJECTED', designVersions: 1, latestDesignComment: 'Name misspelt' }),
+  vendorOrder({ id: 'c', displayId: 'ORD-3', latestDesignStatus: 'PENDING_REVIEW', designVersions: 2 }),
+  vendorOrder({ id: 'd', displayId: 'ORD-4', artworkApproved: true, latestDesignStatus: 'APPROVED', designVersions: 1 }),
+  vendorOrder({ id: 'e', displayId: 'ORD-5', status: 'DISPATCHED', artworkApproved: true }),
+]
+
+function renderQueue(route = '/vendor/orders') {
+  return renderWithProviders(
+    <Routes>
+      <Route path="/vendor/orders" element={<VendorOrdersPage />} />
+      <Route path="/vendor/orders/:id" element={<h1>Order workspace</h1>} />
+    </Routes>,
+    { route },
+  )
 }
 
-describe('VendorOrdersPage -- personalised orders', () => {
-  beforeEach(() => listVendorOrders.mockReset())
+const orderIds = () => screen.getAllByRole('link', { name: /^ORD-\d$/ }).map((link) => link.textContent)
 
-  it('shows what to print, how many and where to ship', async () => {
-    listVendorOrders.mockResolvedValue([PAD_ORDER])
-    renderWithProviders(<VendorOrdersPage />)
+describe('VendorOrdersPage', () => {
+  beforeEach(() => listVendorOrders.mockReset().mockResolvedValue(ORDERS))
 
-    expect((await screen.findAllByText('Reg. no. MH-12345')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Shah Heart Clinic').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('12 MG Road, Pune').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('5').length).toBeGreaterThan(0)
+  it('lists every order with what it needs next', async () => {
+    renderQueue()
+    const row = (await screen.findByRole('link', { name: 'ORD-2' })).closest('tr')!
+    expect(within(row).getByText('Changes requested')).toBeInTheDocument()
+    expect(orderIds()).toHaveLength(5)
   })
 
-  it('says dispatch waits on an approved proof until one is approved', async () => {
-    listVendorOrders.mockResolvedValue([PAD_ORDER])
-    renderWithProviders(<VendorOrdersPage />)
-    expect((await screen.findAllByText(/wait for it to be approved before dispatching/)).length).toBeGreaterThan(0)
+  it('tabs the queue by stage, with counts, and opens one from the URL', async () => {
+    renderQueue('/vendor/orders?stage=review')
+    await screen.findByRole('link', { name: 'ORD-3' })
+    expect(orderIds()).toEqual(['ORD-3'])
+
+    await userEvent.click(screen.getByRole('tab', { name: /Ready to dispatch/ }))
+    expect(orderIds()).toEqual(['ORD-4'])
+    await userEvent.click(screen.getByRole('tab', { name: /Changes requested/ }))
+    expect(orderIds()).toEqual(['ORD-2'])
   })
 
-  it('drops the warning once the artwork is approved', async () => {
-    listVendorOrders.mockResolvedValue([{ ...PAD_ORDER, artworkApproved: true }])
-    renderWithProviders(<VendorOrdersPage />)
-    await screen.findAllByText('Reg. no. MH-12345')
-    expect(screen.queryByText(/wait for it to be approved before dispatching/)).not.toBeInTheDocument()
+  it('opens the order workspace', async () => {
+    renderQueue()
+    await userEvent.click(await screen.findByRole('link', { name: 'ORD-1' }))
+    expect(screen.getByRole('heading', { name: 'Order workspace' })).toBeInTheDocument()
   })
 })

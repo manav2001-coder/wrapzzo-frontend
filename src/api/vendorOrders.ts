@@ -1,4 +1,6 @@
+import type { OrderDesignStatus } from '@/api/orderDesigns'
 import type { OrderSource, OrderStatus } from '@/api/orders'
+import type { Vendor } from '@/api/vendors'
 import type { DoctorDetails } from '@/api/recipients'
 import { vendorApiClient } from '@/lib/vendorApiClient'
 
@@ -26,6 +28,10 @@ export interface VendorOrder {
   /** The order may not be dispatched until one of its proofs is approved. */
   artworkRequired: boolean
   artworkApproved: boolean
+  /** The newest proof's status and review comment -- null before the first upload. */
+  latestDesignStatus: OrderDesignStatus | null
+  latestDesignComment: string | null
+  designVersions: number
   source: OrderSource
   status: OrderStatus
   assignedAt: string | null
@@ -44,5 +50,11 @@ export async function getVendorOrder(id: string): Promise<VendorOrder> {
 
 export async function updateVendorOrderStatus(id: string, status: OrderStatus): Promise<VendorOrder> {
   const { data } = await vendorApiClient.post<VendorOrder>(`/api/vendor/orders/updateStatus/${id}`, { status })
+  return data
+}
+
+/** The signed-in vendor's own record -- name for the portal's greeting. */
+export async function getMyVendorProfile(): Promise<Vendor> {
+  const { data } = await vendorApiClient.get<Vendor>('/api/vendor/view')
   return data
 }

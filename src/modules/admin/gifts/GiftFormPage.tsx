@@ -3,14 +3,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import type { z } from 'zod'
 
-import { uploadGiftImage, type GiftInput } from '@/api/gifts'
+import { uploadGiftImage } from '@/api/gifts'
 import { AppDialog } from '@/components/app-dialog'
 import { FormGenerator } from '@/components/fields/form-generator'
 import { FileDropzone } from '@/components/file-dropzone'
 import { IconButton } from '@/components/icon-button'
-import { decimalField, numberField, selectField, switchField, textField } from '@/components/masters/master-fields'
 import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
 import { SectionCard } from '@/components/section-card'
 import { Button } from '@/components/ui/button'
@@ -18,38 +16,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCreateGift, useDeleteGiftImage, useGift, useGifts, useSetGiftStatus, useUpdateGift, useUploadGiftImage } from '@/hooks/useGifts'
 import { formatCurrency } from '@/lib/format'
+import { GIFT_IMAGE_ACCEPT, MAX_GIFT_IMAGES, giftTotalOf, useGiftFormModel } from './gift-form-model'
 import { GiftThumbnail } from './GiftThumbnail'
-
-/** One image per gift for now -- raise this (and bring back a carousel in the Gift Store) to allow more. */
-export const MAX_GIFT_IMAGES = 1
-
-/** A starting set; every category a gift already uses joins it, so a new "Other" becomes a real option. */
-const FIXED_CATEGORIES = [
-  'Drinkware',
-  'Stationery & Desk',
-  'Wellness',
-  'Travel & Lifestyle',
-  'Corporate Gifting',
-  'Writing Instruments',
-  'Home & Living',
-  'Apparel',
-  'Electronics',
-  'Food & Beverages',
-]
-const OTHER = '__other__'
-const IMAGE_ACCEPT = { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'], 'image/svg+xml': ['.svg'] }
-
-const num = (value: unknown) => (value === '' || value == null ? undefined : Number(value))
-const asString = (value: number | null | undefined) => (value == null ? '' : String(value))
-
-/** price + price × markup% + price × commission%, as the backend computes it. */
-function totalOf(values: Record<string, unknown>): number | null {
-  const price = num(values.price)
-  if (price === undefined || Number.isNaN(price)) return null
-  const markup = num(values.markupFeePercentage) ?? 0
-  const commission = num(values.commissionFeePercentage) ?? 0
-  return price + (price * markup) / 100 + (price * commission) / 100
-}
 
 export function GiftFormPage() {
   const { t } = useTranslation('admin')
@@ -76,88 +44,11 @@ export function GiftFormPage() {
   // A vendor's own submission: the backend refuses edits to its content, so the form is read-only.
   const vendorOwned = Boolean(gift?.vendorId)
 
-  const categories = useMemo(() => {
-    const set = new Set(FIXED_CATEGORIES)
-    for (const g of allGifts ?? []) if (g.category) set.add(g.category)
-    return [...set].sort()
-  }, [allGifts])
-
-  const fields = useMemo(
-    () => [
-      textField({ id: 'name', label: t('gifts.detail.name'), required: true, spanToFullRow: true }),
-      selectField({
-        id: 'category',
-        label: t('gifts.detail.category'),
-        required: true,
-        options: [...categories.map((value) => ({ value, label: value })), { value: OTHER, label: t('gifts.detail.otherOption') }],
-      }),
-      textField({
-        id: 'otherCategory',
-        label: t('gifts.detail.otherCategory'),
-        max: 150,
-        hidden: (values) => values.category !== OTHER,
-      }),
-      textField({ id: 'description', label: t('gifts.detail.description'), multiline: true, max: 2000, spanToFullRow: true }),
-      numberField({ id: 'moq', label: t('gifts.detail.moq'), min: 1, max: 1_000_000 }),
-      numberField({ id: 'leadTimeDays', label: t('gifts.detail.leadTime'), min: 1, max: 365 }),
-      decimalField({ id: 'price', label: t('gifts.detail.price'), required: true, max: 10_000_000, scale: 2 }),
-      decimalField({ id: 'markupFeePercentage', label: t('gifts.detail.markup'), max: 100, scale: 2 }),
-      decimalField({ id: 'commissionFeePercentage', label: t('gifts.detail.commission'), max: 100, scale: 2 }),
-      switchField({
-        id: 'photoRequired',
-        label: t('gifts.detail.photoRequired'),
-        description: t('gifts.detail.photoRequiredHelp'),
-      }),
-      switchField({
-        id: 'artworkRequired',
-        label: t('gifts.detail.artworkRequired'),
-        description: t('gifts.detail.artworkRequiredHelp'),
-      }),
-    ],
-    [t, categories],
-  )
-
-  const values = useMemo(
-    () =>
-      gift
-        ? {
-            name: gift.name,
-            category: gift.category,
-            description: gift.description ?? '',
-            moq: gift.moq ?? '',
-            leadTimeDays: gift.leadTimeDays ?? '',
-            price: asString(gift.price),
-            markupFeePercentage: asString(gift.markupFeePercentage),
-            commissionFeePercentage: asString(gift.commissionFeePercentage),
-            photoRequired: gift.photoRequired,
-            artworkRequired: gift.artworkRequired,
-          }
-        : undefined,
-    [gift],
-  )
-
-  const refine = useMemo(
-    () => (submitted: Record<string, unknown>, ctx: z.RefinementCtx) => {
-      if (submitted.category === OTHER && !String(submitted.otherCategory ?? '').trim()) {
-        ctx.addIssue({ code: 'custom', path: ['otherCategory'], message: t('errors.required', { ns: 'common' }) })
-      }
-    },
-    [t],
-  )
+  const knownCategories = useMemo(() => (allGifts ?? []).map((g) => g.category), [allGifts])
+  const { fields, values, refine, toInput } = useGiftFormModel({ gift, knownCategories, withFees: true })
 
   async function onSubmit(submitted: Record<string, unknown>) {
-    const input: GiftInput = {
-      name: String(submitted.name).trim(),
-      category: submitted.category === OTHER ? String(submitted.otherCategory).trim() : String(submitted.category),
-      description: String(submitted.description ?? '').trim() || undefined,
-      moq: num(submitted.moq),
-      leadTimeDays: num(submitted.leadTimeDays),
-      price: Number(submitted.price),
-      markupFeePercentage: num(submitted.markupFeePercentage),
-      commissionFeePercentage: num(submitted.commissionFeePercentage),
-      photoRequired: Boolean(submitted.photoRequired),
-      artworkRequired: Boolean(submitted.artworkRequired),
-    }
+    const input = toInput(submitted)
     try {
       if (isEdit) {
         await updateGift.mutateAsync(input)
@@ -276,7 +167,7 @@ export function GiftFormPage() {
             refine={refine}
             submitPermission="gift.manage"
             submitLabel={isEdit ? t('gifts.detail.save') : t('gifts.detail.create')}
-            onChange={(live) => setTotal(totalOf(live))}
+            onChange={(live) => setTotal(giftTotalOf(live))}
             onSubmit={onSubmit}
             hideCardWrapper
           />
@@ -305,7 +196,7 @@ export function GiftFormPage() {
               <FileDropzone
                 file={isEdit ? null : pendingImage}
                 onChange={(file) => (file ? void onImagePicked(file) : setPendingImage(null))}
-                accept={IMAGE_ACCEPT}
+                accept={GIFT_IMAGE_ACCEPT}
                 disabled={uploadImage.isPending}
                 prompt={t('gifts.detail.imageDrop')}
               />

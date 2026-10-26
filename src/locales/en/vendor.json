@@ -1,0 +1,163 @@
+{
+  "stage": {
+    "artwork": "Needs artwork",
+    "rework": "Changes requested",
+    "review": "Artwork in review",
+    "ready": "Ready to dispatch",
+    "dispatched": "Dispatched",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "next": {
+    "artwork": "Upload an artwork proof for the customer to approve.",
+    "rework": "The customer asked for changes. Upload a corrected proof.",
+    "review": "Your proof is with the customer. You'll see their decision here.",
+    "ready": "Produce and pack the order, then mark it dispatched.",
+    "dispatched": "On its way. Mark it delivered once it arrives.",
+    "delivered": "Done. Nothing more to do on this order.",
+    "cancelled": "This order was cancelled. Nothing to do."
+  },
+  "home": {
+    "greeting": "Welcome, {{name}}",
+    "greetingFallback": "Welcome",
+    "subtitle": "Here's what needs your attention today.",
+    "todo": "Your work queue",
+    "openQueue": "Open",
+    "reworkTitle": "Changes requested by customers",
+    "reworkBody": "These proofs were sent back. Fix and re-upload to keep the orders moving.",
+    "recentTitle": "Latest orders",
+    "viewAll": "View all orders",
+    "allCaughtUp": "You're all caught up",
+    "allCaughtUpBody": "No order is waiting on you right now.",
+    "catalogueTitle": "Your catalogue",
+    "live_one": "{{count}} gift live in stores",
+    "live_other": "{{count}} gifts live in stores",
+    "hidden_one": "{{count}} hidden by Wrapzzo",
+    "hidden_other": "{{count}} hidden by Wrapzzo",
+    "manageGifts": "Manage gifts",
+    "addGift": "Add a gift",
+    "noGifts": "You haven't listed any gifts yet. Add one so companies can order it."
+  },
+  "orders": {
+    "title": "Orders",
+    "subtitle": "Every order routed to you, grouped by what it needs next.",
+    "all": "All",
+    "column": {
+      "order": "Order",
+      "company": "Company",
+      "product": "Product",
+      "recipient": "Recipient",
+      "quantity": "Qty",
+      "stage": "Stage",
+      "artwork": "Artwork",
+      "received": "Received"
+    },
+    "versions_one": "v{{count}}",
+    "versions_other": "v{{count}}",
+    "noArtwork": "Not needed",
+    "open": "Open",
+    "emptyTitle": "No orders here",
+    "emptyBody": "Orders companies place with you will appear here."
+  },
+  "order": {
+    "back": "Orders",
+    "received": "Received {{date}}",
+    "yourNextStep": "Your next step",
+    "step": {
+      "received": "Received",
+      "artwork": "Artwork approved",
+      "production": "In production",
+      "dispatched": "Dispatched",
+      "delivered": "Delivered"
+    },
+    "print": {
+      "title": "What to print",
+      "subtitle": "Exactly as the customer sent it.",
+      "copy": "Copy details",
+      "copied": "Print details copied",
+      "registration": "Reg. no. {{value}}",
+      "none": "No personalisation for this order."
+    },
+    "shipping": {
+      "title": "Shipping",
+      "recipient": "Recipient",
+      "phone": "Phone",
+      "address": "Deliver to",
+      "quantity": "Quantity",
+      "message": "Gift message",
+      "price": "Your price",
+      "photo": "Recipient's photo",
+      "noPhoto": "Not uploaded yet"
+    },
+    "artwork": {
+      "title": "Artwork",
+      "subtitleRequired": "The customer must approve a proof before you can dispatch.",
+      "subtitleOptional": "Optional for this product. Upload a proof if you'd like the customer to check it.",
+      "drop": "Drop a proof here or click to choose (PDF or image)",
+      "uploaded": "Proof uploaded. The customer has been asked to review it.",
+      "history": "Versions",
+      "version": "Version {{n}}",
+      "openFile": "Open file",
+      "noVersions": "No proofs uploaded yet.",
+      "reviewedBy": "Reviewed by {{name}}",
+      "feedback": "Customer feedback",
+      "status": {
+        "PENDING_REVIEW": "In review",
+        "APPROVED": "Approved",
+        "REJECTED": "Changes requested"
+      },
+      "locked": "A proof is already approved. Uploading another starts a new review."
+    },
+    "action": {
+      "markDispatched": "Mark as dispatched",
+      "markDelivered": "Mark as delivered",
+      "backToProduction": "Move back to production",
+      "dispatchTitle": "Mark {{id}} as dispatched?",
+      "dispatchBody": "The customer will see the order is on its way.",
+      "deliverTitle": "Mark {{id}} as delivered?",
+      "deliverBody": "This completes the order. It can't be changed afterwards.",
+      "backTitle": "Move {{id}} back to production?",
+      "backBody": "Use this if it was marked dispatched by mistake.",
+      "moved": "{{id}} is now {{stage}}",
+      "blocked": "Waiting for the customer to approve the artwork"
+    },
+    "notFound": "This order isn't in your queue."
+  },
+  "gifts": {
+    "title": "My gifts",
+    "subtitle": "The products you offer. Companies you serve see the live ones in their Gift Store.",
+    "add": "Add gift",
+    "live": "Live",
+    "hidden": "Hidden",
+    "hiddenHelp": "Hidden from stores by Wrapzzo. Contact your account manager to bring it back.",
+    "column": {
+      "gift": "Gift",
+      "id": "ID",
+      "category": "Category",
+      "price": "Your price",
+      "needs": "Needs",
+      "leadTime": "Lead time",
+      "status": "Status"
+    },
+    "days": "{{count}} d",
+    "emptyTitle": "No gifts yet",
+    "emptyBody": "Add your first product so companies can order it.",
+    "form": {
+      "newTitle": "Add a gift",
+      "newSubtitle": "Describe the product the way companies should see it in their store.",
+      "editSubtitle": "Changes show in the stores of every company you serve.",
+      "back": "My gifts",
+      "created": "Gift added",
+      "updated": "Gift saved",
+      "priceNote": "Companies see your price plus Wrapzzo's fees.",
+      "image": "Product image",
+      "imageHelp": "Shown on the gift's card in every store.",
+      "imageHelpNew": "Optional. It's uploaded right after the gift is created.",
+      "imageDrop": "Drop an image here or click to choose",
+      "imageAdded": "Image added",
+      "imageRemoved": "Image removed",
+      "removeImage": "Remove image",
+      "imageFailed": "The gift was created, but its image couldn't be uploaded. Try again from the gift."
+    }
+  }
+}

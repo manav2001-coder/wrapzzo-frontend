@@ -1,354 +1,174 @@
-import { Dropdown } from 'primereact/dropdown'
-import { IconField } from 'primereact/iconfield'
-import { InputIcon } from 'primereact/inputicon'
-import { InputText } from 'primereact/inputtext'
-import { useMemo, useRef, useState, type ChangeEvent } from 'react'
-import type { OrderStatus } from '@/api/orders'
+import type { ColumnDef } from '@tanstack/react-table'
+import { ArrowRight, Palette, ShoppingBag } from 'lucide-react'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link, useSearchParams } from 'react-router-dom'
+
 import type { VendorOrder } from '@/api/vendorOrders'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
-import { SectionHeader } from '@/components/SectionHeader'
-import { StatCard } from '@/components/StatCard'
-import { StatusBadge } from '@/components/StatusBadge'
-import { useUpdateVendorOrderStatus, useVendorOrders } from '@/hooks/useVendorOrders'
-import { useUploadVendorOrderDesign, useVendorOrderDesigns } from '@/hooks/useVendorOrderDesigns'
-import { formatCurrency, humanize } from '@/lib/format'
-import { showApiError, showToast } from '@/lib/toast'
+import { AppTabs } from '@/components/app-tabs'
+import { DataTable } from '@/components/data-table'
+import { listEmptyBody } from '@/components/data-table/list-body'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { Button } from '@/components/ui/button'
+import { useVendorOrders } from '@/hooks/useVendorOrders'
+import { formatDate } from '@/lib/datetime'
+import type { ListFieldMap } from '@/lib/list-fields'
+import { VENDOR_STAGES, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
+import { VendorStageBadge } from './VendorStageBadge'
 
-/** PEL process steps 5-6 (Design &amp; QC, Review &amp; rework): upload an artwork proof for this order, see the latest review verdict. */
-function DesignUploadSection({ orderId }: { orderId: string }) {
-  const { data: designs } = useVendorOrderDesigns(orderId)
-  const upload = useUploadVendorOrderDesign(orderId)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const latest = designs?.[0]
-
-  async function handleFileSelected(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    try {
-      await upload.mutateAsync(file)
-      showToast({ severity: 'success', summary: 'Design uploaded for review' })
-    } catch (error) {
-      showApiError(error)
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-1.5 border-t border-border pt-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-text-muted">Design proof</p>
-        {latest && <StatusBadge status={latest.status} label={humanize(latest.status)} />}
-      </div>
-      {latest?.status === 'REJECTED' && latest.reviewComment && (
-        <p className="text-xs text-text-muted">
-          <span className="font-medium text-text">Rework requested:</span> {latest.reviewComment}
-        </p>
-      )}
-      <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFileSelected} />
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={upload.isPending}
-        className="self-start text-xs font-medium text-accent hover:underline disabled:opacity-50"
-      >
-        {upload.isPending ? 'Uploading...' : latest ? 'Upload new version' : 'Upload design proof'}
-      </button>
-    </div>
-  )
+const LIST_FIELDS: ListFieldMap = {
+  displayId: 'text',
+  companyName: 'text',
+  giftName: 'text',
+  recipientName: 'text',
+  quantity: 'number',
 }
 
-/** Mirrors OrderService's VENDOR_SELECTABLE_STATUSES / VENDOR_EDITABLE_SOURCE_STATUSES server-side. */
-const VENDOR_SELECTABLE_STATUSES: OrderStatus[] = ['PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED']
-const VENDOR_EDITABLE_STATUSES: OrderStatus[] = ['PRODUCTION_QUEUE', 'DISPATCHED']
-const STATUS_OPTIONS: { label: string; value: OrderStatus; disabled?: boolean }[] = VENDOR_SELECTABLE_STATUSES.map((status) => ({
-  label: humanize(status),
-  value: status,
-}))
-/** Closed to an artwork-required order until one of its proofs is approved (enforced server-side too). */
-const ARTWORK_GATED_STATUSES: OrderStatus[] = ['DISPATCHED', 'DELIVERED']
-const STATUS_ORDER: OrderStatus[] = ['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED']
-const STATUS_COLORS: Record<string, string> = {
-  PROCESSING: '#6366f1',
-  PRODUCTION_QUEUE: '#f59e0b',
-  DISPATCHED: '#f59e0b',
-  DELIVERED: '#10b981',
-  CANCELLED: '#ef4444',
-}
+const ALL = 'all'
 
-/** A slim, glanceable proportion bar instead of a full donut section -- the counts already live in the stat cards above, so this only needs to convey the mix, not repeat the numbers at large size. */
-function StatusBreakdownBar({ counts }: { counts: Record<string, number> }) {
-  const entries = STATUS_ORDER.map((status) => ({ status, count: counts[status] ?? 0 })).filter((e) => e.count > 0)
-  const total = entries.reduce((sum, e) => sum + e.count, 0)
-  if (total === 0) return null
+type Row = VendorOrder & { stage: VendorStage }
 
-  return (
-    <div className="mb-6 rounded-2xl border border-border bg-surface p-4">
-      <div className="mb-3 flex h-2 overflow-hidden rounded-full bg-surface-muted">
-        {entries.map((e) => (
-          <div
-            key={e.status}
-            style={{ width: `${(e.count / total) * 100}%`, backgroundColor: STATUS_COLORS[e.status] }}
-            className="h-full first:rounded-l-full last:rounded-r-full"
-          />
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-        {entries.map((e) => (
-          <span key={e.status} className="flex items-center gap-1.5 text-xs text-text-muted">
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: STATUS_COLORS[e.status] }} />
-            {humanize(e.status)} <span className="font-medium text-text">{e.count}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function OrderCard({ order, highlight = false }: { order: VendorOrder; highlight?: boolean }) {
-  const updateStatus = useUpdateVendorOrderStatus()
-  const editable = VENDOR_EDITABLE_STATUSES.includes(order.status)
-  // Mirrors the server's gate: an artwork-required order can't leave until a proof is approved.
-  const awaitingArtwork = order.artworkRequired && !order.artworkApproved
-  const statusOptions = awaitingArtwork
-    ? STATUS_OPTIONS.map((o) => (ARTWORK_GATED_STATUSES.includes(o.value) ? { ...o, disabled: true } : o))
-    : STATUS_OPTIONS
-  const doctor = order.doctor
-  const hasDoctorDetails = Boolean(doctor && (doctor.registrationNumber || doctor.qualification || doctor.speciality || doctor.clinicName))
-
-  async function handleStatusChange(newStatus: OrderStatus) {
-    if (newStatus === order.status) return
-    try {
-      await updateStatus.mutateAsync({ id: order.id, status: newStatus })
-      showToast({ severity: 'success', summary: `Order moved to ${humanize(newStatus).toLowerCase()}` })
-    } catch (error) {
-      showApiError(error)
-    }
-  }
-
-  return (
-    <div
-      className={`flex flex-col gap-3 rounded-2xl border p-4 transition-shadow hover:shadow-md ${
-        highlight ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/[0.06] to-surface' : 'border-border bg-surface'
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="font-semibold text-text">{order.displayId}</p>
-          <p className="text-xs text-text-muted">{order.companyName}</p>
-        </div>
-        <StatusBadge status={order.status} label={humanize(order.status)} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <p className="text-xs text-text-muted">Recipient</p>
-          <p className="truncate text-text">{order.recipientName ?? '—'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Gift</p>
-          <p className="truncate text-text">{order.giftName ?? '—'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Phone</p>
-          {order.recipientPhone ? (
-            <a href={`tel:${order.recipientPhone}`} className="font-medium text-accent hover:underline">
-              {order.recipientPhone}
-            </a>
-          ) : (
-            <p className="text-text">—</p>
-          )}
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Price</p>
-          <p className="font-medium text-text">{formatCurrency(order.price)}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Quantity</p>
-          <p className="font-medium text-text">{order.quantity}</p>
-        </div>
-        {order.deliveryAddress && (
-          <div className="col-span-2">
-            <p className="text-xs text-text-muted">Deliver to</p>
-            <p className="text-text">{order.deliveryAddress}</p>
-          </div>
-        )}
-      </div>
-
-      {hasDoctorDetails && doctor && (
-        <div className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm">
-          <p className="mb-1 text-xs font-medium text-text-muted">Print details</p>
-          <p className="font-medium text-text">
-            {order.recipientName}
-            {doctor.qualification && <span className="font-normal text-text-muted">, {doctor.qualification}</span>}
-          </p>
-          {doctor.speciality && <p className="text-text">{doctor.speciality}</p>}
-          {doctor.registrationNumber && <p className="text-text">Reg. no. {doctor.registrationNumber}</p>}
-          {doctor.clinicName && <p className="text-text">{doctor.clinicName}</p>}
-        </div>
-      )}
-      {order.giftMessage && (
-        <p className="text-xs text-text-muted">
-          Message: <span className="text-text">{order.giftMessage}</span>
-        </p>
-      )}
-
-      <div className="flex items-center gap-2">
-        <p className="text-xs text-text-muted">Recipient's photo</p>
-        {order.recipientPhotoUrl ? (
-          <a href={order.recipientPhotoUrl} target="_blank" rel="noreferrer">
-            <img src={order.recipientPhotoUrl} alt="" className="h-8 w-8 rounded-md border border-border object-cover" />
-          </a>
-        ) : (
-          <span className="text-xs text-text-muted">not uploaded yet</span>
-        )}
-      </div>
-
-      <DesignUploadSection orderId={order.id} />
-
-      {editable ? (
-        <div className="flex flex-col gap-1">
-          <label htmlFor={`status-${order.id}`} className="text-xs text-text-muted">
-            Update status
-          </label>
-          <Dropdown
-            inputId={`status-${order.id}`}
-            value={order.status}
-            options={statusOptions}
-            optionDisabled="disabled"
-            onChange={(e) => handleStatusChange(e.value)}
-            disabled={updateStatus.isPending}
-            className="w-full"
-          />
-          {awaitingArtwork && (
-            <p className="text-xs text-amber-600 dark:text-amber-400">Upload a proof and wait for it to be approved before dispatching.</p>
-          )}
-        </div>
-      ) : (
-        <p className="text-center text-xs text-text-muted">
-          {order.status === 'DELIVERED'
-            ? 'Delivered -- fulfillment complete.'
-            : order.status === 'CANCELLED'
-              ? 'Cancelled.'
-              : 'No action needed from you right now.'}
-        </p>
-      )}
-    </div>
-  )
-}
-
+/**
+ * The vendor's work queue: every order routed to them, in tabs by what it needs next (artwork,
+ * review, dispatch…). The tab lives in the URL (`?stage=`) so the home page can link straight to
+ * one. Opening an order goes to its own workspace.
+ */
 export function VendorOrdersPage() {
-  const { data: orders, isLoading } = useVendorOrders()
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const { t } = useTranslation('vendor')
+  const [params, setParams] = useSearchParams()
+  const { data: orders, isLoading, error, refetch } = useVendorOrders()
 
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { PROCESSING: 0, PRODUCTION_QUEUE: 0, DISPATCHED: 0, DELIVERED: 0, CANCELLED: 0 }
-    orders?.forEach((o) => (counts[o.status] = (counts[o.status] ?? 0) + 1))
-    return counts
-  }, [orders])
+  const rows = useMemo<Row[]>(() => (orders ?? []).map((order) => ({ ...order, stage: vendorStageOf(order) })), [orders])
+  const counts = useMemo(() => {
+    const byStage = new Map<VendorStage, number>()
+    for (const row of rows) byStage.set(row.stage, (byStage.get(row.stage) ?? 0) + 1)
+    return byStage
+  }, [rows])
 
-  const actionable = useMemo(() => (orders ?? []).filter((o) => VENDOR_EDITABLE_STATUSES.includes(o.status)), [orders])
+  const requested = params.get('stage')
+  const tab = requested && (VENDOR_STAGES as string[]).includes(requested) ? requested : ALL
+  const visible = tab === ALL ? rows : rows.filter((row) => row.stage === tab)
+  // Rework and cancelled only earn a tab when something is in them -- an empty "Cancelled" is noise.
+  const stages = VENDOR_STAGES.filter((stage) => (stage !== 'rework' && stage !== 'cancelled') || (counts.get(stage) ?? 0) > 0 || stage === tab)
 
-  const filtered = useMemo(() => {
-    if (!orders) return []
-    return orders.filter((o) => {
-      if (statusFilter !== 'ALL' && o.status !== statusFilter) return false
-      const q = search.trim().toLowerCase()
-      if (!q) return true
-      return (
-        o.companyName.toLowerCase().includes(q) ||
-        (o.campaignName ?? '').toLowerCase().includes(q) ||
-        (o.recipientName ?? '').toLowerCase().includes(q) ||
-        (o.giftName ?? '').toLowerCase().includes(q) ||
-        o.displayId.toLowerCase().includes(q)
-      )
-    })
-  }, [orders, search, statusFilter])
+  const columns = useMemo<ColumnDef<Row, unknown>[]>(
+    () => [
+      {
+        id: 'displayId',
+        accessorKey: 'displayId',
+        header: t('orders.column.order'),
+        meta: { className: 'min-w-[110px]', align: 'left' },
+        cell: ({ row }) => (
+          <Link to={`/vendor/orders/${row.original.id}`} className="font-medium text-primary hover:underline">
+            {row.original.displayId}
+          </Link>
+        ),
+      },
+      {
+        id: 'giftName',
+        accessorFn: (row) => row.giftName ?? '',
+        header: t('orders.column.product'),
+        meta: { className: 'min-w-[180px]' },
+      },
+      { id: 'companyName', accessorKey: 'companyName', header: t('orders.column.company'), meta: { className: 'min-w-[150px]' } },
+      {
+        id: 'recipientName',
+        accessorFn: (row) => row.recipientName ?? '',
+        header: t('orders.column.recipient'),
+        meta: { className: 'min-w-[160px]' },
+      },
+      {
+        id: 'quantity',
+        accessorKey: 'quantity',
+        header: t('orders.column.quantity'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[70px]', align: 'right' },
+      },
+      {
+        id: 'stage',
+        accessorKey: 'stage',
+        header: t('orders.column.stage'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[150px]' },
+        cell: ({ row }) => <VendorStageBadge stage={row.original.stage} />,
+      },
+      {
+        id: 'artwork',
+        accessorFn: (row) => row.designVersions,
+        header: t('orders.column.artwork'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[110px]' },
+        cell: ({ row }) =>
+          row.original.designVersions > 0 ? (
+            <span className="inline-flex items-center gap-1 text-xs">
+              <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+              {t('orders.versions', { count: row.original.designVersions })}
+              {row.original.latestDesignStatus && (
+                <span className="text-muted-foreground">· {t(`order.artwork.status.${row.original.latestDesignStatus}`)}</span>
+              )}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">{row.original.artworkRequired ? '—' : t('orders.noArtwork')}</span>
+          ),
+      },
+      {
+        id: 'assignedAt',
+        accessorFn: (row) => row.assignedAt ?? row.createdAt,
+        header: t('orders.column.received'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[110px]' },
+        cell: ({ row }) => formatDate(row.original.assignedAt ?? row.original.createdAt),
+      },
+      {
+        id: 'open',
+        header: '',
+        enableColumnFilter: false,
+        enableSorting: false,
+        meta: { className: 'w-[90px]', pin: 'right' },
+        cell: ({ row }) => (
+          <Button asChild size="sm" variant="ghost">
+            <Link to={`/vendor/orders/${row.original.id}`} aria-label={`${t('orders.open')} ${row.original.displayId}`}>
+              {t('orders.open')}
+              <ArrowRight />
+            </Link>
+          </Button>
+        ),
+      },
+    ],
+    [t],
+  )
 
   return (
     <div>
-      <PageHeader title="Orders" subtitle="Production and dispatch work assigned to you." />
-
-      {!isLoading && orders?.length === 0 ? (
-        <EmptyState
-          icon="pi-inbox"
-          title="No orders assigned yet"
-          description="Once Wrapzzo routes an order to you for fulfillment, it'll show up here."
-        />
-      ) : (
-        <>
-          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="Total orders" value={orders?.length ?? 0} icon="pi-shopping-bag" />
-            <StatCard
-              label="Needs action"
-              value={actionable.length}
-              icon="pi-exclamation-circle"
-              accent={actionable.length > 0 ? 'danger' : 'success'}
-              urgent={actionable.length > 0}
-            />
-            <StatCard label="In production" value={statusCounts.PRODUCTION_QUEUE} icon="pi-cog" accent="warning" />
-            <StatCard label="Delivered" value={statusCounts.DELIVERED} icon="pi-check-circle" accent="success" />
-          </div>
-
-          <StatusBreakdownBar counts={statusCounts} />
-
-          {actionable.length > 0 && (
-            <div className="mb-8">
-              <SectionHeader eyebrow="Priority" title={`Needs your action (${actionable.length})`} />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {actionable.map((order) => (
-                  <OrderCard key={order.id} order={order} highlight />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <SectionHeader eyebrow="Browse" title="All orders" />
-
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <IconField iconPosition="left">
-              <InputIcon className="pi pi-search" />
-              <InputText
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search company, recipient, gift..."
-                className="w-full sm:w-72"
-              />
-            </IconField>
-            <div className="inline-flex flex-wrap gap-1 rounded-xl border border-border bg-surface p-1">
-              {(['ALL', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED'] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setStatusFilter(s)}
-                  className={`rounded-lg border-none px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
-                    statusFilter === s ? 'bg-accent text-white' : 'bg-transparent text-text-muted hover:text-text'
-                  }`}
-                >
-                  {s === 'ALL' ? 'All' : humanize(s)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-40 animate-pulse rounded-2xl bg-surface-muted" />
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <EmptyState icon="pi-search" title="No orders match" />
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((order) => (
-                <OrderCard key={order.id} order={order} />
-              ))}
-            </div>
-          )}
-        </>
-      )}
+      <MasterPageHeader title={t('orders.title')} description={t('orders.subtitle')} />
+      <AppTabs
+        value={tab}
+        onValueChange={(value) => setParams(value === ALL ? {} : { stage: value }, { replace: true })}
+        className="mb-3"
+        tabs={[
+          { value: ALL, label: t('orders.all'), badge: rows.length || undefined },
+          ...stages.map((stage) => ({ value: stage, label: t(`stage.${stage}`), badge: counts.get(stage) || undefined })),
+        ]}
+      />
+      <DataTable<Row>
+        columns={columns}
+        data={visible}
+        isLoading={isLoading}
+        listFields={LIST_FIELDS}
+        searchable
+        showRowSelectionColumn={false}
+        defaultSort={{ id: 'assignedAt', desc: true }}
+        getRowId={(row) => row.id}
+        tableId="vendor-orders"
+        configNamespace="vendor-orders"
+        emptyState={listEmptyBody({
+          error,
+          onRetry: () => void refetch(),
+          icon: <ShoppingBag className="h-8 w-8 opacity-50" />,
+          message: t('orders.emptyTitle'),
+          description: t('orders.emptyBody'),
+        })}
+      />
     </div>
   )
 }

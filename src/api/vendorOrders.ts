@@ -1,4 +1,5 @@
 import type { OrderSource, OrderStatus } from '@/api/orders'
+import type { DoctorDetails } from '@/api/recipients'
 import { vendorApiClient } from '@/lib/vendorApiClient'
 
 /**
@@ -17,6 +18,14 @@ export interface VendorOrder {
   /** Shown so the vendor can produce a personalized gift correctly -- null until the recipient uploads one. */
   recipientPhotoUrl: string | null
   price: number | null
+  quantity: number
+  /** What to print and where to ship -- from the Quick Gift request; null for a campaign order. */
+  deliveryAddress: string | null
+  giftMessage: string | null
+  doctor: DoctorDetails | null
+  /** The order may not be dispatched until one of its proofs is approved. */
+  artworkRequired: boolean
+  artworkApproved: boolean
   source: OrderSource
   status: OrderStatus
   assignedAt: string | null

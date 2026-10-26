@@ -1,5 +1,13 @@
 import { apiClient } from '@/lib/axiosClient'
 
+/** What a personalised prescription pad is printed with. The registration number is the doctor's dedupe key. */
+export interface DoctorDetails {
+  qualification: string | null
+  registrationNumber: string | null
+  speciality: string | null
+  clinicName: string | null
+}
+
 export interface Recipient {
   id: string
   name: string
@@ -7,6 +15,7 @@ export interface Recipient {
   email: string | null
   address: string | null
   dateOfBirth: string | null
+  doctor: DoctorDetails
   createdByName: string | null
   createdAt: string
 }
@@ -27,6 +36,7 @@ export interface CreateRecipientInput {
   email?: string
   address?: string
   dateOfBirth?: string
+  doctor?: Partial<DoctorDetails>
 }
 
 export async function listRecipients(): Promise<Recipient[]> {

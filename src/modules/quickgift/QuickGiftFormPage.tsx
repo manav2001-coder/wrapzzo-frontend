@@ -8,7 +8,7 @@ import { ProgressSpinner } from 'primereact/progressspinner'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { uploadQuickGiftPhoto, type QuickGiftPhotoValue } from '@/api/quickGifts'
-import type { Recipient, UpcomingBirthday } from '@/api/recipients'
+import type { DoctorDetails, Recipient, UpcomingBirthday } from '@/api/recipients'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { useActiveGifts } from '@/hooks/useGifts'
@@ -27,9 +27,22 @@ interface DraftRecipient {
   giftMessage: string
   internalNotes: string
   photo?: File
+  /** Units to order, as typed -- validated to a whole number from 1 on submit. */
+  quantity: string
+  doctor: DoctorFields
   expanded: boolean
   errors: Record<string, string>
 }
+
+/** The prescription-pad print details, as typed (empty string = not given). */
+interface DoctorFields {
+  qualification: string
+  registrationNumber: string
+  speciality: string
+  clinicName: string
+}
+
+const MAX_QUANTITY = 100_000
 
 interface RecipientPrefill {
   recipientName?: string
@@ -37,6 +50,7 @@ interface RecipientPrefill {
   recipientEmail?: string
   deliveryAddress?: string
   dateOfBirth?: Date
+  doctor?: Partial<DoctorDetails>
 }
 
 function prefillFrom(recipient: Recipient | UpcomingBirthday): RecipientPrefill {
@@ -46,6 +60,7 @@ function prefillFrom(recipient: Recipient | UpcomingBirthday): RecipientPrefill 
     recipientEmail: recipient.email ?? undefined,
     deliveryAddress: 'address' in recipient ? (recipient.address ?? undefined) : undefined,
     dateOfBirth: recipient.dateOfBirth ? parseDateOnly(recipient.dateOfBirth) : undefined,
+    doctor: 'doctor' in recipient ? recipient.doctor : undefined,
   }
 }
 
@@ -60,6 +75,13 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
     dateOfBirth: prefill?.dateOfBirth,
     giftMessage: '',
     internalNotes: '',
+    quantity: '1',
+    doctor: {
+      qualification: prefill?.doctor?.qualification ?? '',
+      registrationNumber: prefill?.doctor?.registrationNumber ?? '',
+      speciality: prefill?.doctor?.speciality ?? '',
+      clinicName: prefill?.doctor?.clinicName ?? '',
+    },
     expanded,
     errors: {},
   }
@@ -69,13 +91,33 @@ function isBlankRow(row: DraftRecipient): boolean {
   return !row.recipientName && !row.recipientPhone && !row.recipientEmail && !row.deliveryAddress
 }
 
-function validateRow(row: DraftRecipient, photoRequired: boolean): Record<string, string> {
+function parseQuantity(value: string): number | null {
+  const n = Number(value)
+  return Number.isInteger(n) && n >= 1 && n <= MAX_QUANTITY ? n : null
+}
+
+/** Only the fields actually filled in -- the server stores an absent one as "not given". */
+function doctorInput(doctor: DoctorFields): Partial<DoctorDetails> | undefined {
+  const entries = Object.entries(doctor)
+    .map(([key, value]) => [key, value.trim()] as const)
+    .filter(([, value]) => value)
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined
+}
+
+function validateRow(row: DraftRecipient, photoRequired: boolean, artworkRequired: boolean): Record<string, string> {
   const errors: Record<string, string> = {}
   if (!row.recipientName.trim()) errors.recipientName = 'Required.'
   if (!row.recipientPhone.trim()) errors.recipientPhone = 'Required.'
   if (!row.deliveryAddress.trim()) errors.deliveryAddress = 'Required.'
   if (photoRequired && !row.photo && !row.recipientEmail.trim()) {
     errors.photoOrEmail = "This gift needs a photo -- upload one now, or add the recipient's email so we can send them an upload link."
+  }
+  if (parseQuantity(row.quantity) === null) {
+    errors.quantity = `Quantity must be a whole number from 1 to ${MAX_QUANTITY.toLocaleString()}.`
+  }
+  // A printed prescription pad has to carry the doctor's registration number.
+  if (artworkRequired && !row.doctor.registrationNumber.trim()) {
+    errors.registrationNumber = "Add the doctor's registration number -- it is printed on the pad."
   }
   return errors
 }
@@ -93,13 +135,17 @@ function RecipientRow({
   onRemove,
   canRemove,
   photoRequired,
+  artworkRequired,
 }: {
   row: DraftRecipient
   onUpdate: (patch: Partial<DraftRecipient>) => void
   onRemove: () => void
   canRemove: boolean
   photoRequired: boolean
+  /** A personalised item (prescription pad): ask for the doctor details it is printed with. */
+  artworkRequired: boolean
 }) {
+  const setDoctor = (patch: Partial<DoctorFields>) => onUpdate({ doctor: { ...row.doctor, ...patch } })
   const hasOptionalDetails = Boolean(row.recipientEmail || row.photo || row.giftMessage || row.internalNotes)
   const needsPhotoOrEmail = photoRequired && !row.photo && !row.recipientEmail.trim()
 
@@ -160,6 +206,46 @@ function RecipientRow({
 
       {row.expanded && (
         <div className="mt-3 grid grid-cols-1 gap-3 border-t border-border pt-3 sm:grid-cols-2">
+          {artworkRequired && (
+            <div className="grid grid-cols-1 gap-3 sm:col-span-2 sm:grid-cols-4">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">Registration no. *</label>
+                <InputText
+                  value={row.doctor.registrationNumber}
+                  onChange={(e) => setDoctor({ registrationNumber: e.target.value })}
+                  placeholder="e.g. MH-12345"
+                  className={`w-full ${row.errors.registrationNumber ? 'p-invalid' : ''}`}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">Qualification</label>
+                <InputText
+                  value={row.doctor.qualification}
+                  onChange={(e) => setDoctor({ qualification: e.target.value })}
+                  placeholder="e.g. MBBS, MD"
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">Speciality</label>
+                <InputText value={row.doctor.speciality} onChange={(e) => setDoctor({ speciality: e.target.value })} className="w-full" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">Clinic / hospital</label>
+                <InputText value={row.doctor.clinicName} onChange={(e) => setDoctor({ clinicName: e.target.value })} className="w-full" />
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-muted">Quantity *</label>
+            <InputText
+              value={row.quantity}
+              onChange={(e) => onUpdate({ quantity: e.target.value })}
+              inputMode="numeric"
+              className={`w-full ${row.errors.quantity ? 'p-invalid' : ''}`}
+            />
+          </div>
+          <div className="hidden sm:block" aria-hidden />
           <div>
             <label className="mb-1 block text-xs font-medium text-text-muted">
               Email {photoRequired ? '(required if no photo)' : '(optional)'}
@@ -217,6 +303,8 @@ function RecipientRow({
         <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">Name, phone, and delivery address are required.</p>
       )}
       {row.errors.photoOrEmail && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.photoOrEmail}</p>}
+      {row.errors.registrationNumber && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.registrationNumber}</p>}
+      {row.errors.quantity && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.quantity}</p>}
       {row.errors.__submit && <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{row.errors.__submit}</p>}
     </div>
   )
@@ -232,6 +320,8 @@ export function QuickGiftFormPage() {
   const createRequest = useCreateQuickGiftRequest()
 
   const [rows, setRows] = useState<DraftRecipient[]>([emptyRow(true, prefillRecipient ? prefillFrom(prefillRecipient) : undefined)])
+  // Expanded up front when the gift needs more than name/phone/address, so the extra fields are seen, not found by failing.
+  const startExpanded = Boolean(gift?.photoRequired || gift?.artworkRequired)
   const [submitting, setSubmitting] = useState(false)
   const [pickerVisible, setPickerVisible] = useState(false)
 
@@ -242,7 +332,7 @@ export function QuickGiftFormPage() {
   function addRow() {
     // Auto-expand so a photo-required gift's requirement is visible right away, not
     // discovered only after a failed submit.
-    setRows((prev) => [...prev, emptyRow(gift?.photoRequired)])
+    setRows((prev) => [...prev, emptyRow(startExpanded)])
   }
 
   function removeRow(key: number) {
@@ -255,15 +345,21 @@ export function QuickGiftFormPage() {
     if (picked.length === 0) return
     setRows((prev) => {
       const base = prev.length === 1 && isBlankRow(prev[0]) ? [] : prev
-      return [...base, ...picked.map((r) => emptyRow(gift?.photoRequired, prefillFrom(r)))]
+      return [...base, ...picked.map((r) => emptyRow(startExpanded, prefillFrom(r)))]
     })
   }
 
   async function onSubmitAll() {
     if (!gift) return
-    const validated = rows.map((r) => ({ row: r, errors: validateRow(r, gift.photoRequired) }))
+    const validated = rows.map((r) => ({ row: r, errors: validateRow(r, gift.photoRequired, gift.artworkRequired) }))
     if (validated.some((v) => Object.keys(v.errors).length > 0)) {
-      setRows(validated.map((v) => ({ ...v.row, errors: v.errors, expanded: v.row.expanded || Boolean(v.errors.photoOrEmail) })))
+      setRows(
+        validated.map((v) => ({
+          ...v.row,
+          errors: v.errors,
+          expanded: v.row.expanded || Boolean(v.errors.photoOrEmail || v.errors.quantity || v.errors.registrationNumber),
+        })),
+      )
       showToast({
         severity: 'error',
         summary: 'Fix the highlighted rows',
@@ -276,6 +372,7 @@ export function QuickGiftFormPage() {
 
     setSubmitting(true)
     const succeededKeys: number[] = []
+    let placedAsOrders = 0
     const failures: { key: number; message: string }[] = []
 
     for (const row of rows) {
@@ -284,7 +381,7 @@ export function QuickGiftFormPage() {
         if (row.photo) {
           photo = await uploadQuickGiftPhoto(row.photo)
         }
-        await createRequest.mutateAsync({
+        const created = await createRequest.mutateAsync({
           giftId: gift.id,
           recipientName: row.recipientName.trim(),
           recipientPhone: row.recipientPhone.trim(),
@@ -294,8 +391,12 @@ export function QuickGiftFormPage() {
           giftMessage: row.giftMessage.trim() || undefined,
           internalNotes: row.internalNotes.trim() || undefined,
           photo,
+          doctor: doctorInput(row.doctor),
+          quantity: parseQuantity(row.quantity) ?? 1,
         })
         succeededKeys.push(row.key)
+        // Direct vendor ordering approves on creation -- the order already went to the vendor.
+        if (created.orderId) placedAsOrders++
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to send.'
         failures.push({ key: row.key, message })
@@ -304,10 +405,19 @@ export function QuickGiftFormPage() {
     setSubmitting(false)
 
     if (failures.length === 0) {
+      const direct = placedAsOrders === succeededKeys.length
       showToast({
         severity: 'success',
-        summary: succeededKeys.length > 1 ? `${succeededKeys.length} Quick Gift requests sent` : 'Quick Gift request sent',
-        detail: 'Sent to your Company Admin for approval.',
+        summary: direct
+          ? succeededKeys.length > 1
+            ? `${succeededKeys.length} orders placed`
+            : 'Order placed'
+          : succeededKeys.length > 1
+            ? `${succeededKeys.length} Quick Gift requests sent`
+            : 'Quick Gift request sent',
+        detail: direct
+          ? `Sent to ${gift.vendorName ?? 'the vendor'}. You'll review the artwork when they upload it.`
+          : 'Sent for approval.',
       })
       navigate('/quick-gift')
       return
@@ -349,7 +459,7 @@ export function QuickGiftFormPage() {
     <div>
       <PageHeader
         title={`Quick Gift — ${gift.name}`}
-        subtitle="Add as many recipients as you like, then send. No campaign, no waiting — it goes straight to your Company Admin for approval."
+        subtitle="Add as many recipients as you like, then send. No campaign needed."
         backTo="/quick-gift"
       />
 
@@ -365,7 +475,13 @@ export function QuickGiftFormPage() {
         </div>
         <div className="min-w-0">
           <p className="font-medium text-text">{gift.name}</p>
+          {gift.vendorName && <p className="text-xs text-text-muted">Supplied by {gift.vendorName}</p>}
           {gift.description && <p className="line-clamp-1 text-xs text-text-muted">{gift.description}</p>}
+          {gift.artworkRequired && (
+            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-sky-600 dark:text-sky-400">
+              <i className="pi pi-palette" /> Personalised -- the vendor sends you artwork to approve before printing.
+            </p>
+          )}
           {gift.photoRequired && (
             <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
               <i className="pi pi-camera" /> Needs a recipient photo -- upload one, or add their email so we can request it.
@@ -383,6 +499,7 @@ export function QuickGiftFormPage() {
             onRemove={() => removeRow(row.key)}
             canRemove={rows.length > 1}
             photoRequired={gift.photoRequired}
+            artworkRequired={gift.artworkRequired}
           />
         ))}
       </div>

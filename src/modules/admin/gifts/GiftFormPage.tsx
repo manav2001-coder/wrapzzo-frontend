@@ -108,6 +108,11 @@ export function GiftFormPage() {
         label: t('gifts.detail.photoRequired'),
         description: t('gifts.detail.photoRequiredHelp'),
       }),
+      switchField({
+        id: 'artworkRequired',
+        label: t('gifts.detail.artworkRequired'),
+        description: t('gifts.detail.artworkRequiredHelp'),
+      }),
     ],
     [t, categories],
   )
@@ -125,6 +130,7 @@ export function GiftFormPage() {
             markupFeePercentage: asString(gift.markupFeePercentage),
             commissionFeePercentage: asString(gift.commissionFeePercentage),
             photoRequired: gift.photoRequired,
+            artworkRequired: gift.artworkRequired,
           }
         : undefined,
     [gift],
@@ -150,6 +156,7 @@ export function GiftFormPage() {
       markupFeePercentage: num(submitted.markupFeePercentage),
       commissionFeePercentage: num(submitted.commissionFeePercentage),
       photoRequired: Boolean(submitted.photoRequired),
+      artworkRequired: Boolean(submitted.artworkRequired),
     }
     try {
       if (isEdit) {

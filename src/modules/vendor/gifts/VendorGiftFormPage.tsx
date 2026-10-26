@@ -33,6 +33,7 @@ const giftSchema = z
     markupFeePercentage: z.number().min(0).optional().nullable(),
     commissionFeePercentage: z.number().min(0).optional().nullable(),
     photoRequired: z.boolean(),
+    artworkRequired: z.boolean(),
   })
   .refine((data) => data.price !== null, { message: 'Price is required', path: ['price'] })
 
@@ -76,6 +77,7 @@ export function VendorGiftFormPage() {
       markupFeePercentage: null,
       commissionFeePercentage: null,
       photoRequired: false,
+      artworkRequired: false,
     },
   })
 
@@ -99,6 +101,7 @@ export function VendorGiftFormPage() {
         markupFeePercentage: gift.markupFeePercentage,
         commissionFeePercentage: gift.commissionFeePercentage,
         photoRequired: gift.photoRequired,
+        artworkRequired: gift.artworkRequired,
       })
     }
   }, [gift, reset])
@@ -115,6 +118,7 @@ export function VendorGiftFormPage() {
       markupFeePercentage: values.markupFeePercentage ?? undefined,
       commissionFeePercentage: values.commissionFeePercentage ?? undefined,
       photoRequired: values.photoRequired,
+      artworkRequired: values.artworkRequired,
     }
     try {
       if (isEdit && id) {
@@ -380,6 +384,23 @@ export function VendorGiftFormPage() {
                 <p className="mt-0.5 text-xs text-text-muted">
                   When ordering it, the sender must upload a photo up front or provide the recipient's email so we can send them an
                   upload link.
+                </p>
+              </label>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-lg border border-border bg-surface-muted px-3.5 py-2.5">
+              <Controller
+                name="artworkRequired"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox inputId="artworkRequired" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
+                )}
+              />
+              <label htmlFor="artworkRequired" className="text-sm text-text">
+                <span className="font-medium">Needs artwork approval before dispatch</span>
+                <p className="mt-0.5 text-xs text-text-muted">
+                  For personalised items such as prescription pads: upload a proof on each order, and you can dispatch it only once
+                  the person who ordered approves one.
                 </p>
               </label>
             </div>

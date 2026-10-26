@@ -20,6 +20,8 @@ export interface Gift {
   /** When true, ordering this gift needs a recipient photo -- enforced at request time by
    * requiring either an uploaded photo or an email to send an upload link to. */
   photoRequired: boolean
+  /** When true (a personalised prescription pad), the vendor may not dispatch until a proof is approved. */
+  artworkRequired: boolean
   /** Every gift is available in every commerce path -- always all three, no per-gift picker. */
   modules: GiftModule[]
   /** Base cost. Null until an admin/vendor sets one. */
@@ -47,6 +49,7 @@ export interface GiftInput {
   markupFeePercentage?: number
   commissionFeePercentage?: number
   photoRequired: boolean
+  artworkRequired: boolean
 }
 
 interface PresignImageUploadResponse {

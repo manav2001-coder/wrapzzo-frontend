@@ -16,9 +16,23 @@ interface DraftRecipient {
   email: string
   address: string
   dateOfBirth?: Date
+  qualification: string
+  registrationNumber: string
+  speciality: string
+  clinicName: string
 }
 
-const EMPTY: DraftRecipient = { name: '', phone: '', email: '', address: '', dateOfBirth: undefined }
+const EMPTY: DraftRecipient = {
+  name: '',
+  phone: '',
+  email: '',
+  address: '',
+  dateOfBirth: undefined,
+  qualification: '',
+  registrationNumber: '',
+  speciality: '',
+  clinicName: '',
+}
 
 function draftFrom(recipient: Recipient): DraftRecipient {
   return {
@@ -27,6 +41,10 @@ function draftFrom(recipient: Recipient): DraftRecipient {
     email: recipient.email ?? '',
     address: recipient.address ?? '',
     dateOfBirth: recipient.dateOfBirth ? parseDateOnly(recipient.dateOfBirth) : undefined,
+    qualification: recipient.doctor?.qualification ?? '',
+    registrationNumber: recipient.doctor?.registrationNumber ?? '',
+    speciality: recipient.doctor?.speciality ?? '',
+    clinicName: recipient.doctor?.clinicName ?? '',
   }
 }
 
@@ -62,6 +80,13 @@ export function RecipientFormDialog({ visible, onHide, recipient }: { visible: b
       email: draft.email.trim() || undefined,
       address: draft.address.trim() || undefined,
       dateOfBirth: draft.dateOfBirth ? format(draft.dateOfBirth, 'yyyy-MM-dd') : undefined,
+      // Always sent from this form (it shows them), so clearing a field here really clears it.
+      doctor: {
+        qualification: draft.qualification.trim() || null,
+        registrationNumber: draft.registrationNumber.trim() || null,
+        speciality: draft.speciality.trim() || null,
+        clinicName: draft.clinicName.trim() || null,
+      },
     }
 
     try {
@@ -124,6 +149,33 @@ export function RecipientFormDialog({ visible, onHide, recipient }: { visible: b
         <div>
           <label className="mb-1 block text-xs font-medium text-text-muted">Address</label>
           <InputTextarea value={draft.address} onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))} rows={2} className="w-full" />
+        </div>
+        <p className="mt-1 text-xs font-medium text-text-muted">Doctor details (printed on prescription pads)</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-muted">Registration no.</label>
+            <InputText
+              value={draft.registrationNumber}
+              onChange={(e) => setDraft((d) => ({ ...d, registrationNumber: e.target.value }))}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-muted">Qualification</label>
+            <InputText
+              value={draft.qualification}
+              onChange={(e) => setDraft((d) => ({ ...d, qualification: e.target.value }))}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-muted">Speciality</label>
+            <InputText value={draft.speciality} onChange={(e) => setDraft((d) => ({ ...d, speciality: e.target.value }))} className="w-full" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-muted">Clinic / hospital</label>
+            <InputText value={draft.clinicName} onChange={(e) => setDraft((d) => ({ ...d, clinicName: e.target.value }))} className="w-full" />
+          </div>
         </div>
       </div>
 

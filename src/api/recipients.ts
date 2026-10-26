@@ -40,6 +40,12 @@ export async function searchRecipients(query: string): Promise<Recipient[]> {
   return data
 }
 
+/** An MR's own working list (recipient_assignments) -- not the full shared directory. */
+export async function listMyRecipients(): Promise<Recipient[]> {
+  const { data } = await apiClient.get<Recipient[]>('/api/recipients/mine')
+  return data
+}
+
 export async function createRecipient(input: CreateRecipientInput): Promise<Recipient> {
   const { data } = await apiClient.post<Recipient>('/api/recipients', input)
   return data

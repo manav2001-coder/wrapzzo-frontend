@@ -5,6 +5,7 @@ import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { Checkbox } from 'primereact/checkbox'
 import { FileUpload } from 'primereact/fileupload'
+import { InputSwitch } from 'primereact/inputswitch'
 import { InputText } from 'primereact/inputtext'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Controller, useForm } from 'react-hook-form'
@@ -12,12 +13,53 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { uploadCompanyLogo } from '@/api/companies'
+import type { CompanyFeatureKey } from '@/api/companyFeatureFlags'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useCompany, useCreateCompany, useSetCompanyStatus, useUpdateCompany, useUploadCompanyLogo } from '@/hooks/useCompanies'
+import { useCompanyFeatureFlags, useSetCompanyFeatureFlag } from '@/hooks/useCompanyFeatureFlags'
 import { useAssignCompanyVendor, useCompanyVendors, useUnassignCompanyVendor } from '@/hooks/useCompanyVendors'
 import { useVendors } from '@/hooks/useVendors'
 import { showApiError, showToast } from '@/lib/toast'
+
+/** Optional workflow changes this company has turned on -- off by default, so nothing changes for a company until they explicitly opt in. */
+function FeatureFlagsCard({ companyId }: { companyId: string }) {
+  const { data: flags, isLoading } = useCompanyFeatureFlags(companyId)
+  const setFlag = useSetCompanyFeatureFlag(companyId)
+
+  async function handleToggle(flagKey: CompanyFeatureKey, enabled: boolean) {
+    try {
+      await setFlag.mutateAsync({ flagKey, enabled })
+      showToast({ severity: 'success', summary: enabled ? 'Feature enabled' : 'Feature disabled' })
+    } catch (error) {
+      showApiError(error)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <Card title="Feature flags">
+        <p className="text-sm text-text-muted">Loading...</p>
+      </Card>
+    )
+  }
+
+  return (
+    <Card title="Feature flags" subTitle="Optional workflow changes -- off by default. Existing behavior is unaffected until turned on.">
+      <div className="flex flex-col gap-4">
+        {flags?.map((flag) => (
+          <div key={flag.flagKey} className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-text">{flag.displayName}</p>
+              <p className="text-xs text-text-muted">{flag.description}</p>
+            </div>
+            <InputSwitch checked={flag.enabled} onChange={(e) => handleToggle(flag.flagKey, e.value)} disabled={setFlag.isPending} />
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
 
 /** Which vendors this company sees in its Gift Store -- see GiftBrowseController/company_vendors. */
 function VendorRosterCard({ companyId }: { companyId: string }) {
@@ -304,6 +346,7 @@ export function CompanyFormPage() {
           </Card>
 
           {isEdit && company && <VendorRosterCard companyId={company.id} />}
+          {isEdit && company && <FeatureFlagsCard companyId={company.id} />}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createRecipient,
+  listMyRecipients,
   listRecipients,
   listUpcomingBirthdays,
   searchRecipients,
@@ -12,6 +13,11 @@ import { useHasPermission } from '@/hooks/usePermissions'
 export function useRecipients() {
   const canView = useHasPermission('recipient.manage')
   return useQuery({ queryKey: ['recipients'], queryFn: listRecipients, enabled: canView })
+}
+
+/** An MR's own working list -- not the full shared directory. */
+export function useMyRecipients() {
+  return useQuery({ queryKey: ['recipients', 'mine'], queryFn: listMyRecipients })
 }
 
 /** "Pick an existing doctor" -- works for anyone who can send a gift, not just recipient.manage holders. Empty query returns nothing (no full-directory dump). */

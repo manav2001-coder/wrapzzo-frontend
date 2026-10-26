@@ -392,7 +392,7 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
           </button>
         )}
         <div className="ml-auto">
-          <Button label="Export" icon="pi pi-upload" outlined size="small" onClick={() => exportOrdersCsv(filtered)} />
+          <Button label="Export" icon="pi pi-upload" outlined severity="secondary" size="small" onClick={() => exportOrdersCsv(filtered)} />
         </div>
       </div>
 
@@ -418,7 +418,8 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               assignedVendorName: { value: null, matchMode: 'equals' },
               status: { value: null, matchMode: 'equals' },
             }}
-            className="orders-table min-w-[920px]"
+            className="orders-table min-w-[1000px]"
+            tableStyle={{ tableLayout: 'fixed', width: '100%' }}
           >
             <Column
               header="Gift"
@@ -427,6 +428,7 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               filter
               filterField="giftName"
               showFilterMenu={false}
+              style={{ width: '24%' }}
               filterElement={() => (
                 <IconField iconPosition="left" className="w-full">
                   <InputIcon className="pi pi-search text-xs" />
@@ -439,26 +441,36 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
                 </IconField>
               )}
               body={(row: Order) => (
-                <div className="flex items-center gap-2.5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  {row.hasPendingDesignReview && (
+                    <span
+                      className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-accent text-white"
+                      title="Needs design review"
+                    >
+                      <i className="pi pi-eye text-[8px]" />
+                    </span>
+                  )}
                   <GiftThumb url={row.giftImageUrl} size="h-9 w-9" />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-text">{row.giftName ?? row.displayId}</p>
                     <p className="truncate text-xs text-text-muted">{row.displayId}</p>
                   </div>
-                  {row.hasPendingDesignReview && (
-                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-ink">
-                      <i className="pi pi-eye text-[9px]" /> review
-                    </span>
-                  )}
                 </div>
               )}
             />
-            <Column header="Recipient" field="recipientName" sortable body={(row: Order) => row.recipientName ?? '—'} />
+            <Column
+              header="Recipient"
+              field="recipientName"
+              sortable
+              body={(row: Order) => row.recipientName ?? '—'}
+              style={{ width: '13%' }}
+            />
             <Column
               header="Source"
               sortField="campaignName"
               sortable
               body={(row: Order) => (row.source === 'CAMPAIGN' ? row.campaignName : humanize(row.source))}
+              style={{ width: '12%' }}
             />
             <Column
               header="Vendor"
@@ -468,6 +480,7 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               filter
               filterField="assignedVendorName"
               showFilterMenu={false}
+              style={{ width: '14%' }}
               filterElement={() => (
                 <Dropdown
                   value={vendorFilter}
@@ -486,6 +499,7 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               filter
               filterField="status"
               showFilterMenu={false}
+              style={{ width: '13%' }}
               filterElement={() => (
                 <Dropdown
                   value={statusFilter}
@@ -501,7 +515,7 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               field="totalPrice"
               sortable
               body={(row: Order) => formatCurrency(row.totalPrice)}
-              style={{ textAlign: 'right' }}
+              style={{ width: '9%', textAlign: 'right' }}
               className="tabular-nums"
             />
             <Column
@@ -509,9 +523,11 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
               field="createdAt"
               sortable
               body={(row: Order) => new Date(row.createdAt).toLocaleDateString()}
+              style={{ width: '10%' }}
             />
             <Column
               header="Actions"
+              style={{ width: '5%' }}
               body={(row: Order) => (
                 <Button
                   icon="pi pi-eye"
@@ -523,7 +539,6 @@ function OrdersTable({ orders, onOpen }: { orders: Order[]; onOpen: (order: Orde
                   }}
                 />
               )}
-              style={{ width: '3.5rem' }}
             />
           </DataTable>
         </div>

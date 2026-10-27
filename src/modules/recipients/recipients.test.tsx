@@ -125,7 +125,26 @@ describe('MyDoctorsPage', () => {
     expect(within(dialog).getByRole('button', { name: 'Send for approval' })).toBeDisabled()
     await userEvent.type(within(dialog).getByLabelText('Doctor name *'), 'Dr. Meera Iyer')
     await userEvent.type(within(dialog).getByLabelText('Phone *'), '9800000003')
+    await userEvent.type(within(dialog).getByLabelText('Registration no.'), 'TN-555')
+    await userEvent.type(within(dialog).getByLabelText('Speciality'), 'Paediatrics')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Send for approval' }))
-    await waitFor(() => expect(createDoctorChangeRequest).toHaveBeenCalledWith(expect.objectContaining({ action: 'ADD', proposedName: 'Dr. Meera Iyer' })))
+    await waitFor(() =>
+      expect(createDoctorChangeRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'ADD',
+          proposedName: 'Dr. Meera Iyer',
+          proposedDoctor: { registrationNumber: 'TN-555', speciality: 'Paediatrics', qualification: null, clinicName: null },
+        }),
+      ),
+    )
+  })
+
+  it('starts a change request from the doctor’s current print details', async () => {
+    listMyRecipients.mockResolvedValue([recipient()])
+    renderWithProviders(<MyDoctorsPage />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Request changes to Dr. Asha Shah' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Request changes to Dr. Asha Shah' })
+    expect(within(dialog).getByLabelText('Registration no.')).toHaveValue('MH-12345')
+    expect(within(dialog).getByLabelText('Clinic / hospital')).toHaveValue('Shah Clinic')
   })
 })

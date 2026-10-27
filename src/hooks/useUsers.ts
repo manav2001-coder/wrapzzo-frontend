@@ -1,5 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { bulkImportUsers, deleteUser, listCompanyUsers, makeCompanyAdmin, removeCompanyAdmin, type BulkImportUserRow } from '@/api/users'
+import {
+  bulkImportUsers,
+  deleteUser,
+  listCompanyOrgUnits,
+  listCompanyUsers,
+  makeCompanyAdmin,
+  removeCompanyAdmin,
+  setExtraOrgUnits,
+  type BulkImportUserRow,
+} from '@/api/users'
 import { CURRENT_USER_QUERY_KEY } from '@/hooks/use-current-user'
 
 export function useCompanyUsers(companyId: string | undefined) {
@@ -39,6 +48,22 @@ export function useRemoveCompanyAdmin(companyId: string) {
       queryClient.invalidateQueries({ queryKey: ['companyUsers', companyId] })
       queryClient.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY })
     },
+  })
+}
+
+export function useCompanyOrgUnits(companyId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['companyOrgUnits', companyId],
+    queryFn: () => listCompanyOrgUnits(companyId!),
+    enabled: Boolean(companyId) && enabled,
+  })
+}
+
+export function useSetExtraOrgUnits(companyId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, orgUnitIds }: { userId: string; orgUnitIds: string[] }) => setExtraOrgUnits(companyId, userId, orgUnitIds),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companyUsers', companyId] }),
   })
 }
 

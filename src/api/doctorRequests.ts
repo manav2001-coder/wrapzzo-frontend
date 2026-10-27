@@ -1,3 +1,4 @@
+import type { DoctorDetails } from '@/api/recipients'
 import { apiClient } from '@/lib/axiosClient'
 
 export type DoctorChangeAction = 'ADD' | 'EDIT' | 'REMOVE'
@@ -13,6 +14,7 @@ export interface DoctorChangeRequest {
   proposedEmail: string | null
   proposedAddress: string | null
   proposedDob: string | null
+  proposedDoctor: DoctorDetails
   requestedByName: string
   status: DoctorChangeStatus
   reviewedByName: string | null
@@ -29,6 +31,8 @@ export interface CreateDoctorChangeInput {
   proposedEmail?: string
   proposedAddress?: string
   proposedDob?: string
+  /** Print details; for EDIT a blank field keeps the doctor's current value. */
+  proposedDoctor?: Partial<DoctorDetails>
 }
 
 export async function createDoctorChangeRequest(input: CreateDoctorChangeInput): Promise<DoctorChangeRequest> {

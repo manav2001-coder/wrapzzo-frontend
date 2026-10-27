@@ -82,6 +82,16 @@
     "deleteBody": "This permanently removes {{name}}'s account. It can't be undone.",
     "deleted": "{{name}} has been removed.",
     "thisCompany": "this company",
+    "extraUnits": {
+      "action": "Org units covered",
+      "title": "Org units {{name}} covers",
+      "body": "Besides their own unit ({{unit}}), {{name}} sees orders, requests and approvals from the units ticked here, and everything under them.",
+      "noOwnUnit": "none",
+      "save": "Save",
+      "saved": "Org units updated for {{name}}",
+      "none": "This company has no org units yet. They're created when you import users with an org path.",
+      "more": "+{{count}}"
+    },
     "addPage": {
       "title": "Add users",
       "subtitle": "Add employees directly, one row per person.",

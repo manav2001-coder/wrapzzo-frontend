@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowLeft, Download, Plus, ShieldMinus, ShieldPlus, Trash2, Upload, Users } from 'lucide-react'
+import { ArrowLeft, Download, Network, Plus, ShieldMinus, ShieldPlus, Trash2, Upload, Users } from 'lucide-react'
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -20,6 +20,7 @@ import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useRemoveCompanyAd
 import { formatDate } from '@/lib/datetime'
 import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { ExtraOrgUnitsDialog } from './ExtraOrgUnitsDialog'
 
 const COMPANY_ADMIN_ROLE_NAME = 'Company Admin'
 
@@ -50,6 +51,7 @@ export function CompanyUsersPage() {
   const deleteUser = useDeleteUser(companyId)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<PendingAction | null>(null)
+  const [coveringFor, setCoveringFor] = useState<CompanyUser | null>(null)
 
   const company = companyName ?? t('users.thisCompany')
 
@@ -101,7 +103,21 @@ export function CompanyUsersPage() {
       { id: 'designation', accessorFn: (u) => u.designation ?? '', header: t('users.column.designation'), meta: { className: 'min-w-[140px]' } },
       { id: 'employeeCode', accessorFn: (u) => u.employeeCode ?? '', header: t('users.column.employeeCode'), meta: { className: 'min-w-[130px]' } },
       { id: 'reportsToName', accessorFn: (u) => u.reportsToName ?? '', header: t('users.column.reportsTo'), meta: { className: 'min-w-[140px]' } },
-      { id: 'orgUnitName', accessorFn: (u) => u.orgUnitName ?? '', header: t('users.column.orgUnit'), meta: { className: 'min-w-[130px]' } },
+      {
+        id: 'orgUnitName',
+        accessorFn: (u) => u.orgUnitName ?? '',
+        header: t('users.column.orgUnit'),
+        meta: { className: 'min-w-[150px]' },
+        cell: ({ row }) => {
+          const extra = row.original.extraOrgUnits
+          return (
+            <span className="flex items-center gap-1.5" title={extra.map((unit) => unit.name).join(', ') || undefined}>
+              {row.original.orgUnitName ?? '—'}
+              {extra.length > 0 && <Badge variant="secondary-soft">{t('users.extraUnits.more', { count: extra.length })}</Badge>}
+            </span>
+          )
+        },
+      },
       {
         id: 'roleName',
         accessorKey: 'roleName',
@@ -136,12 +152,13 @@ export function CompanyUsersPage() {
         header: t('field.actions', { ns: 'common' }),
         enableColumnFilter: false,
         enableSorting: false,
-        meta: { className: 'min-w-[110px]', pin: 'right' },
+        meta: { className: 'min-w-[140px]', pin: 'right' },
         cell: ({ row }) => {
           const user = row.original
           const isAdmin = user.roleName === COMPANY_ADMIN_ROLE_NAME
           return (
             <div className="flex items-center justify-end gap-0.5">
+              <IconButton icon={Network} label={t('users.extraUnits.action')} onClick={() => setCoveringFor(user)} />
               {isAdmin ? (
                 <IconButton icon={ShieldMinus} label={t('users.removeAdmin')} onClick={() => setPending({ kind: 'removeAdmin', user })} />
               ) : (
@@ -220,6 +237,9 @@ export function CompanyUsersPage() {
           loading={makeCompanyAdmin.isPending || removeCompanyAdmin.isPending || deleteUser.isPending}
           onConfirm={confirmPending}
         />
+      )}
+      {coveringFor && companyId && (
+        <ExtraOrgUnitsDialog key={coveringFor.id} companyId={companyId} user={coveringFor} onClose={() => setCoveringFor(null)} />
       )}
     </div>
   )

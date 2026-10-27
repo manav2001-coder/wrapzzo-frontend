@@ -194,6 +194,10 @@ export function ApprovalQueuePage() {
               {request.proposedAddress}
             </Detail>
           )}
+          {request.proposedDoctor?.registrationNumber && <Detail label="Registration no.">{request.proposedDoctor.registrationNumber}</Detail>}
+          {request.proposedDoctor?.qualification && <Detail label="Qualification">{request.proposedDoctor.qualification}</Detail>}
+          {request.proposedDoctor?.speciality && <Detail label="Speciality">{request.proposedDoctor.speciality}</Detail>}
+          {request.proposedDoctor?.clinicName && <Detail label="Clinic / hospital">{request.proposedDoctor.clinicName}</Detail>}
         </RequestCard>
       ))}
     </div>

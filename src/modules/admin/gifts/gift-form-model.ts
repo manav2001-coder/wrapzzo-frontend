@@ -46,7 +46,7 @@ export function giftTotalOf(values: Record<string, unknown>, fees?: Pick<Gift, '
 /**
  * The gift form's fields, values and payload, shared by the admin catalogue and the vendor
  * portal so both edit a gift the same way. `withFees: false` (the vendor) leaves the markup and
- * commission -- Wrapzzo's own margin -- off the form and sends the gift's current ones unchanged.
+ * commission -- Wrappzo's own margin -- off the form and sends the gift's current ones unchanged.
  */
 export function useGiftFormModel({ gift, knownCategories, withFees }: { gift?: Gift; knownCategories: string[]; withFees: boolean }) {
   const { t } = useTranslation('admin')

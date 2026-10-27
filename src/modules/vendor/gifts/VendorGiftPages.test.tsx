@@ -36,7 +36,7 @@ describe('VendorGiftFormPage', () => {
     getVendorGift.mockReset()
   })
 
-  it('keeps Wrapzzo’s fees off the vendor’s form', async () => {
+  it('keeps Wrappzo’s fees off the vendor’s form', async () => {
     getVendorGift.mockResolvedValue(vendorGift())
     renderWithProviders(
       <Routes>
@@ -50,7 +50,7 @@ describe('VendorGiftFormPage', () => {
     expect(screen.queryByLabelText(/Commission fee/)).not.toBeInTheDocument()
   })
 
-  it('tells the vendor when Wrapzzo has hidden a product', async () => {
+  it('tells the vendor when Wrappzo has hidden a product', async () => {
     getVendorGift.mockResolvedValue(vendorGift({ active: false }))
     renderWithProviders(
       <Routes>
@@ -58,6 +58,6 @@ describe('VendorGiftFormPage', () => {
       </Routes>,
       { route: '/vendor/gifts/g-1' },
     )
-    expect(await screen.findByText(/Hidden from stores by Wrapzzo/)).toBeInTheDocument()
+    expect(await screen.findByText(/Hidden from stores by Wrappzo/)).toBeInTheDocument()
   })
 })

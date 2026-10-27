@@ -23,7 +23,7 @@ const LIST_FIELDS: ListFieldMap = {
   price: 'number',
 }
 
-/** A vendor's own products. Whether one is live in stores is Wrapzzo's call, so status is shown, not toggled. */
+/** A vendor's own products. Whether one is live in stores is Wrappzo's call, so status is shown, not toggled. */
 export function VendorGiftListPage() {
   const { t } = useTranslation('vendor')
   const navigate = useNavigate()

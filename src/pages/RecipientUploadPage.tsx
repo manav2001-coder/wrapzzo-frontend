@@ -48,7 +48,7 @@ function Outcome({ tone, title, body }: { tone: 'error' | 'success'; title: stri
 }
 
 /**
- * Reached from an emailed or WhatsApp'd link by a recipient with no Wrapzzo account: shows what
+ * Reached from an emailed or WhatsApp'd link by a recipient with no Wrappzo account: shows what
  * the gift is and takes one photo. `kind` picks a Campaign submission's link or a Quick Gift's.
  */
 export function RecipientUploadPage({ kind = 'recipient' }: { kind?: RecipientUploadKind }) {

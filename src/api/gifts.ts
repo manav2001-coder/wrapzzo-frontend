@@ -32,7 +32,7 @@ export interface Gift {
   commissionFeePercentage: number
   /** price + price*markup% + price*commission% -- null until price itself is set. */
   totalPrice: number | null
-  /** Null for Wrapzzo's own catalogue entries; set when a vendor submitted this gift themselves. */
+  /** Null for Wrappzo's own catalogue entries; set when a vendor submitted this gift themselves. */
   vendorId: string | null
   vendorName: string | null
   images: GiftImage[]

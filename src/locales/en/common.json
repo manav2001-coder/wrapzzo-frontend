@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Wrapzzo",
+    "name": "Wrappzo",
     "tagline": "Corporate gifting, end to end"
   },
   "nav": {
@@ -194,7 +194,7 @@
     "label": "Account",
     "signedIn": "Signed in",
     "vendorPortal": "Vendor portal",
-    "platformStaff": "Wrapzzo platform",
+    "platformStaff": "Wrappzo platform",
     "profile": "Profile",
     "accountSettings": "Account settings",
     "support": "Support",
@@ -252,7 +252,7 @@
     "toggleTheme": "Toggle theme",
     "uploaded": "Uploaded",
     "qr": "QR",
-    "logoAlt": "Wrapzzo"
+    "logoAlt": "Wrappzo"
   },
   "notFound": {
     "title": "Page not found",

@@ -28,7 +28,7 @@ import type { LucideIcon } from 'lucide-react'
  *  - `permission` says what the destination requires (any-of for an array). `useNav` filters on
  *    it, so nobody is shown an entry to a screen that answers 403. The API is still the control.
  *
- * Wrapzzo has three audiences, each with its own tree: platform staff (Admin), company users,
+ * Wrappzo has three audiences, each with its own tree: platform staff (Admin), company users,
  * and vendors (a separate login with a fixed capability set, so their tree is ungated).
  */
 export interface NavSource {
@@ -62,7 +62,7 @@ const GENERAL: NavSource = {
   ],
 }
 
-/** Wrapzzo platform staff. */
+/** Wrappzo platform staff. */
 export const ADMIN_NAV: NavSource[] = [
   {
     id: 'admin',

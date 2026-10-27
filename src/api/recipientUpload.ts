@@ -24,7 +24,7 @@ interface PresignResponse {
 
 /**
  * Deliberately raw axios, not apiClient -- this is reached from an emailed link by an
- * unauthenticated recipient with no Wrapzzo session at all, and doesn't need the client's
+ * unauthenticated recipient with no Wrappzo session at all, and doesn't need the client's
  * auth-refresh interceptor. `kind` picks between a Campaign submission's photo request and
  * a Quick Gift request's -- same shape, different backend path.
  */

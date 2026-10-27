@@ -28,7 +28,7 @@ export interface PermissionContextValue {
   can: (keys: string | readonly string[] | undefined, options?: { requireAll?: boolean }) => boolean
   refetchPermissions: () => Promise<void>
   /**
-   * Wrapzzo platform staff: a user with no company (`companyId` null on the profile). Picks the
+   * Wrappzo platform staff: a user with no company (`companyId` null on the profile). Picks the
    * Admin navigation instead of the company one. Never a permission bypass: the platform Super
    * Admin already receives every key from the API.
    */

@@ -54,7 +54,7 @@ export async function generateEmployeeTemplateBlob(): Promise<Blob> {
 
 /** Builds the roster template and saves it -- the Users and Import pages both offer it. */
 export async function downloadEmployeeTemplate(): Promise<void> {
-  downloadBlob(await generateEmployeeTemplateBlob(), 'wrapzzo-employee-template.xlsx')
+  downloadBlob(await generateEmployeeTemplateBlob(), 'wrappzo-employee-template.xlsx')
 }
 
 export interface ParsedEmployeeSheet {

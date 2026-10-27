@@ -79,7 +79,7 @@ export function StatusCell({ active, label }: { active: boolean; label?: string 
  * The Status column and the trailing row actions every list screen shares, plus the confirm
  * dialog Deactivate goes through (MobixFL's `useMasterColumns`).
  *
- * Wrapzzo's entities each spell "active" their own way (`status: "ACTIVE"`, `active: true`), so
+ * Wrappzo's entities each spell "active" their own way (`status: "ACTIVE"`, `active: true`), so
  * the row's state comes from `isActive` and the words from `statusLabels`.
  *
  * Actions live in a column rather than in the selection toolbar because they act on ONE row; the

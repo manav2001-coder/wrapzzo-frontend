@@ -42,7 +42,7 @@ const LIST_FIELDS: ListFieldMap = {
 const assignable = (order: Order) => order.status === 'PROCESSING' || order.status === 'PRODUCTION_QUEUE'
 
 /**
- * Every company's orders, and the one fulfilment action Wrapzzo staff take on them: routing each
+ * Every company's orders, and the one fulfilment action Wrappzo staff take on them: routing each
  * to a vendor -- one at a time from its row, or many at once by selecting rows. Auto-assign prefers
  * the vendor who submitted the gift, else the least-loaded active vendor (decided by the backend).
  */

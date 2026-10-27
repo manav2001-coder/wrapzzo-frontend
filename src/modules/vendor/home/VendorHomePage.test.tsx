@@ -58,9 +58,9 @@ describe('VendorHomePage', () => {
     expect(screen.getByTestId('where')).toHaveTextContent('/vendor/orders?stage=ready')
   })
 
-  it('summarises the catalogue, including what Wrapzzo has hidden', async () => {
+  it('summarises the catalogue, including what Wrappzo has hidden', async () => {
     renderHome()
     expect(await screen.findByText('1 gift live in stores')).toBeInTheDocument()
-    expect(screen.getByText('1 hidden by Wrapzzo')).toBeInTheDocument()
+    expect(screen.getByText('1 hidden by Wrappzo')).toBeInTheDocument()
   })
 })

@@ -13,9 +13,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Wrapzzo',
-        short_name: 'Wrapzzo',
-        description: 'Wrapzzo -- corporate gifting and custom merchandise commerce platform.',
+        name: 'Wrappzo',
+        short_name: 'Wrappzo',
+        description: 'Wrappzo -- corporate gifting and custom merchandise commerce platform.',
         start_url: '/admin',
         scope: '/',
         display: 'standalone',

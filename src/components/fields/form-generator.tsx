@@ -381,7 +381,7 @@ function layoutFromSteps(steps: StepConfig[]): ResolvedFormLayout {
  * worse than one that never invited them to.
  *
  * (MobixFL also merges an admin's per-tenant Field Configuration, custom fields and stored layouts
- * in here; Wrapzzo has no such configuration, so those are not ported.)
+ * in here; Wrappzo has no such configuration, so those are not ported.)
  */
 export function FormGenerator({
   maxWidgetsPerRow,

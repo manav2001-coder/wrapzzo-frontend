@@ -34,8 +34,8 @@
     "catalogueTitle": "Your catalogue",
     "live_one": "{{count}} gift live in stores",
     "live_other": "{{count}} gifts live in stores",
-    "hidden_one": "{{count}} hidden by Wrapzzo",
-    "hidden_other": "{{count}} hidden by Wrapzzo",
+    "hidden_one": "{{count}} hidden by Wrappzo",
+    "hidden_other": "{{count}} hidden by Wrappzo",
     "manageGifts": "Manage gifts",
     "addGift": "Add a gift",
     "noGifts": "You haven't listed any gifts yet. Add one so companies can order it."
@@ -133,7 +133,7 @@
     "add": "Add gift",
     "live": "Live",
     "hidden": "Hidden",
-    "hiddenHelp": "Hidden from stores by Wrapzzo. Contact your account manager to bring it back.",
+    "hiddenHelp": "Hidden from stores by Wrappzo. Contact your account manager to bring it back.",
     "column": {
       "gift": "Gift",
       "id": "ID",
@@ -153,7 +153,7 @@
       "back": "My gifts",
       "created": "Gift added",
       "updated": "Gift saved",
-      "priceNote": "Companies see your price plus Wrapzzo's fees.",
+      "priceNote": "Companies see your price plus Wrappzo's fees.",
       "image": "Product image",
       "imageHelp": "Shown on the gift's card in every store.",
       "imageHelpNew": "Optional. It's uploaded right after the gift is created.",

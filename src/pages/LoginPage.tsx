@@ -111,7 +111,7 @@ export function LoginPage() {
 
   return (
     <div className="hero-gradient relative isolate min-h-svh overflow-hidden text-white">
-      {/* MobixFL's sign-in floats over its film; Wrapzzo has none, so the hero's own glow and
+      {/* MobixFL's sign-in floats over its film; Wrappzo has none, so the hero's own glow and
           blueprint grid carry the backdrop. */}
       <div aria-hidden className="hero-glow absolute inset-0 -z-10" />
       <div

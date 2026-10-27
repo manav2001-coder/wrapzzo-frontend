@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowLeft, Camera, ChevronDown, ChevronUp, Contact, Gift as GiftIcon, Palette, Plus, Send, Trash2 } from 'lucide-react'
-import { useRef, useState, type ReactNode } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -14,7 +14,7 @@ import { MasterPageHeader } from '@/components/masters/master-page'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { LabelledField } from '@/components/fields/labelled-field'
 import { Textarea } from '@/components/ui/textarea'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useCreateQuickGiftRequest } from '@/hooks/useQuickGifts'
@@ -112,22 +112,6 @@ function doctorInput(doctor: DoctorFields): Partial<DoctorDetails> | undefined {
   return entries.length > 0 ? Object.fromEntries(entries) : undefined
 }
 
-/** One labelled input with its error -- the label is a real <label>, so the field is found by its name. */
-function Field({ id, label, hint, error, className, children }: { id: string; label: ReactNode; hint?: string; error?: string; className?: string; children: ReactNode }) {
-  return (
-    <div className={cn('flex min-w-0 flex-col gap-1.5', className)}>
-      <Label htmlFor={id} className="text-xs">
-        {label}
-      </Label>
-      {children}
-      {error ? (
-        <p className="text-xs text-destructive">{error}</p>
-      ) : (
-        hint && <p className="text-[11px] text-muted-foreground">{hint}</p>
-      )}
-    </div>
-  )
-}
 
 function RecipientCard({
   row,
@@ -185,15 +169,15 @@ function RecipientCard({
       </header>
 
       <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field id={id('name')} label={`${t('form.name')} *`} error={row.errors.recipientName}>
+        <LabelledField id={id('name')} label={`${t('form.name')} *`} error={row.errors.recipientName}>
           <Input
             id={id('name')}
             value={row.recipientName}
             aria-invalid={Boolean(row.errors.recipientName)}
             onChange={(e) => onUpdate({ recipientName: e.target.value })}
           />
-        </Field>
-        <Field id={id('phone')} label={`${t('form.phone')} *`} error={row.errors.recipientPhone}>
+        </LabelledField>
+        <LabelledField id={id('phone')} label={`${t('form.phone')} *`} error={row.errors.recipientPhone}>
           <Input
             id={id('phone')}
             type="tel"
@@ -201,11 +185,11 @@ function RecipientCard({
             aria-invalid={Boolean(row.errors.recipientPhone)}
             onChange={(e) => onUpdate({ recipientPhone: e.target.value })}
           />
-        </Field>
-        <Field id={id('dob')} label={t('form.dob')}>
+        </LabelledField>
+        <LabelledField id={id('dob')} label={t('form.dob')}>
           <DatePicker id={id('dob')} value={row.dateOfBirth} onChange={(value) => onUpdate({ dateOfBirth: value })} toDate={new Date()} />
-        </Field>
-        <Field id={id('quantity')} label={`${t('form.quantity')} *`} error={row.errors.quantity}>
+        </LabelledField>
+        <LabelledField id={id('quantity')} label={`${t('form.quantity')} *`} error={row.errors.quantity}>
           <Input
             id={id('quantity')}
             inputMode="numeric"
@@ -213,15 +197,15 @@ function RecipientCard({
             aria-invalid={Boolean(row.errors.quantity)}
             onChange={(e) => onUpdate({ quantity: e.target.value })}
           />
-        </Field>
-        <Field id={id('address')} label={`${t('form.address')} *`} error={row.errors.deliveryAddress} className="sm:col-span-2 lg:col-span-4">
+        </LabelledField>
+        <LabelledField id={id('address')} label={`${t('form.address')} *`} error={row.errors.deliveryAddress} className="sm:col-span-2 lg:col-span-4">
           <Input
             id={id('address')}
             value={row.deliveryAddress}
             aria-invalid={Boolean(row.errors.deliveryAddress)}
             onChange={(e) => onUpdate({ deliveryAddress: e.target.value })}
           />
-        </Field>
+        </LabelledField>
 
         {artworkRequired && (
           <div className="grid grid-cols-1 gap-3 rounded-md border border-primary/20 bg-primary/5 p-3 sm:col-span-2 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-4">
@@ -229,7 +213,7 @@ function RecipientCard({
               <Palette className="h-3.5 w-3.5" />
               {t('form.doctorSection')}
             </p>
-            <Field id={id('reg')} label={`${t('form.registrationNumber')} *`} error={row.errors.registrationNumber}>
+            <LabelledField id={id('reg')} label={`${t('form.registrationNumber')} *`} error={row.errors.registrationNumber}>
               <Input
                 id={id('reg')}
                 value={row.doctor.registrationNumber}
@@ -237,27 +221,27 @@ function RecipientCard({
                 aria-invalid={Boolean(row.errors.registrationNumber)}
                 onChange={(e) => setDoctor({ registrationNumber: e.target.value })}
               />
-            </Field>
-            <Field id={id('qualification')} label={t('form.qualification')}>
+            </LabelledField>
+            <LabelledField id={id('qualification')} label={t('form.qualification')}>
               <Input
                 id={id('qualification')}
                 value={row.doctor.qualification}
                 placeholder={t('form.qualificationPlaceholder')}
                 onChange={(e) => setDoctor({ qualification: e.target.value })}
               />
-            </Field>
-            <Field id={id('speciality')} label={t('form.speciality')}>
+            </LabelledField>
+            <LabelledField id={id('speciality')} label={t('form.speciality')}>
               <Input id={id('speciality')} value={row.doctor.speciality} onChange={(e) => setDoctor({ speciality: e.target.value })} />
-            </Field>
-            <Field id={id('clinic')} label={t('form.clinicName')}>
+            </LabelledField>
+            <LabelledField id={id('clinic')} label={t('form.clinicName')}>
               <Input id={id('clinic')} value={row.doctor.clinicName} onChange={(e) => setDoctor({ clinicName: e.target.value })} />
-            </Field>
+            </LabelledField>
           </div>
         )}
 
         {row.expanded && (
           <>
-            <Field
+            <LabelledField
               id={id('email')}
               label={`${t('form.email')} (${photoRequired ? t('form.requiredIfNoPhoto') : t('form.optional')})`}
               hint={t('form.emailHelp')}
@@ -271,8 +255,8 @@ function RecipientCard({
                 aria-invalid={Boolean(row.errors.photoOrEmail)}
                 onChange={(e) => onUpdate({ recipientEmail: e.target.value })}
               />
-            </Field>
-            <Field
+            </LabelledField>
+            <LabelledField
               id={id('photo')}
               label={`${t('form.photo')} (${photoRequired ? t('form.requiredIfNoEmail') : t('form.optional')})`}
               className="sm:col-span-1 lg:col-span-2"
@@ -292,8 +276,8 @@ function RecipientCard({
                   onChange={(e) => e.target.files?.[0] && onUpdate({ photo: e.target.files[0] })}
                 />
               </div>
-            </Field>
-            <Field id={id('message')} label={t('form.message')} className="sm:col-span-1 lg:col-span-2">
+            </LabelledField>
+            <LabelledField id={id('message')} label={t('form.message')} className="sm:col-span-1 lg:col-span-2">
               <Textarea
                 id={id('message')}
                 rows={2}
@@ -301,8 +285,8 @@ function RecipientCard({
                 placeholder={t('form.messagePlaceholder')}
                 onChange={(e) => onUpdate({ giftMessage: e.target.value })}
               />
-            </Field>
-            <Field id={id('notes')} label={t('form.notes')} className="sm:col-span-1 lg:col-span-2">
+            </LabelledField>
+            <LabelledField id={id('notes')} label={t('form.notes')} className="sm:col-span-1 lg:col-span-2">
               <Textarea
                 id={id('notes')}
                 rows={2}
@@ -310,7 +294,7 @@ function RecipientCard({
                 placeholder={t('form.notesPlaceholder')}
                 onChange={(e) => onUpdate({ internalNotes: e.target.value })}
               />
-            </Field>
+            </LabelledField>
           </>
         )}
 

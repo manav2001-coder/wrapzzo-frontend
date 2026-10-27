@@ -1,28 +1,33 @@
-import { Tag } from 'primereact/tag'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
+import { humanize } from '@/lib/format'
 
-const SEVERITY: Record<string, 'success' | 'danger' | 'warning' | 'secondary' | 'info'> = {
-  ACTIVE: 'success',
-  INACTIVE: 'secondary',
-  SUSPENDED: 'danger',
-  // Campaigns (PRD 2.9)
-  DRAFT: 'secondary',
-  CLOSED: 'secondary',
-  // Submissions (PRD 2.7)
-  SUBMITTED: 'info',
-  RESUBMITTED: 'info',
-  APPROVED: 'success',
-  REJECTED: 'danger',
-  // Orders (PRD 2.11)
-  PROCESSING: 'info',
-  PRODUCTION_QUEUE: 'warning',
-  DISPATCHED: 'warning',
-  DELIVERED: 'success',
-  CANCELLED: 'danger',
-  // Company user roles
-  'Company Admin': 'info',
-  Member: 'secondary',
+const VARIANT: Record<string, BadgeProps['variant']> = {
+  ACTIVE: 'success-soft',
+  INACTIVE: 'secondary-soft',
+  SUSPENDED: 'destructive-soft',
+  DRAFT: 'secondary-soft',
+  CLOSED: 'secondary-soft',
+  PENDING: 'warning-soft',
+  SUBMITTED: 'primary-soft',
+  RESUBMITTED: 'primary-soft',
+  APPROVED: 'success-soft',
+  REJECTED: 'destructive-soft',
+  PROCESSING: 'primary-soft',
+  PRODUCTION_QUEUE: 'warning-soft',
+  DISPATCHED: 'warning-soft',
+  DELIVERED: 'success-soft',
+  CANCELLED: 'destructive-soft',
 }
 
+/**
+ * A badge for any status string -- for the places that mix kinds in one list (the dashboard's
+ * drill-down rows). Where the kind is known, prefer its own badge (OrderStatusBadge,
+ * CampaignStatusBadge, SubmissionStatusBadge).
+ */
 export function StatusBadge({ status, label }: { status: string; label?: string }) {
-  return <Tag value={label ?? status} severity={SEVERITY[status] ?? 'secondary'} rounded className="whitespace-nowrap" />
+  return (
+    <Badge variant={VARIANT[status] ?? 'secondary-soft'} className="whitespace-nowrap">
+      {label ?? humanize(status)}
+    </Badge>
+  )
 }

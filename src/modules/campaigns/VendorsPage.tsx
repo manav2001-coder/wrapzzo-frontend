@@ -1,158 +1,140 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from 'primereact/button'
-import { Dialog } from 'primereact/dialog'
-import { Dropdown } from 'primereact/dropdown'
-import { InputText } from 'primereact/inputtext'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Truck } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
-import { StatusBadge } from '@/components/StatusBadge'
+import { toast } from 'sonner'
+
+import type { CompanyVendor } from '@/api/companyVendors'
+import { AppDialog } from '@/components/app-dialog'
+import { DataTable } from '@/components/data-table'
+import { listEmptyBody } from '@/components/data-table/list-body'
+import { FormGenerator } from '@/components/fields/form-generator'
+import { emailField, phoneField, selectField, textField } from '@/components/masters/master-fields'
+import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useMyOrgUnits } from '@/hooks/useMyOrgUnits'
 import { useAddMyVendor, useMyVendors } from '@/hooks/useMyVendors'
-import { showApiError, showToast } from '@/lib/toast'
+import type { ListFieldMap } from '@/lib/list-fields'
 
 const COMPANY_WIDE = '__company_wide__'
 
-const vendorSchema = z.object({
-  name: z.string().min(1, 'Vendor name is required'),
-  contactEmail: z.string().min(1, 'Contact email is required').email('Enter a valid email'),
-  contactPhone: z.string().optional(),
-  orgUnitId: z.string(),
-})
+const LIST_FIELDS: ListFieldMap = { vendorName: 'text', orgUnitName: 'text' }
 
-type VendorFormValues = z.infer<typeof vendorSchema>
-
-function AddVendorDialog({ visible, onHide }: { visible: boolean; onHide: () => void }) {
+/** A Company Admin onboards their own vendor; an invite email lets the vendor set a password. */
+function AddVendorDialog({ onClose }: { onClose: () => void }) {
+  const showError = useApiErrorToast()
   const addVendor = useAddMyVendor()
   const { data: orgUnits } = useMyOrgUnits()
-  const orgUnitOptions = useMemo(
+
+  const fields = useMemo(
     () => [
-      { label: 'Whole company', value: COMPANY_WIDE },
-      ...(orgUnits ?? []).map((u) => ({ label: `${u.levelName}: ${u.name}`, value: u.id })),
+      textField({ id: 'name', label: 'Vendor name', required: true, max: 200, spanToFullRow: true }),
+      emailField({ id: 'contactEmail', label: 'Contact email', required: true }),
+      phoneField({ id: 'contactPhone', label: 'Contact phone' }),
+      selectField({
+        id: 'orgUnitId',
+        label: 'Serves',
+        required: true,
+        spanToFullRow: true,
+        options: [
+          { value: COMPANY_WIDE, label: 'Whole company' },
+          ...(orgUnits ?? []).map((u) => ({ value: u.id, label: `${u.levelName}: ${u.name}` })),
+        ],
+      }),
     ],
     [orgUnits],
   )
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<VendorFormValues>({
-    resolver: zodResolver(vendorSchema),
-    defaultValues: { name: '', contactEmail: '', contactPhone: '', orgUnitId: COMPANY_WIDE },
-  })
-
-  async function onSubmit(values: VendorFormValues) {
+  async function onSubmit(values: Record<string, unknown>) {
     try {
       await addVendor.mutateAsync({
-        name: values.name,
-        contactEmail: values.contactEmail,
-        contactPhone: values.contactPhone,
-        orgUnitId: values.orgUnitId === COMPANY_WIDE ? null : values.orgUnitId,
+        name: String(values.name).trim(),
+        contactEmail: String(values.contactEmail).trim(),
+        contactPhone: String(values.contactPhone ?? '').trim() || undefined,
+        orgUnitId: values.orgUnitId === COMPANY_WIDE ? null : String(values.orgUnitId),
       })
-      showToast({ severity: 'success', summary: 'Vendor added', detail: 'An invite email was sent to set up their password.' })
-      reset()
-      onHide()
-    } catch (error) {
-      showApiError(error)
+      toast.success('Vendor added', { description: 'An invite email was sent so they can set up their password.' })
+      onClose()
+    } catch (err) {
+      showError(err)
     }
   }
 
   return (
-    <Dialog header="Add vendor" visible={visible} onHide={onHide} style={{ width: '28rem' }} modal>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="vendor-name" className="text-sm font-medium text-text">
-            Vendor name
-          </label>
-          <Controller
-            name="name"
-            control={control}
-            render={({ field }) => <InputText id="vendor-name" {...field} className={errors.name ? 'p-invalid' : ''} />}
-          />
-          {errors.name && <small className="text-red-500 dark:text-red-400">{errors.name.message}</small>}
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="vendor-email" className="text-sm font-medium text-text">
-            Contact email
-          </label>
-          <Controller
-            name="contactEmail"
-            control={control}
-            render={({ field }) => <InputText id="vendor-email" {...field} className={errors.contactEmail ? 'p-invalid' : ''} />}
-          />
-          {errors.contactEmail && <small className="text-red-500 dark:text-red-400">{errors.contactEmail.message}</small>}
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="vendor-phone" className="text-sm font-medium text-text">
-            Contact phone (optional)
-          </label>
-          <Controller name="contactPhone" control={control} render={({ field }) => <InputText id="vendor-phone" {...field} />} />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="vendor-orgunit" className="text-sm font-medium text-text">
-            Serves
-          </label>
-          <Controller
-            name="orgUnitId"
-            control={control}
-            render={({ field }) => <Dropdown inputId="vendor-orgunit" {...field} options={orgUnitOptions} className="w-full" />}
-          />
-          <p className="text-xs text-text-muted">
-            Scope this vendor to one org unit if they only fulfill orders there -- their gifts will only show up for MRs in that
-            unit and the units beneath it.
-          </p>
-        </div>
-
-        <Button type="submit" label="Add vendor" loading={addVendor.isPending} />
-      </form>
-    </Dialog>
+    <AppDialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      size="md"
+      title="Add vendor"
+      description="Scope a vendor to one org unit if they only fulfil orders there: their gifts then show only for that unit and the units under it."
+      footer={<></>}
+    >
+      <FormGenerator
+        fields={fields}
+        values={{ orgUnitId: COMPANY_WIDE }}
+        mode="create"
+        maxWidgetsPerRow={2}
+        submitLabel="Add vendor"
+        hideCardWrapper
+        onSubmit={onSubmit}
+      />
+    </AppDialog>
   )
 }
 
+/** The vendors this company works with -- only their gifts appear in its Gift Store, scoped to the unit each serves. */
 export function VendorsPage() {
-  const { data: vendors, isLoading } = useMyVendors()
-  const [addVisible, setAddVisible] = useState(false)
+  const { data: vendors, isLoading, error, refetch } = useMyVendors()
+  const [adding, setAdding] = useState(false)
+
+  const columns = useMemo<ColumnDef<CompanyVendor, unknown>[]>(
+    () => [
+      { id: 'vendorName', accessorKey: 'vendorName', header: 'Vendor', meta: { className: 'min-w-[200px]', align: 'left' } },
+      {
+        id: 'orgUnitName',
+        accessorFn: (v) => v.orgUnitName ?? 'Whole company',
+        header: 'Serves',
+        meta: { className: 'min-w-[180px]' },
+      },
+      {
+        id: 'vendorStatus',
+        accessorKey: 'vendorStatus',
+        header: 'Status',
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[120px]' },
+        cell: ({ row }) => <StatusCell active={row.original.vendorStatus === 'ACTIVE'} label={row.original.vendorStatus === 'ACTIVE' ? 'Active' : 'Suspended'} />,
+      },
+    ],
+    [],
+  )
 
   return (
     <div>
-      <PageHeader
+      <MasterPageHeader
         title="Vendors"
-        subtitle="The vendors you work with -- only their gifts appear in your Gift Store, scoped to the org unit they serve."
-        actions={<Button label="Add vendor" icon="pi pi-plus" onClick={() => setAddVisible(true)} />}
+        description="The vendors you work with. Only their gifts appear in your Gift Store, scoped to the org unit they serve."
+        createLabel="Add vendor"
+        createPermission="company.vendor.manage"
+        onCreate={() => setAdding(true)}
       />
-
-      {!isLoading && vendors?.length === 0 ? (
-        <EmptyState
-          icon="pi-truck"
-          title="No vendors yet"
-          description="Add your own fulfillment vendor to start offering their gifts."
-          action={<Button label="Add vendor" icon="pi pi-plus" onClick={() => setAddVisible(true)} />}
-        />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {vendors?.map((vendor) => (
-            <div key={vendor.mappingId} className="flex items-center justify-between rounded-xl border border-border bg-surface p-4">
-              <div className="min-w-0">
-                <p className="font-medium text-text">{vendor.vendorName}</p>
-                <p className="flex items-center gap-1.5 text-xs text-text-muted">
-                  <i className="pi pi-sitemap text-[10px]" />
-                  {vendor.orgUnitName ? `Serves ${vendor.orgUnitName}` : 'Serves the whole company'}
-                </p>
-              </div>
-              <StatusBadge status={vendor.vendorStatus} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <AddVendorDialog visible={addVisible} onHide={() => setAddVisible(false)} />
+      <DataTable<CompanyVendor>
+        columns={columns}
+        data={vendors ?? []}
+        isLoading={isLoading}
+        listFields={LIST_FIELDS}
+        searchable
+        showRowSelectionColumn={false}
+        getRowId={(v) => v.mappingId}
+        tableId="company-vendors"
+        configNamespace="company-vendors"
+        emptyState={listEmptyBody({
+          error,
+          onRetry: () => void refetch(),
+          icon: <Truck className="h-8 w-8 opacity-50" />,
+          message: 'No vendors yet',
+          description: 'Add your own fulfilment vendor to start offering their gifts.',
+        })}
+      />
+      {adding && <AddVendorDialog onClose={() => setAdding(false)} />}
     </div>
   )
 }

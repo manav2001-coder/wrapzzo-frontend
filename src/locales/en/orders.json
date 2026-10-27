@@ -20,7 +20,9 @@
     "total": "Total",
     "vendor": "Vendor",
     "status": "Status",
-    "placed": "Placed"
+    "placed": "Placed",
+    "quantity": "Qty",
+    "orgUnit": "Org unit"
   },
   "unassigned": "Unassigned",
   "auto": "Auto",
@@ -35,6 +37,8 @@
     "source": "Source",
     "vendor": "Vendor",
     "total": "Total",
+    "quantity": "Quantity",
+    "orgUnit": "Org unit",
     "placed": "Placed",
     "progress": "Progress",
     "history": "History",
@@ -42,6 +46,48 @@
     "noPhoto": "No photo uploaded yet.",
     "sendLink": "Send photo upload link",
     "linkSent": "Link sent to the recipient"
+  },
+  "company": {
+    "title": "Orders",
+    "subtitle": "Orders from you and your team, and the artwork vendors send you to approve.",
+    "tabAll": "All orders",
+    "tabReview": "Needs your review",
+    "stats": {
+      "review": "Artwork to review",
+      "production": "In production",
+      "dispatched": "Dispatched",
+      "delivered": "Delivered"
+    },
+    "emptyTitle": "No orders yet",
+    "emptyBody": "Orders appear here once they're placed through Quick Gift or a campaign.",
+    "reviewEmptyTitle": "Nothing to review",
+    "reviewEmptyBody": "When a vendor uploads a proof, it shows up here for you to approve."
+  },
+  "artwork": {
+    "title": "Artwork",
+    "requiredHelp": "The vendor can dispatch only after you approve a proof.",
+    "optionalHelp": "Proofs the vendor sent for you to check.",
+    "waitingForVendor": "Waiting for the vendor to upload a proof. It will appear here.",
+    "waitingForRework": "Sent back to the vendor. Their corrected proof will appear here.",
+    "version": "Version {{n}}",
+    "open": "Open proof",
+    "approve": "Approve",
+    "requestChanges": "Request changes",
+    "approved": "Version {{n}} approved. The vendor can now dispatch.",
+    "rejected": "Version {{n}} sent back to the vendor",
+    "approvedBadge": "v{{n}} approved",
+    "yourFeedback": "Feedback sent:",
+    "earlier": "Earlier versions",
+    "rejectTitle": "Request changes to version {{n}}",
+    "rejectBody": "Tell the vendor what to fix. They'll see this note with the proof.",
+    "feedbackLabel": "What should change?",
+    "feedbackPlaceholder": "e.g. The doctor's name is misspelt; it should be Dr. Asha Shah.",
+    "sendBack": "Send back to vendor",
+    "status": {
+      "PENDING_REVIEW": "Waiting on you",
+      "APPROVED": "Approved",
+      "REJECTED": "Changes requested"
+    }
   },
   "photoLink": {
     "title": "Recipient photo requested",

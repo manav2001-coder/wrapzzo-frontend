@@ -1,6 +1,8 @@
-import { Checkbox } from 'primereact/checkbox'
+import { ArrowDown, Network } from 'lucide-react'
 import clsx from 'clsx'
 import { useMemo } from 'react'
+
+import { Checkbox } from '@/components/ui/checkbox'
 
 export interface OrgUnitOption {
   id: string
@@ -108,32 +110,32 @@ export function OrgUnitCascadeSelector({
 
   if (orgUnits.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border p-4 text-sm text-text-muted">
+      <div className="rounded-lg border border-dashed border p-4 text-sm text-muted-foreground">
         This company doesn't have an org hierarchy yet — import employees with org levels to target by unit.
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-lg border border bg-card p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
-            <i className="pi pi-sitemap text-sm" />
+          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Network className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-text">Target by org unit</p>
-            <p className="text-xs text-text-muted">Check a whole branch, or drill down for finer control.</p>
+            <p className="text-sm font-semibold text-foreground">Target by org unit</p>
+            <p className="text-xs text-muted-foreground">Check a whole branch, or drill down for finer control.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {frontierCount > 0 && (
-            <span className="rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent">
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
               {frontierCount} unit{frontierCount === 1 ? '' : 's'} selected
             </span>
           )}
           {frontierCount > 0 && !disabled && (
-            <button type="button" className="text-xs text-text-muted hover:text-accent hover:underline" onClick={() => onChange(new Set())}>
+            <button type="button" className="text-xs text-muted-foreground hover:text-primary hover:underline" onClick={() => onChange(new Set())}>
               Clear all
             </button>
           )}
@@ -150,20 +152,20 @@ export function OrgUnitCascadeSelector({
             <div key={depth}>
               {depth > 0 && (
                 <div className="flex justify-center py-1">
-                  <i className="pi pi-arrow-down text-[10px] text-text-muted/40" />
+                  <ArrowDown className="h-3 w-3 text-muted-foreground/40" />
                 </div>
               )}
-              <div className="rounded-lg border border-border p-3">
+              <div className="rounded-lg border border p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-surface-muted text-[11px] font-semibold text-text-muted">
+                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
                       {depth + 1}
                     </span>
-                    <span className="text-xs font-semibold tracking-wide text-text-muted uppercase">{nodes[0]?.levelName ?? `Level ${depth + 1}`}</span>
+                    <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{nodes[0]?.levelName ?? `Level ${depth + 1}`}</span>
                   </div>
                   {!disabled && nodes.length > 1 && (
-                    <label className="flex cursor-pointer items-center gap-1.5 text-xs text-text-muted">
-                      <Checkbox checked={allChecked} onChange={(e) => toggleLevel(nodes, Boolean(e.checked))} />
+                    <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
+                      <Checkbox checked={allChecked} onCheckedChange={(checked) => toggleLevel(nodes, checked === true)} />
                       Select all
                     </label>
                   )}
@@ -173,8 +175,8 @@ export function OrgUnitCascadeSelector({
                   {[...groups.entries()].map(([parentId, groupNodes]) => (
                     <div key={parentId ?? 'root'}>
                       {showGroupHeaders && (
-                        <p className="mb-1 text-[11px] text-text-muted">
-                          Under <span className="font-medium text-text">{parentId ? (byId.get(parentId)?.name ?? '') : ''}</span>
+                        <p className="mb-1 text-[11px] text-muted-foreground">
+                          Under <span className="font-medium text-foreground">{parentId ? (byId.get(parentId)?.name ?? '') : ''}</span>
                         </p>
                       )}
                       <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -185,10 +187,10 @@ export function OrgUnitCascadeSelector({
                               key={node.id}
                               className={clsx(
                                 'flex min-w-0 cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-sm transition-colors',
-                                checked ? 'border-accent/30 bg-accent/5 text-text' : 'border-transparent text-text hover:bg-surface-muted',
+                                checked ? 'border-primary/30 bg-primary/5 text-foreground' : 'border-transparent text-foreground hover:bg-muted',
                               )}
                             >
-                              <Checkbox checked={checked} disabled={disabled} onChange={(e) => toggleNode(node.id, Boolean(e.checked))} />
+                              <Checkbox checked={checked} disabled={disabled} onCheckedChange={(next) => toggleNode(node.id, next === true)} />
                               <span className="truncate">{node.name}</span>
                             </label>
                           )

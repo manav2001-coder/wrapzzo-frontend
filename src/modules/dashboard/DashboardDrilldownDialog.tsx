@@ -1,9 +1,10 @@
 import { format } from 'date-fns'
-import { Dialog } from 'primereact/dialog'
-import { ProgressSpinner } from 'primereact/progressspinner'
+import { Inbox } from 'lucide-react'
+import { AppDialog } from '@/components/app-dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Link } from 'react-router-dom'
 import type { DrilldownDimension, DrilldownRow } from '@/api/dashboard'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/empty-state'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useDashboardDrilldown } from '@/hooks/useDashboard'
 import { formatCurrency, humanize } from '@/lib/format'
@@ -22,29 +23,29 @@ function DrilldownRowItem({ row }: { row: DrilldownRow }) {
     <>
       <div className="flex min-w-0 items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate font-medium text-text">{row.title}</p>
-          <p className="truncate text-xs text-text-muted">
+          <p className="truncate font-medium text-foreground">{row.title}</p>
+          <p className="truncate text-xs text-muted-foreground">
             {row.displayId ? `${row.displayId} · ` : ''}
             {row.subtitle}
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <StatusBadge status={row.status} label={humanize(row.status)} />
-          {row.amount != null && <span className="text-sm font-semibold text-text">{formatCurrency(row.amount)}</span>}
+          {row.amount != null && <span className="text-sm font-semibold text-foreground">{formatCurrency(row.amount)}</span>}
         </div>
       </div>
-      <p className="mt-1 text-xs text-text-muted">{format(new Date(row.at), 'dd MMM yyyy, h:mm a')}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{format(new Date(row.at), 'dd MMM yyyy, h:mm a')}</p>
     </>
   )
   return row.campaignId ? (
     <Link
       to={`/campaigns/${row.campaignId}`}
-      className="rounded-lg border border-border p-3 transition-colors hover:border-accent/50 hover:bg-surface-muted"
+      className="rounded-lg border p-3 transition-colors hover:bg-muted/50"
     >
       {content}
     </Link>
   ) : (
-    <div className="rounded-lg border border-border p-3">{content}</div>
+    <div className="rounded-lg border p-3">{content}</div>
   )
 }
 
@@ -61,19 +62,19 @@ export function DashboardDrilldownDialog({ selection, onHide }: { selection: Dri
       : null
 
   return (
-    <Dialog
-      header={data?.title ?? 'Details'}
-      visible={selection !== null}
-      onHide={onHide}
-      style={{ width: '34rem' }}
-      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+    <AppDialog
+      title={data?.title ?? "Details"}
+      open={selection !== null}
+      size="md"
+      cancelLabel="Close"
+      onOpenChange={(open) => !open && onHide()}
     >
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <ProgressSpinner style={{ width: 32, height: 32 }} strokeWidth="4" />
+          <Skeleton className="h-32 w-full" />
         </div>
       ) : !data || data.rows.length === 0 ? (
-        <EmptyState icon="pi-inbox" title="Nothing here yet" description="No records behind this number just yet." />
+        <EmptyState variant="plain" icon={Inbox} title="Nothing here yet" description="No records behind this number just yet." />
       ) : groups ? (
         <div className="flex max-h-[60vh] flex-col gap-5 overflow-y-auto">
           {groups.map((group) => {
@@ -81,10 +82,10 @@ export function DashboardDrilldownDialog({ selection, onHide }: { selection: Dri
             return (
               <div key={group.source}>
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-semibold tracking-wide text-text-muted uppercase">
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                     {SOURCE_LABELS[group.source] ?? humanize(group.source)} ({group.rows.length})
                   </p>
-                  <p className="text-xs font-semibold text-text">{formatCurrency(subtotal)}</p>
+                  <p className="text-xs font-semibold text-foreground">{formatCurrency(subtotal)}</p>
                 </div>
                 <div className="flex flex-col gap-2">
                   {group.rows.map((row, i) => (
@@ -102,6 +103,6 @@ export function DashboardDrilldownDialog({ selection, onHide }: { selection: Dri
           ))}
         </div>
       )}
-    </Dialog>
+    </AppDialog>
   )
 }

@@ -41,7 +41,7 @@ export function TrendLineChart({
   height = 200,
   reference,
 }: TrendLineChartProps) {
-  const { t } = useTranslation("fleetAgents");
+  const { t } = useTranslation();
   if (data.length === 0) {
     return <p className="py-6 text-center text-sm text-muted-foreground">{t("charts.empty")}</p>;
   }

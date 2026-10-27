@@ -1,92 +1,103 @@
-import { format } from 'date-fns'
-import { Button } from 'primereact/button'
-import { Column } from 'primereact/column'
-import { DataTable } from 'primereact/datatable'
-import { IconField } from 'primereact/iconfield'
-import { InputIcon } from 'primereact/inputicon'
-import { InputText } from 'primereact/inputtext'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Contact, Pencil } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
 import type { Recipient } from '@/api/recipients'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
+import { DataTable } from '@/components/data-table'
+import { listEmptyBody } from '@/components/data-table/list-body'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader } from '@/components/masters/master-page'
 import { useRecipients } from '@/hooks/useRecipients'
-import { parseDateOnly } from '@/lib/format'
+import { formatDateOnly } from '@/lib/datetime'
+import type { ListFieldMap } from '@/lib/list-fields'
 import { RecipientFormDialog } from './RecipientFormDialog'
 import { UpcomingBirthdaysWidget } from './UpcomingBirthdaysWidget'
 
-/** The company's shared recipient directory -- built up from Quick Gift requests and Campaign submissions, plus anyone added here manually. Company Admin and Member alike can view and add. */
+const LIST_FIELDS: ListFieldMap = {
+  name: 'text',
+  phone: 'text',
+  email: 'text',
+  registrationNumber: 'text',
+  createdByName: 'text',
+}
+
+/** The company's shared recipient directory -- fed by Quick Gift and campaigns, plus anyone added here. */
 export function RecipientsPage() {
-  const { data: recipients, isLoading } = useRecipients()
-  const [search, setSearch] = useState('')
-  const [formVisible, setFormVisible] = useState(false)
-  const [editing, setEditing] = useState<Recipient | null>(null)
+  const { t } = useTranslation('recipients')
+  const { data: recipients, isLoading, error, refetch } = useRecipients()
+  // `undefined` = closed, `null` = adding, a recipient = editing it.
+  const [editing, setEditing] = useState<Recipient | null | undefined>(undefined)
 
-  function openAddForm() {
-    setEditing(null)
-    setFormVisible(true)
-  }
-
-  function openEditForm(recipient: Recipient) {
-    setEditing(recipient)
-    setFormVisible(true)
-  }
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return recipients ?? []
-    return (recipients ?? []).filter(
-      (r) => r.name.toLowerCase().includes(q) || r.phone.toLowerCase().includes(q) || (r.email ?? '').toLowerCase().includes(q),
-    )
-  }, [recipients, search])
+  const columns = useMemo<ColumnDef<Recipient, unknown>[]>(
+    () => [
+      { id: 'name', accessorKey: 'name', header: t('field.name'), meta: { className: 'min-w-[180px]', align: 'left' } },
+      { id: 'phone', accessorKey: 'phone', header: t('field.phone'), meta: { className: 'min-w-[130px]' } },
+      { id: 'email', accessorFn: (r) => r.email ?? '', header: t('field.email'), meta: { className: 'min-w-[180px]' } },
+      {
+        id: 'registrationNumber',
+        accessorFn: (r) => r.doctor?.registrationNumber ?? '',
+        header: t('field.registrationNumber'),
+        meta: { className: 'min-w-[130px]' },
+      },
+      {
+        id: 'speciality',
+        accessorFn: (r) => r.doctor?.speciality ?? '',
+        header: t('field.speciality'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[130px]' },
+      },
+      {
+        id: 'dateOfBirth',
+        accessorKey: 'dateOfBirth',
+        header: t('field.dob'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[120px]' },
+        cell: ({ row }) => formatDateOnly(row.original.dateOfBirth),
+      },
+      { id: 'createdByName', accessorFn: (r) => r.createdByName ?? '', header: t('field.addedBy'), meta: { className: 'min-w-[140px]' } },
+      {
+        id: 'actions',
+        header: '',
+        enableColumnFilter: false,
+        enableSorting: false,
+        meta: { className: 'w-[56px]', pin: 'right' },
+        cell: ({ row }) => <IconButton icon={Pencil} label={t('directory.edit', { name: row.original.name })} onClick={() => setEditing(row.original)} />,
+      },
+    ],
+    [t],
+  )
 
   return (
     <div>
-      <PageHeader
-        title="Recipients"
-        subtitle="Everyone your team has sent a gift to or requested one for, in one shared directory."
-        actions={<Button label="Add recipient" icon="pi pi-plus" onClick={openAddForm} />}
+      <MasterPageHeader
+        title={t('directory.title')}
+        description={t('directory.subtitle')}
+        createLabel={t('directory.add')}
+        onCreate={() => setEditing(null)}
       />
-
       <UpcomingBirthdaysWidget />
-
-      {!isLoading && (recipients ?? []).length === 0 ? (
-        <EmptyState
-          icon="pi-address-book"
-          title="No recipients yet"
-          description="Recipients from Quick Gift requests and Campaign submissions show up here automatically, or add one manually."
-          action={<Button label="Add recipient" icon="pi pi-plus" outlined onClick={openAddForm} />}
-        />
-      ) : (
-        <>
-          <div className="mb-4">
-            <IconField iconPosition="left">
-              <InputIcon className="pi pi-search" />
-              <InputText
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, phone, or email"
-                className="w-full sm:w-80"
-              />
-            </IconField>
-          </div>
-
-          <DataTable value={filtered} loading={isLoading} dataKey="id" emptyMessage="No recipients match your search.">
-            <Column header="Name" field="name" />
-            <Column header="Phone" field="phone" />
-            <Column header="Email" body={(r: Recipient) => r.email ?? '—'} />
-            <Column header="Address" body={(r: Recipient) => r.address ?? '—'} />
-            <Column header="Date of birth" body={(r: Recipient) => (r.dateOfBirth ? format(parseDateOnly(r.dateOfBirth), 'dd MMM yyyy') : '—')} />
-            <Column header="Added by" body={(r: Recipient) => r.createdByName ?? '—'} />
-            <Column
-              header=""
-              style={{ width: '4rem' }}
-              body={(r: Recipient) => <Button icon="pi pi-pencil" text aria-label="Edit recipient" onClick={() => openEditForm(r)} />}
-            />
-          </DataTable>
-        </>
+      <DataTable<Recipient>
+        columns={columns}
+        data={recipients ?? []}
+        isLoading={isLoading}
+        listFields={LIST_FIELDS}
+        searchable
+        showRowSelectionColumn={false}
+        getRowId={(r) => r.id}
+        tableId="recipients"
+        configNamespace="recipients"
+        emptyState={listEmptyBody({
+          error,
+          onRetry: () => void refetch(),
+          icon: <Contact className="h-8 w-8 opacity-50" />,
+          message: t('directory.emptyTitle'),
+          description: t('directory.emptyBody'),
+        })}
+      />
+      {editing !== undefined && (
+        <RecipientFormDialog key={editing?.id ?? 'new'} visible recipient={editing} onHide={() => setEditing(undefined)} />
       )}
-
-      <RecipientFormDialog visible={formVisible} onHide={() => setFormVisible(false)} recipient={editing} />
     </div>
   )
 }

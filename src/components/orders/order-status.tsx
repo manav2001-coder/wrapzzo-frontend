@@ -76,6 +76,24 @@ export function OrderStepper({ status, history }: { status: OrderStatus; history
   )
 }
 
+/** A thin bar with one segment per stage, filled up to the current one -- all red when cancelled. For compact cards. */
+export function OrderProgressBar({ status }: { status: OrderStatus }) {
+  const current = ORDER_STAGES.indexOf(status)
+  return (
+    <div className="flex gap-1" aria-hidden>
+      {ORDER_STAGES.map((stage, index) => (
+        <span
+          key={stage}
+          className={cn(
+            'h-1 flex-1 rounded-full',
+            status === 'CANCELLED' ? 'bg-destructive/40' : index <= current ? 'bg-success' : 'bg-border',
+          )}
+        />
+      ))}
+    </div>
+  )
+}
+
 /** "status — when — by whom", oldest first: the detail behind the stepper's dates. */
 export function OrderHistoryList({ history }: { history: StageEvent[] }) {
   const { t } = useTranslation('orders')

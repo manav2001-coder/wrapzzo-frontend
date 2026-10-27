@@ -1,20 +1,21 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
-import { Dropdown } from 'primereact/dropdown'
-import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea'
-import { Steps } from 'primereact/steps'
-import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { ArrowLeft, ArrowRight, Check, CheckCircle2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { z } from 'zod'
+import { toast } from 'sonner'
+
 import type { CampaignPurpose, CampaignRecipientCategory } from '@/api/campaigns'
-import { useActiveGifts } from '@/hooks/useGifts'
-import { PageHeader } from '@/components/PageHeader'
+import { FormGenerator } from '@/components/fields/form-generator'
+import { Stepper } from '@/components/fields/stepper'
+import { IconButton } from '@/components/icon-button'
+import { selectField, textField } from '@/components/masters/master-fields'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { SectionCard } from '@/components/section-card'
+import { Button } from '@/components/ui/button'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCreateCampaign } from '@/hooks/useCampaigns'
+import { useActiveGifts } from '@/hooks/useGifts'
 import { humanize } from '@/lib/format'
-import { showApiError, showToast } from '@/lib/toast'
+import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
 import { CampaignGiftPicker } from './CampaignGiftPicker'
 
 const PURPOSE_OPTIONS: CampaignPurpose[] = [
@@ -43,251 +44,176 @@ const RECIPIENT_OPTIONS: CampaignRecipientCategory[] = [
   'OTHER',
 ]
 
-const campaignSchema = z.object({
-  name: z.string().min(1, 'Campaign name is required'),
-  purpose: z.enum(PURPOSE_OPTIONS as [CampaignPurpose, ...CampaignPurpose[]], { message: 'Purpose is required' }),
-  recipientCategory: z.enum(RECIPIENT_OPTIONS as [CampaignRecipientCategory, ...CampaignRecipientCategory[]], {
-    message: 'Recipient category is required',
-  }),
-  giftIds: z.array(z.string()).min(1, 'Pick at least one gift to continue'),
-  instructions: z.string().optional(),
-})
+const STEPS = ['Basics', 'Choose gift(s)', 'Review & create']
 
-type CampaignFormValues = z.infer<typeof campaignSchema>
+interface Basics {
+  name: string
+  purpose: CampaignPurpose
+  recipientCategory: CampaignRecipientCategory
+  instructions: string
+}
 
-const STEPS = [{ label: 'Basics' }, { label: 'Choose gift(s)' }, { label: 'Review & create' }]
-
+/** Create a campaign in three steps: the basics, the gift(s) it offers, then a review. Audience and activation come after, on the campaign. */
 export function CampaignWizardPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  // Arrives from a Gift Store card's "Launch Campaign" button -- that gift should already
-  // be checked off when the admin reaches the gift-picking step, not re-picked from scratch.
+  const showError = useApiErrorToast()
+  // From a Gift Store card's "Launch campaign": that gift starts checked.
   const { initialGiftId } = (location.state as { initialGiftId?: string } | null) ?? {}
   const createCampaign = useCreateCampaign()
   const { data: gifts } = useActiveGifts()
+
   const [step, setStep] = useState(0)
-  const [furthestStep, setFurthestStep] = useState(0)
+  const [furthest, setFurthest] = useState(0)
+  const [basics, setBasics] = useState<Basics | null>(null)
+  const [giftIds, setGiftIds] = useState<string[]>(initialGiftId ? [initialGiftId] : [])
+  const [giftError, setGiftError] = useState(false)
+  const selectedGifts = (gifts ?? []).filter((g) => giftIds.includes(g.id))
 
-  const {
-    control,
-    handleSubmit,
-    trigger,
-    watch,
-    formState: { errors },
-  } = useForm<CampaignFormValues>({
-    resolver: zodResolver(campaignSchema),
-    defaultValues: { name: '', instructions: '', giftIds: initialGiftId ? [initialGiftId] : [] },
-  })
+  const fields = useMemo(
+    () => [
+      textField({ id: 'name', label: 'Campaign name', required: true, max: 200, spanToFullRow: true }),
+      selectField({ id: 'purpose', label: 'Purpose', required: true, options: PURPOSE_OPTIONS.map((value) => ({ value, label: humanize(value) })) }),
+      selectField({
+        id: 'recipientCategory',
+        label: 'Recipient category',
+        required: true,
+        options: RECIPIENT_OPTIONS.map((value) => ({ value, label: humanize(value) })),
+      }),
+      textField({ id: 'instructions', label: 'Instructions for your team', multiline: true, max: 2000, spanToFullRow: true }),
+    ],
+    [],
+  )
 
-  const values = watch()
-  const selectedGifts = (gifts ?? []).filter((g) => values.giftIds.includes(g.id))
-
-  async function goNext() {
-    if (step === 0) {
-      const valid = await trigger(['name', 'purpose', 'recipientCategory'])
-      if (!valid) return
-    }
-    if (step === 1) {
-      const valid = await trigger('giftIds')
-      if (!valid) return
-    }
-    const next = Math.min(step + 1, STEPS.length - 1)
+  function goTo(next: number) {
     setStep(next)
-    setFurthestStep((f) => Math.max(f, next))
+    setFurthest((f) => Math.max(f, next))
   }
 
-  function goBack() {
-    setStep((s) => Math.max(s - 1, 0))
-  }
-
-  async function onSubmit(formValues: CampaignFormValues) {
+  async function create() {
+    if (!basics) return
     try {
       const campaign = await createCampaign.mutateAsync({
-        name: formValues.name,
-        purpose: formValues.purpose,
-        recipientCategory: formValues.recipientCategory,
-        giftIds: formValues.giftIds,
-        instructions: formValues.instructions || undefined,
+        name: basics.name.trim(),
+        purpose: basics.purpose,
+        recipientCategory: basics.recipientCategory,
+        giftIds,
+        instructions: basics.instructions.trim() || undefined,
       })
-      showToast({ severity: 'success', summary: 'Campaign created', detail: 'Next, set who can submit into it and activate it.' })
+      toast.success('Campaign created', { description: 'Next, choose who can submit into it and activate it.' })
       navigate(`/campaigns/${campaign.id}`, { replace: true })
-    } catch (error) {
-      showApiError(error)
+    } catch (err) {
+      showError(err)
     }
   }
 
   return (
-    <div>
-      <PageHeader title="New campaign" subtitle="Set up the basics, pick your gift(s), then review and create." backTo="/campaigns" />
+    <div className="space-y-5 pb-6">
+      <MasterPageHeader
+        lead={<IconButton icon={ArrowLeft} label="Campaigns" onClick={() => navigate('/campaigns')} />}
+        title="New campaign"
+        description="Set up the basics, pick your gift(s), then review and create."
+      />
 
-      <div className="mb-6">
-        <Steps
-          model={STEPS.map((s, i) => ({ label: s.label, command: () => i <= furthestStep && setStep(i) }))}
-          activeIndex={step}
-          readOnly={false}
-        />
-      </div>
+      <Stepper steps={STEPS} activeStep={step} onStepClick={(index) => index <= furthest && setStep(index)} />
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        {step === 0 && (
-          <Card className="max-w-2xl">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="name" className="text-sm font-medium text-text">
-                  Campaign name
-                </label>
-                <Controller
-                  name="name"
-                  control={control}
-                  render={({ field }) => (
-                    <InputText id="name" {...field} className={errors.name ? 'p-invalid' : ''} placeholder="Product Launch - Mugs" />
-                  )}
-                />
-                {errors.name && <small className="text-red-500 dark:text-red-400">{errors.name.message}</small>}
-              </div>
+      {step === 0 && (
+        <SectionCard title="Basics" className="max-w-3xl">
+          <FormGenerator
+            fields={fields}
+            values={basics ? { ...basics } : undefined}
+            mode={basics ? 'edit' : 'create'}
+            maxWidgetsPerRow={2}
+            submitLabel="Next: choose gift(s)"
+            hideCardWrapper
+            onSubmit={(submitted) => {
+              setBasics({
+                name: String(submitted.name ?? ''),
+                purpose: submitted.purpose as CampaignPurpose,
+                recipientCategory: submitted.recipientCategory as CampaignRecipientCategory,
+                instructions: String(submitted.instructions ?? ''),
+              })
+              goTo(1)
+            }}
+          />
+        </SectionCard>
+      )}
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="purpose" className="text-sm font-medium text-text">
-                    Purpose
-                  </label>
-                  <Controller
-                    name="purpose"
-                    control={control}
-                    render={({ field }) => (
-                      <Dropdown
-                        inputId="purpose"
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.value)}
-                        options={PURPOSE_OPTIONS.map((value) => ({ label: humanize(value), value }))}
-                        placeholder="Select purpose"
-                        className={errors.purpose ? 'p-invalid w-full' : 'w-full'}
-                      />
-                    )}
-                  />
-                  {errors.purpose && <small className="text-red-500 dark:text-red-400">{errors.purpose.message}</small>}
-                </div>
+      {step === 1 && (
+        <div className="space-y-4">
+          {initialGiftId && selectedGifts.length > 0 && (
+            <p className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              Starting with <span className="font-medium">{selectedGifts[0].name}</span> from the Gift Store. Add more if you like.
+            </p>
+          )}
+          <CampaignGiftPicker
+            selectedIds={giftIds}
+            onChange={(ids) => {
+              setGiftIds(ids)
+              setGiftError(false)
+            }}
+          />
+          {giftError && <p className="text-sm text-destructive">Pick at least one gift to continue.</p>}
+          <p className="text-sm text-muted-foreground">With more than one, whoever submits a recipient picks which gift they get.</p>
+          <div className="flex justify-between">
+            <Button variant="ghost" onClick={() => setStep(0)}>
+              <ArrowLeft />
+              Back
+            </Button>
+            <Button onClick={() => (giftIds.length === 0 ? setGiftError(true) : goTo(2))}>
+              Next: review
+              <ArrowRight />
+            </Button>
+          </div>
+        </div>
+      )}
 
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="recipientCategory" className="text-sm font-medium text-text">
-                    Recipient category
-                  </label>
-                  <Controller
-                    name="recipientCategory"
-                    control={control}
-                    render={({ field }) => (
-                      <Dropdown
-                        inputId="recipientCategory"
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.value)}
-                        options={RECIPIENT_OPTIONS.map((value) => ({ label: humanize(value), value }))}
-                        placeholder="Select recipients"
-                        className={errors.recipientCategory ? 'p-invalid w-full' : 'w-full'}
-                      />
-                    )}
-                  />
-                  {errors.recipientCategory && (
-                    <small className="text-red-500 dark:text-red-400">{errors.recipientCategory.message}</small>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="instructions" className="text-sm font-medium text-text">
-                  Instructions for your team
-                </label>
-                <Controller
-                  name="instructions"
-                  control={control}
-                  render={({ field }) => (
-                    <InputTextarea id="instructions" {...field} rows={3} placeholder="Optional" className="w-full" />
-                  )}
-                />
-              </div>
-
-              <div className="mt-2 flex justify-end">
-                <Button type="button" label="Next: Choose gift(s)" icon="pi pi-arrow-right" iconPos="right" onClick={goNext} />
-              </div>
+      {step === 2 && basics && (
+        <SectionCard title="Review" className="max-w-3xl">
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <dt className="text-xs text-muted-foreground">Campaign name</dt>
+              <dd className="text-base font-medium">{basics.name}</dd>
             </div>
-          </Card>
-        )}
-
-        {step === 1 && (
-          <div className="flex flex-col gap-4">
-            {initialGiftId && selectedGifts.length > 0 && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-sm text-text">
-                <i className="pi pi-check-circle text-accent" />
-                <span>
-                  Starting with <span className="font-medium">{selectedGifts[0].name}</span> from the Gift Store — you can add more on the
-                  next step.
-                </span>
+            <div>
+              <dt className="text-xs text-muted-foreground">Purpose</dt>
+              <dd className="text-sm">{humanize(basics.purpose)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Recipients</dt>
+              <dd className="text-sm">{humanize(basics.recipientCategory)}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="mb-2 text-xs text-muted-foreground">Gift(s)</dt>
+              <dd className="flex flex-wrap gap-2">
+                {selectedGifts.map((g) => (
+                  <span key={g.id} className="flex items-center gap-2 rounded-md border bg-muted/40 py-1 pr-3 pl-1 text-sm">
+                    <GiftThumbnail gift={g} size={28} />
+                    {g.name}
+                  </span>
+                ))}
+              </dd>
+            </div>
+            {basics.instructions && (
+              <div className="sm:col-span-2">
+                <dt className="text-xs text-muted-foreground">Instructions</dt>
+                <dd className="text-sm whitespace-pre-line">{basics.instructions}</dd>
               </div>
             )}
-            <Controller
-              name="giftIds"
-              control={control}
-              render={({ field }) => <CampaignGiftPicker selectedIds={field.value} onChange={field.onChange} />}
-            />
-            {errors.giftIds && <small className="text-red-500 dark:text-red-400">{errors.giftIds.message}</small>}
-            <p className="text-sm text-text-muted">
-              If you select more than one, the field user picks which one each recipient gets when they submit.
-            </p>
-
-            <div className="flex justify-between">
-              <Button type="button" label="Back" icon="pi pi-arrow-left" text onClick={goBack} />
-              <Button type="button" label="Next: Review" icon="pi pi-arrow-right" iconPos="right" onClick={goNext} />
-            </div>
+          </dl>
+          <div className="mt-5 flex justify-between">
+            <Button variant="ghost" onClick={() => setStep(1)}>
+              <ArrowLeft />
+              Back
+            </Button>
+            <Button loading={createCampaign.isPending} onClick={() => void create()}>
+              <Check />
+              Create campaign
+            </Button>
           </div>
-        )}
-
-        {step === 2 && (
-          <Card className="max-w-2xl">
-            <div className="flex flex-col gap-4">
-              <div>
-                <p className="text-xs text-text-muted">Campaign name</p>
-                <p className="text-base font-medium text-text">{values.name}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-text-muted">Purpose</p>
-                  <p className="text-sm text-text">{humanize(values.purpose)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-text-muted">Recipients</p>
-                  <p className="text-sm text-text">{humanize(values.recipientCategory)}</p>
-                </div>
-              </div>
-              <div>
-                <p className="mb-2 text-xs text-text-muted">Gift(s)</p>
-                <div className="flex flex-wrap gap-3">
-                  {selectedGifts.map((g) => {
-                    const cover = [...g.images].sort((a, b) => a.displayOrder - b.displayOrder)[0]
-                    return (
-                      <div key={g.id} className="flex items-center gap-2 rounded-lg border border-border bg-surface-muted py-1 pr-3 pl-1">
-                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded bg-surface">
-                          {cover && <img src={cover.imageUrl} alt="" className="h-full w-full object-cover" />}
-                        </div>
-                        <span className="text-sm text-text">{g.name}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-              {values.instructions && (
-                <div>
-                  <p className="text-xs text-text-muted">Instructions</p>
-                  <p className="text-sm text-text">{values.instructions}</p>
-                </div>
-              )}
-
-              <div className="mt-2 flex justify-between">
-                <Button type="button" label="Back" icon="pi pi-arrow-left" text onClick={goBack} />
-                <Button type="submit" label="Create campaign" icon="pi pi-check" loading={createCampaign.isPending} />
-              </div>
-            </div>
-          </Card>
-        )}
-      </form>
+        </SectionCard>
+      )}
     </div>
   )
 }

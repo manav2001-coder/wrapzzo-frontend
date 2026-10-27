@@ -9,12 +9,6 @@ import '@fontsource/inter/800.css'
 import '@fontsource/jetbrains-mono/500.css'
 import '@fontsource/jetbrains-mono/600.css'
 import '@fontsource/jetbrains-mono/700.css'
-// MIGRATION: PrimeReact stays loaded only while pages still render its widgets; it goes with the
-// last of them.
-import { PrimeReactProvider } from 'primereact/api'
-import 'primereact/resources/primereact.min.css'
-import 'primereact/resources/themes/lara-light-indigo/theme.css'
-import 'primeicons/primeicons.css'
 import './index.css'
 
 import App from './App.tsx'
@@ -24,11 +18,9 @@ import { Toaster } from '@/components/ui/sonner'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Providers>
-      <PrimeReactProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </PrimeReactProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
       <Toaster />
     </Providers>
   </StrictMode>,

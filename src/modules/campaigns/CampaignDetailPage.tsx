@@ -1,39 +1,33 @@
-import { Button } from 'primereact/button'
-import { confirmDialog } from 'primereact/confirmdialog'
-import { IconField } from 'primereact/iconfield'
-import { InputIcon } from 'primereact/inputicon'
-import { InputText } from 'primereact/inputtext'
-import { MultiSelect } from 'primereact/multiselect'
-import { ProgressSpinner } from 'primereact/progressspinner'
-import { TabPanel, TabView } from 'primereact/tabview'
-import { useState } from 'react'
+import { ArrowLeft, CalendarDays, Check, Gift, Lock, Pencil, Play, Search, Send, Target, Users, type LucideIcon } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import type { Submission } from '@/api/submissions'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
-import { StatusBadge } from '@/components/StatusBadge'
-import { useActiveGifts } from '@/hooks/useGifts'
-import {
-  useAudienceOptions,
-  useCampaign,
-  useReplaceCampaignAudience,
-  useSetCampaignStatus,
-  useUpdateCampaign,
-} from '@/hooks/useCampaigns'
+import { toast } from 'sonner'
+
+import { AppDialog } from '@/components/app-dialog'
+import { AppTabs } from '@/components/app-tabs'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
+import { useAudienceOptions, useCampaign, useReplaceCampaignAudience, useSetCampaignStatus, useUpdateCampaign } from '@/hooks/useCampaigns'
+import { useActiveGifts } from '@/hooks/useGifts'
 import { useCampaignSubmissions, useMySubmissions } from '@/hooks/useSubmissions'
+import { formatDate } from '@/lib/datetime'
 import { humanize } from '@/lib/format'
-import { showApiError, showToast } from '@/lib/toast'
+import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
+import { CampaignGiftPicker } from './CampaignGiftPicker'
+import { CampaignStatusBadge } from './campaign-status'
 import { computeOrgUnitFrontier, OrgUnitCascadeSelector, type OrgUnitOption } from './OrgUnitCascadeSelector'
+import { SubmissionList } from './submission-card'
 
 /**
- * The saved audience only stores the deepest checked org unit per branch (see
- * computeOrgUnitFrontier) -- every ancestor is deliberately dropped from what's persisted,
- * since it's implied by the leaf. OrgUnitCascadeSelector, though, needs every ancestor's id
- * literally present in `selected`: it's what both reveals each deeper level in the tree and
- * marks each row's own checkbox as checked. Re-derive that full set here by walking each
- * saved id back up to the root via parentId, or every level above the one actually saved
- * renders as an unchecked, invisible-until-expanded row instead of reflecting what was saved.
+ * The saved audience stores only the deepest checked org unit per branch (computeOrgUnitFrontier),
+ * but the selector needs every ancestor present to reveal each level and tick each row. Walk each
+ * saved id back up to the root via parentId to rebuild that set.
  */
 function expandWithAncestors(orgUnitIds: string[], orgUnits: OrgUnitOption[]): Set<string> {
   const byId = new Map(orgUnits.map((o) => [o.id, o]))
@@ -48,99 +42,41 @@ function expandWithAncestors(orgUnitIds: string[], orgUnits: OrgUnitOption[]): S
   return expanded
 }
 
-/** One submission's detail card -- shared by the manager "Submissions" tab (everyone's) and a
- * Member's own-submissions view (just theirs, for this one campaign). */
-function SubmissionCard({ submission }: { submission: Submission }) {
+function Fact({ icon: Icon, label, children, action }: { icon: LucideIcon; label: string; children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="rounded-lg border border-border p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <span className="font-medium text-text">{submission.submittedByName}</span>
-          <span className="ml-2 text-xs text-text-muted">
-            {submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : ''}
+    <Card>
+      <CardContent className="space-y-1 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-md bg-primary/10 text-primary">
+            <Icon className="h-4 w-4" />
           </span>
+          {action}
         </div>
-        <StatusBadge status={submission.status} label={humanize(submission.status)} />
-      </div>
-      <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
-        {submission.giftName && (
-          <div>
-            <span className="text-text-muted">Gift: </span>
-            <span className="font-medium text-text">{submission.giftName}</span>
-          </div>
-        )}
-        {submission.values.map((v) => (
-          <div key={v.fieldKey}>
-            <span className="text-text-muted">{v.label}: </span>
-            <span className="text-text">{Array.isArray(v.value) ? v.value.join(', ') : String(v.value ?? '—')}</span>
-          </div>
-        ))}
-      </div>
-      {submission.attachments.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {submission.attachments.map((a) => (
-            <a key={a.fieldKey} href={a.url} target="_blank" rel="noreferrer" className="text-xs text-accent underline">
-              {a.label}: {a.fileName}
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <div className="text-sm font-semibold">{children}</div>
+      </CardContent>
+    </Card>
   )
 }
 
-function SubmissionList({
-  submissions,
-  isLoading,
-  emptyTitle = 'No submissions yet',
-  emptyDescription,
-}: {
-  submissions: Submission[] | undefined
-  isLoading: boolean
-  emptyTitle?: string
-  emptyDescription: string
-}) {
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-6">
-        <ProgressSpinner style={{ width: 32, height: 32 }} strokeWidth="4" />
-      </div>
-    )
-  }
-  if (!submissions || submissions.length === 0) {
-    return <EmptyState icon="pi-inbox" title={emptyTitle} description={emptyDescription} />
-  }
-  return (
-    <div className="flex flex-col gap-3">
-      {submissions.map((submission) => (
-        <SubmissionCard key={submission.id} submission={submission} />
-      ))}
-    </div>
-  )
-}
+type Confirming = 'activate' | 'close' | null
 
+/** One campaign: its facts, lifecycle actions, and -- by permission -- its audience and submissions, or the member's own. */
 export function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>()
   const campaignId = id ?? ''
   const navigate = useNavigate()
   const location = useLocation()
-  const { tab } = (location.state as { tab?: 'submissions' } | null) ?? {}
+  const showError = useApiErrorToast()
+  const { tab: requestedTab } = (location.state as { tab?: 'submissions' } | null) ?? {}
 
-  // Mirrors the backend exactly: the Audience tab's endpoint requires campaign.manage
-  // specifically; the Submissions list accepts campaign.manage OR campaign.approve. Deciding
-  // this synchronously from the already-cached permission list -- instead of the old approach
-  // of optimistically showing both tabs and only discovering a 403 after the Submissions
-  // query failed -- is what stops the whole tab view from disappearing out from under a
-  // Member mid-click.
-  const canManageAudience = useHasAccess('campaign.manage')
-  const hasApprove = useHasAccess('campaign.approve')
-  const canReviewSubmissions = canManageAudience || hasApprove
-  const showManagerView = canManageAudience || canReviewSubmissions
-
-  const [activeIndex, setActiveIndex] = useState(tab === 'submissions' && canManageAudience ? 1 : 0)
+  // Mirrors the backend: the audience needs campaign.manage; the submissions list takes manage or approve.
+  const canManage = useHasAccess('campaign.manage')
+  const canApprove = useHasAccess('campaign.approve')
+  const canReviewSubmissions = canManage || canApprove
 
   const { data: campaign, isLoading } = useCampaign(campaignId)
-  const { data: audienceOptions } = useAudienceOptions(canManageAudience)
+  const { data: audienceOptions } = useAudienceOptions(canManage)
   const { data: activeGifts } = useActiveGifts()
   const submissionsQuery = useCampaignSubmissions(campaignId, canReviewSubmissions)
   const mySubmissionsQuery = useMySubmissions()
@@ -148,79 +84,61 @@ export function CampaignDetailPage() {
   const replaceAudience = useReplaceCampaignAudience(campaignId)
   const updateCampaign = useUpdateCampaign(campaignId)
 
+  const [tab, setTab] = useState(requestedTab === 'submissions' || !canManage ? 'submissions' : 'audience')
   const [orgUnitIdsDraft, setOrgUnitIdsDraft] = useState<Set<string> | null>(null)
   const [giftsDraft, setGiftsDraft] = useState<string[] | null>(null)
-  const [submissionSearch, setSubmissionSearch] = useState('')
+  const [search, setSearch] = useState('')
+  const [confirming, setConfirming] = useState<Confirming>(null)
 
   if (isLoading || !campaign) {
     return (
-      <div className="flex justify-center py-20">
-        <ProgressSpinner style={{ width: 40, height: 40 }} strokeWidth="4" />
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     )
   }
 
-  const giftImageById = new Map((activeGifts ?? []).map((g) => [g.id, g.images[0]?.imageUrl]))
-
+  const orgUnits = audienceOptions?.orgUnits ?? []
   const orgUnitIds =
     orgUnitIdsDraft ??
     expandWithAncestors(
       campaign.audiences.filter((a) => a.type === 'ORG_UNIT' && a.orgUnitId).map((a) => a.orgUnitId as string),
-      audienceOptions?.orgUnits ?? [],
+      orgUnits,
     )
-  const audienceDirty = orgUnitIdsDraft !== null
   const myCampaignSubmissions = (mySubmissionsQuery.data ?? []).filter((s) => s.campaignId === campaignId)
+  const giftById = new Map((activeGifts ?? []).map((g) => [g.id, g]))
 
-  const submissionSearchQuery = submissionSearch.trim().toLowerCase()
-  const filteredSubmissions = !submissionSearchQuery
+  const q = search.trim().toLowerCase()
+  const filteredSubmissions = !q
     ? submissionsQuery.data
-    : (submissionsQuery.data ?? []).filter((s) => {
-        const haystack = [s.submittedByName, ...s.values.map((v) => (Array.isArray(v.value) ? v.value.join(' ') : String(v.value ?? '')))]
-        return haystack.some((value) => value.toLowerCase().includes(submissionSearchQuery))
-      })
+    : (submissionsQuery.data ?? []).filter((s) =>
+        [s.submittedByName, ...s.values.map((v) => (Array.isArray(v.value) ? v.value.join(' ') : String(v.value ?? '')))].some((value) =>
+          value.toLowerCase().includes(q),
+        ),
+      )
 
-  function confirmActivate() {
-    confirmDialog({
-      header: 'Activate campaign',
-      message: 'Once active, people in the audience can submit recipients. You can still edit the audience afterward.',
-      icon: 'pi pi-play',
-      accept: async () => {
-        try {
-          await setStatus.mutateAsync('ACTIVE')
-          showToast({ severity: 'success', summary: 'Campaign activated' })
-        } catch (error) {
-          showApiError(error)
-        }
-      },
-    })
-  }
-
-  function confirmClose() {
-    confirmDialog({
-      header: 'Close campaign',
-      message: 'No new submissions or orders can be created from this campaign afterward. Orders already in flight continue.',
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: 'p-button-danger',
-      accept: async () => {
-        try {
-          await setStatus.mutateAsync('CLOSED')
-          showToast({ severity: 'success', summary: 'Campaign closed' })
-        } catch (error) {
-          showApiError(error)
-        }
-      },
-    })
+  async function confirmStatus() {
+    const next = confirming === 'activate' ? 'ACTIVE' : 'CLOSED'
+    try {
+      await setStatus.mutateAsync(next)
+      toast.success(next === 'ACTIVE' ? 'Campaign activated' : 'Campaign closed')
+    } catch (err) {
+      showError(err)
+    } finally {
+      setConfirming(null)
+    }
   }
 
   async function saveAudience() {
-    if (!audienceDirty) return
-    const frontier = computeOrgUnitFrontier(orgUnitIds, audienceOptions?.orgUnits ?? [])
+    const frontier = computeOrgUnitFrontier(orgUnitIds, orgUnits)
     try {
       await replaceAudience.mutateAsync(frontier.map((orgUnitId) => ({ type: 'ORG_UNIT' as const, orgUnitId })))
       setOrgUnitIdsDraft(null)
-      showToast({ severity: 'success', summary: 'Audience saved' })
-    } catch (error) {
-      showApiError(error)
+      toast.success('Audience saved')
+    } catch (err) {
+      showError(err)
     }
   }
 
@@ -236,180 +154,136 @@ export function CampaignDetailPage() {
         submissionDeadline: campaign.submissionDeadline ?? undefined,
       })
       setGiftsDraft(null)
-      showToast({ severity: 'success', summary: 'Gifts updated' })
-    } catch (error) {
-      showApiError(error)
+      toast.success('Gifts updated')
+    } catch (err) {
+      showError(err)
     }
   }
 
-  const panels = []
-  if (canManageAudience) {
-    panels.push(
-      <TabPanel key="audience" header="Audience">
-        <p className="mb-3 text-sm text-text-muted">Who can submit recipients into this campaign.</p>
-        <OrgUnitCascadeSelector orgUnits={audienceOptions?.orgUnits ?? []} selected={orgUnitIds} onChange={setOrgUnitIdsDraft} />
-        {audienceDirty && (
-          <div className="mt-4 flex gap-2">
-            <Button label="Save audience" icon="pi pi-check" loading={replaceAudience.isPending} onClick={saveAudience} />
-            <Button label="Cancel" text onClick={() => setOrgUnitIdsDraft(null)} />
-          </div>
-        )}
-      </TabPanel>,
-    )
-  }
-  if (canReviewSubmissions) {
-    panels.push(
-      <TabPanel key="submissions" header={`Submissions${submissionsQuery.data ? ` (${submissionsQuery.data.length})` : ''}`}>
-        {submissionsQuery.data && submissionsQuery.data.length > 0 && (
-          <div className="mb-4">
-            <IconField iconPosition="left">
-              <InputIcon className="pi pi-search" />
-              <InputText
-                value={submissionSearch}
-                onChange={(e) => setSubmissionSearch(e.target.value)}
-                placeholder="Search by submitter or recipient details"
-                className="w-full sm:w-80"
-              />
-            </IconField>
-          </div>
-        )}
-        <SubmissionList
-          submissions={filteredSubmissions}
-          isLoading={submissionsQuery.isLoading}
-          emptyTitle={submissionSearchQuery ? 'No submissions match' : 'No submissions yet'}
-          emptyDescription={
-            submissionSearchQuery
-              ? 'Try a different name or search term.'
-              : 'Recipients submitted by your team for this campaign will appear here.'
-          }
-        />
-      </TabPanel>,
-    )
-  }
+  const submissionsPanel = (
+    <div className="space-y-3">
+      {submissionsQuery.data && submissionsQuery.data.length > 0 && (
+        <div className="relative w-full sm:w-80">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by submitter or recipient details"
+            aria-label="Search submissions"
+            className="pl-8"
+          />
+        </div>
+      )}
+      <SubmissionList
+        submissions={filteredSubmissions}
+        isLoading={submissionsQuery.isLoading}
+        emptyTitle={q ? 'No submissions match' : 'No submissions yet'}
+        emptyDescription={q ? 'Try a different name or search term.' : 'Recipients submitted by your team for this campaign will appear here.'}
+      />
+    </div>
+  )
+
+  const audiencePanel = (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">Who can submit recipients into this campaign.</p>
+      <OrgUnitCascadeSelector orgUnits={orgUnits} selected={orgUnitIds} onChange={setOrgUnitIdsDraft} />
+      {orgUnitIdsDraft !== null && (
+        <div className="flex gap-2">
+          <Button loading={replaceAudience.isPending} onClick={() => void saveAudience()}>
+            <Check />
+            Save audience
+          </Button>
+          <Button variant="ghost" onClick={() => setOrgUnitIdsDraft(null)}>
+            Cancel
+          </Button>
+        </div>
+      )}
+    </div>
+  )
 
   return (
-    <div>
-      <PageHeader
+    <div className="space-y-4 pb-6">
+      <MasterPageHeader
+        lead={<IconButton icon={ArrowLeft} label="Campaigns" onClick={() => navigate('/campaigns')} />}
         title={`${campaign.displayId} · ${campaign.name}`}
-        subtitle={campaign.instructions ?? undefined}
-        backTo="/campaigns"
-        actions={
-          <div className="flex items-center gap-2">
-            <StatusBadge status={campaign.status} label={humanize(campaign.status)} />
-            {canManageAudience && campaign.status === 'DRAFT' && (
-              <Button label="Activate" icon="pi pi-play" loading={setStatus.isPending} onClick={confirmActivate} />
+        description={campaign.instructions ?? undefined}
+        extra={
+          <div className="flex flex-wrap items-center gap-2">
+            <CampaignStatusBadge status={campaign.status} />
+            {canManage && campaign.status === 'DRAFT' && (
+              <Button size="sm" className="h-9" onClick={() => setConfirming('activate')}>
+                <Play />
+                Activate
+              </Button>
             )}
-            {canManageAudience && campaign.status === 'ACTIVE' && (
-              <Button
-                label="Close campaign"
-                icon="pi pi-lock"
-                severity="danger"
-                outlined
-                loading={setStatus.isPending}
-                onClick={confirmClose}
-              />
+            {canManage && campaign.status === 'ACTIVE' && (
+              <Button size="sm" variant="outline" className="h-9" onClick={() => setConfirming('close')}>
+                <Lock />
+                Close campaign
+              </Button>
             )}
             {campaign.status === 'ACTIVE' && (
-              <Button label="Submit a recipient" icon="pi pi-send" onClick={() => navigate(`/campaigns/${campaignId}/submit`)} />
+              <Button size="sm" className="h-9" onClick={() => navigate(`/campaigns/${campaignId}/submit`)}>
+                <Send />
+                Submit a recipient
+              </Button>
             )}
           </div>
         }
       />
 
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-2xl border border-border bg-surface p-4">
-          <div className="mb-2.5 grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 text-accent">
-            <i className="pi pi-bullseye text-sm" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Fact icon={Target} label="Purpose">
+          {humanize(campaign.purpose)}
+        </Fact>
+        <Fact icon={Users} label="Recipients">
+          {humanize(campaign.recipientCategory)}
+        </Fact>
+        <Fact
+          icon={Gift}
+          label="Gift(s)"
+          action={
+            canManage &&
+            campaign.status === 'DRAFT' && (
+              <IconButton icon={Pencil} label="Edit gifts" onClick={() => setGiftsDraft(campaign.gifts.map((g) => g.id))} />
+            )
+          }
+        >
+          <div className="flex flex-wrap gap-1.5 font-normal">
+            {campaign.gifts.map((g) => {
+              const full = giftById.get(g.id)
+              return (
+                <span key={g.id} className="flex items-center gap-1.5 rounded-full bg-muted py-0.5 pr-2.5 pl-0.5 text-xs font-medium">
+                  {full ? <GiftThumbnail gift={full} size={20} /> : <Gift className="h-4 w-4" />}
+                  <span className="max-w-[120px] truncate" title={g.name}>
+                    {g.name}
+                  </span>
+                </span>
+              )
+            })}
           </div>
-          <p className="text-xs text-text-muted">Purpose</p>
-          <p className="mt-0.5 text-sm font-semibold text-text">{humanize(campaign.purpose)}</p>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-surface p-4">
-          <div className="mb-2.5 grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-500">
-            <i className="pi pi-users text-sm" />
-          </div>
-          <p className="text-xs text-text-muted">Recipients</p>
-          <p className="mt-0.5 text-sm font-semibold text-text">{humanize(campaign.recipientCategory)}</p>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-surface p-4">
-          <div className="mb-2.5 flex items-center justify-between gap-1">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-500/5 text-amber-500">
-              <i className="pi pi-gift text-sm" />
-            </div>
-            {canManageAudience && campaign.status === 'DRAFT' && giftsDraft === null && (
-              <button
-                type="button"
-                className="text-xs font-medium text-accent hover:underline"
-                onClick={() => setGiftsDraft(campaign.gifts.map((g) => g.id))}
-              >
-                Edit
-              </button>
-            )}
-          </div>
-          <p className="mb-1.5 text-xs text-text-muted">Gift(s)</p>
-          {giftsDraft !== null ? (
-            <div className="flex flex-col gap-2">
-              <MultiSelect
-                value={giftsDraft}
-                onChange={(e) => setGiftsDraft(e.value)}
-                options={(activeGifts ?? []).map((g) => ({ label: g.name, value: g.id }))}
-                display="chip"
-                filter
-                className="w-full text-sm"
-                placeholder="Select at least one"
-              />
-              <div className="flex gap-2">
-                <Button label="Save" size="small" loading={updateCampaign.isPending} disabled={giftsDraft.length === 0} onClick={saveGifts} />
-                <Button label="Cancel" text size="small" onClick={() => setGiftsDraft(null)} />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {campaign.gifts.map((g) => {
-                const imageUrl = giftImageById.get(g.id)
-                return (
-                  <div key={g.id} className="flex items-center gap-1.5 rounded-full bg-surface-muted py-1 pr-2.5 pl-1">
-                    {imageUrl ? (
-                      <img src={imageUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
-                    ) : (
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                        <i className="pi pi-gift text-[9px]" />
-                      </span>
-                    )}
-                    <span className="max-w-[110px] truncate text-xs font-medium text-text" title={g.name}>
-                      {g.name}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-border bg-surface p-4">
-          <div className="mb-2.5 grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-sky-500/15 to-sky-500/5 text-sky-500">
-            <i className="pi pi-calendar text-sm" />
-          </div>
-          <p className="text-xs text-text-muted">Deadline</p>
-          <p className="mt-0.5 text-sm font-semibold text-text">
-            {campaign.submissionDeadline ? new Date(campaign.submissionDeadline).toLocaleDateString() : '—'}
-          </p>
-        </div>
+        </Fact>
+        <Fact icon={CalendarDays} label="Deadline">
+          {campaign.submissionDeadline ? formatDate(campaign.submissionDeadline) : '—'}
+        </Fact>
       </div>
 
-      {showManagerView ? (
-        <TabView scrollable activeIndex={activeIndex} onTabChange={(e) => setActiveIndex(e.index)}>
-          {panels}
-        </TabView>
+      {canReviewSubmissions ? (
+        <AppTabs
+          value={tab}
+          onValueChange={setTab}
+          tabs={[
+            ...(canManage ? [{ value: 'audience', label: 'Audience', content: audiencePanel }] : []),
+            { value: 'submissions', label: 'Submissions', badge: submissionsQuery.data?.length || undefined, content: submissionsPanel },
+          ]}
+        />
       ) : (
-        <div>
-          <p className="mb-3 text-sm text-text-muted">
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
             You're in the audience for this campaign.{' '}
             {campaign.status === 'ACTIVE'
-              ? 'Use "Submit a recipient" above to add one, or see what you\'ve already sent below.'
-              : 'It is not currently accepting submissions.'}
+              ? 'Use "Submit a recipient" to add one, or see what you have already sent below.'
+              : 'It is not accepting submissions right now.'}
           </p>
           <SubmissionList
             submissions={myCampaignSubmissions}
@@ -418,6 +292,38 @@ export function CampaignDetailPage() {
           />
         </div>
       )}
+
+      <AppDialog
+        open={confirming !== null}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        size="sm"
+        title={confirming === 'activate' ? 'Activate campaign?' : 'Close campaign?'}
+        description={
+          confirming === 'activate'
+            ? 'People in the audience can then submit recipients. You can still edit the audience afterwards.'
+            : 'No new submissions or orders can come from this campaign afterwards. Orders already in flight continue.'
+        }
+        confirmLabel={confirming === 'activate' ? 'Activate' : 'Close campaign'}
+        confirmVariant={confirming === 'close' ? 'destructive' : 'default'}
+        cancelLabel="Cancel"
+        loading={setStatus.isPending}
+        onConfirm={() => void confirmStatus()}
+      />
+
+      <AppDialog
+        open={giftsDraft !== null}
+        onOpenChange={(open) => !open && setGiftsDraft(null)}
+        size="xl"
+        title="Edit gifts"
+        description="Choose the gift(s) this campaign offers."
+        confirmLabel="Save gifts"
+        cancelLabel="Cancel"
+        confirmDisabled={!giftsDraft || giftsDraft.length === 0}
+        loading={updateCampaign.isPending}
+        onConfirm={() => void saveGifts()}
+      >
+        {giftsDraft && <CampaignGiftPicker selectedIds={giftsDraft} onChange={setGiftsDraft} />}
+      </AppDialog>
     </div>
   )
 }

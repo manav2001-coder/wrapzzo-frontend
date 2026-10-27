@@ -1,12 +1,14 @@
-import { ProgressSpinner } from 'primereact/progressspinner'
-import { useMemo, useState } from 'react'
+import { BarChart3, CalendarDays, Clock, Megaphone, Zap } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BarChart } from '@/components/charts/BarChart'
-import { DonutChart } from '@/components/charts/DonutChart'
-import { TrendChart } from '@/components/charts/TrendChart'
-import { EmptyState } from '@/components/EmptyState'
-import { SectionHeader } from '@/components/SectionHeader'
-import { StatCard } from '@/components/StatCard'
+
+import { DonutChart } from '@/components/charts/donut-chart'
+import { MiniBarChart } from '@/components/charts/mini-bar-chart'
+import { MultiLineChart } from '@/components/charts/multi-line-chart'
+import { EmptyState } from '@/components/empty-state'
+import { SectionCard } from '@/components/section-card'
+import { StatCard } from '@/components/stat-card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useDashboard } from '@/hooks/useDashboard'
 import { humanize } from '@/lib/format'
 import { statusColor } from '@/lib/statusColors'
@@ -22,61 +24,47 @@ import { RecentCampaignsCard } from './RecentCampaignsCard'
 const SOURCE_LABELS: Record<string, string> = { CAMPAIGN: 'Campaign', QUICK_GIFT: 'Quick Gift', BULK_GIFT: 'Bulk Gifting' }
 const SOURCE_COLORS: Record<string, string> = { CAMPAIGN: '#6366f1', QUICK_GIFT: '#f59e0b', BULK_GIFT: '#0d9488' }
 
-// bg-transparent explicitly, not just omitted -- there's no Tailwind preflight in this app
-// (see index.css), so a plain <button> with no background utility falls back to PrimeReact's
-// own default button chrome (a solid gray fill) instead of staying invisible around the card.
-const STAT_BUTTON_CLASS = 'w-full rounded-xl border-none bg-transparent p-0 text-left transition-transform hover:-translate-y-0.5'
+function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold">{title}</h2>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
 
+/** The company's (or, for a member, their own) gifting at a glance; every number drills into its records. */
 export function DashboardPage() {
   const { data, isLoading } = useDashboard()
   const navigate = useNavigate()
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
   const [selectedQuickGiftId, setSelectedQuickGiftId] = useState<string | null>(null)
 
-  // Memoized so a re-render from unrelated page state (opening a dialog, a drilldown
-  // selection) doesn't hand the donut charts a new slices array every time -- that
-  // would make Highcharts re-animate the chart for no data-related reason.
-  const sourceSlices = useMemo(
-    () =>
-      data
-        ? Object.entries(data.orderSourceBreakdown).map(([key, value]) => ({
-            key,
-            name: SOURCE_LABELS[key] ?? humanize(key),
-            value,
-            color: SOURCE_COLORS[key] ?? '#94a3b8',
-          }))
-        : [],
-    [data],
-  )
-  const quickGiftSlices = useMemo(
-    () =>
-      data
-        ? Object.entries(data.quickGiftStatusBreakdown).map(([key, value]) => ({
-            key,
-            name: humanize(key),
-            value,
-            color: statusColor(key),
-          }))
-        : [],
-    [data],
-  )
-  const submissionSlices = useMemo(
-    () =>
-      data
-        ? Object.entries(data.submissionStatusBreakdown).map(([key, value]) => ({
-            key,
-            name: humanize(key),
-            value,
-            color: key === 'PENDING' ? statusColor('SUBMITTED') : statusColor(key),
-          }))
-        : [],
-    [data],
-  )
+  const breakdowns = useMemo(() => {
+    if (!data) return null
+    const slices = (counts: Record<string, number>, label: (key: string) => string, color: (key: string) => string) =>
+      Object.entries(counts).map(([key, value]) => ({ key, label: label(key), value, color: color(key) }))
+    return {
+      source: slices(data.orderSourceBreakdown, (k) => SOURCE_LABELS[k] ?? humanize(k), (k) => SOURCE_COLORS[k] ?? '#94a3b8'),
+      quickGift: slices(data.quickGiftStatusBreakdown, humanize, statusColor),
+      submission: slices(data.submissionStatusBreakdown, humanize, (k) => (k === 'PENDING' ? statusColor('SUBMITTED') : statusColor(k))),
+      trend: data.activityTrend.map((p) => ({ label: p.weekLabel, CAMPAIGN: p.campaignSubmissions, QUICK_GIFT: p.quickGiftRequests })),
+    }
+  }, [data])
 
-  if (isLoading || !data) {
+  if (isLoading || !data || !breakdowns) {
     return (
-      <div className="flex justify-center py-20">
-        <ProgressSpinner style={{ width: 40, height: 40 }} strokeWidth="4" />
+      <div className="space-y-4">
+        <Skeleton className="h-28 w-full" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <Skeleton className="h-64 w-full" />
       </div>
     )
   }
@@ -91,15 +79,14 @@ export function DashboardPage() {
     data.recentActivity.length > 0
 
   return (
-    <div>
-      <div className="relative mb-6 overflow-hidden rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5 sm:p-6">
-        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-accent via-accent/40 to-transparent" />
-        <p className="text-xs font-semibold tracking-wide text-accent uppercase">Welcome back</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-text sm:text-3xl">{data.companyName}</h1>
-        <p className="mt-1.5 text-sm text-text-muted">
+    <div className="space-y-6 pb-6">
+      <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 sm:p-6">
+        <p className="text-xs font-semibold tracking-wide text-primary uppercase">Welcome back</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{data.companyName}</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           {data.companyWide
-            ? "Here's everything happening across your campaigns, orders, and Quick Gift requests."
-            : "Here's what's happening with your campaigns, orders, and Quick Gift requests."}
+            ? "Here's everything happening across your campaigns, orders and Quick Gift requests."
+            : "Here's what's happening with your campaigns, orders and Quick Gift requests."}
         </p>
       </div>
 
@@ -107,17 +94,17 @@ export function DashboardPage() {
 
       {!hasAnyActivity ? (
         <EmptyState
-          icon="pi-chart-bar"
+          icon={BarChart3}
           title="Nothing to show yet"
           description={
             data.companyWide
               ? 'Once your team starts campaigns and Quick Gift requests, this dashboard fills in automatically.'
-              : "Once you're part of a campaign or send a Quick Gift, they'll show up here."
+              : "Once you're part of a campaign or send a Quick Gift, it shows up here."
           }
         />
       ) : (
         <>
-          <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="lg:col-span-5">
               <HeroSpendCard amount={data.monthlySpend} onClick={() => setDrilldown({ dimension: 'monthlySpend', value: '' })} />
             </div>
@@ -131,133 +118,116 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="mb-8">
-            <SectionHeader
-              eyebrow="Fulfillment"
-              title="Order timeline"
-              subtitle={data.companyWide ? 'Every gift order in the company, ordered to delivered.' : 'Your gift orders, ordered to delivered.'}
-            />
+          <Section
+            title="Order timeline"
+            description={data.companyWide ? 'Every gift order in the company, ordered to delivered.' : 'Your gift orders, ordered to delivered.'}
+          >
             <OrderTimeline orders={data.recentOrders} />
-          </div>
+          </Section>
 
-          <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <button type="button" onClick={() => navigate(data.companyWide ? '/campaigns' : '/my-campaigns')} className={STAT_BUTTON_CLASS}>
-              <StatCard label="Campaigns running" value={data.campaignsRunning} icon="pi-megaphone" />
-            </button>
-            <button type="button" onClick={() => navigate(data.companyWide ? '/approvals' : '/my-campaigns')} className={STAT_BUTTON_CLASS}>
-              <StatCard
-                label="Submission approvals pending"
-                value={data.submissionsPending}
-                icon="pi-clock"
-                accent={data.submissionsPending > 0 ? 'danger' : 'accent'}
-                urgent={data.submissionsPending > 0}
-              />
-            </button>
-            <button type="button" onClick={() => navigate(data.companyWide ? '/approvals' : '/quick-gift')} className={STAT_BUTTON_CLASS}>
-              <StatCard
-                label="Quick Gift approvals pending"
-                value={data.quickGiftsPending}
-                icon="pi-bolt"
-                accent={data.quickGiftsPending > 0 ? 'danger' : 'accent'}
-                urgent={data.quickGiftsPending > 0}
-              />
-            </button>
-            <button
-              type="button"
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard
+              title="Campaigns running"
+              value={data.campaignsRunning}
+              icon={Megaphone}
+              onClick={() => navigate(data.companyWide ? '/campaigns' : '/my-campaigns')}
+            />
+            <StatCard
+              title="Submissions pending"
+              value={data.submissionsPending}
+              icon={Clock}
+              color={data.submissionsPending > 0 ? 'destructive' : 'default'}
+              onClick={() => navigate(data.companyWide ? '/approvals' : '/my-campaigns')}
+            />
+            <StatCard
+              title="Quick Gifts pending"
+              value={data.quickGiftsPending}
+              icon={Zap}
+              color={data.quickGiftsPending > 0 ? 'destructive' : 'default'}
+              onClick={() => navigate(data.companyWide ? '/approvals' : '/quick-gift')}
+            />
+            <StatCard
+              title="Quick Gifts this month"
+              value={data.quickGiftsThisMonth}
+              icon={CalendarDays}
               onClick={() => setDrilldown({ dimension: 'quickGiftsThisMonth', value: '' })}
-              className={STAT_BUTTON_CLASS}
-            >
-              <StatCard label="Quick Gifts this month" value={data.quickGiftsThisMonth} icon="pi-calendar" />
-            </button>
+            />
           </div>
 
-          <div className="mb-8">
-            <SectionHeader eyebrow="Activity" title="Weekly activity — last 12 weeks" />
-            <div className="rounded-2xl border border-border bg-surface p-5">
-              <TrendChart
-                categories={data.activityTrend.map((p) => p.weekLabel)}
-                series={[
-                  { key: 'CAMPAIGN', name: 'Campaign submissions', data: data.activityTrend.map((p) => p.campaignSubmissions), color: SOURCE_COLORS.CAMPAIGN },
-                  { key: 'QUICK_GIFT', name: 'Quick Gift requests', data: data.activityTrend.map((p) => p.quickGiftRequests), color: SOURCE_COLORS.QUICK_GIFT },
-                ]}
-                onSelect={(index, seriesKey) => {
-                  const point = data.activityTrend[index]
-                  if (point) setDrilldown({ dimension: 'week', value: `${point.weekStart}:${seriesKey}` })
-                }}
-              />
-            </div>
-          </div>
+          <SectionCard title="Weekly activity" description="Last 12 weeks. Click a point to see its records.">
+            <MultiLineChart
+              data={breakdowns.trend}
+              series={[
+                { key: 'CAMPAIGN', label: 'Campaign submissions', color: SOURCE_COLORS.CAMPAIGN },
+                { key: 'QUICK_GIFT', label: 'Quick Gift requests', color: SOURCE_COLORS.QUICK_GIFT },
+              ]}
+              onSelect={(index, seriesKey) => {
+                const point = data.activityTrend[index]
+                if (point) setDrilldown({ dimension: 'week', value: `${point.weekStart}:${seriesKey}` })
+              }}
+            />
+          </SectionCard>
 
-          <div className="mb-8">
-            <SectionHeader eyebrow="Breakdown" title="Where things stand" />
+          <Section title="Where things stand">
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="rounded-2xl border border-border bg-surface p-5">
-                <p className="mb-2 text-sm font-medium text-text">Orders by source</p>
+              <SectionCard title="Orders by source">
+                <DonutChart data={breakdowns.source} emptyText="No orders yet." onSelect={(key) => setDrilldown({ dimension: 'orderSource', value: key })} />
+              </SectionCard>
+              <SectionCard title="Quick Gift status">
                 <DonutChart
-                  slices={sourceSlices}
-                  empty="No orders yet."
-                  onSelect={(key) => setDrilldown({ dimension: 'orderSource', value: key })}
-                />
-              </div>
-              <div className="rounded-2xl border border-border bg-surface p-5">
-                <p className="mb-2 text-sm font-medium text-text">Quick Gift status</p>
-                <DonutChart
-                  slices={quickGiftSlices}
-                  empty="No Quick Gift requests yet."
+                  data={breakdowns.quickGift}
+                  emptyText="No Quick Gift requests yet."
                   onSelect={(key) => setDrilldown({ dimension: 'quickGiftStatus', value: key })}
                 />
-              </div>
-              <div className="rounded-2xl border border-border bg-surface p-5">
-                <p className="mb-2 text-sm font-medium text-text">Campaign submission status</p>
+              </SectionCard>
+              <SectionCard title="Campaign submission status">
                 <DonutChart
-                  slices={submissionSlices}
-                  empty="No submissions yet."
+                  data={breakdowns.submission}
+                  emptyText="No submissions yet."
                   onSelect={(key) => setDrilldown({ dimension: 'submissionStatus', value: key })}
                 />
-              </div>
+              </SectionCard>
             </div>
-          </div>
+          </Section>
 
-          <div className="mb-8">
-            <SectionHeader eyebrow="Rankings" title="What's performing" />
+          <Section title="What's performing">
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="rounded-2xl border border-border bg-surface p-5">
-                <p className="mb-2 text-sm font-medium text-text">Top gifts</p>
-                <BarChart
-                  rows={data.topGifts.map((g) => ({ label: g.giftName, value: g.orderCount }))}
-                  color={SOURCE_COLORS.CAMPAIGN}
-                  empty="No orders yet."
-                  onSelect={(row) => setDrilldown({ dimension: 'topGift', value: row.label })}
+              <SectionCard title="Top gifts">
+                <MiniBarChart
+                  data={data.topGifts.map((g) => ({ label: g.giftName, value: g.orderCount, color: SOURCE_COLORS.CAMPAIGN }))}
+                  seriesName="Orders"
+                  emptyText="No orders yet."
+                  onSelect={(bar) => setDrilldown({ dimension: 'topGift', value: bar.label })}
                 />
-              </div>
-              <div className="rounded-2xl border border-border bg-surface p-5">
-                <p className="mb-2 text-sm font-medium text-text">Top campaigns</p>
-                <BarChart
-                  rows={data.topCampaigns.map((c) => ({ label: c.campaignName, value: c.orderCount, to: `/campaigns/${c.campaignId}` }))}
-                  color={SOURCE_COLORS.QUICK_GIFT}
-                  empty="No campaign orders yet."
-                  onSelect={(row) => row.to && navigate(row.to)}
+              </SectionCard>
+              <SectionCard title="Top campaigns">
+                <MiniBarChart
+                  data={data.topCampaigns.map((c) => ({ label: c.campaignName, value: c.orderCount, color: SOURCE_COLORS.QUICK_GIFT }))}
+                  seriesName="Orders"
+                  emptyText="No campaign orders yet."
+                  onSelect={(bar) => {
+                    const campaign = data.topCampaigns.find((c) => c.campaignName === bar.label)
+                    if (campaign) navigate(`/campaigns/${campaign.campaignId}`)
+                  }}
                 />
-              </div>
-              <div className="rounded-2xl border border-border bg-surface p-5">
-                <p className="mb-2 text-sm font-medium text-text">{data.companyWide ? 'Top departments' : 'Your department'}</p>
-                <BarChart
-                  rows={data.topDepartments.map((d) => ({ label: d.departmentName, value: d.orderCount }))}
-                  color="#7c3aed"
-                  empty="No orders yet."
-                  onSelect={(row) => setDrilldown({ dimension: 'topDepartment', value: row.label })}
+              </SectionCard>
+              <SectionCard title={data.companyWide ? 'Top departments' : 'Your department'}>
+                <MiniBarChart
+                  data={data.topDepartments.map((d) => ({ label: d.departmentName, value: d.orderCount, color: '#7c3aed' }))}
+                  seriesName="Orders"
+                  emptyText="No orders yet."
+                  onSelect={(bar) => setDrilldown({ dimension: 'topDepartment', value: bar.label })}
                 />
-              </div>
+              </SectionCard>
             </div>
-          </div>
+          </Section>
 
-          <div>
-            <SectionHeader eyebrow="Recent" title="What's happening" />
+          <Section title="What's happening">
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <RecentCampaignsCard campaigns={data.recentCampaigns} />
               <RecentActivityFeed items={data.recentActivity} onSelectQuickGift={setSelectedQuickGiftId} />
             </div>
-          </div>
+          </Section>
         </>
       )}
 

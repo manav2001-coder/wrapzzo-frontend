@@ -26,6 +26,8 @@ export interface MultiLineChartProps {
    *  the Y axis to `[0, 100]` for `"%"` specifically, so a percentage chart reads against a
    *  known ceiling rather than an axis that rescales to whatever the data happened to reach. */
   unit?: string;
+  /** Clicking a point drills into that x position for that series. */
+  onSelect?: (index: number, seriesKey: string) => void;
 }
 
 /**
@@ -35,8 +37,8 @@ export interface MultiLineChartProps {
  * is a single measure read against a standard, and multiplexing both shapes into one
  * component would make neither caller's intent legible at the call site.
  */
-export function MultiLineChart({ data, series, height = 260, unit }: MultiLineChartProps) {
-  const { t } = useTranslation("fleetAgents");
+export function MultiLineChart({ data, series, height = 260, unit, onSelect }: MultiLineChartProps) {
+  const { t } = useTranslation();
   if (data.length === 0) {
     return <p className="py-6 text-center text-sm text-muted-foreground">{t("charts.empty")}</p>;
   }
@@ -83,6 +85,20 @@ export function MultiLineChart({ data, series, height = 260, unit }: MultiLineCh
             stroke={s.color}
             strokeWidth={2}
             dot={{ r: 2 }}
+            activeDot={
+              onSelect
+                ? (dot: { cx?: number; cy?: number; index?: number }) => (
+                    <circle
+                      cx={dot.cx}
+                      cy={dot.cy}
+                      r={5}
+                      fill={s.color}
+                      className="cursor-pointer"
+                      onClick={() => onSelect(dot.index ?? 0, s.key)}
+                    />
+                  )
+                : undefined
+            }
           />
         ))}
       </LineChart>

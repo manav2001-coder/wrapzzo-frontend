@@ -540,7 +540,7 @@ export function emailField({ max = 320, ...base }: Base & { max?: number }): Fie
 }
 
 /**
- * A phone number as typed. Wrapzzo stores phones as free text (the backend has no E.164
+ * A phone number as typed. Wrappzo stores phones as free text (the backend has no E.164
  * contract), so this is a `tel` input with a loose character check rather than MobixFL's
  * country-aware `PhoneField`.
  */

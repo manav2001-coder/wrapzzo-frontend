@@ -1,7 +1,7 @@
 {
   "companies": {
     "title": "कंपनियाँ",
-    "subtitle": "Wrapzzo से खरीदने वाली कंपनियों को जोड़ें और प्रबंधित करें।",
+    "subtitle": "Wrappzo से खरीदने वाली कंपनियों को जोड़ें और प्रबंधित करें।",
     "add": "कंपनी जोड़ें",
     "emptyTitle": "अभी कोई कंपनी नहीं",
     "emptyBody": "शुरू करने के लिए अपने पहले कॉर्पोरेट ग्राहक को जोड़ें।",
@@ -48,8 +48,8 @@
   },
   "users": {
     "title": "उपयोगकर्ता",
-    "subtitle": "{{company}} में Wrapzzo खाते वाले सभी लोग।",
-    "subtitleNoName": "इस कंपनी में Wrapzzo खाते वाले सभी लोग।",
+    "subtitle": "{{company}} में Wrappzo खाते वाले सभी लोग।",
+    "subtitleNoName": "इस कंपनी में Wrappzo खाते वाले सभी लोग।",
     "back": "वापस",
     "add": "उपयोगकर्ता जोड़ें",
     "downloadTemplate": "टेम्पलेट डाउनलोड करें",
@@ -194,7 +194,7 @@
     "outBody": "यह हर गिफ्ट स्टोर से हट जाएगा और फिर से स्टॉक में आने तक नए अभियानों में नहीं जोड़ा जा सकेगा।",
     "markedIn": "गिफ्ट स्टॉक में किया गया",
     "markedOut": "गिफ्ट स्टॉक से बाहर किया गया",
-    "wrapzzo": "Wrapzzo",
+    "wrapzzo": "Wrappzo",
     "photoRequired": "आवश्यक",
     "days_one": "{{count}} दिन",
     "days_other": "{{count}} दिन",

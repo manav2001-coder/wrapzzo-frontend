@@ -72,7 +72,7 @@ export function CampaignGiftPicker({ selectedIds, onChange }: { selectedIds: str
       <EmptyState
         icon={GiftIcon}
         title="No gifts in the catalogue yet"
-        description="Ask your Wrapzzo account manager to add a gift before you can launch a campaign."
+        description="Ask your Wrappzo account manager to add a gift before you can launch a campaign."
       />
     )
   }

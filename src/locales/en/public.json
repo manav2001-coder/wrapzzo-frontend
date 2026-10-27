@@ -4,7 +4,7 @@
     "hero": {
       "badge": "Corporate gifting platform",
       "title": "A gifting platform for every relationship you manage.",
-      "body": "Campaigns, vendors, orders and every recipient roster: Wrapzzo runs the whole corporate gifting workflow in one place.",
+      "body": "Campaigns, vendors, orders and every recipient roster: Wrappzo runs the whole corporate gifting workflow in one place.",
       "cta": "Log in"
     },
     "solutions": {
@@ -21,14 +21,14 @@
     },
     "cta": {
       "title": "Ready to manage your next gifting program?",
-      "body": "Log in to see campaigns, orders and rosters for every company on Wrapzzo."
+      "body": "Log in to see campaigns, orders and rosters for every company on Wrappzo."
     },
     "footer": {
-      "blurb": "Corporate gifting and custom merchandise, sourced and delivered by Wrapzzo.",
+      "blurb": "Corporate gifting and custom merchandise, sourced and delivered by Wrappzo.",
       "platform": "Platform",
       "account": "Account",
       "links": { "giftStore": "Gift Store", "quickGifts": "Quick Gifts", "bulkGifting": "Bulk Gifting", "campaigns": "Campaigns" },
-      "rights": "© {{year}} Wrapzzo. Operated by Orange Dot Solutions. All rights reserved."
+      "rights": "© {{year}} Wrappzo. Operated by Orange Dot Solutions. All rights reserved."
     }
   },
   "notFound": {

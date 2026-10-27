@@ -33,7 +33,7 @@ const percent = (value: number | null) => (value == null ? '-' : `${value}%`)
 const toNumber = (value: unknown) => (value === '' || value == null ? undefined : Number(value))
 
 /**
- * Wrapzzo's fulfilment vendors, as a MobixFL master: the list, with create and edit in a side
+ * Wrappzo's fulfilment vendors, as a MobixFL master: the list, with create and edit in a side
  * drawer so the list keeps its place. The drawer follows the URL (`/admin/vendors/new`,
  * `/admin/vendors/:id`), so a vendor can still be linked to directly.
  */

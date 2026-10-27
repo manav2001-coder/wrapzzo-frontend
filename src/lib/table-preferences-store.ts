@@ -1,7 +1,7 @@
 /**
  * A user's own table layout (hidden columns, order, widths), kept in this browser.
  *
- * MobixFL also syncs this to the server so a layout follows the user to another machine; Wrapzzo
+ * MobixFL also syncs this to the server so a layout follows the user to another machine; Wrappzo
  * has no such endpoint, so the browser copy is the only one. It is read synchronously, so a table
  * renders in its saved layout on the first paint.
  */

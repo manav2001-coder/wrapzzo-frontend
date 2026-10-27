@@ -26,7 +26,7 @@ import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
 
 /**
  * A vendor adds or edits one of their own products -- the same form the admin catalogue uses,
- * minus Wrapzzo's fees, which stay as Wrapzzo set them.
+ * minus Wrappzo's fees, which stay as Wrappzo set them.
  */
 export function VendorGiftFormPage() {
   const { t } = useTranslation('vendor')

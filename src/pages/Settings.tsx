@@ -20,7 +20,7 @@ const MODES = [
 const LANGUAGE_OPTIONS = SUPPORTED_LOCALES.map((value) => ({ value, label: LOCALE_LABELS[value] }))
 
 /**
- * Appearance and language for this browser, as MobixFL's Settings screen lays them out. Wrapzzo
+ * Appearance and language for this browser, as MobixFL's Settings screen lays them out. Wrappzo
  * keeps both per browser (next-themes and the i18n detector's localStorage), so each applies the
  * moment it is picked -- there is no profile to save them to.
  */

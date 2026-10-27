@@ -7,7 +7,7 @@ import { vendorApiClient } from '@/lib/vendorApiClient'
 /**
  * A vendor's own view of an order assigned to them -- deliberately narrower than the admin/company
  * Order type: no assignment metadata (it's already scoped to them), and price excludes markup
- * entirely (that's Wrapzzo's own margin) -- only the gift's base price plus commission fee.
+ * entirely (that's Wrappzo's own margin) -- only the gift's base price plus commission fee.
  */
 export interface VendorOrder {
   id: string

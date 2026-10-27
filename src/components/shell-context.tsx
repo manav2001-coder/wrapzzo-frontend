@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 /**
- * Which signed-in session the app shell is serving. Wrapzzo has two separate logins -- company
+ * Which signed-in session the app shell is serving. Wrappzo has two separate logins -- company
  * and platform users (`auth`) and vendors (`vendorAuth`), with their own tokens and refresh -- but
  * one shell. The route tree mounts `<AppLayout portal="…">` once per portal, and everything in the
  * chrome (nav tree, account menu, command palette, logo link) reads the session from here instead

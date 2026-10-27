@@ -14,7 +14,7 @@ interface WrapzzoLogoProps {
 }
 
 /**
- * The Wrapzzo lockup, drawn in the MobixFL shell's style: a primary-blue tile carrying the mark
+ * The Wrappzo lockup, drawn in the MobixFL shell's style: a primary-blue tile carrying the mark
  * (with the same soft blue glow MobixFL's logo has on the navy rail) and a bold wordmark beside it.
  */
 export function WrapzzoLogo({ variant = 'full', height = 28, tone = 'white', className }: WrapzzoLogoProps) {

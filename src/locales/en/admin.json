@@ -1,7 +1,7 @@
 {
   "companies": {
     "title": "Companies",
-    "subtitle": "Onboard and manage the corporates that buy through Wrapzzo.",
+    "subtitle": "Onboard and manage the corporates that buy through Wrappzo.",
     "add": "Add company",
     "emptyTitle": "No companies yet",
     "emptyBody": "Onboard your first corporate customer to get started.",
@@ -48,8 +48,8 @@
   },
   "users": {
     "title": "Users",
-    "subtitle": "Everyone with a Wrapzzo account at {{company}}.",
-    "subtitleNoName": "Everyone with a Wrapzzo account at this company.",
+    "subtitle": "Everyone with a Wrappzo account at {{company}}.",
+    "subtitleNoName": "Everyone with a Wrappzo account at this company.",
     "back": "Back",
     "add": "Add users",
     "downloadTemplate": "Download template",
@@ -194,7 +194,7 @@
     "outBody": "It disappears from every Gift Store and can't be added to new campaigns until it is back in stock.",
     "markedIn": "Gift marked in stock",
     "markedOut": "Gift marked out of stock",
-    "wrapzzo": "Wrapzzo",
+    "wrapzzo": "Wrappzo",
     "photoRequired": "Required",
     "days_one": "{{count}} day",
     "days_other": "{{count}} days",

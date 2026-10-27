@@ -15,6 +15,8 @@ const VARIANT: Record<string, BadgeProps['variant']> = {
   PROCESSING: 'primary-soft',
   PRODUCTION_QUEUE: 'warning-soft',
   DISPATCHED: 'warning-soft',
+  RECEIVED_AT_WAREHOUSE: 'warning-soft',
+  OUT_FOR_DELIVERY: 'warning-soft',
   DELIVERED: 'success-soft',
   CANCELLED: 'destructive-soft',
 }

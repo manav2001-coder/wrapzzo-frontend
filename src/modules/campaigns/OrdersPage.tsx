@@ -34,7 +34,15 @@ const LIST_FIELDS: ListFieldMap = {
   status: 'enum',
 }
 
-const STATUSES: OrderStatus[] = ['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED']
+const STATUSES: OrderStatus[] = [
+  'PROCESSING',
+  'PRODUCTION_QUEUE',
+  'DISPATCHED',
+  'RECEIVED_AT_WAREHOUSE',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'CANCELLED',
+]
 
 type Tab = 'all' | 'review'
 

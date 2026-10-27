@@ -15,6 +15,7 @@ import {
   Store,
   Truck,
   Users,
+  Warehouse,
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -114,6 +115,7 @@ export const COMPANY_NAV: NavSource[] = [
       },
       { id: 'company-users', titleKey: 'nav.users', type: 'item', url: '/company/users', icon: Users, permission: 'user.manage' },
       { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: 'company.vendor.manage' },
+      { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: 'warehouse.manage' },
     ],
   },
   GENERAL,

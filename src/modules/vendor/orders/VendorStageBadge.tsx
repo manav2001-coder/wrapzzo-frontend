@@ -9,6 +9,7 @@ const VARIANT: Record<VendorStage, BadgeProps['variant']> = {
   review: 'primary-soft',
   ready: 'success-soft',
   dispatched: 'primary-soft',
+  warehouse: 'secondary-soft',
   delivered: 'secondary-soft',
   cancelled: 'secondary-soft',
 }

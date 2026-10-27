@@ -3,6 +3,8 @@
     "PROCESSING": "प्रोसेसिंग",
     "PRODUCTION_QUEUE": "उत्पादन",
     "DISPATCHED": "भेजा गया",
+    "RECEIVED_AT_WAREHOUSE": "गोदाम में",
+    "OUT_FOR_DELIVERY": "डिलीवरी के लिए निकला",
     "DELIVERED": "पहुँचाया गया",
     "CANCELLED": "रद्द"
   },
@@ -39,6 +41,7 @@
     "total": "कुल",
     "quantity": "मात्रा",
     "orgUnit": "ऑर्ग यूनिट",
+    "warehouse": "गोदाम के ज़रिए",
     "placed": "दिया गया",
     "progress": "प्रगति",
     "history": "इतिहास",

@@ -7,12 +7,35 @@ import { formatDate, formatDateTime } from '@/lib/datetime'
 import { cn } from '@/lib/utils'
 
 /** The fulfilment pipeline in order. CANCELLED is a terminal state off to the side, not a step. */
-export const ORDER_STAGES: OrderStatus[] = ['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED']
+const ORDER_STAGES: OrderStatus[] = ['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED']
+
+/** An order routed through the company's warehouse: the vendor ships to it, and it delivers onward. */
+const WAREHOUSE_ORDER_STAGES: OrderStatus[] = [
+  'PROCESSING',
+  'PRODUCTION_QUEUE',
+  'DISPATCHED',
+  'RECEIVED_AT_WAREHOUSE',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+]
+
+const WAREHOUSE_ONLY: OrderStatus[] = ['RECEIVED_AT_WAREHOUSE', 'OUT_FOR_DELIVERY']
+
+/**
+ * viaWarehouse when the caller knows it (the order's warehouseName); otherwise read off the
+ * order's own progress, for lists that don't carry it (the dashboard timeline).
+ */
+function stagesFor(status: OrderStatus, history: StageEvent[] = [], viaWarehouse?: boolean): OrderStatus[] {
+  const routed = viaWarehouse ?? (WAREHOUSE_ONLY.includes(status) || history.some((event) => WAREHOUSE_ONLY.includes(event.status)))
+  return routed ? WAREHOUSE_ORDER_STAGES : ORDER_STAGES
+}
 
 const VARIANT: Record<OrderStatus, BadgeProps['variant']> = {
   PROCESSING: 'secondary',
   PRODUCTION_QUEUE: 'warning',
   DISPATCHED: 'default',
+  RECEIVED_AT_WAREHOUSE: 'default',
+  OUT_FOR_DELIVERY: 'default',
   DELIVERED: 'success',
   CANCELLED: 'destructive',
 }
@@ -30,7 +53,15 @@ export function OrderStatusBadge({ status }: { status: OrderStatus }) {
  * Every stage up to the order's current one, dated from its real history entry; a stage not
  * reached yet shows no date. A cancelled order shows a terminal marker instead of a position.
  */
-export function OrderStepper({ status, history }: { status: OrderStatus; history: StageEvent[] }) {
+export function OrderStepper({
+  status,
+  history,
+  viaWarehouse,
+}: {
+  status: OrderStatus
+  history: StageEvent[]
+  viaWarehouse?: boolean
+}) {
   const { t } = useTranslation('orders')
   if (status === 'CANCELLED') {
     return (
@@ -41,10 +72,11 @@ export function OrderStepper({ status, history }: { status: OrderStatus; history
     )
   }
   const reachedAt = new Map(history.map((event) => [event.status, event.at]))
-  const current = ORDER_STAGES.indexOf(status)
+  const stages = stagesFor(status, history, viaWarehouse)
+  const current = stages.indexOf(status)
   return (
     <ol className="flex items-start">
-      {ORDER_STAGES.map((stage, index) => {
+      {stages.map((stage, index) => {
         const done = index < current
         const active = index === current
         const at = reachedAt.get(stage)
@@ -66,7 +98,7 @@ export function OrderStepper({ status, history }: { status: OrderStatus; history
               </span>
               <span className="text-[10px] text-muted-foreground">{at ? formatDate(at) : '-'}</span>
             </div>
-            {index < ORDER_STAGES.length - 1 && (
+            {index < stages.length - 1 && (
               <span className={cn('mt-4 h-0.5 flex-1', done ? 'bg-primary' : 'bg-border')} aria-hidden />
             )}
           </li>
@@ -77,11 +109,12 @@ export function OrderStepper({ status, history }: { status: OrderStatus; history
 }
 
 /** A thin bar with one segment per stage, filled up to the current one -- all red when cancelled. For compact cards. */
-export function OrderProgressBar({ status }: { status: OrderStatus }) {
-  const current = ORDER_STAGES.indexOf(status)
+export function OrderProgressBar({ status, history }: { status: OrderStatus; history?: StageEvent[] }) {
+  const stages = stagesFor(status, history)
+  const current = stages.indexOf(status)
   return (
     <div className="flex gap-1" aria-hidden>
-      {ORDER_STAGES.map((stage, index) => (
+      {stages.map((stage, index) => (
         <span
           key={stage}
           className={cn(

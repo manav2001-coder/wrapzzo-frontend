@@ -3,6 +3,8 @@
     "PROCESSING": "Processing",
     "PRODUCTION_QUEUE": "Production",
     "DISPATCHED": "Dispatched",
+    "RECEIVED_AT_WAREHOUSE": "At warehouse",
+    "OUT_FOR_DELIVERY": "Out for delivery",
     "DELIVERED": "Delivered",
     "CANCELLED": "Cancelled"
   },
@@ -39,6 +41,7 @@
     "total": "Total",
     "quantity": "Quantity",
     "orgUnit": "Org unit",
+    "warehouse": "Via warehouse",
     "placed": "Placed",
     "progress": "Progress",
     "history": "History",

@@ -40,6 +40,17 @@ function DesignationEditor({
   const saved = useMemo(() => new Set(access.accessControlIds), [access])
   const [checked, setChecked] = useState<Set<string>>(saved)
   const total = groups.reduce((sum, [, items]) => sum + items.length, 0)
+  // Each key its people already get from a role, with the role names that grant it. Those can't
+  // be taken away here -- the role is changed on the user -- so they show ticked and locked.
+  const fromRole = useMemo(() => {
+    const roles = new Map<string, string[]>()
+    for (const role of access.roles ?? []) {
+      for (const id of role.accessControlIds) roles.set(id, [...(roles.get(id) ?? []), role.roleName])
+    }
+    return roles
+  }, [access])
+  const effective = new Set([...checked, ...fromRole.keys()]).size
+  const roleSummary = (access.roles ?? []).map((role) => t('access.roleCount', { role: role.roleName, count: role.userCount })).join(', ')
 
   function toggle(id: string, on: boolean) {
     setChecked((current) => {
@@ -62,7 +73,12 @@ function DesignationEditor({
   return (
     <SectionCard
       title={access.designation}
-      description={t('access.granted', { count: checked.size, total })}
+      description={
+        <>
+          {t('access.effective', { count: effective, total })}
+          {roleSummary && <span className="block">{t('access.rolesHeld', { roles: roleSummary })}</span>}
+        </>
+      }
       actions={
         <Button size="sm" onClick={() => void save()} disabled={sameSet(checked, saved) || replaceAccess.isPending}>
           {replaceAccess.isPending && <Loader2 className="animate-spin" />}
@@ -74,15 +90,28 @@ function DesignationEditor({
         {groups.map(([category, items]) => (
           <div key={category} className="space-y-3 rounded-md border p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</p>
-            {items.map((item) => (
-              <CheckboxField
-                key={item.id}
-                label={item.name}
-                helperText={item.description ?? undefined}
-                checked={checked.has(item.id)}
-                onCheckedChange={(on) => toggle(item.id, on)}
-              />
-            ))}
+            {items.map((item) => {
+              const roles = fromRole.get(item.id)
+              // Granted by the role and not added here: shown ticked, locked, and labelled with its source.
+              const lockedByRole = Boolean(roles) && !checked.has(item.id)
+              return (
+                <CheckboxField
+                  key={item.id}
+                  label={item.name}
+                  helperText={
+                    <>
+                      {item.description}
+                      {roles && (
+                        <span className="mt-0.5 block font-medium text-primary">{t('access.fromRole', { roles: roles.join(', ') })}</span>
+                      )}
+                    </>
+                  }
+                  checked={checked.has(item.id) || lockedByRole}
+                  disabled={lockedByRole}
+                  onCheckedChange={(on) => toggle(item.id, on)}
+                />
+              )
+            })}
           </div>
         ))}
       </div>

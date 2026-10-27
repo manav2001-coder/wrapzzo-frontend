@@ -1,8 +1,18 @@
 import { apiClient } from '@/lib/axiosClient'
 
+/** A role held by people with this designation: how many hold it, and what it grants them. */
+export interface DesignationRoleGrant {
+  roleName: string
+  userCount: number
+  accessControlIds: string[]
+}
+
 export interface DesignationAccess {
   designation: string
+  /** Granted to the designation itself -- the editable part. */
   accessControlIds: string[]
+  /** What its people already get from their role(s); shown read-only. */
+  roles: DesignationRoleGrant[]
 }
 
 export async function listDesignations(companyId: string): Promise<string[]> {

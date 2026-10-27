@@ -237,7 +237,7 @@
   },
   "access": {
     "title": "एक्सेस कंट्रोल",
-    "subtitle": "एक कंपनी और पदनाम चुनें, फिर वे कुंजियाँ दें जो उस पदनाम वाले सभी को मिलती हैं।",
+    "subtitle": "कंपनी और पदनाम चुनें। लोगों की भूमिका से मिलने वाली अनुमतियाँ टिक और लॉक दिखती हैं; उस पदनाम वाले सभी को जो अतिरिक्त मिलना चाहिए, उसे टिक करें।",
     "company": "कंपनी",
     "pickCompany": "कंपनी चुनें",
     "designation": "पदनाम",
@@ -247,6 +247,11 @@
     "save": "सहेजें",
     "updated_one": "{{designation}} के पास अब {{count}} अनुमति है।",
     "updated_other": "{{designation}} के पास अब {{count}} अनुमतियाँ हैं।",
-    "granted": "{{total}} में से {{count}} दी गईं"
+    "effective_one": "{{total}} में से {{count}} अनुमति लागू",
+    "effective_other": "{{total}} में से {{count}} अनुमतियाँ लागू",
+    "rolesHeld": "भूमिका: {{roles}}",
+    "roleCount_one": "{{role}} ({{count}} व्यक्ति)",
+    "roleCount_other": "{{role}} ({{count}} लोग)",
+    "fromRole": "भूमिका से: {{roles}}"
   }
 }

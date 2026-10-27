@@ -5,12 +5,14 @@ import { useNavigate } from 'react-router-dom'
 import { GiftCatalogue } from '@/components/gifts/gift-catalogue'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { Button } from '@/components/ui/button'
+import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useHasAccess } from '@/hooks/use-permission'
 
 /** The company's catalogue: every gift from the vendors serving the user, sendable now or as a campaign. */
 export function GiftStorePage() {
   const { t } = useTranslation('gifts')
+  const pageTitle = useMenuLabel('gift-store', t('store.title'))
   const navigate = useNavigate()
   const { data: gifts, isLoading } = useActiveGifts()
   const canQuickGift = useHasAccess('quickgift.create')
@@ -18,7 +20,7 @@ export function GiftStorePage() {
 
   return (
     <div>
-      <MasterPageHeader title={t('store.title')} description={t('store.subtitle')} />
+      <MasterPageHeader title={pageTitle} description={t('store.subtitle')} />
       <GiftCatalogue
         gifts={gifts}
         isLoading={isLoading}

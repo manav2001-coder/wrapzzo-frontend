@@ -16,6 +16,7 @@ import { OrderStatusBadge } from '@/components/orders/order-status'
 import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
 import { StatCard } from '@/components/stat-card'
 import { Badge } from '@/components/ui/badge'
+import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
 import { useOrders, useRequestOrderPhotoLink } from '@/hooks/useOrders'
@@ -53,6 +54,7 @@ type Tab = 'all' | 'review'
  */
 export function OrdersPage() {
   const { t } = useTranslation('orders')
+  const pageTitle = useMenuLabel('company-orders', t('company.title'))
   const showError = useApiErrorToast()
   const canReview = useHasAccess('order.design.review')
   const { data: orders, isLoading, error, refetch } = useOrders()
@@ -182,7 +184,7 @@ export function OrdersPage() {
 
   return (
     <div>
-      <MasterPageHeader title={t('company.title')} description={t('company.subtitle')} />
+      <MasterPageHeader title={pageTitle} description={t('company.subtitle')} />
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {canReview && (

@@ -8,6 +8,7 @@ import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
+import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useRecipients } from '@/hooks/useRecipients'
 import { formatDateOnly } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
@@ -25,6 +26,7 @@ const LIST_FIELDS: ListFieldMap = {
 /** The company's shared recipient directory -- fed by Quick Gift and campaigns, plus anyone added here. */
 export function RecipientsPage() {
   const { t } = useTranslation('recipients')
+  const pageTitle = useMenuLabel('recipients', t('directory.title'))
   const { data: recipients, isLoading, error, refetch } = useRecipients()
   // `undefined` = closed, `null` = adding, a recipient = editing it.
   const [editing, setEditing] = useState<Recipient | null | undefined>(undefined)
@@ -71,7 +73,7 @@ export function RecipientsPage() {
   return (
     <div>
       <MasterPageHeader
-        title={t('directory.title')}
+        title={pageTitle}
         description={t('directory.subtitle')}
         createLabel={t('directory.add')}
         onCreate={() => setEditing(null)}

@@ -16,6 +16,7 @@ import { MasterPageHeader } from '@/components/masters/master-page'
 import { SectionCard } from '@/components/section-card'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCreateDoctorChangeRequest, useMyDoctorChangeRequests } from '@/hooks/useDoctorRequests'
 import { useMyRecipients } from '@/hooks/useRecipients'
@@ -138,6 +139,7 @@ function DoctorRequestDialog({ target, onClose }: { target: Recipient | null; on
 /** An MR's own doctor list; every add, edit or removal is a request their manager approves. */
 export function MyDoctorsPage() {
   const { t } = useTranslation('recipients')
+  const pageTitle = useMenuLabel('my-doctors', t('doctors.title'))
   const showError = useApiErrorToast()
   const { data: doctors, isLoading, error, refetch } = useMyRecipients()
   const { data: requests } = useMyDoctorChangeRequests()
@@ -203,7 +205,7 @@ export function MyDoctorsPage() {
   return (
     <div className="space-y-4">
       <MasterPageHeader
-        title={t('doctors.title')}
+        title={pageTitle}
         description={t('doctors.subtitle')}
         createLabel={t('doctors.request')}
         onCreate={() => setEditing(null)}

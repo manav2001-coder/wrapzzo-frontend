@@ -53,7 +53,7 @@ describe('AppLayout', () => {
 
   it('serves the vendor portal its own nav from the same chrome', () => {
     renderLayout('vendor')
-    expect(screen.getAllByRole('link', { name: 'My Gifts' })[0]).toHaveAttribute('href', '/vendor/gifts')
+    expect(screen.getAllByRole('link', { name: 'My Products' })[0]).toHaveAttribute('href', '/vendor/gifts')
     expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
   })
 })

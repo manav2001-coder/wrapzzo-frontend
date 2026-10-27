@@ -27,6 +27,8 @@ export interface CurrentUser {
   companyName: string | null
   /** Someone reports to this user, which makes them the approver of their team's doctor requests. */
   managesTeam: boolean
+  /** The company's own names for its navigation menus (menu id -> name). Absent or empty: the defaults. */
+  menuLabels?: Record<string, string>
 }
 
 /** The logged-in user's effective access-control keys and their own company -- lets the UI gate things like "New campaign" without guessing from a role name. */

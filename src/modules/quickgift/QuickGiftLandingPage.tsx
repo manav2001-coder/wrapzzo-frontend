@@ -15,6 +15,7 @@ import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
 import { Button } from '@/components/ui/button'
+import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useMyQuickGiftRequests, useRequestQuickGiftPhotoLink } from '@/hooks/useQuickGifts'
@@ -42,6 +43,7 @@ type Tab = 'send' | 'requests' | 'monthly'
  */
 export function QuickGiftLandingPage() {
   const { t } = useTranslation('gifts')
+  const pageTitle = useMenuLabel('quick-gift', t('landing.title'))
   const navigate = useNavigate()
   const location = useLocation()
   const showError = useApiErrorToast()
@@ -131,7 +133,7 @@ export function QuickGiftLandingPage() {
   return (
     <div>
       <MasterPageHeader
-        title={t('landing.title')}
+        title={pageTitle}
         description={prefillRecipient ? t('landing.subtitleFor', { name: prefillRecipient.name }) : t('landing.subtitle')}
       />
 

@@ -36,6 +36,10 @@ interface Draft {
   email: string
   address: string
   dob: Date | null
+  registrationNumber: string
+  qualification: string
+  speciality: string
+  clinicName: string
 }
 
 /**
@@ -52,6 +56,10 @@ function DoctorRequestDialog({ target, onClose }: { target: Recipient | null; on
     email: target?.email ?? '',
     address: target?.address ?? '',
     dob: fromDateOnly(target?.dateOfBirth) ?? null,
+    registrationNumber: target?.doctor?.registrationNumber ?? '',
+    qualification: target?.doctor?.qualification ?? '',
+    speciality: target?.doctor?.speciality ?? '',
+    clinicName: target?.doctor?.clinicName ?? '',
   }))
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }))
 
@@ -65,6 +73,12 @@ function DoctorRequestDialog({ target, onClose }: { target: Recipient | null; on
         proposedEmail: draft.email.trim() || undefined,
         proposedAddress: draft.address.trim() || undefined,
         proposedDob: toDateOnly(draft.dob) ?? undefined,
+        proposedDoctor: {
+          registrationNumber: draft.registrationNumber.trim() || null,
+          qualification: draft.qualification.trim() || null,
+          speciality: draft.speciality.trim() || null,
+          clinicName: draft.clinicName.trim() || null,
+        },
       })
       toast.success(t('doctors.sent'))
       onClose()
@@ -77,7 +91,7 @@ function DoctorRequestDialog({ target, onClose }: { target: Recipient | null; on
     <AppDialog
       open
       onOpenChange={(open) => !open && onClose()}
-      size="sm"
+      size="md"
       title={target ? t('doctors.editTitle', { name: target.name }) : t('doctors.addTitle')}
       confirmLabel={t('doctors.send')}
       cancelLabel={t('action.cancel', { ns: 'common' })}
@@ -101,6 +115,21 @@ function DoctorRequestDialog({ target, onClose }: { target: Recipient | null; on
         <LabelledField id="doctor-dob" label={t('field.dob')}>
           <DatePicker id="doctor-dob" value={draft.dob} onChange={(value) => set({ dob: value })} toDate={new Date()} />
         </LabelledField>
+        <p className="pt-1 text-xs font-semibold text-muted-foreground">{t('field.doctorSection')}</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <LabelledField id="doctor-reg" label={t('field.registrationNumber')}>
+            <Input id="doctor-reg" value={draft.registrationNumber} onChange={(e) => set({ registrationNumber: e.target.value })} />
+          </LabelledField>
+          <LabelledField id="doctor-qualification" label={t('field.qualification')}>
+            <Input id="doctor-qualification" value={draft.qualification} onChange={(e) => set({ qualification: e.target.value })} />
+          </LabelledField>
+          <LabelledField id="doctor-speciality" label={t('field.speciality')}>
+            <Input id="doctor-speciality" value={draft.speciality} onChange={(e) => set({ speciality: e.target.value })} />
+          </LabelledField>
+          <LabelledField id="doctor-clinic" label={t('field.clinicName')}>
+            <Input id="doctor-clinic" value={draft.clinicName} onChange={(e) => set({ clinicName: e.target.value })} />
+          </LabelledField>
+        </div>
       </div>
     </AppDialog>
   )

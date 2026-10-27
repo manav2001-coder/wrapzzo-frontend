@@ -135,11 +135,12 @@
     "browse": "Pick from directory",
     "send": "Send",
     "sendAll": "Send all {{count}}",
+    "minQuantity": "Minimum order: {{min}}",
     "repeatMonthly": "Repeat every month",
     "error": {
       "required": "Required",
       "photoOrEmail": "This gift needs a photo. Upload one, or add the recipient's email so we can ask for it.",
-      "quantity": "Enter a whole number from 1 to {{max}}.",
+      "quantity": "Enter a whole number from {{min}} to {{max}}.",
       "registrationNumber": "The doctor's registration number is printed on the pad.",
       "fixRows": "Fix the highlighted recipients",
       "partial": "{{ok}} sent, {{failed}} failed. The failed ones are still below.",

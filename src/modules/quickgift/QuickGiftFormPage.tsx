@@ -37,6 +37,12 @@ interface DoctorFields {
 
 interface DraftRecipient {
   key: number
+  /**
+   * The directory doctor this row was filled from. Sent so the order (and a monthly plan's later
+   * runs) stays tied to that doctor's record; dropped as soon as a field the server would take
+   * from the record is edited, since the server would otherwise overwrite the edit.
+   */
+  recipientId?: string
   recipientName: string
   recipientPhone: string
   recipientEmail: string
@@ -55,6 +61,7 @@ interface DraftRecipient {
 type RowErrorKey = 'recipientName' | 'recipientPhone' | 'deliveryAddress' | 'photoOrEmail' | 'quantity' | 'registrationNumber' | 'submit'
 
 interface RecipientPrefill {
+  recipientId?: string
   recipientName?: string
   recipientPhone?: string
   recipientEmail?: string
@@ -65,6 +72,7 @@ interface RecipientPrefill {
 
 function prefillFrom(recipient: Recipient | UpcomingBirthday): RecipientPrefill {
   return {
+    recipientId: recipient.id,
     recipientName: recipient.name,
     recipientPhone: recipient.phone,
     recipientEmail: recipient.email ?? undefined,
@@ -78,6 +86,7 @@ let nextRowKey = 1
 function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient {
   return {
     key: nextRowKey++,
+    recipientId: prefill?.recipientId,
     recipientName: prefill?.recipientName ?? '',
     recipientPhone: prefill?.recipientPhone ?? '',
     recipientEmail: prefill?.recipientEmail ?? '',
@@ -101,10 +110,13 @@ function isBlankRow(row: DraftRecipient): boolean {
   return !row.recipientName && !row.recipientPhone && !row.recipientEmail && !row.deliveryAddress
 }
 
-function parseQuantity(value: string): number | null {
+function parseQuantity(value: string, min = 1): number | null {
   const n = Number(value)
-  return value.trim() !== '' && Number.isInteger(n) && n >= 1 && n <= MAX_QUANTITY ? n : null
+  return value.trim() !== '' && Number.isInteger(n) && n >= min && n <= MAX_QUANTITY ? n : null
 }
+
+/** Fields the server reads from the picked doctor's record instead of the request. */
+const RECORD_FIELDS: (keyof DraftRecipient)[] = ['recipientName', 'recipientPhone', 'recipientEmail', 'deliveryAddress', 'dateOfBirth', 'doctor']
 
 /** Only the fields actually filled in -- the server stores an absent one as "not given". */
 function doctorInput(doctor: DoctorFields): Partial<DoctorDetails> | undefined {
@@ -123,6 +135,7 @@ function RecipientCard({
   canRemove,
   photoRequired,
   artworkRequired,
+  minQuantity,
 }: {
   row: DraftRecipient
   index: number
@@ -130,6 +143,8 @@ function RecipientCard({
   onRemove: () => void
   canRemove: boolean
   photoRequired: boolean
+  /** The vendor's minimum order, when it is more than one. */
+  minQuantity: number
   /** A personalised item (prescription pad): ask for the doctor details it is printed with. */
   artworkRequired: boolean
 }) {
@@ -191,7 +206,12 @@ function RecipientCard({
         <LabelledField id={id('dob')} label={t('form.dob')}>
           <DatePicker id={id('dob')} value={row.dateOfBirth} onChange={(value) => onUpdate({ dateOfBirth: value })} toDate={new Date()} />
         </LabelledField>
-        <LabelledField id={id('quantity')} label={`${t('form.quantity')} *`} error={row.errors.quantity}>
+        <LabelledField
+          id={id('quantity')}
+          label={`${t('form.quantity')} *`}
+          hint={minQuantity > 1 ? t('form.minQuantity', { min: minQuantity.toLocaleString() }) : undefined}
+          error={row.errors.quantity}
+        >
           <Input
             id={id('quantity')}
             inputMode="numeric"
@@ -332,9 +352,12 @@ export function QuickGiftFormPage() {
   const [pickerOpen, setPickerOpen] = useState(false)
   // Expanded up front when the gift needs more than the basics, so the extra fields are seen, not found by failing.
   const startExpanded = Boolean(gift?.photoRequired)
+  // The vendor's minimum order; the server refuses anything below it too.
+  const minQuantity = gift?.moq ?? 1
 
   function updateRow(key: number, patch: Partial<DraftRecipient>) {
-    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch, errors: {} } : r)))
+    const unlinks = RECORD_FIELDS.some((field) => field in patch)
+    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch, ...(unlinks && { recipientId: undefined }), errors: {} } : r)))
   }
 
   function removeRow(key: number) {
@@ -359,7 +382,9 @@ export function QuickGiftFormPage() {
     if (!row.recipientPhone.trim()) errors.recipientPhone = required
     if (!row.deliveryAddress.trim()) errors.deliveryAddress = required
     if (gift.photoRequired && !row.photo && !row.recipientEmail.trim()) errors.photoOrEmail = t('form.error.photoOrEmail')
-    if (parseQuantity(row.quantity) === null) errors.quantity = t('form.error.quantity', { max: MAX_QUANTITY.toLocaleString() })
+    if (parseQuantity(row.quantity, minQuantity) === null) {
+      errors.quantity = t('form.error.quantity', { min: minQuantity.toLocaleString(), max: MAX_QUANTITY.toLocaleString() })
+    }
     // A printed prescription pad has to carry the doctor's registration number.
     if (gift.artworkRequired && !row.doctor.registrationNumber.trim()) errors.registrationNumber = t('form.error.registrationNumber')
     return errors
@@ -385,6 +410,7 @@ export function QuickGiftFormPage() {
         if (row.photo) photo = await uploadQuickGiftPhoto(row.photo)
         const input = {
           giftId: gift.id,
+          recipientId: row.recipientId,
           recipientName: row.recipientName.trim(),
           recipientPhone: row.recipientPhone.trim(),
           recipientEmail: row.recipientEmail.trim() || undefined,
@@ -394,7 +420,7 @@ export function QuickGiftFormPage() {
           internalNotes: row.internalNotes.trim() || undefined,
           photo,
           doctor: gift.artworkRequired ? doctorInput(row.doctor) : undefined,
-          quantity: parseQuantity(row.quantity) ?? 1,
+          quantity: parseQuantity(row.quantity, minQuantity) ?? minQuantity,
         }
         if (repeatMonthly) {
           await createPlan.mutateAsync(input)
@@ -489,6 +515,7 @@ export function QuickGiftFormPage() {
             canRemove={rows.length > 1}
             photoRequired={gift.photoRequired}
             artworkRequired={gift.artworkRequired}
+            minQuantity={minQuantity}
           />
         ))}
       </div>

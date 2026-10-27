@@ -9,6 +9,16 @@ describe('vendorStageOf', () => {
     expect(vendorStageOf(base)).toBe('artwork')
   })
 
+  it('is done for the vendor once a warehouse-routed order is shipped to the warehouse', () => {
+    const viaWarehouse = { ...base, shipToWarehouseName: 'North Warehouse' }
+    expect(vendorStageOf({ ...viaWarehouse, status: 'DISPATCHED' })).toBe('warehouse')
+    expect(vendorStageOf({ ...viaWarehouse, status: 'RECEIVED_AT_WAREHOUSE' })).toBe('warehouse')
+    expect(vendorStageOf({ ...viaWarehouse, status: 'OUT_FOR_DELIVERY' })).toBe('warehouse')
+    expect(vendorStageOf({ ...viaWarehouse, status: 'DELIVERED' })).toBe('delivered')
+    // The vendor never marks it delivered -- the warehouse does.
+    expect(nextStatusOf('warehouse')).toBeNull()
+  })
+
   it('is in review while the newest proof waits on the customer', () => {
     expect(vendorStageOf({ ...base, latestDesignStatus: 'PENDING_REVIEW' })).toBe('review')
   })

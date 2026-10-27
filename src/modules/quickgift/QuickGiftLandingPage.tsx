@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Eye, Send, Zap } from 'lucide-react'
+import { Eye, Repeat, Send, Zap } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -21,6 +21,7 @@ import { useMyQuickGiftRequests, useRequestQuickGiftPhotoLink } from '@/hooks/us
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { QuickGiftRequestSheet, QuickGiftStatusBadge } from './QuickGiftRequestSheet'
+import { RecurringPlansTable } from './RecurringPlansTable'
 
 const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
@@ -33,7 +34,7 @@ const LIST_FIELDS: ListFieldMap = {
 
 const STATUSES = ['SUBMITTED', 'APPROVED', 'REJECTED'] as const
 
-type Tab = 'send' | 'requests'
+type Tab = 'send' | 'requests' | 'monthly'
 
 /**
  * Quick Gift's home: pick a gift to send (optionally for a recipient carried in from the
@@ -44,12 +45,13 @@ export function QuickGiftLandingPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const showError = useApiErrorToast()
-  const { prefillRecipient } = (location.state as { prefillRecipient?: Recipient | UpcomingBirthday } | null) ?? {}
+  const { prefillRecipient, tab: initialTab } =
+    (location.state as { prefillRecipient?: Recipient | UpcomingBirthday; tab?: Tab } | null) ?? {}
   const { data: gifts, isLoading: giftsLoading } = useActiveGifts()
   const { data: requests, isLoading, error, refetch } = useMyQuickGiftRequests()
   const requestPhotoLink = useRequestQuickGiftPhotoLink()
 
-  const [tab, setTab] = useState<Tab>('send')
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'send')
   const [viewingId, setViewingId] = useState<string | null>(null)
   const [photoPrompt, setPhotoPrompt] = useState<PhotoLinkPrompt | null>(null)
   const viewing = requests?.find((request) => request.id === viewingId) ?? null
@@ -183,6 +185,12 @@ export function QuickGiftLandingPage() {
                 })}
               />
             ),
+          },
+          {
+            value: 'monthly',
+            label: t('landing.tabMonthly'),
+            icon: Repeat,
+            content: <RecurringPlansTable />,
           },
         ]}
       />

@@ -64,6 +64,8 @@ function progressOf(order: VendorOrder, stage: VendorStage): { steps: StepKey[];
     review: 'artwork',
     ready: 'production',
     dispatched: 'dispatched',
+    // Shipped to the company's warehouse: the vendor's last step is done.
+    warehouse: 'delivered',
     delivered: 'delivered',
     cancelled: 'received',
   }
@@ -73,7 +75,7 @@ function progressOf(order: VendorOrder, stage: VendorStage): { steps: StepKey[];
 function Progress({ order, stage }: { order: VendorOrder; stage: VendorStage }) {
   const { t } = useTranslation('vendor')
   const { steps, current } = progressOf(order, stage)
-  const finished = stage === 'delivered'
+  const finished = stage === 'delivered' || stage === 'warehouse'
   return (
     <ol className="flex items-start" aria-label={t('order.yourNextStep')}>
       {steps.map((step, index) => {
@@ -177,9 +179,23 @@ function ShippingCard({ order }: { order: VendorOrder }) {
             '—'
           )}
         </Row>
-        <div className="col-span-2">
-          <Row label={t('order.shipping.address')}>{order.deliveryAddress ?? '—'}</Row>
-        </div>
+        {order.shipToWarehouseName ? (
+          <>
+            <div className="col-span-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+              <Row label={t('order.shipping.shipToWarehouse')}>
+                <span className="block">{order.shipToWarehouseName}</span>
+                <span className="block font-normal">{order.shipToWarehouseAddress}</span>
+              </Row>
+            </div>
+            <div className="col-span-2">
+              <Row label={t('order.shipping.finalRecipient')}>{order.deliveryAddress ?? '—'}</Row>
+            </div>
+          </>
+        ) : (
+          <div className="col-span-2">
+            <Row label={t('order.shipping.address')}>{order.deliveryAddress ?? '—'}</Row>
+          </div>
+        )}
         <Row label={t('order.shipping.quantity')}>
           <span className="text-lg font-semibold">{order.quantity}</span>
         </Row>
@@ -213,7 +229,7 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
   const showError = useApiErrorToast()
   const { data: designs, isLoading } = useVendorOrderDesigns(order.id)
   const upload = useUploadVendorOrderDesign(order.id)
-  const closed = order.status === 'DELIVERED' || order.status === 'CANCELLED'
+  const closed = ['DELIVERED', 'CANCELLED', 'RECEIVED_AT_WAREHOUSE', 'OUT_FOR_DELIVERY'].includes(order.status)
 
   async function onFile(file: File | null) {
     if (!file) return

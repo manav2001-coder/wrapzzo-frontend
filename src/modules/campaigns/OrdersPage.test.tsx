@@ -34,6 +34,7 @@ function order(overrides: Partial<Order> = {}): Order {
     quantity: 5,
     orgUnitName: 'N1',
     artworkRequired: true,
+    warehouseName: null,
     source: 'QUICK_GIFT',
     status: 'PRODUCTION_QUEUE',
     assignedVendorId: 'v-1',

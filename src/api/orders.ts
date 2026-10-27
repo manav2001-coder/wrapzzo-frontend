@@ -1,7 +1,15 @@
 import { apiClient } from '@/lib/axiosClient'
 
 export type OrderSource = 'CAMPAIGN' | 'QUICK_GIFT' | 'BULK_GIFT'
-export type OrderStatus = 'PROCESSING' | 'PRODUCTION_QUEUE' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED'
+/** RECEIVED_AT_WAREHOUSE and OUT_FOR_DELIVERY: only an order routed through the company's warehouse (warehouseName set). */
+export type OrderStatus =
+  | 'PROCESSING'
+  | 'PRODUCTION_QUEUE'
+  | 'DISPATCHED'
+  | 'RECEIVED_AT_WAREHOUSE'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'CANCELLED'
 export type OrderAssignmentMode = 'AUTO' | 'MANUAL'
 
 export interface StageEvent {
@@ -35,6 +43,8 @@ export interface Order {
   orgUnitName: string | null
   /** The vendor may not dispatch until a proof is approved. */
   artworkRequired: boolean
+  /** The company warehouse this order goes through; null = shipped straight to the recipient. */
+  warehouseName: string | null
   source: OrderSource
   status: OrderStatus
   assignedVendorId: string | null

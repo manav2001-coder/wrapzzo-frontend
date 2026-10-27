@@ -5,6 +5,7 @@
     "review": "Artwork in review",
     "ready": "Ready to dispatch",
     "dispatched": "Dispatched",
+    "warehouse": "Sent to warehouse",
     "delivered": "Delivered",
     "cancelled": "Cancelled"
   },
@@ -14,6 +15,7 @@
     "review": "Your proof is with the customer. You'll see their decision here.",
     "ready": "Produce and pack the order, then mark it dispatched.",
     "dispatched": "On its way. Mark it delivered once it arrives.",
+    "warehouse": "Shipped to the company's warehouse. They deliver it from here, so you're done.",
     "delivered": "Done. Nothing more to do on this order.",
     "cancelled": "This order was cancelled. Nothing to do."
   },
@@ -83,6 +85,8 @@
       "recipient": "Recipient",
       "phone": "Phone",
       "address": "Deliver to",
+      "shipToWarehouse": "Ship to the company's warehouse",
+      "finalRecipient": "Final delivery (by the warehouse)",
       "quantity": "Quantity",
       "message": "Gift message",
       "price": "Your price",

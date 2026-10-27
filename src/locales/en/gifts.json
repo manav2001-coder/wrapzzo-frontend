@@ -29,6 +29,7 @@
     "subtitleFor": "Pick a gift for {{name}}. Their details are already filled in.",
     "tabSend": "Send a gift",
     "tabRequests": "My requests",
+    "tabMonthly": "Monthly orders",
     "send": "Send this",
     "column": {
       "request": "Request",
@@ -41,6 +42,30 @@
     },
     "emptyTitle": "No requests yet",
     "emptyBody": "Pick a gift on the Send a gift tab to send your first one."
+  },
+  "monthly": {
+    "column": {
+      "next": "Next order",
+      "placed": "Placed"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "PAUSED": "Paused",
+      "CANCELLED": "Cancelled"
+    },
+    "placeNextNow": "Place next order now",
+    "pause": "Pause",
+    "resume": "Resume",
+    "cancel": "Stop these orders",
+    "lastRunFailed": "The last scheduled order could not be placed",
+    "done": {
+      "placeNextNow": "Next order for {{name}} placed",
+      "pause": "Monthly order for {{name}} paused",
+      "resume": "Monthly order for {{name}} resumed",
+      "cancel": "Monthly order for {{name}} stopped"
+    },
+    "emptyTitle": "No monthly orders yet",
+    "emptyBody": "Tick \"Repeat every month\" when you send a gift, and it goes out again each month."
   },
   "status": {
     "SUBMITTED": "Awaiting approval",
@@ -110,6 +135,7 @@
     "browse": "Pick from directory",
     "send": "Send",
     "sendAll": "Send all {{count}}",
+    "repeatMonthly": "Repeat every month",
     "error": {
       "required": "Required",
       "photoOrEmail": "This gift needs a photo. Upload one, or add the recipient's email so we can ask for it.",
@@ -126,7 +152,10 @@
       "theVendor": "the vendor",
       "requestSent_one": "Quick Gift request sent",
       "requestSent_other": "{{count}} Quick Gift requests sent",
-      "requestSentDetail": "Sent for approval."
+      "requestSentDetail": "Sent for approval.",
+      "monthlySetUp_one": "Monthly order set up",
+      "monthlySetUp_other": "{{count}} monthly orders set up",
+      "monthlySetUpDetail": "The first order went out now. The same order goes out again every month."
     },
     "notAvailableTitle": "Gift not available",
     "notAvailableBody": "This gift isn't available to you for Quick Gift right now."

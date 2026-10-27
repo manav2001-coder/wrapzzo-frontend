@@ -11,6 +11,8 @@ const createQuickGiftRequest = vi.hoisted(() => vi.fn())
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }))
 vi.mock('@/api/gifts', async (importOriginal) => ({ ...(await importOriginal<object>()), listActiveGifts }))
 vi.mock('@/api/quickGifts', async (importOriginal) => ({ ...(await importOriginal<object>()), createQuickGiftRequest }))
+const createRecurringOrderPlan = vi.hoisted(() => vi.fn())
+vi.mock('@/api/recurringOrders', async (importOriginal) => ({ ...(await importOriginal<object>()), createRecurringOrderPlan }))
 vi.mock('sonner', async (importOriginal) => ({ ...(await importOriginal<object>()), toast }))
 
 const PAD: Gift = {
@@ -62,6 +64,7 @@ describe('QuickGiftFormPage', () => {
   beforeEach(() => {
     listActiveGifts.mockReset()
     createQuickGiftRequest.mockReset()
+    createRecurringOrderPlan.mockReset()
     toast.success.mockReset()
     toast.error.mockReset()
   })
@@ -113,6 +116,23 @@ describe('QuickGiftFormPage', () => {
     })
     expect(await screen.findByRole('heading', { name: 'My quick gifts' })).toBeInTheDocument()
     expect(toast.success).toHaveBeenCalledWith('Order placed', { description: expect.stringContaining('Pad Printers') })
+  })
+
+  it('sets up a monthly order instead of a one-off when "Repeat every month" is ticked', async () => {
+    createRecurringOrderPlan.mockResolvedValue({ id: 'p-1', status: 'ACTIVE' })
+    renderForm({ ...PAD, artworkRequired: false })
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    await fillRecipient()
+    await setQuantity('200')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Repeat every month' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    await waitFor(() => expect(createRecurringOrderPlan).toHaveBeenCalledTimes(1))
+    expect(createRecurringOrderPlan.mock.calls[0][0]).toMatchObject({ giftId: 'g-pad', recipientName: 'Dr. Asha Shah', quantity: 200 })
+    expect(createQuickGiftRequest).not.toHaveBeenCalled()
+    expect(toast.success).toHaveBeenCalledWith('Monthly order set up', {
+      description: 'The first order went out now. The same order goes out again every month.',
+    })
   })
 
   it('keeps the approval wording when requests still wait for approval, one per recipient', async () => {

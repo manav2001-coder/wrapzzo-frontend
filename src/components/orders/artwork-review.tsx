@@ -16,6 +16,7 @@ import { formatDateTime } from '@/lib/datetime'
 
 const VARIANT: Record<OrderDesign['status'], BadgeProps['variant']> = {
   PENDING_REVIEW: 'primary-soft',
+  PENDING_FINAL_APPROVAL: 'warning-soft',
   APPROVED: 'success-soft',
   REJECTED: 'destructive-soft',
 }
@@ -69,8 +70,12 @@ export function ArtworkReview({ orderId, artworkRequired }: { orderId: string; a
 
   async function onApprove(design: OrderDesign) {
     try {
-      await approve.mutateAsync(design.id)
-      toast.success(t('artwork.approved', { n: design.versionNo }))
+      const result = await approve.mutateAsync(design.id)
+      toast.success(
+        result.status === 'PENDING_FINAL_APPROVAL'
+          ? t('artwork.approvedPendingFinal', { n: design.versionNo })
+          : t('artwork.approved', { n: design.versionNo }),
+      )
     } catch (err) {
       showError(err)
     }
@@ -143,6 +148,11 @@ export function ArtworkReview({ orderId, artworkRequired }: { orderId: string; a
               )
             )}
             {latest.status === 'REJECTED' && <p className="text-xs text-muted-foreground">{t('artwork.waitingForRework')}</p>}
+            {latest.status === 'PENDING_FINAL_APPROVAL' && (
+              <p className="rounded-md bg-warning/10 px-3 py-2 text-sm">
+                {t('artwork.waitingForFinal', { name: latest.firstApprovedByUserName ?? t('artwork.theMr') })}
+              </p>
+            )}
           </div>
 
           {earlier.length > 0 && (

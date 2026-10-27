@@ -108,7 +108,8 @@
       "status": {
         "PENDING_REVIEW": "In review",
         "APPROVED": "Approved",
-        "REJECTED": "Changes requested"
+        "REJECTED": "Changes requested",
+        "PENDING_FINAL_APPROVAL": "MR approved · awaiting final approval"
       },
       "locked": "A proof is already approved. Uploading another starts a new review."
     },

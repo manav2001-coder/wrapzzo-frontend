@@ -47,6 +47,7 @@ const PROOF_ACCEPT = {
 
 const DESIGN_VARIANT: Record<OrderDesign['status'], BadgeProps['variant']> = {
   PENDING_REVIEW: 'primary-soft',
+  PENDING_FINAL_APPROVAL: 'warning-soft',
   APPROVED: 'success-soft',
   REJECTED: 'destructive-soft',
 }

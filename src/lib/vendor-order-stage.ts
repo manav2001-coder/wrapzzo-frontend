@@ -27,7 +27,8 @@ export function vendorStageOf(order: StageInput): VendorStage {
   if (order.status === 'RECEIVED_AT_WAREHOUSE' || order.status === 'OUT_FOR_DELIVERY') return 'warehouse'
   if (order.status === 'DISPATCHED') return order.shipToWarehouseName ? 'warehouse' : 'dispatched'
   if (order.artworkRequired && !order.artworkApproved) {
-    if (order.latestDesignStatus === 'PENDING_REVIEW') return 'review'
+    // Still with the customer while the MR's manager gives the final approval.
+    if (order.latestDesignStatus === 'PENDING_REVIEW' || order.latestDesignStatus === 'PENDING_FINAL_APPROVAL') return 'review'
     return order.latestDesignStatus === 'REJECTED' ? 'rework' : 'artwork'
   }
   return 'ready'

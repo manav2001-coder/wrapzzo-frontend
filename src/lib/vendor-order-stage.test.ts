@@ -23,6 +23,11 @@ describe('vendorStageOf', () => {
     expect(vendorStageOf({ ...base, latestDesignStatus: 'PENDING_REVIEW' })).toBe('review')
   })
 
+  it("stays in review, dispatch still locked, while the MR's manager gives the final approval", () => {
+    expect(vendorStageOf({ ...base, latestDesignStatus: 'PENDING_FINAL_APPROVAL' })).toBe('review')
+    expect(nextStatusOf('review')).toBeNull()
+  })
+
   it('asks for rework when the newest proof was sent back', () => {
     expect(vendorStageOf({ ...base, latestDesignStatus: 'REJECTED' })).toBe('rework')
   })

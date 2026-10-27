@@ -36,8 +36,8 @@ export function useRequestQuickGiftPhotoLink() {
 
 // --- Approval (Company Admin) ---
 
-export function usePendingQuickGiftApprovals() {
-  return useQuery({ queryKey: ['quick-gifts', 'pending-approval'], queryFn: listPendingQuickGiftApprovals })
+export function usePendingQuickGiftApprovals(enabled = true) {
+  return useQuery({ queryKey: ['quick-gifts', 'pending-approval'], queryFn: listPendingQuickGiftApprovals, enabled })
 }
 
 export function useApproveQuickGiftRequest() {

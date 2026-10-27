@@ -1,4 +1,4 @@
-import { Check, CheckSquare, Search, UserCog, X, Zap } from 'lucide-react'
+import { Check, CheckSquare, ExternalLink, Palette, Search, UserCog, X, Zap } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useApproveDoctorChangeRequest, usePendingDoctorChangeRequests, useRejectDoctorChangeRequest } from '@/hooks/useDoctorRequests'
+import { useHasAccess } from '@/hooks/use-permission'
+import { usePendingArtworkApprovals, useReviewArtwork } from '@/hooks/useOrderDesigns'
 import { useApproveQuickGiftRequest, usePendingQuickGiftApprovals, useRejectQuickGiftRequest } from '@/hooks/useQuickGifts'
 import { formatDateTime } from '@/lib/datetime'
 import { humanize } from '@/lib/format'
@@ -36,6 +38,7 @@ function RequestCard({
   approving,
   onApprove,
   onReject,
+  rejectLabel = 'Reject',
 }: {
   icon: ReactNode
   title: string
@@ -44,6 +47,7 @@ function RequestCard({
   approving: boolean
   onApprove: () => void
   onReject: () => void
+  rejectLabel?: string
 }) {
   return (
     <article className="rounded-lg border bg-card p-4 shadow-sm">
@@ -62,26 +66,32 @@ function RequestCard({
         </Button>
         <Button size="sm" variant="outline" onClick={onReject}>
           <X />
-          Reject
+          {rejectLabel}
         </Button>
       </div>
     </article>
   )
 }
 
-type Rejecting = { kind: 'quickGift' | 'doctor'; id: string } | null
+type Rejecting = { kind: 'quickGift' | 'doctor'; id: string } | { kind: 'artwork'; id: string; orderId: string } | null
 
 /** Quick Gift requests and doctor changes from the team, waiting on the user's decision. Campaign submissions never land here. */
 export function ApprovalQueuePage() {
   const showError = useApiErrorToast()
-  const { data: quickGifts, isLoading } = usePendingQuickGiftApprovals()
+  // A manager reviewing only their team's doctor requests has no Quick Gift approval right: skip
+  // that queue (it would only answer 403) and open on the doctor changes.
+  const canApproveQuickGifts = useHasAccess(['campaign.approve', 'campaign.manage'])
+  const { data: quickGifts, isLoading } = usePendingQuickGiftApprovals(canApproveQuickGifts)
   const { data: doctorRequests, isLoading: doctorsLoading } = usePendingDoctorChangeRequests()
   const approveQuickGift = useApproveQuickGiftRequest()
   const rejectQuickGift = useRejectQuickGiftRequest()
   const approveDoctor = useApproveDoctorChangeRequest()
   const rejectDoctor = useRejectDoctorChangeRequest()
+  // MR-approved artwork waiting on this user's final approval (empty unless they're the MR's manager).
+  const { data: artwork, isLoading: artworkLoading } = usePendingArtworkApprovals()
+  const reviewArtwork = useReviewArtwork()
 
-  const [tab, setTab] = useState('quickGift')
+  const [tab, setTab] = useState(canApproveQuickGifts ? 'quickGift' : 'doctors')
   const [search, setSearch] = useState('')
   const [rejecting, setRejecting] = useState<Rejecting>(null)
   const [reason, setReason] = useState('')
@@ -95,7 +105,7 @@ export function ApprovalQueuePage() {
       ),
     [quickGifts, q],
   )
-  const total = (quickGifts?.length ?? 0) + (doctorRequests?.length ?? 0)
+  const total = (quickGifts?.length ?? 0) + (doctorRequests?.length ?? 0) + (artwork?.length ?? 0)
 
   async function approveGift(id: string) {
     try {
@@ -118,12 +128,22 @@ export function ApprovalQueuePage() {
     }
   }
 
+  async function approveArtwork(orderId: string, designId: string) {
+    try {
+      await reviewArtwork.mutateAsync({ orderId, designId })
+      toast.success('Artwork approved', { description: 'The vendor can now print and dispatch.' })
+    } catch (err) {
+      showError(err)
+    }
+  }
+
   async function confirmReject() {
     if (!rejecting || !reason.trim()) return
     try {
       if (rejecting.kind === 'quickGift') await rejectQuickGift.mutateAsync({ id: rejecting.id, reason: reason.trim() })
+      else if (rejecting.kind === 'artwork') await reviewArtwork.mutateAsync({ orderId: rejecting.orderId, designId: rejecting.id, comment: reason.trim() })
       else await rejectDoctor.mutateAsync({ id: rejecting.id, reason: reason.trim() })
-      toast.success('Rejected')
+      toast.success(rejecting.kind === 'artwork' ? 'Sent back to the vendor' : 'Rejected')
       setRejecting(null)
       setReason('')
     } catch (err) {
@@ -203,19 +223,53 @@ export function ApprovalQueuePage() {
     </div>
   )
 
+  const artworkPanel = artworkLoading ? (
+    <Skeleton className="h-40 w-full" />
+  ) : (artwork ?? []).length === 0 ? (
+    <EmptyState variant="plain" icon={Palette} title="No artwork waiting for your final approval" />
+  ) : (
+    <div className="space-y-3">
+      {(artwork ?? []).map((item) => (
+        <RequestCard
+          key={item.designId}
+          icon={<Palette className="h-4 w-4" />}
+          title={`${item.giftName ?? 'Artwork'} · ${item.orderDisplayId}`}
+          subtitle={`Approved by ${item.mrApprovedByName ?? 'the MR'}${item.mrApprovedAt ? ` · ${formatDateTime(item.mrApprovedAt)}` : ''}`}
+          approving={reviewArtwork.isPending}
+          onApprove={() => void approveArtwork(item.orderId, item.designId)}
+          onReject={() => setRejecting({ kind: 'artwork', id: item.designId, orderId: item.orderId })}
+          rejectLabel="Request changes"
+        >
+          <Detail label="Doctor">{item.recipientName ?? '—'}</Detail>
+          <Detail label="Quantity">{item.quantity}</Detail>
+          <Detail label="Vendor">{item.vendorName}</Detail>
+          <Detail label="Proof">
+            <a href={item.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+              Version {item.versionNo}
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </Detail>
+        </RequestCard>
+      ))}
+    </div>
+  )
+
   return (
     <div className="space-y-4">
-      <MasterPageHeader title="Approvals" description="Quick Gift requests and doctor changes from your team, waiting on your decision." />
+      <MasterPageHeader title="Approvals" description="Quick Gift requests, doctor changes and artwork from your team, waiting on your decision." />
 
-      {!isLoading && !doctorsLoading && total === 0 ? (
+      {!isLoading && !doctorsLoading && !artworkLoading && total === 0 ? (
         <EmptyState icon={CheckSquare} title="Nothing pending" description="You're all caught up. New requests appear here." />
       ) : (
         <AppTabs
           value={tab}
           onValueChange={setTab}
           tabs={[
-            { value: 'quickGift', label: 'Quick Gift requests', badge: quickGifts?.length || undefined, content: quickGiftPanel },
+            ...(canApproveQuickGifts
+              ? [{ value: 'quickGift', label: 'Quick Gift requests', badge: quickGifts?.length || undefined, content: quickGiftPanel }]
+              : []),
             { value: 'doctors', label: 'Doctor changes', badge: doctorRequests?.length || undefined, content: doctorPanel },
+            { value: 'artwork', label: 'Artwork', badge: artwork?.length || undefined, content: artworkPanel },
           ]}
         />
       )}
@@ -229,15 +283,17 @@ export function ApprovalQueuePage() {
           }
         }}
         size="sm"
-        title={rejecting?.kind === 'doctor' ? 'Reject doctor change' : 'Reject Quick Gift request'}
-        confirmLabel="Reject"
+        title={
+          rejecting?.kind === 'artwork' ? 'Send artwork back to the vendor' : rejecting?.kind === 'doctor' ? 'Reject doctor change' : 'Reject Quick Gift request'
+        }
+        confirmLabel={rejecting?.kind === 'artwork' ? 'Send back to vendor' : 'Reject'}
         confirmVariant="destructive"
         cancelLabel="Cancel"
         confirmDisabled={!reason.trim()}
-        loading={rejectQuickGift.isPending || rejectDoctor.isPending}
+        loading={rejectQuickGift.isPending || rejectDoctor.isPending || reviewArtwork.isPending}
         onConfirm={() => void confirmReject()}
       >
-        <LabelledField id="reject-reason" label="Reason (shown to the requester)">
+        <LabelledField id="reject-reason" label={rejecting?.kind === 'artwork' ? 'What should change? (shown to the vendor)' : 'Reason (shown to the requester)'}>
           <Textarea id="reject-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} />
         </LabelledField>
       </AppDialog>

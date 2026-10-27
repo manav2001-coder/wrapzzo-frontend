@@ -33,6 +33,11 @@ export interface PermissionContextValue {
    * Admin already receives every key from the API.
    */
   isPlatformStaff: boolean
+  /**
+   * Someone reports to this user. Reviewing a direct report's doctor request rests on the
+   * reporting line, not on a key, so it can't be expressed through `can()`.
+   */
+  managesTeam: boolean
 }
 
 const PermissionContext = React.createContext<PermissionContextValue | undefined>(undefined)
@@ -77,6 +82,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
       can,
       refetchPermissions,
       isPlatformStaff: user !== undefined && user.companyId === null,
+      managesTeam: user?.managesTeam === true,
     }),
     [permissions, isLoading, error, hasPermission, hasAnyPermission, hasAllPermissions, can, refetchPermissions, user],
   )

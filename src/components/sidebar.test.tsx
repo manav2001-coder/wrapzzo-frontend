@@ -7,8 +7,8 @@ import { Sidebar } from './sidebar'
 const useCurrentUser = vi.hoisted(() => vi.fn())
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
-function companyUser(permissions: string[]) {
-  useCurrentUser.mockReturnValue({ data: { companyId: 'c1', companyName: 'Acme Pharma', permissions }, isLoading: false })
+function companyUser(permissions: string[], managesTeam = false) {
+  useCurrentUser.mockReturnValue({ data: { companyId: 'c1', companyName: 'Acme Pharma', permissions, managesTeam }, isLoading: false })
 }
 
 describe('Sidebar', () => {
@@ -23,6 +23,12 @@ describe('Sidebar', () => {
     // campaign.manage is missing, so the Approvals entry and the Campaigns > Create link are not offered.
     expect(screen.queryByRole('link', { name: /approvals/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Create' })).not.toBeInTheDocument()
+  })
+
+  it('offers Approvals to a manager with direct reports even without an approval key', () => {
+    companyUser(['dashboard.view', 'quickgift.create', 'order.track'], true)
+    renderWithProviders(<Sidebar />, { route: '/dashboard' })
+    expect(screen.getByRole('link', { name: /approvals/i })).toHaveAttribute('href', '/approvals')
   })
 
   it('shows platform staff the Admin tree instead of the company one', () => {

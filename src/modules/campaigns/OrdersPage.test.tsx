@@ -58,6 +58,8 @@ function design(overrides: Partial<OrderDesign> = {}): OrderDesign {
     status: 'PENDING_REVIEW',
     uploadedByVendorName: 'Pad Printers',
     reviewedByUserName: null,
+    firstApprovedByUserName: null,
+    firstApprovedAt: null,
     reviewComment: null,
     reviewedAt: null,
     createdAt: '2026-10-21T09:00:00Z',

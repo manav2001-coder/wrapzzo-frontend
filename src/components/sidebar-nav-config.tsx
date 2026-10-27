@@ -40,6 +40,8 @@ export interface NavSource {
   end?: boolean
   /** Any-of. Omit for an entry everyone in this portal may see. */
   permission?: string | string[]
+  /** Also shown to anyone with direct reports, whatever their keys (a manager's own approvals). */
+  forManagers?: boolean
   children?: NavSource[]
 }
 
@@ -104,7 +106,7 @@ export const COMPANY_NAV: NavSource[] = [
       { id: 'gift-store', titleKey: 'nav.giftStore', type: 'item', url: '/gift-store', icon: Store, permission: 'quickgift.create' },
       { id: 'recipients', titleKey: 'nav.recipients', type: 'item', url: '/recipients', icon: Contact, permission: 'recipient.manage' },
       { id: 'my-doctors', titleKey: 'nav.myDoctors', type: 'item', url: '/my-doctors', icon: Stethoscope, permission: ['quickgift.create', 'recipient.manage'] },
-      { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: 'campaign.manage' },
+      { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: ['campaign.manage', 'campaign.approve', 'recipient.approve', 'order.design.final'], forManagers: true },
       {
         id: 'company-orders',
         titleKey: 'nav.orders',

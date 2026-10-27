@@ -237,7 +237,7 @@
   },
   "access": {
     "title": "Access Control",
-    "subtitle": "Pick a company and a designation, then grant the keys everyone with that designation gets.",
+    "subtitle": "Pick a company and a designation. Permissions from people's role show ticked and locked; tick anything extra everyone with that designation should get.",
     "company": "Company",
     "pickCompany": "Choose a company",
     "designation": "Designation",
@@ -247,6 +247,11 @@
     "save": "Save",
     "updated_one": "{{designation}} now has {{count}} permission.",
     "updated_other": "{{designation}} now has {{count}} permissions.",
-    "granted": "{{count}} of {{total}} granted"
+    "effective_one": "{{count}} of {{total}} permission in effect",
+    "effective_other": "{{count}} of {{total}} permissions in effect",
+    "rolesHeld": "Role held: {{roles}}",
+    "roleCount_one": "{{role}} ({{count}} person)",
+    "roleCount_other": "{{role}} ({{count}} people)",
+    "fromRole": "From role: {{roles}}"
   }
 }

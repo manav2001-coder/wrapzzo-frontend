@@ -89,8 +89,12 @@
     "status": {
       "PENDING_REVIEW": "Waiting on you",
       "APPROVED": "Approved",
-      "REJECTED": "Changes requested"
-    }
+      "REJECTED": "Changes requested",
+      "PENDING_FINAL_APPROVAL": "Waiting for final approval"
+    },
+    "approvedPendingFinal": "Version {{n}} approved. It now goes to your manager for the final approval before printing.",
+    "waitingForFinal": "Approved by {{name}}. Waiting for their manager’s final approval before the vendor can print.",
+    "theMr": "the MR"
   },
   "photoLink": {
     "title": "Recipient photo requested",

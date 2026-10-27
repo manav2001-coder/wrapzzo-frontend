@@ -25,6 +25,8 @@ export interface CurrentUser {
   /** Null for platform staff -- a company user's own company, so self-service pages can resolve "my company" without an id in the URL. */
   companyId: string | null
   companyName: string | null
+  /** Someone reports to this user, which makes them the approver of their team's doctor requests. */
+  managesTeam: boolean
 }
 
 /** The logged-in user's effective access-control keys and their own company -- lets the UI gate things like "New campaign" without guessing from a role name. */

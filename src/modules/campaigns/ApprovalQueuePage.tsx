@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useApproveDoctorChangeRequest, usePendingDoctorChangeRequests, useRejectDoctorChangeRequest } from '@/hooks/useDoctorRequests'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useApproveQuickGiftRequest, usePendingQuickGiftApprovals, useRejectQuickGiftRequest } from '@/hooks/useQuickGifts'
 import { formatDateTime } from '@/lib/datetime'
 import { humanize } from '@/lib/format'
@@ -74,14 +75,17 @@ type Rejecting = { kind: 'quickGift' | 'doctor'; id: string } | null
 /** Quick Gift requests and doctor changes from the team, waiting on the user's decision. Campaign submissions never land here. */
 export function ApprovalQueuePage() {
   const showError = useApiErrorToast()
-  const { data: quickGifts, isLoading } = usePendingQuickGiftApprovals()
+  // A manager reviewing only their team's doctor requests has no Quick Gift approval right: skip
+  // that queue (it would only answer 403) and open on the doctor changes.
+  const canApproveQuickGifts = useHasAccess(['campaign.approve', 'campaign.manage'])
+  const { data: quickGifts, isLoading } = usePendingQuickGiftApprovals(canApproveQuickGifts)
   const { data: doctorRequests, isLoading: doctorsLoading } = usePendingDoctorChangeRequests()
   const approveQuickGift = useApproveQuickGiftRequest()
   const rejectQuickGift = useRejectQuickGiftRequest()
   const approveDoctor = useApproveDoctorChangeRequest()
   const rejectDoctor = useRejectDoctorChangeRequest()
 
-  const [tab, setTab] = useState('quickGift')
+  const [tab, setTab] = useState(canApproveQuickGifts ? 'quickGift' : 'doctors')
   const [search, setSearch] = useState('')
   const [rejecting, setRejecting] = useState<Rejecting>(null)
   const [reason, setReason] = useState('')
@@ -214,7 +218,9 @@ export function ApprovalQueuePage() {
           value={tab}
           onValueChange={setTab}
           tabs={[
-            { value: 'quickGift', label: 'Quick Gift requests', badge: quickGifts?.length || undefined, content: quickGiftPanel },
+            ...(canApproveQuickGifts
+              ? [{ value: 'quickGift', label: 'Quick Gift requests', badge: quickGifts?.length || undefined, content: quickGiftPanel }]
+              : []),
             { value: 'doctors', label: 'Doctor changes', badge: doctorRequests?.length || undefined, content: doctorPanel },
           ]}
         />

@@ -9,6 +9,7 @@ import type { NavItemType } from '@/components/nav/nav-types'
 interface FilterContext {
   t: (key: string) => string
   can: (permission?: string | string[]) => boolean
+  managesTeam?: boolean
 }
 
 /**
@@ -16,7 +17,7 @@ interface FilterContext {
  * filtered out -- unless it has a `url` of its own, in which case it is still a destination.
  */
 function filterItem(item: NavSource, ctx: FilterContext): NavItemType | null {
-  if (!ctx.can(item.permission)) return null
+  if (!ctx.can(item.permission) && !(item.forManagers && ctx.managesTeam)) return null
 
   const title = ctx.t(item.titleKey)
   if (item.type === 'item' && !item.children) {
@@ -46,12 +47,12 @@ export function buildNav(items: NavSource[], ctx: FilterContext): NavItemType[] 
 export function useNav(): NavItemType[] {
   const { t } = useTranslation()
   const { portal } = useShell()
-  const { can, isPlatformStaff, loading, error } = usePermissions()
+  const { can, isPlatformStaff, managesTeam, loading, error } = usePermissions()
 
   return React.useMemo(() => {
     const translate = (key: string) => t(key)
     if (portal === 'vendor') return buildNav(VENDOR_NAV, { t: translate, can: () => true })
     if (loading || error) return []
-    return buildNav(isPlatformStaff ? ADMIN_NAV : COMPANY_NAV, { t: translate, can: (permission) => can(permission) })
-  }, [t, portal, can, isPlatformStaff, loading, error])
+    return buildNav(isPlatformStaff ? ADMIN_NAV : COMPANY_NAV, { t: translate, can: (permission) => can(permission), managesTeam })
+  }, [t, portal, can, isPlatformStaff, managesTeam, loading, error])
 }

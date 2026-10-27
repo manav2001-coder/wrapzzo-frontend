@@ -1,85 +1,71 @@
-import { format } from 'date-fns'
-import { Button } from 'primereact/button'
-import { Calendar } from 'primereact/calendar'
-import { Dialog } from 'primereact/dialog'
-import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea'
 import { useState } from 'react'
-import type { Recipient } from '@/api/recipients'
-import { useCreateRecipient, useUpdateRecipient } from '@/hooks/useRecipients'
-import { parseDateOnly } from '@/lib/format'
-import { showApiError, showToast } from '@/lib/toast'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
-interface DraftRecipient {
+import type { Recipient } from '@/api/recipients'
+import { AppDialog } from '@/components/app-dialog'
+import { DatePicker } from '@/components/fields/date-picker'
+import { LabelledField } from '@/components/fields/labelled-field'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useCreateRecipient, useUpdateRecipient } from '@/hooks/useRecipients'
+import { fromDateOnly, toDateOnly } from '@/lib/datetime'
+
+interface Draft {
   name: string
   phone: string
   email: string
   address: string
-  dateOfBirth?: Date
+  dateOfBirth: Date | null
   qualification: string
   registrationNumber: string
   speciality: string
   clinicName: string
 }
 
-const EMPTY: DraftRecipient = {
-  name: '',
-  phone: '',
-  email: '',
-  address: '',
-  dateOfBirth: undefined,
-  qualification: '',
-  registrationNumber: '',
-  speciality: '',
-  clinicName: '',
-}
-
-function draftFrom(recipient: Recipient): DraftRecipient {
+function draftFrom(recipient: Recipient | null | undefined): Draft {
   return {
-    name: recipient.name,
-    phone: recipient.phone,
-    email: recipient.email ?? '',
-    address: recipient.address ?? '',
-    dateOfBirth: recipient.dateOfBirth ? parseDateOnly(recipient.dateOfBirth) : undefined,
-    qualification: recipient.doctor?.qualification ?? '',
-    registrationNumber: recipient.doctor?.registrationNumber ?? '',
-    speciality: recipient.doctor?.speciality ?? '',
-    clinicName: recipient.doctor?.clinicName ?? '',
+    name: recipient?.name ?? '',
+    phone: recipient?.phone ?? '',
+    email: recipient?.email ?? '',
+    address: recipient?.address ?? '',
+    dateOfBirth: fromDateOnly(recipient?.dateOfBirth) ?? null,
+    qualification: recipient?.doctor?.qualification ?? '',
+    registrationNumber: recipient?.doctor?.registrationNumber ?? '',
+    speciality: recipient?.doctor?.speciality ?? '',
+    clinicName: recipient?.doctor?.clinicName ?? '',
   }
 }
 
-/** Add mode with no `recipient`, edit mode with one -- e.g. to fill in a Date of Birth on a recipient that came in via Quick Gift/a submission without one. */
+/**
+ * Add a recipient to the directory, or edit one (e.g. fill in a date of birth or a doctor's
+ * registration number). The caller remounts it per recipient (`key`), so it starts from that
+ * recipient's values rather than syncing them in an effect.
+ */
 export function RecipientFormDialog({ visible, onHide, recipient }: { visible: boolean; onHide: () => void; recipient?: Recipient | null }) {
-  const [draft, setDraft] = useState<DraftRecipient>(EMPTY)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const { t } = useTranslation('recipients')
+  const showError = useApiErrorToast()
   const createRecipient = useCreateRecipient()
   const updateRecipient = useUpdateRecipient()
+  const [draft, setDraft] = useState<Draft>(() => draftFrom(recipient))
+  const [errors, setErrors] = useState<Partial<Record<'name' | 'phone', string>>>({})
   const isEdit = Boolean(recipient)
+  const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }))
 
-  function handleShow() {
-    setDraft(recipient ? draftFrom(recipient) : EMPTY)
-    setErrors({})
-  }
-
-  function handleHide() {
-    onHide()
-  }
-
-  async function handleSubmit() {
-    const nextErrors: Record<string, string> = {}
-    if (!draft.name.trim()) nextErrors.name = 'Required.'
-    if (!draft.phone.trim()) nextErrors.phone = 'Required.'
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors)
-      return
-    }
+  async function submit() {
+    const next: typeof errors = {}
+    if (!draft.name.trim()) next.name = t('field.required')
+    if (!draft.phone.trim()) next.phone = t('field.required')
+    setErrors(next)
+    if (Object.keys(next).length > 0) return
 
     const input = {
       name: draft.name.trim(),
       phone: draft.phone.trim(),
       email: draft.email.trim() || undefined,
       address: draft.address.trim() || undefined,
-      dateOfBirth: draft.dateOfBirth ? format(draft.dateOfBirth, 'yyyy-MM-dd') : undefined,
+      dateOfBirth: toDateOnly(draft.dateOfBirth) ?? undefined,
       // Always sent from this form (it shows them), so clearing a field here really clears it.
       doctor: {
         qualification: draft.qualification.trim() || null,
@@ -88,105 +74,62 @@ export function RecipientFormDialog({ visible, onHide, recipient }: { visible: b
         clinicName: draft.clinicName.trim() || null,
       },
     }
-
     try {
-      if (isEdit && recipient) {
+      if (recipient) {
         await updateRecipient.mutateAsync({ id: recipient.id, input })
-        showToast({ severity: 'success', summary: 'Recipient updated' })
+        toast.success(t('directory.updated'))
       } else {
         await createRecipient.mutateAsync(input)
-        showToast({ severity: 'success', summary: 'Recipient added' })
+        toast.success(t('directory.added'))
       }
-      handleHide()
-    } catch (error) {
-      showApiError(error)
+      onHide()
+    } catch (err) {
+      showError(err)
     }
   }
 
   return (
-    <Dialog
-      header={isEdit ? 'Edit recipient' : 'Add recipient'}
-      visible={visible}
-      onShow={handleShow}
-      onHide={handleHide}
-      style={{ width: '32rem' }}
-      breakpoints={{ '960px': '90vw', '640px': '95vw' }}
-      modal
+    <AppDialog
+      open={visible}
+      onOpenChange={(open) => !open && onHide()}
+      size="md"
+      title={isEdit ? t('directory.editTitle') : t('directory.addTitle')}
+      confirmLabel={isEdit ? t('directory.save') : t('directory.add')}
+      cancelLabel={t('action.cancel', { ns: 'common' })}
+      loading={createRecipient.isPending || updateRecipient.isPending}
+      onConfirm={() => void submit()}
     >
-      <div className="flex flex-col gap-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-text-muted">Name *</label>
-          <InputText
-            value={draft.name}
-            onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-            className={`w-full ${errors.name ? 'p-invalid' : ''}`}
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Phone *</label>
-            <InputText
-              value={draft.phone}
-              onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
-              className={`w-full ${errors.phone ? 'p-invalid' : ''}`}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Date of birth</label>
-            <Calendar
-              value={draft.dateOfBirth}
-              onChange={(e) => setDraft((d) => ({ ...d, dateOfBirth: (e.value as Date) ?? undefined }))}
-              dateFormat="dd M yy"
-              showIcon
-              className="w-full"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-text-muted">Email</label>
-          <InputText value={draft.email} onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))} className="w-full" />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-text-muted">Address</label>
-          <InputTextarea value={draft.address} onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))} rows={2} className="w-full" />
-        </div>
-        <p className="mt-1 text-xs font-medium text-text-muted">Doctor details (printed on prescription pads)</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Registration no.</label>
-            <InputText
-              value={draft.registrationNumber}
-              onChange={(e) => setDraft((d) => ({ ...d, registrationNumber: e.target.value }))}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Qualification</label>
-            <InputText
-              value={draft.qualification}
-              onChange={(e) => setDraft((d) => ({ ...d, qualification: e.target.value }))}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Speciality</label>
-            <InputText value={draft.speciality} onChange={(e) => setDraft((d) => ({ ...d, speciality: e.target.value }))} className="w-full" />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">Clinic / hospital</label>
-            <InputText value={draft.clinicName} onChange={(e) => setDraft((d) => ({ ...d, clinicName: e.target.value }))} className="w-full" />
-          </div>
-        </div>
-      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <LabelledField id="recipient-name" label={`${t('field.name')} *`} error={errors.name} className="sm:col-span-2">
+          <Input id="recipient-name" value={draft.name} aria-invalid={Boolean(errors.name)} onChange={(e) => set({ name: e.target.value })} />
+        </LabelledField>
+        <LabelledField id="recipient-phone" label={`${t('field.phone')} *`} error={errors.phone}>
+          <Input id="recipient-phone" type="tel" value={draft.phone} aria-invalid={Boolean(errors.phone)} onChange={(e) => set({ phone: e.target.value })} />
+        </LabelledField>
+        <LabelledField id="recipient-dob" label={t('field.dob')}>
+          <DatePicker id="recipient-dob" value={draft.dateOfBirth} onChange={(value) => set({ dateOfBirth: value })} toDate={new Date()} />
+        </LabelledField>
+        <LabelledField id="recipient-email" label={t('field.email')} className="sm:col-span-2">
+          <Input id="recipient-email" type="email" value={draft.email} onChange={(e) => set({ email: e.target.value })} />
+        </LabelledField>
+        <LabelledField id="recipient-address" label={t('field.address')} className="sm:col-span-2">
+          <Textarea id="recipient-address" rows={2} value={draft.address} onChange={(e) => set({ address: e.target.value })} />
+        </LabelledField>
 
-      <div className="mt-5 flex justify-end gap-2">
-        <Button label="Cancel" text onClick={handleHide} />
-        <Button
-          label={isEdit ? 'Save changes' : 'Add recipient'}
-          loading={createRecipient.isPending || updateRecipient.isPending}
-          onClick={handleSubmit}
-        />
+        <p className="pt-1 text-xs font-semibold text-muted-foreground sm:col-span-2">{t('field.doctorSection')}</p>
+        <LabelledField id="recipient-reg" label={t('field.registrationNumber')}>
+          <Input id="recipient-reg" value={draft.registrationNumber} onChange={(e) => set({ registrationNumber: e.target.value })} />
+        </LabelledField>
+        <LabelledField id="recipient-qualification" label={t('field.qualification')}>
+          <Input id="recipient-qualification" value={draft.qualification} onChange={(e) => set({ qualification: e.target.value })} />
+        </LabelledField>
+        <LabelledField id="recipient-speciality" label={t('field.speciality')}>
+          <Input id="recipient-speciality" value={draft.speciality} onChange={(e) => set({ speciality: e.target.value })} />
+        </LabelledField>
+        <LabelledField id="recipient-clinic" label={t('field.clinicName')}>
+          <Input id="recipient-clinic" value={draft.clinicName} onChange={(e) => set({ clinicName: e.target.value })} />
+        </LabelledField>
       </div>
-    </Dialog>
+    </AppDialog>
   )
 }

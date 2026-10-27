@@ -1,0 +1,77 @@
+{
+  "field": {
+    "name": "Name",
+    "doctorName": "Doctor name",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "clinicAddress": "Clinic / address",
+    "dob": "Date of birth",
+    "registrationNumber": "Registration no.",
+    "qualification": "Qualification",
+    "speciality": "Speciality",
+    "clinicName": "Clinic / hospital",
+    "addedBy": "Added by",
+    "doctorSection": "Doctor details (printed on prescription pads)",
+    "required": "Required"
+  },
+  "directory": {
+    "title": "Recipients",
+    "subtitle": "Everyone your team has sent a gift to or requested one for, in one shared directory.",
+    "add": "Add recipient",
+    "edit": "Edit {{name}}",
+    "emptyTitle": "No recipients yet",
+    "emptyBody": "Recipients from Quick Gift and campaigns appear here automatically, or add one yourself.",
+    "addTitle": "Add recipient",
+    "editTitle": "Edit recipient",
+    "save": "Save changes",
+    "added": "Recipient added",
+    "updated": "Recipient updated"
+  },
+  "birthdays": {
+    "title": "Upcoming birthdays",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "inDays": "In {{count}} days",
+    "gift": "Send a gift"
+  },
+  "picker": {
+    "title": "Pick from the directory",
+    "search": "Search by name, phone or registration no.",
+    "startTitle": "Start typing to search",
+    "startBody": "Find a doctor already in your directory.",
+    "noMatchTitle": "No matches",
+    "noMatchBody": "Nobody matches that search. Add them as a new recipient instead.",
+    "add_one": "Add {{count}} selected",
+    "add_other": "Add {{count}} selected",
+    "addNone": "Add selected"
+  },
+  "doctors": {
+    "title": "My doctors",
+    "subtitle": "Your own list. Adding, editing or removing a doctor goes to your manager for approval first.",
+    "request": "Request new doctor",
+    "requestEdit": "Request changes to {{name}}",
+    "requestRemove": "Request removal of {{name}}",
+    "emptyTitle": "No doctors on your list yet",
+    "emptyBody": "Request your first one. It appears here once your manager approves it.",
+    "addTitle": "Request a new doctor",
+    "editTitle": "Request changes to {{name}}",
+    "send": "Send for approval",
+    "sent": "Request sent to your manager for approval",
+    "removeTitle": "Remove {{name}} from your list?",
+    "removeBody": "Your manager approves the removal. The doctor stays in the company directory.",
+    "removeConfirm": "Request removal",
+    "removeSent": "Removal requested",
+    "pendingTitle": "Waiting for your manager",
+    "action": {
+      "ADD": "Add",
+      "EDIT": "Edit",
+      "REMOVE": "Remove"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    }
+  }
+}

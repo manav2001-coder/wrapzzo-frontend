@@ -68,7 +68,9 @@ export function OrderDetailSheet({
                 <Detail label={t('detail.company')}>{order.companyName}</Detail>
                 <Detail label={t('detail.source')}>{order.campaignName ?? t(`source.${order.source}`)}</Detail>
                 <Detail label={t('detail.vendor')}>{order.assignedVendorName ?? t('unassigned')}</Detail>
+                <Detail label={t('detail.quantity')}>{order.quantity}</Detail>
                 <Detail label={t('detail.total')}>{formatCurrency(order.totalPrice)}</Detail>
+                {order.orgUnitName && <Detail label={t('detail.orgUnit')}>{order.orgUnitName}</Detail>}
                 <Detail label={t('detail.placed')}>{formatDateTime(order.createdAt)}</Detail>
               </dl>
 

@@ -21,7 +21,7 @@ export interface TechnicianCapacityBarProps {
  * numbers so color is never the only signal (the `dataviz` skill's accessibility rule).
  */
 export function TechnicianCapacityBar({ rows }: TechnicianCapacityBarProps) {
-  const { t } = useTranslation("fleetAgents");
+  const { t } = useTranslation();
 
   if (rows.length === 0) {
     return (

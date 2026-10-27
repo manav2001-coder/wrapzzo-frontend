@@ -31,6 +31,10 @@ export interface MiniBarChartProps {
    * (`fleet-command/maria/maria-reply.tsx`) have no single fixed metric name to give it.
    */
   seriesName?: string;
+  /** Shown instead of the chart when there are no bars. */
+  emptyText?: string;
+  /** Makes each bar a drill-down. */
+  onSelect?: (datum: MiniBarChartDatum) => void;
 }
 
 /**
@@ -38,10 +42,10 @@ export interface MiniBarChartProps {
  * `dataviz` skill. Used for `AiInsightsList`'s category breakdown, the Command Center's
  * "Fleet status" operational view (§6.5), and the chat's `chart.type === "bar"` answers.
  */
-export function MiniBarChart({ data, height = 200, seriesName }: MiniBarChartProps) {
-  const { t } = useTranslation("fleetAgents");
+export function MiniBarChart({ data, height = 200, seriesName, emptyText, onSelect }: MiniBarChartProps) {
+  const { t } = useTranslation();
   if (data.length === 0) {
-    return <p className="py-6 text-center text-sm text-muted-foreground">{t("charts.empty")}</p>;
+    return <p className="py-6 text-center text-sm text-muted-foreground">{emptyText ?? t("charts.empty")}</p>;
   }
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -74,9 +78,10 @@ export function MiniBarChart({ data, height = 200, seriesName }: MiniBarChartPro
           name={seriesName ?? t("charts.value")}
           radius={[4, 4, 0, 0]}
           maxBarSize={40}
+          onClick={onSelect ? (_, index) => onSelect(data[index]) : undefined}
         >
           {data.map((d) => (
-            <Cell key={d.label} fill={d.color ?? "hsl(var(--primary))"} />
+            <Cell key={d.label} fill={d.color ?? "hsl(var(--primary))"} className={onSelect ? "cursor-pointer" : undefined} />
           ))}
         </Bar>
       </BarChart>

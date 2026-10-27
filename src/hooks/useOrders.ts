@@ -12,13 +12,15 @@ import {
   requestOrderPhotoLink,
   requestPlatformOrderPhotoLink,
 } from '@/api/orders'
+import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 
+// Both poll: a vendor's new proof or status change shows on the company side without a reload.
 export function useOrders() {
-  return useQuery({ queryKey: ['orders'], queryFn: listOrders })
+  return useQuery({ queryKey: ['orders'], queryFn: listOrders, refetchInterval: LIVE_REFRESH_MS })
 }
 
 export function useOrder(id: string | undefined) {
-  return useQuery({ queryKey: ['orders', id], queryFn: () => getOrder(id!), enabled: Boolean(id) })
+  return useQuery({ queryKey: ['orders', id], queryFn: () => getOrder(id!), enabled: Boolean(id), refetchInterval: LIVE_REFRESH_MS })
 }
 
 export function useRequestOrderPhotoLink() {

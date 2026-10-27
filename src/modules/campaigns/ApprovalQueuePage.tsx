@@ -1,284 +1,243 @@
-import { Button } from 'primereact/button'
-import { Dialog } from 'primereact/dialog'
-import { IconField } from 'primereact/iconfield'
-import { InputIcon } from 'primereact/inputicon'
-import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea'
-import { useMemo, useState } from 'react'
-import { EmptyState } from '@/components/EmptyState'
-import { PageHeader } from '@/components/PageHeader'
-import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
-import { SectionHeader } from '@/components/SectionHeader'
-import { StatusBadge } from '@/components/StatusBadge'
+import { Check, CheckSquare, Search, UserCog, X, Zap } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { toast } from 'sonner'
+
+import { AppDialog } from '@/components/app-dialog'
+import { AppTabs } from '@/components/app-tabs'
+import { EmptyState } from '@/components/empty-state'
+import { LabelledField } from '@/components/fields/labelled-field'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Textarea } from '@/components/ui/textarea'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useApproveDoctorChangeRequest, usePendingDoctorChangeRequests, useRejectDoctorChangeRequest } from '@/hooks/useDoctorRequests'
 import { useApproveQuickGiftRequest, usePendingQuickGiftApprovals, useRejectQuickGiftRequest } from '@/hooks/useQuickGifts'
+import { formatDateTime } from '@/lib/datetime'
 import { humanize } from '@/lib/format'
-import { showApiError, showToast } from '@/lib/toast'
 
-/** A manager's queue for their direct reports' doctor add/edit/remove requests (PRD: routed to "the MR's senior/manager"). */
-function DoctorRequestsSection() {
-  const { data: requests, isLoading } = usePendingDoctorChangeRequests()
-  const approve = useApproveDoctorChangeRequest()
-  const reject = useRejectDoctorChangeRequest()
-  const [rejectTarget, setRejectTarget] = useState<string | null>(null)
-  const [reason, setReason] = useState('')
-
-  async function handleApprove(id: string) {
-    try {
-      await approve.mutateAsync(id)
-      showToast({ severity: 'success', summary: 'Approved' })
-    } catch (error) {
-      showApiError(error)
-    }
-  }
-
-  async function handleReject() {
-    if (!rejectTarget || !reason.trim()) return
-    try {
-      await reject.mutateAsync({ id: rejectTarget, reason: reason.trim() })
-      showToast({ severity: 'success', summary: 'Rejected' })
-      setRejectTarget(null)
-      setReason('')
-    } catch (error) {
-      showApiError(error)
-    }
-  }
-
-  if (!isLoading && (requests ?? []).length === 0) return null
-
+function Detail({ label, children, wide }: { label: string; children: ReactNode; wide?: boolean }) {
   return (
-    <div className="mb-8">
-      <SectionHeader eyebrow={`${requests?.length ?? 0} pending`} title="Doctor change requests" />
-      <div className="flex flex-col gap-3">
-        {requests?.map((request) => (
-          <div key={request.id} className="rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 text-accent">
-                  <i className="pi pi-user-edit text-sm" />
-                </div>
-                <div>
-                  <span className="font-semibold text-text">{humanize(request.action)}</span>
-                  <span className="ml-2 text-xs text-text-muted">requested by {request.requestedByName}</span>
-                </div>
-              </div>
-              <StatusBadge status={request.status} label={humanize(request.status)} />
-            </div>
-            <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
-              <div>
-                <span className="text-text-muted">Doctor: </span>
-                <span className="text-text">{request.proposedName ?? request.recipientName}</span>
-              </div>
-              {request.proposedPhone && (
-                <div>
-                  <span className="text-text-muted">Phone: </span>
-                  <span className="text-text">{request.proposedPhone}</span>
-                </div>
-              )}
-              {request.proposedAddress && (
-                <div className="sm:col-span-2">
-                  <span className="text-text-muted">Address: </span>
-                  <span className="text-text">{request.proposedAddress}</span>
-                </div>
-              )}
-            </div>
-            <div className="mt-3 flex gap-2">
-              <Button label="Approve" icon="pi pi-check" size="small" loading={approve.isPending} onClick={() => handleApprove(request.id)} />
-              <Button
-                label="Reject"
-                icon="pi pi-times"
-                size="small"
-                severity="danger"
-                outlined
-                onClick={() => setRejectTarget(request.id)}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <Dialog
-        header="Reject doctor change request"
-        visible={rejectTarget !== null}
-        onHide={() => setRejectTarget(null)}
-        style={{ width: '28rem' }}
-        breakpoints={{ '960px': '90vw', '640px': '95vw' }}
-      >
-        <div className="flex flex-col gap-3">
-          <label htmlFor="doctorRejectReason" className="text-sm font-medium text-text">
-            Reason (shown to the requester)
-          </label>
-          <InputTextarea id="doctorRejectReason" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} autoFocus />
-          <div className="flex justify-end gap-2">
-            <Button label="Cancel" text onClick={() => setRejectTarget(null)} />
-            <Button label="Reject" severity="danger" disabled={!reason.trim()} loading={reject.isPending} onClick={handleReject} />
-          </div>
-        </div>
-      </Dialog>
+    <div className={wide ? 'min-w-0 sm:col-span-2' : 'min-w-0'}>
+      <span className="text-muted-foreground">{label}: </span>
+      <span>{children}</span>
     </div>
   )
 }
 
-/** Campaign submissions never land here -- they're approved automatically the moment they're submitted. Only Quick Gift requests need a human decision. */
+/** One pending item: what it is, who asked, its details, and Approve / Reject. */
+function RequestCard({
+  icon,
+  title,
+  subtitle,
+  children,
+  approving,
+  onApprove,
+  onReject,
+}: {
+  icon: ReactNode
+  title: string
+  subtitle: string
+  children: ReactNode
+  approving: boolean
+  onApprove: () => void
+  onReject: () => void
+}) {
+  return (
+    <article className="rounded-lg border bg-card p-4 shadow-sm">
+      <header className="flex items-center gap-2.5">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">{icon}</span>
+        <div className="min-w-0">
+          <h3 className="truncate font-semibold">{title}</h3>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        </div>
+      </header>
+      <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2">{children}</div>
+      <div className="mt-3 flex gap-2">
+        <Button size="sm" loading={approving} onClick={onApprove}>
+          <Check />
+          Approve
+        </Button>
+        <Button size="sm" variant="outline" onClick={onReject}>
+          <X />
+          Reject
+        </Button>
+      </div>
+    </article>
+  )
+}
+
+type Rejecting = { kind: 'quickGift' | 'doctor'; id: string } | null
+
+/** Quick Gift requests and doctor changes from the team, waiting on the user's decision. Campaign submissions never land here. */
 export function ApprovalQueuePage() {
+  const showError = useApiErrorToast()
   const { data: quickGifts, isLoading } = usePendingQuickGiftApprovals()
-  const { data: doctorRequests, isLoading: isLoadingDoctorRequests } = usePendingDoctorChangeRequests()
+  const { data: doctorRequests, isLoading: doctorsLoading } = usePendingDoctorChangeRequests()
   const approveQuickGift = useApproveQuickGiftRequest()
   const rejectQuickGift = useRejectQuickGiftRequest()
+  const approveDoctor = useApproveDoctorChangeRequest()
+  const rejectDoctor = useRejectDoctorChangeRequest()
 
-  const [rejectTarget, setRejectTarget] = useState<string | null>(null)
-  const [reason, setReason] = useState('')
-  const [photoLinkPrompt, setPhotoLinkPrompt] = useState<RecipientPhotoLinkPrompt | null>(null)
+  const [tab, setTab] = useState('quickGift')
   const [search, setSearch] = useState('')
+  const [rejecting, setRejecting] = useState<Rejecting>(null)
+  const [reason, setReason] = useState('')
+  const [photoPrompt, setPhotoPrompt] = useState<PhotoLinkPrompt | null>(null)
 
-  const filteredQuickGifts = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return quickGifts ?? []
-    return (quickGifts ?? []).filter(
-      (r) =>
-        r.giftName.toLowerCase().includes(q) ||
-        r.recipientName.toLowerCase().includes(q) ||
-        (r.requestedByName ?? '').toLowerCase().includes(q),
-    )
-  }, [quickGifts, search])
+  const q = search.trim().toLowerCase()
+  const filteredQuickGifts = useMemo(
+    () =>
+      (quickGifts ?? []).filter(
+        (r) => !q || [r.giftName, r.recipientName, r.requestedByName ?? ''].some((value) => value.toLowerCase().includes(q)),
+      ),
+    [quickGifts, q],
+  )
+  const total = (quickGifts?.length ?? 0) + (doctorRequests?.length ?? 0)
 
-  async function handleApproveQuickGift(id: string) {
+  async function approveGift(id: string) {
     try {
       const result = await approveQuickGift.mutateAsync(id)
-      showToast({ severity: 'success', summary: 'Approved', detail: 'An order has been created.' })
+      toast.success('Approved', { description: 'An order has been created.' })
       if (result.recipientUploadUrl) {
-        setPhotoLinkPrompt({ link: result.recipientUploadUrl, phone: result.recipientPhone, recipientName: result.recipientName })
+        setPhotoPrompt({ link: result.recipientUploadUrl, phone: result.recipientPhone, recipientName: result.recipientName })
       }
-    } catch (error) {
-      showApiError(error)
+    } catch (err) {
+      showError(err)
     }
   }
 
-  async function handleReject() {
-    if (!rejectTarget || !reason.trim()) return
+  async function approveDoctorChange(id: string) {
     try {
-      await rejectQuickGift.mutateAsync({ id: rejectTarget, reason: reason.trim() })
-      showToast({ severity: 'success', summary: 'Rejected' })
-      setRejectTarget(null)
-      setReason('')
-    } catch (error) {
-      showApiError(error)
+      await approveDoctor.mutateAsync(id)
+      toast.success('Approved')
+    } catch (err) {
+      showError(err)
     }
   }
 
-  const quickGiftCount = quickGifts?.length ?? 0
-  const doctorRequestCount = doctorRequests?.length ?? 0
-  const totalPending = quickGiftCount + doctorRequestCount
-  const stillLoading = isLoading || isLoadingDoctorRequests
+  async function confirmReject() {
+    if (!rejecting || !reason.trim()) return
+    try {
+      if (rejecting.kind === 'quickGift') await rejectQuickGift.mutateAsync({ id: rejecting.id, reason: reason.trim() })
+      else await rejectDoctor.mutateAsync({ id: rejecting.id, reason: reason.trim() })
+      toast.success('Rejected')
+      setRejecting(null)
+      setReason('')
+    } catch (err) {
+      showError(err)
+    }
+  }
+
+  const quickGiftPanel = (
+    <div className="space-y-3">
+      <div className="relative w-full sm:w-80">
+        <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by gift, recipient or requester" aria-label="Search requests" className="pl-8" />
+      </div>
+      {isLoading ? (
+        <Skeleton className="h-40 w-full" />
+      ) : filteredQuickGifts.length === 0 ? (
+        <EmptyState variant="plain" icon={Zap} title={q ? 'No requests match' : 'No Quick Gift requests waiting'} />
+      ) : (
+        filteredQuickGifts.map((request) => (
+          <RequestCard
+            key={request.id}
+            icon={<Zap className="h-4 w-4" />}
+            title={request.giftName}
+            subtitle={`Requested by ${request.requestedByName ?? 'a team member'} · ${formatDateTime(request.createdAt)}`}
+            approving={approveQuickGift.isPending}
+            onApprove={() => void approveGift(request.id)}
+            onReject={() => setRejecting({ kind: 'quickGift', id: request.id })}
+          >
+            <Detail label="Recipient">{request.recipientName}</Detail>
+            <Detail label="Phone">{request.recipientPhone}</Detail>
+            <Detail label="Quantity">{request.quantity}</Detail>
+            {request.vendorName && <Detail label="Vendor">{request.vendorName}</Detail>}
+            <Detail label="Deliver to" wide>
+              {request.deliveryAddress}
+            </Detail>
+            {request.giftMessage && (
+              <Detail label="Gift message" wide>
+                {request.giftMessage}
+              </Detail>
+            )}
+          </RequestCard>
+        ))
+      )}
+    </div>
+  )
+
+  const doctorPanel = doctorsLoading ? (
+    <Skeleton className="h-40 w-full" />
+  ) : (doctorRequests ?? []).length === 0 ? (
+    <EmptyState variant="plain" icon={UserCog} title="No doctor changes waiting" />
+  ) : (
+    <div className="space-y-3">
+      {(doctorRequests ?? []).map((request) => (
+        <RequestCard
+          key={request.id}
+          icon={<UserCog className="h-4 w-4" />}
+          title={`${humanize(request.action)} doctor`}
+          subtitle={`Requested by ${request.requestedByName} · ${formatDateTime(request.createdAt)}`}
+          approving={approveDoctor.isPending}
+          onApprove={() => void approveDoctorChange(request.id)}
+          onReject={() => setRejecting({ kind: 'doctor', id: request.id })}
+        >
+          <Detail label="Doctor">{request.proposedName ?? request.recipientName}</Detail>
+          {request.proposedPhone && <Detail label="Phone">{request.proposedPhone}</Detail>}
+          {request.proposedEmail && <Detail label="Email">{request.proposedEmail}</Detail>}
+          {request.proposedAddress && (
+            <Detail label="Address" wide>
+              {request.proposedAddress}
+            </Detail>
+          )}
+        </RequestCard>
+      ))}
+    </div>
+  )
 
   return (
-    <div>
-      <PageHeader title="Approvals" subtitle="Quick Gift requests and doctor changes from your team, waiting on your decision." />
+    <div className="space-y-4">
+      <MasterPageHeader title="Approvals" description="Quick Gift requests and doctor changes from your team, waiting on your decision." />
 
-      {!stillLoading && totalPending === 0 ? (
-        <EmptyState icon="pi-check-square" title="Nothing pending" description="You're all caught up. New requests will appear here." />
+      {!isLoading && !doctorsLoading && total === 0 ? (
+        <EmptyState icon={CheckSquare} title="Nothing pending" description="You're all caught up. New requests appear here." />
       ) : (
-        <div>
-          <DoctorRequestsSection />
-
-          {quickGiftCount === 0 ? null : (
-          <>
-          <SectionHeader eyebrow={`${quickGiftCount} pending`} title="Quick Gift requests" />
-          <div className="mb-4">
-            <IconField iconPosition="left">
-              <InputIcon className="pi pi-search" />
-              <InputText
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by gift, recipient, or requester"
-                className="w-full sm:w-80"
-              />
-            </IconField>
-          </div>
-          {filteredQuickGifts.length === 0 ? (
-            <EmptyState icon="pi-search" title="No requests match" />
-          ) : (
-          <div className="flex flex-col gap-3">
-            {filteredQuickGifts.map((request) => (
-              <div key={request.id} className="rounded-2xl border border-border bg-surface p-4 transition-shadow hover:shadow-md">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-500/5 text-amber-500">
-                      <i className="pi pi-bolt text-sm" />
-                    </div>
-                    <div>
-                      <span className="font-semibold text-text">{request.giftName}</span>
-                      <span className="ml-2 text-xs text-text-muted">requested by {request.requestedByName ?? 'a team member'}</span>
-                    </div>
-                  </div>
-                  <StatusBadge status={request.status} label={humanize(request.status)} />
-                </div>
-                <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
-                  <div>
-                    <span className="text-text-muted">Recipient: </span>
-                    <span className="text-text">{request.recipientName}</span>
-                  </div>
-                  <div>
-                    <span className="text-text-muted">Phone: </span>
-                    <span className="text-text">{request.recipientPhone}</span>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <span className="text-text-muted">Deliver to: </span>
-                    <span className="text-text">{request.deliveryAddress}</span>
-                  </div>
-                  {request.giftMessage && (
-                    <div className="sm:col-span-2">
-                      <span className="text-text-muted">Gift message: </span>
-                      <span className="text-text">{request.giftMessage}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    label="Approve"
-                    icon="pi pi-check"
-                    size="small"
-                    loading={approveQuickGift.isPending}
-                    onClick={() => handleApproveQuickGift(request.id)}
-                  />
-                  <Button
-                    label="Reject"
-                    icon="pi pi-times"
-                    size="small"
-                    severity="danger"
-                    outlined
-                    onClick={() => setRejectTarget(request.id)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-          )}
-          </>
-          )}
-        </div>
+        <AppTabs
+          value={tab}
+          onValueChange={setTab}
+          tabs={[
+            { value: 'quickGift', label: 'Quick Gift requests', badge: quickGifts?.length || undefined, content: quickGiftPanel },
+            { value: 'doctors', label: 'Doctor changes', badge: doctorRequests?.length || undefined, content: doctorPanel },
+          ]}
+        />
       )}
 
-      <Dialog
-        header="Reject Quick Gift request"
-        visible={rejectTarget !== null}
-        onHide={() => setRejectTarget(null)}
-        style={{ width: '28rem' }}
-        breakpoints={{ '960px': '90vw', '640px': '95vw' }}
+      <AppDialog
+        open={rejecting !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejecting(null)
+            setReason('')
+          }
+        }}
+        size="sm"
+        title={rejecting?.kind === 'doctor' ? 'Reject doctor change' : 'Reject Quick Gift request'}
+        confirmLabel="Reject"
+        confirmVariant="destructive"
+        cancelLabel="Cancel"
+        confirmDisabled={!reason.trim()}
+        loading={rejectQuickGift.isPending || rejectDoctor.isPending}
+        onConfirm={() => void confirmReject()}
       >
-        <div className="flex flex-col gap-3">
-          <label htmlFor="approvalRejectReason" className="text-sm font-medium text-text">
-            Reason (shown to the requester)
-          </label>
-          <InputTextarea id="approvalRejectReason" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} autoFocus />
-          <div className="flex justify-end gap-2">
-            <Button label="Cancel" text onClick={() => setRejectTarget(null)} />
-            <Button label="Reject" severity="danger" disabled={!reason.trim()} loading={rejectQuickGift.isPending} onClick={handleReject} />
-          </div>
-        </div>
-      </Dialog>
-
-      <RecipientPhotoLinkDialog prompt={photoLinkPrompt} onHide={() => setPhotoLinkPrompt(null)} />
+        <LabelledField id="reject-reason" label="Reason (shown to the requester)">
+          <Textarea id="reject-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} />
+        </LabelledField>
+      </AppDialog>
+      <PhotoLinkDialog prompt={photoPrompt} onClose={() => setPhotoPrompt(null)} />
     </div>
   )
 }

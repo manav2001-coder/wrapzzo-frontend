@@ -1,22 +1,23 @@
-import { Button } from 'primereact/button'
-import { Calendar } from 'primereact/calendar'
-import { Checkbox } from 'primereact/checkbox'
-import { Dropdown } from 'primereact/dropdown'
-import { FileUpload } from 'primereact/fileupload'
-import { InputNumber } from 'primereact/inputnumber'
-import { InputText } from 'primereact/inputtext'
-import { MultiSelect } from 'primereact/multiselect'
-import { ProgressSpinner } from 'primereact/progressspinner'
-import { useState } from 'react'
+import { ArrowLeft, Camera, Paperclip, Plus, Send, Trash2 } from 'lucide-react'
+import { Fragment, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { showApiError, showToast } from '@/lib/toast'
+
 import type { CampaignField } from '@/api/campaigns'
 import { uploadSubmissionAttachment, type AttachmentValue, type SubmissionValues } from '@/api/submissions'
-import { PageHeader } from '@/components/PageHeader'
-import { RecipientPhotoLinkDialog, type RecipientPhotoLinkPrompt } from '@/components/RecipientPhotoLinkDialog'
+import { Combobox } from '@/components/fields/combobox'
+import { DatePicker } from '@/components/fields/date-picker'
+import { IconButton } from '@/components/icon-button'
+import { MasterPageHeader } from '@/components/masters/master-page'
+import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useCampaign } from '@/hooks/useCampaigns'
 import { useHasAccess } from '@/hooks/use-permission'
 import { useCreateSubmission } from '@/hooks/useSubmissions'
-import { showApiError, showToast } from '@/lib/toast'
 
 type FieldValue = string | number | boolean | string[] | File | undefined
 
@@ -46,7 +47,7 @@ export function SubmissionFormPage() {
 
   const [rows, setRows] = useState<DraftRow[]>([emptyRow()])
   const [submitting, setSubmitting] = useState(false)
-  const [photoLinkQueue, setPhotoLinkQueue] = useState<RecipientPhotoLinkPrompt[]>([])
+  const [photoLinkQueue, setPhotoLinkQueue] = useState<PhotoLinkPrompt[]>([])
 
   function updateRow(key: number, patch: Partial<DraftRow>) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch, errors: {} } : r)))
@@ -132,7 +133,7 @@ export function SubmissionFormPage() {
     setSubmitting(true)
     const succeededKeys: number[] = []
     const failures: { key: number; message: string }[] = []
-    const photoLinkPrompts: RecipientPhotoLinkPrompt[] = []
+    const photoLinkPrompts: PhotoLinkPrompt[] = []
 
     for (const row of rows) {
       try {
@@ -187,101 +188,106 @@ export function SubmissionFormPage() {
 
   if (isLoading || !campaign) {
     return (
-      <div className="flex justify-center py-20">
-        <ProgressSpinner style={{ width: 40, height: 40 }} strokeWidth="4" />
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-48 w-full" />
       </div>
     )
   }
 
-  function renderCell(field: CampaignField, row: DraftRow) {
+  function renderCell(field: CampaignField, row: DraftRow, rowNumber: number) {
     const value = row.values[field.fieldKey]
-    const error = row.errors[field.fieldKey]
-    const invalidClass = error ? 'p-invalid' : ''
+    const invalid = Boolean(row.errors[field.fieldKey])
+    const label = `${field.label}, row ${rowNumber}`
 
     switch (field.fieldType) {
-      case 'TEXTAREA':
-        return (
-          <InputText
-            value={(value as string) ?? ''}
-            onChange={(e) => updateValue(row.key, field.fieldKey, e.target.value)}
-            placeholder={field.placeholder ?? field.label}
-            className={`w-full min-w-[160px] ${invalidClass}`}
-          />
-        )
       case 'NUMBER':
         return (
-          <InputNumber
-            value={(value as number) ?? null}
-            onValueChange={(e) => updateValue(row.key, field.fieldKey, e.value ?? undefined)}
+          <Input
+            type="number"
+            aria-label={label}
+            aria-invalid={invalid}
+            value={value === undefined ? '' : String(value)}
+            onChange={(e) => updateValue(row.key, field.fieldKey, e.target.value === '' ? undefined : Number(e.target.value))}
             placeholder={field.placeholder ?? undefined}
-            className={`w-full min-w-[100px] ${invalidClass}`}
+            className="min-w-[100px]"
           />
         )
       case 'DATE':
         return (
-          <Calendar
-            value={(value as unknown as Date) ?? undefined}
-            onChange={(e) => updateValue(row.key, field.fieldKey, (e.value as unknown as FieldValue) ?? undefined)}
-            dateFormat="dd M yy"
-            className={`w-full min-w-[130px] ${invalidClass}`}
-          />
+          <div className="min-w-[150px]">
+            <DatePicker
+              value={(value as unknown as Date) ?? null}
+              onChange={(date) => updateValue(row.key, field.fieldKey, (date as unknown as FieldValue) ?? undefined)}
+            />
+          </div>
         )
       case 'BOOLEAN':
       case 'CHECKBOX':
         return (
-          <div className="flex justify-center">
-            <Checkbox checked={Boolean(value)} onChange={(e) => updateValue(row.key, field.fieldKey, !!e.checked)} />
+          <div className="flex justify-center pt-2">
+            <Checkbox aria-label={label} checked={Boolean(value)} onCheckedChange={(checked) => updateValue(row.key, field.fieldKey, checked === true)} />
           </div>
         )
       case 'SELECT':
       case 'RADIO':
         return (
-          <Dropdown
-            value={value as string}
-            onChange={(e) => updateValue(row.key, field.fieldKey, e.value)}
-            options={field.options.map((o) => ({ label: o, value: o }))}
-            placeholder={field.placeholder ?? 'Select'}
-            className={`w-full min-w-[140px] ${invalidClass}`}
-          />
+          <Select value={(value as string) ?? ''} onValueChange={(next) => updateValue(row.key, field.fieldKey, next)}>
+            <SelectTrigger aria-label={label} aria-invalid={invalid} className="min-w-[140px]">
+              <SelectValue placeholder={field.placeholder ?? 'Select'} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )
       case 'MULTISELECT':
         return (
-          <MultiSelect
+          <Combobox<string>
+            multiple
+            options={field.options}
+            displayValue={(option) => option}
             value={(value as string[]) ?? []}
-            onChange={(e) => updateValue(row.key, field.fieldKey, e.value)}
-            options={field.options.map((o) => ({ label: o, value: o }))}
+            onChange={(next) => updateValue(row.key, field.fieldKey, (next as string[] | null) ?? [])}
             placeholder={field.placeholder ?? 'Select'}
-            display="comma"
-            className={`w-full min-w-[150px] ${invalidClass}`}
+            className="min-w-[160px]"
           />
         )
       case 'IMAGE':
       case 'FILE':
         return (
-          <div className="flex min-w-[150px] items-center gap-1.5">
-            {value instanceof File ? (
-              <span className="max-w-[80px] truncate text-xs text-text-muted" title={value.name}>
+          <label className="flex min-w-[160px] cursor-pointer items-center gap-1.5">
+            <span className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs font-medium hover:bg-accent">
+              <Paperclip className="h-3.5 w-3.5" />
+              {value instanceof File ? 'Change' : 'Choose'}
+            </span>
+            {value instanceof File && (
+              <span className="max-w-[90px] truncate text-xs text-muted-foreground" title={value.name}>
                 {value.name}
               </span>
-            ) : null}
-            <FileUpload
-              key={value instanceof File ? value.name + value.size : 'empty'}
-              mode="basic"
-              chooseLabel={value instanceof File ? 'Change' : 'Choose'}
+            )}
+            <input
+              type="file"
+              aria-label={label}
+              className="sr-only"
               accept={field.fieldType === 'IMAGE' ? 'image/*' : undefined}
-              maxFileSize={10_000_000}
-              onSelect={(e) => updateValue(row.key, field.fieldKey, e.files[0])}
-              auto={false}
+              onChange={(e) => e.target.files?.[0] && updateValue(row.key, field.fieldKey, e.target.files[0])}
             />
-          </div>
+          </label>
         )
       default:
         return (
-          <InputText
+          <Input
+            aria-label={label}
+            aria-invalid={invalid}
             value={(value as string) ?? ''}
             onChange={(e) => updateValue(row.key, field.fieldKey, e.target.value)}
             placeholder={field.placeholder ?? field.label}
-            className={`w-full min-w-[140px] ${invalidClass}`}
+            className={field.fieldType === 'TEXTAREA' ? 'min-w-[160px]' : 'min-w-[140px]'}
           />
         )
     }
@@ -296,91 +302,95 @@ export function SubmissionFormPage() {
   }
 
   return (
-    <div>
-      <PageHeader
+    <div className="space-y-4 pb-6">
+      <MasterPageHeader
+        lead={<IconButton icon={ArrowLeft} label="Back" onClick={() => navigate(backTarget)} />}
         title="Submit recipients"
-        subtitle={`${campaign.displayId} · ${campaign.name}. Add as many recipients as you like in one go.`}
-        backTo={backTarget}
+        description={`${campaign.displayId} · ${campaign.name}. Add as many recipients as you like in one go.`}
       />
 
-      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+      <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full min-w-[900px] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-border bg-surface-muted">
-              <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">
-                Gift <span className="text-red-500 dark:text-red-400">*</span>
+            <tr className="border-b bg-muted/50">
+              <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
+                Gift <span className="text-destructive">*</span>
               </th>
               {campaign.fields.map((field) => (
-                <th key={field.id} className="px-3 py-2 text-left text-xs font-medium text-text-muted whitespace-nowrap">
+                <th key={field.id} className="px-3 py-2 text-left text-xs font-medium whitespace-nowrap text-muted-foreground">
                   {field.label}
-                  {field.required && <span className="text-red-500 dark:text-red-400"> *</span>}
+                  {field.required && <span className="text-destructive"> *</span>}
                 </th>
               ))}
               <th className="w-10 px-2 py-2" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.key} className="border-b border-border align-top last:border-b-0">
-                <td className="p-1.5">
-                  {campaign.gifts.length === 1 ? (
-                    <span className="block min-w-[130px] px-2 py-1.5 text-sm text-text">{campaign.gifts[0].name}</span>
-                  ) : (
-                    <Dropdown
-                      value={effectiveGiftId(row)}
-                      onChange={(e) => updateRow(row.key, { giftId: e.value })}
-                      options={campaign.gifts.map((g) => ({ label: g.name, value: g.id }))}
-                      placeholder="Choose"
-                      className={`w-full min-w-[140px] ${row.errors.__gift ? 'p-invalid' : ''}`}
-                    />
-                  )}
-                  {rowGift(row)?.photoRequired && (
-                    <small className="mt-0.5 block text-amber-600 dark:text-amber-400">
-                      <i className="pi pi-camera mr-0.5 text-[10px]" />
-                      Needs a photo or email
-                    </small>
-                  )}
-                </td>
-                {campaign.fields.map((field) => (
-                  <td key={field.id} className="p-1.5">
-                    {renderCell(field, row)}
-                    {row.errors[field.fieldKey] && (
-                      <small className="mt-0.5 block text-red-500 dark:text-red-400">{row.errors[field.fieldKey]}</small>
+            {rows.map((row, index) => (
+              <Fragment key={row.key}>
+                <tr className="border-b align-top last:border-b-0">
+                  <td className="p-1.5">
+                    {campaign.gifts.length === 1 ? (
+                      <span className="block min-w-[130px] px-2 py-2 text-sm">{campaign.gifts[0].name}</span>
+                    ) : (
+                      <Select value={effectiveGiftId(row) ?? ''} onValueChange={(giftId) => updateRow(row.key, { giftId })}>
+                        <SelectTrigger aria-label={`Gift, row ${index + 1}`} aria-invalid={Boolean(row.errors.__gift)} className="min-w-[140px]">
+                          <SelectValue placeholder="Choose" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {campaign.gifts.map((g) => (
+                            <SelectItem key={g.id} value={g.id}>
+                              {g.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
+                    {rowGift(row)?.photoRequired && (
+                      <small className="mt-0.5 flex items-center gap-1 text-warning">
+                        <Camera className="h-3 w-3" />
+                        Needs a photo or email
+                      </small>
+                    )}
+                    {row.errors.__gift && <small className="mt-0.5 block text-destructive">{row.errors.__gift}</small>}
                   </td>
-                ))}
-                <td className="p-1.5 text-center">
-                  <Button
-                    icon="pi pi-trash"
-                    text
-                    severity="danger"
-                    disabled={rows.length === 1}
-                    aria-label="Remove row"
-                    onClick={() => removeRow(row.key)}
-                  />
-                </td>
+                  {campaign.fields.map((field) => (
+                    <td key={field.id} className="p-1.5">
+                      {renderCell(field, row, index + 1)}
+                      {row.errors[field.fieldKey] && <small className="mt-0.5 block text-destructive">{row.errors[field.fieldKey]}</small>}
+                    </td>
+                  ))}
+                  <td className="p-1.5 text-center">
+                    <IconButton icon={Trash2} tone="destructive" label={`Remove row ${index + 1}`} disabled={rows.length === 1} onClick={() => removeRow(row.key)} />
+                  </td>
+                </tr>
                 {row.errors.__submit && (
-                  <td colSpan={campaign.fields.length + 2} className="px-3 pb-2">
-                    <small className="text-red-500 dark:text-red-400">{row.errors.__submit}</small>
-                  </td>
+                  <tr>
+                    <td colSpan={campaign.fields.length + 2} className="px-3 pb-2">
+                      <p role="alert" className="text-xs text-destructive">
+                        {row.errors.__submit}
+                      </p>
+                    </td>
+                  </tr>
                 )}
-              </tr>
+              </Fragment>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
-        <Button label="Add row" icon="pi pi-plus" outlined onClick={addRow} />
-        <Button
-          label={`Submit ${rows.length > 1 ? `all ${rows.length}` : ''}`}
-          icon="pi pi-send"
-          loading={submitting}
-          onClick={onSubmitAll}
-        />
+      <div className="flex items-center gap-2">
+        <Button variant="outline" onClick={addRow}>
+          <Plus />
+          Add row
+        </Button>
+        <Button loading={submitting} onClick={() => void onSubmitAll()}>
+          <Send />
+          {rows.length > 1 ? `Submit all ${rows.length}` : 'Submit'}
+        </Button>
       </div>
 
-      <RecipientPhotoLinkDialog prompt={photoLinkQueue[0] ?? null} onHide={dismissPhotoLinkPrompt} />
+      <PhotoLinkDialog prompt={photoLinkQueue[0] ?? null} onClose={dismissPhotoLinkPrompt} />
     </div>
   )
 }

@@ -1,51 +1,49 @@
-import { Button } from 'primereact/button'
+import { Cake, Zap } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+
+import { SectionCard } from '@/components/section-card'
+import { Button } from '@/components/ui/button'
 import { useUpcomingBirthdays } from '@/hooks/useRecipients'
 
-function whenLabel(daysUntilBirthday: number): string {
-  if (daysUntilBirthday === 0) return 'Today!'
-  if (daysUntilBirthday === 1) return 'Tomorrow'
-  return `In ${daysUntilBirthday} days`
-}
-
 /**
- * Shown at the top of the Dashboard and the Recipients page -- recipients with a birthday
- * coming up in the next 30 days, each with a one-click way to send them a Quick Gift
- * (carries their details forward via router state, see QuickGiftLandingPage/QuickGiftFormPage).
- * Renders nothing while loading or once there's nothing upcoming, rather than an empty shell.
+ * Recipients with a birthday in the next 30 days, each a click away from a Quick Gift that
+ * carries their details forward (router state; see QuickGiftLandingPage). Renders nothing while
+ * loading or once nothing is coming up, rather than an empty shell.
  */
 export function UpcomingBirthdaysWidget() {
+  const { t } = useTranslation('recipients')
   const { data, isLoading } = useUpcomingBirthdays(30)
   const navigate = useNavigate()
 
   if (isLoading || !data || data.length === 0) return null
 
+  const when = (days: number) => (days === 0 ? t('birthdays.today') : days === 1 ? t('birthdays.tomorrow') : t('birthdays.inDays', { count: days }))
+
   return (
-    <div className="mb-6 rounded-2xl border border-border bg-surface p-4">
-      <div className="mb-3 flex items-center gap-2">
-        <i className="pi pi-heart-fill text-accent" />
-        <p className="text-sm font-semibold text-text">Upcoming birthdays</p>
-      </div>
-      <div className="flex gap-3 overflow-x-auto pb-1">
+    <SectionCard
+      className="mb-4"
+      title={
+        <span className="inline-flex items-center gap-2">
+          <Cake className="h-4 w-4 text-primary" />
+          {t('birthdays.title')}
+        </span>
+      }
+    >
+      <ul className="flex gap-3 overflow-x-auto pb-1">
         {data.map((recipient) => (
-          <div
-            key={recipient.id}
-            className="flex min-w-[220px] shrink-0 items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted p-3"
-          >
+          <li key={recipient.id} className="flex min-w-[220px] shrink-0 items-center justify-between gap-3 rounded-md border bg-muted/40 p-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-text">{recipient.name}</p>
-              <p className="text-xs text-text-muted">{whenLabel(recipient.daysUntilBirthday)}</p>
+              <p className="truncate text-sm font-medium">{recipient.name}</p>
+              <p className="text-xs text-muted-foreground">{when(recipient.daysUntilBirthday)}</p>
             </div>
-            <Button
-              icon="pi pi-bolt"
-              label="Gift"
-              size="small"
-              outlined
-              onClick={() => navigate('/quick-gift', { state: { prefillRecipient: recipient } })}
-            />
-          </div>
+            <Button size="sm" variant="outline" onClick={() => navigate('/quick-gift', { state: { prefillRecipient: recipient } })}>
+              <Zap />
+              {t('birthdays.gift')}
+            </Button>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </SectionCard>
   )
 }

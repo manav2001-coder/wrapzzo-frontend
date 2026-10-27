@@ -218,6 +218,10 @@
     "sat": "Sat",
     "sun": "Sun"
   },
+  "charts": {
+    "empty": "No data to show yet.",
+    "value": "Value"
+  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Can't reach the server. Check your connection and try again.",

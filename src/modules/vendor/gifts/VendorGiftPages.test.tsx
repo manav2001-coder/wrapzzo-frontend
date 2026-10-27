@@ -26,7 +26,7 @@ describe('VendorGiftListPage', () => {
 
     const calendar = screen.getByRole('link', { name: 'Desk Calendar' }).closest('tr')!
     expect(within(calendar).getByText('Hidden')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Add gift/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Add product/ })).toBeInTheDocument()
   })
 })
 

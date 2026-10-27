@@ -60,7 +60,7 @@ describe('VendorHomePage', () => {
 
   it('summarises the catalogue, including what Wrappzo has hidden', async () => {
     renderHome()
-    expect(await screen.findByText('1 gift live in stores')).toBeInTheDocument()
+    expect(await screen.findByText('1 product live in stores')).toBeInTheDocument()
     expect(screen.getByText('1 hidden by Wrappzo')).toBeInTheDocument()
   })
 })

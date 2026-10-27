@@ -17,6 +17,7 @@ import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
 import { OrderStatusBadge } from '@/components/orders/order-status'
 import { StatCard } from '@/components/stat-card'
 import { Button } from '@/components/ui/button'
+import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useMyOrgUnits } from '@/hooks/useMyOrgUnits'
 import { useAdvanceWarehouseOrder, useSaveWarehouse, useWarehouseOrders, useWarehouses } from '@/hooks/useWarehouses'
@@ -338,6 +339,7 @@ function WarehouseSetupTab({ onEdit }: { onEdit: (warehouse: Warehouse) => void 
  * receives them and delivers them to the doctor. Setup lives on the second tab.
  */
 export function WarehousesPage() {
+  const pageTitle = useMenuLabel('warehouses', 'Warehouses')
   const [tab, setTab] = useState<Tab>('orders')
   // undefined = closed, null = adding, a warehouse = editing it.
   const [dialog, setDialog] = useState<Warehouse | null | undefined>(undefined)
@@ -345,7 +347,7 @@ export function WarehousesPage() {
   return (
     <div>
       <MasterPageHeader
-        title="Warehouses"
+        title={pageTitle}
         description="Receive orders from vendors and deliver them to the doctor."
         createLabel="Add warehouse"
         createPermission="warehouse.manage"

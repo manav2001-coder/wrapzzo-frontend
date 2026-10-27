@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useApproveDoctorChangeRequest, usePendingDoctorChangeRequests, useRejectDoctorChangeRequest } from '@/hooks/useDoctorRequests'
 import { useHasAccess } from '@/hooks/use-permission'
@@ -78,6 +79,7 @@ type Rejecting = { kind: 'quickGift' | 'doctor'; id: string } | { kind: 'artwork
 /** Quick Gift requests and doctor changes from the team, waiting on the user's decision. Campaign submissions never land here. */
 export function ApprovalQueuePage() {
   const showError = useApiErrorToast()
+  const pageTitle = useMenuLabel('approvals', 'Approvals')
   // A manager reviewing only their team's doctor requests has no Quick Gift approval right: skip
   // that queue (it would only answer 403) and open on the doctor changes.
   const canApproveQuickGifts = useHasAccess(['campaign.approve', 'campaign.manage'])
@@ -256,7 +258,7 @@ export function ApprovalQueuePage() {
 
   return (
     <div className="space-y-4">
-      <MasterPageHeader title="Approvals" description="Quick Gift requests, doctor changes and artwork from your team, waiting on your decision." />
+      <MasterPageHeader title={pageTitle} description="Quick Gift requests, doctor changes and artwork from your team, waiting on your decision." />
 
       {!isLoading && !doctorsLoading && !artworkLoading && total === 0 ? (
         <EmptyState icon={CheckSquare} title="Nothing pending" description="You're all caught up. New requests appear here." />

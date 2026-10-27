@@ -32,13 +32,13 @@
     "allCaughtUp": "You're all caught up",
     "allCaughtUpBody": "No order is waiting on you right now.",
     "catalogueTitle": "Your catalogue",
-    "live_one": "{{count}} gift live in stores",
-    "live_other": "{{count}} gifts live in stores",
+    "live_one": "{{count}} product live in stores",
+    "live_other": "{{count}} products live in stores",
     "hidden_one": "{{count}} hidden by Wrappzo",
     "hidden_other": "{{count}} hidden by Wrappzo",
-    "manageGifts": "Manage gifts",
-    "addGift": "Add a gift",
-    "noGifts": "You haven't listed any gifts yet. Add one so companies can order it."
+    "manageGifts": "Manage products",
+    "addGift": "Add a product",
+    "noGifts": "You haven't listed any products yet. Add one so companies can order it."
   },
   "orders": {
     "title": "Orders",
@@ -88,7 +88,7 @@
       "shipToWarehouse": "Ship to the company's warehouse",
       "finalRecipient": "Final delivery (by the warehouse)",
       "quantity": "Quantity",
-      "message": "Gift message",
+      "message": "Message",
       "price": "Your price",
       "photo": "Recipient's photo",
       "noPhoto": "Not uploaded yet"
@@ -129,14 +129,14 @@
     "notFound": "This order isn't in your queue."
   },
   "gifts": {
-    "title": "My gifts",
-    "subtitle": "The products you offer. Companies you serve see the live ones in their Gift Store.",
-    "add": "Add gift",
+    "title": "My products",
+    "subtitle": "The products you offer. Companies you serve see the live ones in their store.",
+    "add": "Add product",
     "live": "Live",
     "hidden": "Hidden",
     "hiddenHelp": "Hidden from stores by Wrappzo. Contact your account manager to bring it back.",
     "column": {
-      "gift": "Gift",
+      "gift": "Product",
       "id": "ID",
       "category": "Category",
       "price": "Your price",
@@ -145,24 +145,24 @@
       "status": "Status"
     },
     "days": "{{count}} d",
-    "emptyTitle": "No gifts yet",
+    "emptyTitle": "No products yet",
     "emptyBody": "Add your first product so companies can order it.",
     "form": {
-      "newTitle": "Add a gift",
+      "newTitle": "Add a product",
       "newSubtitle": "Describe the product the way companies should see it in their store.",
       "editSubtitle": "Changes show in the stores of every company you serve.",
-      "back": "My gifts",
-      "created": "Gift added",
-      "updated": "Gift saved",
+      "back": "My products",
+      "created": "Product added",
+      "updated": "Product saved",
       "priceNote": "Companies see your price plus Wrappzo's fees.",
       "image": "Product image",
-      "imageHelp": "Shown on the gift's card in every store.",
-      "imageHelpNew": "Optional. It's uploaded right after the gift is created.",
+      "imageHelp": "Shown on the product's card in every store.",
+      "imageHelpNew": "Optional. It's uploaded right after the product is created.",
       "imageDrop": "Drop an image here or click to choose",
       "imageAdded": "Image added",
       "imageRemoved": "Image removed",
       "removeImage": "Remove image",
-      "imageFailed": "The gift was created, but its image couldn't be uploaded. Try again from the gift."
+      "imageFailed": "The product was created, but its image couldn't be uploaded. Try again from the product."
     }
   }
 }

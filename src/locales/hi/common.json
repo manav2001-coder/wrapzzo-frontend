@@ -30,10 +30,11 @@
     "myVendors": "विक्रेता",
     "warehouses": "गोदाम",
     "vendorHome": "होम",
-    "vendorGifts": "मेरे गिफ्ट",
+    "vendorGifts": "मेरे प्रोडक्ट",
     "vendorOrders": "ऑर्डर",
     "components": "कंपोनेंट्स",
-    "settings": "सेटिंग्स"
+    "settings": "सेटिंग्स",
+    "menuNames": "मेनू के नाम"
   },
   "action": {
     "activate": "सक्रिय करें",
@@ -283,5 +284,16 @@
     "nextInvalid_other": "आगे बढ़ने से पहले ये {{count}} फ़ील्ड ठीक करें: {{fields}}",
     "stepBadge_one": "{{count}} फ़ील्ड पर ध्यान देना ज़रूरी है",
     "stepBadge_other": "{{count}} फ़ील्ड पर ध्यान देना ज़रूरी है"
+  },
+  "menuNames": {
+    "subtitle": "अपने नेविगेशन के मेनू को अपने नाम दें। आपकी कंपनी में सभी को ये दिखेंगे, और हर पेज को वही नाम मिलेगा।",
+    "cardTitle": "मेनू",
+    "cardHelp": "डिफ़ॉल्ट नाम रखने के लिए खाली छोड़ें।",
+    "save": "सेव करें",
+    "discard": "बदलाव हटाएँ",
+    "saved": "मेनू के नाम सेव हुए",
+    "reset": "डिफ़ॉल्ट नाम रखें",
+    "resetFor": "{{menu}} का डिफ़ॉल्ट नाम रखें",
+    "nameFor": "{{menu}} के लिए आपका नाम"
   }
 }

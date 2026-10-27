@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useMenuLabels } from '@/hooks/use-menu-labels'
 import { usePermissions } from '@/hooks/use-permission'
 import { useShell } from '@/components/shell-context'
 import { ADMIN_NAV, COMPANY_NAV, VENDOR_NAV, type NavSource } from '@/components/sidebar-nav-config'
@@ -10,6 +11,8 @@ interface FilterContext {
   t: (key: string) => string
   can: (permission?: string | string[]) => boolean
   managesTeam?: boolean
+  /** The company's own menu names, which replace the translated default. */
+  labels?: Record<string, string>
 }
 
 /**
@@ -19,7 +22,7 @@ interface FilterContext {
 function filterItem(item: NavSource, ctx: FilterContext): NavItemType | null {
   if (!ctx.can(item.permission) && !(item.forManagers && ctx.managesTeam)) return null
 
-  const title = ctx.t(item.titleKey)
+  const title = ctx.labels?.[item.id] ?? ctx.t(item.titleKey)
   if (item.type === 'item' && !item.children) {
     return { ...item, title, children: undefined }
   }
@@ -48,11 +51,12 @@ export function useNav(): NavItemType[] {
   const { t } = useTranslation()
   const { portal } = useShell()
   const { can, isPlatformStaff, managesTeam, loading, error } = usePermissions()
+  const labels = useMenuLabels()
 
   return React.useMemo(() => {
     const translate = (key: string) => t(key)
     if (portal === 'vendor') return buildNav(VENDOR_NAV, { t: translate, can: () => true })
     if (loading || error) return []
-    return buildNav(isPlatformStaff ? ADMIN_NAV : COMPANY_NAV, { t: translate, can: (permission) => can(permission), managesTeam })
-  }, [t, portal, can, isPlatformStaff, managesTeam, loading, error])
+    return buildNav(isPlatformStaff ? ADMIN_NAV : COMPANY_NAV, { t: translate, can: (permission) => can(permission), managesTeam, labels })
+  }, [t, portal, can, isPlatformStaff, managesTeam, labels, loading, error])
 }

@@ -7,8 +7,8 @@ import { Sidebar } from './sidebar'
 const useCurrentUser = vi.hoisted(() => vi.fn())
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
-function companyUser(permissions: string[], managesTeam = false) {
-  useCurrentUser.mockReturnValue({ data: { companyId: 'c1', companyName: 'Acme Pharma', permissions, managesTeam }, isLoading: false })
+function companyUser(permissions: string[], managesTeam = false, menuLabels: Record<string, string> = {}) {
+  useCurrentUser.mockReturnValue({ data: { companyId: 'c1', companyName: 'Acme Pharma', permissions, managesTeam, menuLabels }, isLoading: false })
 }
 
 describe('Sidebar', () => {
@@ -29,6 +29,14 @@ describe('Sidebar', () => {
     companyUser(['dashboard.view', 'quickgift.create', 'order.track'], true)
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /approvals/i })).toHaveAttribute('href', '/approvals')
+  })
+
+  it("uses the company's own menu names where it has renamed them", () => {
+    companyUser(['dashboard.view', 'quickgift.create'], false, { 'quick-gift': 'Request Prescription Pads', 'gift-store': 'Prescription Pads' })
+    renderWithProviders(<Sidebar />, { route: '/dashboard' })
+    expect(screen.getByRole('link', { name: 'Request Prescription Pads' })).toHaveAttribute('href', '/quick-gift')
+    expect(screen.getByRole('link', { name: 'Prescription Pads' })).toHaveAttribute('href', '/gift-store')
+    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
   })
 
   it('shows platform staff the Admin tree instead of the company one', () => {

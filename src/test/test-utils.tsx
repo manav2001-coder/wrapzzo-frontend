@@ -14,7 +14,7 @@ import { i18next, initI18n, type Locale } from '@/lib/i18n'
 
 interface Options extends Omit<RenderOptions, 'wrapper'> {
   /** Initial history entry, for components that read router state. */
-  route?: string
+  route?: string | { pathname: string; state?: unknown }
   /** Render in a specific language. Defaults to English so assertions can match literals. */
   locale?: Locale
   /** Redux state to start from, e.g. a signed-in session. */

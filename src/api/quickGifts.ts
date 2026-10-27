@@ -43,6 +43,8 @@ export interface QuickGiftPhotoValue {
 
 export interface CreateQuickGiftInput {
   giftId: string
+  /** A directory doctor -- the server then takes their details from the record, not the fields below. */
+  recipientId?: string
   recipientName: string
   recipientPhone: string
   recipientEmail?: string

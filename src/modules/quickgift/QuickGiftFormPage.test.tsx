@@ -118,6 +118,62 @@ describe('QuickGiftFormPage', () => {
     expect(toast.success).toHaveBeenCalledWith('Order placed', { description: expect.stringContaining('Pad Printers') })
   })
 
+  it("holds the quantity to the vendor's minimum order", async () => {
+    renderForm({ ...PAD, moq: 50 })
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    expect(screen.getByText('Minimum order: 50')).toBeInTheDocument()
+    await fillRecipient()
+    await userEvent.type(screen.getByLabelText('Registration no. *'), 'MH-12345')
+    await setQuantity('5')
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    expect(screen.getByText(/Enter a whole number from 50 to/)).toBeInTheDocument()
+    expect(createQuickGiftRequest).not.toHaveBeenCalled()
+  })
+
+  it('sends the picked doctor as recipientId, and drops the link once their details are edited', async () => {
+    createQuickGiftRequest.mockResolvedValue({ id: 'q-1', orderId: 'o-1', status: 'APPROVED' })
+    const doctor = {
+      id: 'r-1',
+      name: 'Dr. Asha Shah',
+      phone: '9800000001',
+      email: null,
+      address: '12 MG Road, Pune',
+      dateOfBirth: null,
+      doctor: { qualification: 'MBBS', registrationNumber: 'MH-12345', speciality: null, clinicName: null },
+    }
+    listActiveGifts.mockResolvedValue([PAD])
+    const view = renderWithProviders(
+      <Routes>
+        <Route path="/quick-gift/new/:giftId" element={<QuickGiftFormPage />} />
+        <Route path="/quick-gift" element={<h1>My quick gifts</h1>} />
+      </Routes>,
+      { route: { pathname: `/quick-gift/new/${PAD.id}`, state: { prefillRecipient: doctor } } },
+    )
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
+    expect(createQuickGiftRequest.mock.calls[0][0]).toMatchObject({ recipientId: 'r-1', recipientName: 'Dr. Asha Shah' })
+    view.unmount()
+
+    createQuickGiftRequest.mockClear()
+    renderWithProviders(
+      <Routes>
+        <Route path="/quick-gift/new/:giftId" element={<QuickGiftFormPage />} />
+        <Route path="/quick-gift" element={<h1>My quick gifts</h1>} />
+      </Routes>,
+      { route: { pathname: `/quick-gift/new/${PAD.id}`, state: { prefillRecipient: doctor } } },
+    )
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    await userEvent.type(screen.getByLabelText('Delivery address *'), ', Clinic gate')
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
+    expect(createQuickGiftRequest.mock.calls[0][0].recipientId).toBeUndefined()
+    expect(createQuickGiftRequest.mock.calls[0][0].deliveryAddress).toBe('12 MG Road, Pune, Clinic gate')
+  })
+
   it('sets up a monthly order instead of a one-off when "Repeat every month" is ticked', async () => {
     createRecurringOrderPlan.mockResolvedValue({ id: 'p-1', status: 'ACTIVE' })
     renderForm({ ...PAD, artworkRequired: false })

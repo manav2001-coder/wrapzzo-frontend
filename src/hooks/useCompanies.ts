@@ -12,8 +12,9 @@ import {
 const companiesKey = ['companies'] as const
 const companyKey = (id: string) => ['companies', id] as const
 
-export function useCompanies() {
-  return useQuery({ queryKey: companiesKey, queryFn: listCompanies })
+/** `enabled` false for a company user, who cannot list companies and has no use for the list. */
+export function useCompanies(enabled = true) {
+  return useQuery({ queryKey: companiesKey, queryFn: listCompanies, enabled })
 }
 
 export function useCompany(id: string | undefined) {

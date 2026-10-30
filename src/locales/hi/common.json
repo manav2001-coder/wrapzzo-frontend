@@ -42,7 +42,8 @@
     "templatesToTemplate": "टेम्पलेट से टेम्पलेट",
     "roleToTemplate": "भूमिका से टेम्पलेट",
     "userToTemplate": "उपयोगकर्ता से टेम्पलेट",
-    "masters": "मास्टर्स"
+    "masters": "मास्टर्स",
+    "vendorMapping": "वेंडर मैपिंग"
   },
   "action": {
     "activate": "सक्रिय करें",

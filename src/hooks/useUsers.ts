@@ -44,7 +44,7 @@ export function useMakeCompanyAdmin(companyId: string) {
 export function useRemoveCompanyAdmin(companyId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (userId: string) => removeCompanyAdmin(companyId, userId),
+    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) => removeCompanyAdmin(companyId, userId, roleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companyUsers', companyId] })
       queryClient.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY })

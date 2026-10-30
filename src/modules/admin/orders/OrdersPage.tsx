@@ -12,6 +12,8 @@ import { listEmptyBody } from '@/components/data-table/list-body'
 import { Combobox } from '@/components/fields/combobox'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
+import { useAccessCompany } from '@/hooks/useAccessCompany'
+import { ScopeBar } from '../access-control/ScopeBar'
 import { OrderDetailSheet } from '@/components/orders/order-detail-sheet'
 import { OrderStatusBadge } from '@/components/orders/order-status'
 import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
@@ -50,7 +52,10 @@ export function OrdersPage() {
   const { t } = useTranslation('orders')
   const queryClient = useQueryClient()
   const showError = useApiErrorToast()
-  const { data: orders, isLoading, error, refetch } = usePlatformOrders()
+  const { data: allOrders, isLoading, error, refetch } = usePlatformOrders()
+  // The company scope (first company by default), as everywhere else platform staff work per company.
+  const { companyId } = useAccessCompany()
+  const orders = useMemo(() => (companyId ? (allOrders ?? []).filter((order) => order.companyId === companyId) : []), [allOrders, companyId])
   const { data: vendors } = useVendors()
   const requestPhotoLink = useRequestPlatformOrderPhotoLink()
 
@@ -227,6 +232,7 @@ export function OrdersPage() {
   return (
     <div className="space-y-4">
       <MasterPageHeader title={t('platform.title')} description={t('platform.subtitle')} />
+      <ScopeBar id="orders-company" />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard title={t('platform.stats.total')} value={counts.total} icon={ShoppingBag} loading={isLoading} />

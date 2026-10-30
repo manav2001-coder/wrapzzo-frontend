@@ -1,4 +1,4 @@
-import type { AccessControlItem } from '@/api/accessControls'
+import type { Feature } from '@/api/features'
 import { VIEW_ACTION } from '@/lib/permissions'
 
 /** One row of the access grid: a module and its actions, view first. */
@@ -6,12 +6,12 @@ export interface AccessModule {
   module: string
   label: string
   /** The module's view action, if it has one -- every other action implies it. */
-  view: AccessControlItem | undefined
-  actions: AccessControlItem[]
+  view: Feature | undefined
+  actions: Feature[]
 }
 
 /** Groups the catalogue into modules, keeping the catalogue's order (it arrives sorted by sortOrder). */
-export function groupByModule(items: readonly AccessControlItem[]): AccessModule[] {
+export function groupByModule(items: readonly Feature[]): AccessModule[] {
   const modules = new Map<string, AccessModule>()
   for (const item of [...items].sort((a, b) => a.sortOrder - b.sortOrder)) {
     const row = modules.get(item.module) ?? { module: item.module, label: item.category, view: undefined, actions: [] }

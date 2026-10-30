@@ -23,23 +23,23 @@ export interface Feature {
 }
 
 export async function listCompanyFeatures(companyId: string): Promise<Feature[]> {
-  const { data } = await apiClient.get<Feature[]>(`/api/platform/companies/${companyId}/features`)
+  const { data } = await apiClient.get<Feature[]>(`/api/platform/companies/${companyId}/access-features`)
   return data
 }
 
 /** Platform staff: every key (for system templates). A company: the keys it can hold. */
 export async function listFeatureCatalog(): Promise<Feature[]> {
-  const { data } = await apiClient.get<Feature[]>('/api/platform/features')
+  const { data } = await apiClient.get<Feature[]>('/api/platform/access-features')
   return data
 }
 
 /** Registers features for a company; with no ids, every one it is missing. Returns the company's refreshed list. */
 export async function registerFeatures(companyId: string, featureIds?: string[]): Promise<Feature[]> {
-  const { data } = await apiClient.post<Feature[]>(`/api/platform/companies/${companyId}/features/register`, featureIds ? { featureIds } : {})
+  const { data } = await apiClient.post<Feature[]>(`/api/platform/companies/${companyId}/access-features/register`, featureIds ? { featureIds } : {})
   return data
 }
 
 export async function setFeatureActive(companyId: string, featureId: string, active: boolean): Promise<Feature> {
-  const { data } = await apiClient.put<Feature>(`/api/platform/companies/${companyId}/features/${featureId}/active`, { active })
+  const { data } = await apiClient.put<Feature>(`/api/platform/companies/${companyId}/access-features/${featureId}/active`, { active })
   return data
 }

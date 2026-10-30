@@ -80,7 +80,7 @@
     "makeAdminBody": "{{name}} will be able to manage users, roles and campaigns for {{company}}.",
     "madeAdmin": "{{name}} is now a Company Admin.",
     "removeAdmin": "Remove Company Admin",
-    "removeAdminBody": "{{name}} will lose Company Admin access and go back to being a Member.",
+    "removeAdminBody": "{{name}} will lose Company Admin access and move to the role you pick.",
     "removedAdmin": "{{name}} is now a Member.",
     "delete": "Delete user",
     "deleteBody": "This permanently removes {{name}}'s account. It can't be undone.",
@@ -139,7 +139,10 @@
       "clearBody": "{{name}} will see only their own unit ({{unit}}), the units under it and the people who report to them.",
       "set": "{{name}} now sees the whole company.",
       "cleared": "{{name}} now sees their own unit."
-    }
+    },
+    "removeAdminRole": "Move to role",
+    "removeAdminPick": "Choose a role",
+    "removeAdminNoRoles": "Create another role first -- there is none to move them to."
   },
   "vendors": {
     "title": "Vendors",

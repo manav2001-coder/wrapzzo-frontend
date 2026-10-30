@@ -64,8 +64,9 @@ export async function changeUserRole(companyId: string, userId: string, roleId: 
   return data
 }
 
-export async function removeCompanyAdmin(companyId: string, userId: string): Promise<CompanyUser> {
-  const { data } = await apiClient.post<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/removeCompanyAdmin`)
+/** The role the person moves to: a company has no default one. */
+export async function removeCompanyAdmin(companyId: string, userId: string, roleId: string): Promise<CompanyUser> {
+  const { data } = await apiClient.post<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/removeCompanyAdmin`, { roleId })
   return data
 }
 

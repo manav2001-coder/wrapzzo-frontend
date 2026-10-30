@@ -17,11 +17,12 @@ import { Button } from '@/components/ui/button'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess, usePermissions } from '@/hooks/use-permission'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
-import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useRemoveCompanyAdmin, useSetCompanyWide } from '@/hooks/useUsers'
+import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useSetCompanyWide } from '@/hooks/useUsers'
 import { formatDate } from '@/lib/datetime'
 import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
+import { RemoveAdminDialog } from './RemoveAdminDialog'
 import { CompanyPicker } from '../access-control/CompanyPicker'
 import { ExtraOrgUnitsDialog } from './ExtraOrgUnitsDialog'
 
@@ -39,7 +40,7 @@ const LIST_FIELDS: ListFieldMap = {
   createdAt: 'date',
 }
 
-type PendingAction = { kind: 'makeAdmin' | 'removeAdmin' | 'wholeCompany' | 'ownUnit' | 'delete'; user: CompanyUser }
+type PendingAction = { kind: 'makeAdmin' | 'wholeCompany' | 'ownUnit' | 'delete'; user: CompanyUser }
 
 export function CompanyUsersPage() {
   const { t } = useTranslation('admin')
@@ -50,7 +51,6 @@ export function CompanyUsersPage() {
 
   const { data: users, isLoading, error, refetch } = useCompanyUsers(companyId)
   const makeCompanyAdmin = useMakeCompanyAdmin(companyId)
-  const removeCompanyAdmin = useRemoveCompanyAdmin(companyId)
   const deleteUser = useDeleteUser(companyId)
   const setCompanyWide = useSetCompanyWide(companyId)
   const canCreate = useHasAccess(P.USER_CREATE)
@@ -63,6 +63,7 @@ export function CompanyUsersPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<PendingAction | null>(null)
   const [coveringFor, setCoveringFor] = useState<CompanyUser | null>(null)
+  const [removingAdminFor, setRemovingAdminFor] = useState<CompanyUser | null>(null)
 
   const company = companyName ?? t('users.thisCompany')
 
@@ -73,9 +74,6 @@ export function CompanyUsersPage() {
       if (kind === 'makeAdmin') {
         await makeCompanyAdmin.mutateAsync(user.id)
         toast.success(t('users.madeAdmin', { name: user.name }))
-      } else if (kind === 'removeAdmin') {
-        await removeCompanyAdmin.mutateAsync(user.id)
-        toast.success(t('users.removedAdmin', { name: user.name }))
       } else if (kind === 'wholeCompany' || kind === 'ownUnit') {
         await setCompanyWide.mutateAsync({ userId: user.id, companyWide: kind === 'wholeCompany' })
         toast.success(t(kind === 'wholeCompany' ? 'users.wholeCompany.set' : 'users.wholeCompany.cleared', { name: user.name }))
@@ -181,7 +179,7 @@ export function CompanyUsersPage() {
                     onClick={() => setPending({ kind: user.companyWide ? 'ownUnit' : 'wholeCompany', user })}
                   />
                   {isAdmin ? (
-                    <IconButton icon={ShieldMinus} label={t('users.removeAdmin')} onClick={() => setPending({ kind: 'removeAdmin', user })} />
+                    <IconButton icon={ShieldMinus} label={t('users.removeAdmin')} onClick={() => setRemovingAdminFor(user)} />
                   ) : (
                     <IconButton icon={ShieldPlus} label={t('users.makeAdmin')} onClick={() => setPending({ kind: 'makeAdmin', user })} />
                   )}
@@ -200,7 +198,6 @@ export function CompanyUsersPage() {
 
   const dialog = pending && {
     makeAdmin: { title: t('users.makeAdmin'), body: t('users.makeAdminBody', { name: pending.user.name, company }), destructive: false },
-    removeAdmin: { title: t('users.removeAdmin'), body: t('users.removeAdminBody', { name: pending.user.name }), destructive: false },
     wholeCompany: { title: t('users.wholeCompany.make'), body: t('users.wholeCompany.makeBody', { name: pending.user.name, company }), destructive: false },
     ownUnit: {
       title: t('users.wholeCompany.clear'),
@@ -267,10 +264,11 @@ export function CompanyUsersPage() {
           confirmLabel={dialog.title}
           cancelLabel={t('action.cancel', { ns: 'common' })}
           confirmVariant={dialog.destructive ? 'destructive' : 'default'}
-          loading={makeCompanyAdmin.isPending || removeCompanyAdmin.isPending || setCompanyWide.isPending || deleteUser.isPending}
+          loading={makeCompanyAdmin.isPending || setCompanyWide.isPending || deleteUser.isPending}
           onConfirm={confirmPending}
         />
       )}
+      {removingAdminFor && companyId && <RemoveAdminDialog key={removingAdminFor.id} companyId={companyId} user={removingAdminFor} onClose={() => setRemovingAdminFor(null)} />}
       {coveringFor && companyId && (
         <ExtraOrgUnitsDialog key={coveringFor.id} companyId={companyId} user={coveringFor} onClose={() => setCoveringFor(null)} />
       )}

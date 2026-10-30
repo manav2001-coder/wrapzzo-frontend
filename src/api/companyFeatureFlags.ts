@@ -18,3 +18,14 @@ export async function setCompanyFeatureFlag(companyId: string, flagKey: CompanyF
   const { data } = await apiClient.post<CompanyFeatureFlag[]>(`/api/platform/companies/${companyId}/features`, { flagKey, enabled })
   return data
 }
+
+/** With Senior Artwork Approval on: how many managers above the MR sign off on artwork, 1-5. */
+export async function getArtworkApprovalLevels(companyId: string): Promise<number> {
+  const { data } = await apiClient.get<{ levels: number }>(`/api/platform/companies/${companyId}/features/artwork-approval-levels`)
+  return data.levels
+}
+
+export async function setArtworkApprovalLevels(companyId: string, levels: number): Promise<number> {
+  const { data } = await apiClient.put<{ levels: number }>(`/api/platform/companies/${companyId}/features/artwork-approval-levels`, { levels })
+  return data.levels
+}

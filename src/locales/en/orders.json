@@ -90,11 +90,20 @@
       "PENDING_REVIEW": "Waiting on you",
       "APPROVED": "Approved",
       "REJECTED": "Changes requested",
-      "PENDING_FINAL_APPROVAL": "Waiting for final approval"
+      "PENDING_FINAL_APPROVAL": "In management approval"
     },
-    "approvedPendingFinal": "Version {{n}} approved. It now goes to your manager for the final approval before printing.",
-    "waitingForFinal": "Approved by {{name}}. Waiting for their manager’s final approval before the vendor can print.",
-    "theMr": "the MR"
+    "approvedPendingFinal": "Version {{n}} approved. It now goes up your reporting line for approval before printing.",
+    "waitingAtLevel": "Management approval: level {{level}} of {{total}}. The vendor can print once every level approves.",
+    "trail": {
+      "title": "Approval trail",
+      "mr": "MR review",
+      "level": "Level {{n}}",
+      "approved": "approved by {{name}}",
+      "rejected": "sent back by {{name}}",
+      "onBehalf": "(for {{name}})",
+      "waiting": "waiting on {{name}}",
+      "waitingAnyone": "waiting on a Final Artwork Approval holder"
+    }
   },
   "photoLink": {
     "title": "Recipient photo requested",

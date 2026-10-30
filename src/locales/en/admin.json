@@ -43,7 +43,11 @@
       "features": "Feature flags",
       "featuresHelp": "Optional workflow changes, off by default. Nothing changes for the company until one is turned on.",
       "featureEnabled": "Feature enabled",
-      "featureDisabled": "Feature disabled"
+      "featureDisabled": "Feature disabled",
+      "approvalLevels": "Approval levels",
+      "approvalLevelsHelp": "How many managers above the MR approve artwork, one after another up their reporting line. If an MR has fewer managers, the top of their line gives the final approval.",
+      "approvalLevelsSaved_one": "Artwork now needs {{count}} level of approval",
+      "approvalLevelsSaved_other": "Artwork now needs {{count}} levels of approval"
     }
   },
   "users": {

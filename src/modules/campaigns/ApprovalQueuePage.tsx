@@ -7,7 +7,9 @@ import { AppTabs } from '@/components/app-tabs'
 import { EmptyState } from '@/components/empty-state'
 import { LabelledField } from '@/components/fields/labelled-field'
 import { MasterPageHeader } from '@/components/masters/master-page'
+import { ArtworkApprovalTrail } from '@/components/orders/artwork-approval-trail'
 import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -89,7 +91,7 @@ export function ApprovalQueuePage() {
   const rejectQuickGift = useRejectQuickGiftRequest()
   const approveDoctor = useApproveDoctorChangeRequest()
   const rejectDoctor = useRejectDoctorChangeRequest()
-  // MR-approved artwork waiting on this user's final approval (empty unless they're the MR's manager).
+  // MR-approved artwork whose current level waits on this user (or that they can cover with Final Artwork Approval).
   const { data: artwork, isLoading: artworkLoading } = usePendingArtworkApprovals()
   const reviewArtwork = useReviewArtwork()
 
@@ -132,8 +134,14 @@ export function ApprovalQueuePage() {
 
   async function approveArtwork(orderId: string, designId: string) {
     try {
-      await reviewArtwork.mutateAsync({ orderId, designId })
-      toast.success('Artwork approved', { description: 'The vendor can now print and dispatch.' })
+      const design = await reviewArtwork.mutateAsync({ orderId, designId })
+      if (design.status === 'PENDING_FINAL_APPROVAL') {
+        toast.success('Artwork approved', {
+          description: `It moves to level ${design.approvalLevel} of ${design.approvalLevels}${design.waitingOnName ? ` (${design.waitingOnName})` : ''}.`,
+        })
+      } else {
+        toast.success('Artwork approved', { description: 'The vendor can now print and dispatch.' })
+      }
     } catch (err) {
       showError(err)
     }
@@ -228,7 +236,7 @@ export function ApprovalQueuePage() {
   const artworkPanel = artworkLoading ? (
     <Skeleton className="h-40 w-full" />
   ) : (artwork ?? []).length === 0 ? (
-    <EmptyState variant="plain" icon={Palette} title="No artwork waiting for your final approval" />
+    <EmptyState variant="plain" icon={Palette} title="No artwork waiting for your approval" />
   ) : (
     <div className="space-y-3">
       {(artwork ?? []).map((item) => (
@@ -236,7 +244,7 @@ export function ApprovalQueuePage() {
           key={item.designId}
           icon={<Palette className="h-4 w-4" />}
           title={`${item.giftName ?? 'Artwork'} · ${item.orderDisplayId}`}
-          subtitle={`Approved by ${item.mrApprovedByName ?? 'the MR'}${item.mrApprovedAt ? ` · ${formatDateTime(item.mrApprovedAt)}` : ''}`}
+          subtitle={`Level ${item.approvalLevel} of ${item.approvalLevels} · MR approved by ${item.mrApprovedByName ?? 'the MR'}${item.mrApprovedAt ? ` · ${formatDateTime(item.mrApprovedAt)}` : ''}`}
           approving={reviewArtwork.isPending}
           onApprove={() => void approveArtwork(item.orderId, item.designId)}
           onReject={() => setRejecting({ kind: 'artwork', id: item.designId, orderId: item.orderId })}
@@ -251,6 +259,16 @@ export function ApprovalQueuePage() {
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </Detail>
+          {item.covering && (
+            <div className="sm:col-span-2">
+              <Badge variant="warning-soft">
+                {item.waitingOnName ? `Covering for ${item.waitingOnName}` : 'No manager above the MR: you sign as Final Artwork Approval'}
+              </Badge>
+            </div>
+          )}
+          <div className="mt-1 sm:col-span-2">
+            <ArtworkApprovalTrail steps={item.approvals} pending={{ level: item.approvalLevel, waitingOnName: item.waitingOnName }} />
+          </div>
         </RequestCard>
       ))}
     </div>

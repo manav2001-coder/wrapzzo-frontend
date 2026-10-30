@@ -295,7 +295,11 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium">{t('order.artwork.version', { n: design.versionNo })}</span>
-                      <Badge variant={DESIGN_VARIANT[design.status]}>{t(`order.artwork.status.${design.status}`)}</Badge>
+                      <Badge variant={DESIGN_VARIANT[design.status]}>
+                        {design.status === 'PENDING_FINAL_APPROVAL' && (design.approvalLevels ?? 1) > 1
+                          ? t('order.artwork.managementLevel', { level: design.approvalLevel, total: design.approvalLevels })
+                          : t(`order.artwork.status.${design.status}`)}
+                      </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {formatDateTime(design.createdAt)}

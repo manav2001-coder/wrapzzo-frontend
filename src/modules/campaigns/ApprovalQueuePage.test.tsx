@@ -37,6 +37,13 @@ const PROOF = {
   vendorName: 'Shree Ganesh Offset Printers',
   mrApprovedByName: 'Rahul Deshmukh',
   mrApprovedAt: '2026-10-27T09:00:00Z',
+  approvalLevel: 1,
+  approvalLevels: 2,
+  waitingOnName: 'Sanjay Kulkarni',
+  covering: false,
+  approvals: [
+    { level: 0, decision: 'APPROVED', decidedByName: 'Rahul Deshmukh', onBehalfOfName: null, comment: null, decidedAt: '2026-10-27T09:00:00Z' },
+  ],
 }
 
 describe('ApprovalQueuePage — artwork final approval', () => {
@@ -53,9 +60,20 @@ describe('ApprovalQueuePage — artwork final approval', () => {
     await userEvent.click(await screen.findByRole('tab', { name: /artwork/i }))
 
     expect(await screen.findByText('Rx Pad A5 · ORD-42')).toBeInTheDocument()
-    expect(screen.getByText(/Approved by Rahul Deshmukh/)).toBeInTheDocument()
+    expect(screen.getByText(/Level 1 of 2 · MR approved by Rahul Deshmukh/)).toBeInTheDocument()
+    expect(screen.getByText(/waiting on Sanjay Kulkarni/)).toBeInTheDocument()
+    expect(screen.queryByText(/Covering for/)).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /approve/i }))
     await waitFor(() => expect(approveOrderDesign).toHaveBeenCalledWith('o-1', 'd-2'))
+  })
+
+  it('says when the approver is covering a level for the manager it waits on', async () => {
+    listPendingArtworkApprovals.mockResolvedValue([{ ...PROOF, approvalLevel: 2, covering: true, waitingOnName: 'Ravi Menon' }])
+    approveOrderDesign.mockResolvedValue({ ...PROOF, id: 'd-2', status: 'APPROVED' })
+    renderWithProviders(<ApprovalQueuePage />)
+    await userEvent.click(await screen.findByRole('tab', { name: /artwork/i }))
+    expect(await screen.findByText('Covering for Ravi Menon')).toBeInTheDocument()
+    expect(screen.getByText(/Level 2 of 2/)).toBeInTheDocument()
   })
 
   it('sends the proof back to the vendor with a note', async () => {

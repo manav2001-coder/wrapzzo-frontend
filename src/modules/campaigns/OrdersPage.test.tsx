@@ -62,6 +62,10 @@ function design(overrides: Partial<OrderDesign> = {}): OrderDesign {
     firstApprovedAt: null,
     reviewComment: null,
     reviewedAt: null,
+    approvalLevel: null,
+    approvalLevels: null,
+    waitingOnName: null,
+    approvals: [],
     createdAt: '2026-10-21T09:00:00Z',
     ...overrides,
   }

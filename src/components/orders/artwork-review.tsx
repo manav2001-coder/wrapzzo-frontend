@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import type { OrderDesign } from '@/api/orderDesigns'
 import { AppDialog } from '@/components/app-dialog'
+import { ArtworkApprovalTrail } from '@/components/orders/artwork-approval-trail'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -150,9 +151,20 @@ export function ArtworkReview({ orderId, artworkRequired }: { orderId: string; a
             {latest.status === 'REJECTED' && <p className="text-xs text-muted-foreground">{t('artwork.waitingForRework')}</p>}
             {latest.status === 'PENDING_FINAL_APPROVAL' && (
               <p className="rounded-md bg-warning/10 px-3 py-2 text-sm">
-                {t('artwork.waitingForFinal', { name: latest.firstApprovedByUserName ?? t('artwork.theMr') })}
+                {t('artwork.waitingAtLevel', { level: latest.approvalLevel ?? 1, total: latest.approvalLevels ?? 1 })}
               </p>
             )}
+            {latest.approvals.length > 1 || latest.status === 'PENDING_FINAL_APPROVAL' ? (
+              <div className="rounded-md border px-3 py-2">
+                <h4 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t('artwork.trail.title')}</h4>
+                <ArtworkApprovalTrail
+                  steps={latest.approvals}
+                  pending={
+                    latest.status === 'PENDING_FINAL_APPROVAL' ? { level: latest.approvalLevel ?? 1, waitingOnName: latest.waitingOnName } : null
+                  }
+                />
+              </div>
+            ) : null}
           </div>
 
           {earlier.length > 0 && (

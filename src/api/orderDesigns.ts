@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/axiosClient'
 
-/** PENDING_FINAL_APPROVAL: the MR approved it and, with senior artwork approval on, it waits for their manager. */
+/** PENDING_FINAL_APPROVAL: the MR approved it and, with senior artwork approval on, it climbs their reporting line one manager per level. */
 export type OrderDesignStatus = 'PENDING_REVIEW' | 'PENDING_FINAL_APPROVAL' | 'APPROVED' | 'REJECTED'
 
 export interface OrderDesign {
@@ -17,7 +17,24 @@ export interface OrderDesign {
   firstApprovedAt: string | null
   reviewComment: string | null
   reviewedAt: string | null
+  /** While PENDING_FINAL_APPROVAL: the level it waits on (1 = the MR's manager), of how many. */
+  approvalLevel: number | null
+  approvalLevels: number | null
+  /** The manager the current level waits on; null when no one is above the MR. Empty for the vendor. */
+  waitingOnName: string | null
+  /** Every decision on this proof, oldest first (level 0 is the MR's review). Empty for the vendor. */
+  approvals: ArtworkApprovalStep[]
   createdAt: string
+}
+
+export interface ArtworkApprovalStep {
+  level: number
+  decision: 'APPROVED' | 'REJECTED'
+  decidedByName: string
+  /** Set when someone with Final Artwork Approval signed this level for the manager it was waiting on. */
+  onBehalfOfName: string | null
+  comment: string | null
+  decidedAt: string
 }
 
 export async function listOrderDesigns(orderId: string): Promise<OrderDesign[]> {
@@ -35,7 +52,7 @@ export async function rejectOrderDesign(orderId: string, designId: string, comme
   return data
 }
 
-/** An MR-approved proof waiting for a senior's final approval -- a row of their Approvals queue. */
+/** An MR-approved proof waiting on the caller's level of approval -- a row of their Approvals queue. */
 export interface PendingArtworkApproval {
   designId: string
   orderId: string
@@ -50,6 +67,13 @@ export interface PendingArtworkApproval {
   vendorName: string
   mrApprovedByName: string | null
   mrApprovedAt: string | null
+  approvalLevel: number
+  approvalLevels: number
+  /** The manager this level waits on; null when no one is above the MR. */
+  waitingOnName: string | null
+  /** True when the caller isn't that manager and signs as cover (Final Artwork Approval). */
+  covering: boolean
+  approvals: ArtworkApprovalStep[]
 }
 
 export async function listPendingArtworkApprovals(): Promise<PendingArtworkApproval[]> {

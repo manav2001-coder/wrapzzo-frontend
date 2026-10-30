@@ -18,6 +18,7 @@ export type EmployeeFieldKey =
   | 'email'
   | 'mobile'
   | 'designation'
+  | 'role'
   | 'employeeCode'
   | 'reportsToEmail'
   | `orgLevel${1 | 2 | 3 | 4}`
@@ -33,6 +34,7 @@ export const EMPLOYEE_FIELDS: EmployeeFieldDef[] = [
   { key: 'email', label: 'Email', required: true },
   { key: 'mobile', label: 'Mobile', required: true },
   { key: 'designation', label: 'Designation', required: true },
+  { key: 'role', label: 'Role', required: true },
   { key: 'employeeCode', label: 'Employee Code', required: true },
   { key: 'reportsToEmail', label: 'Reports To Email', required: false },
   ...Array.from({ length: ORG_LEVEL_COUNT }, (_, i) => ({
@@ -173,6 +175,7 @@ export async function parseEmployeeWorkbook(file: File, mapping?: ColumnMapping)
       !values.email &&
       !values.mobile &&
       !values.designation &&
+      !values.role &&
       !values.employeeCode &&
       !values.reportsToEmail &&
       orgUnitPath.length === 0
@@ -183,6 +186,7 @@ export async function parseEmployeeWorkbook(file: File, mapping?: ColumnMapping)
     if (!values.email) missing.push('Email')
     if (!values.mobile) missing.push('Mobile')
     if (!values.designation) missing.push('Designation')
+    if (!values.role) missing.push('Role')
     if (!values.employeeCode) missing.push('Employee Code')
     if (orgUnitPath.length === 0) missing.push('Org Level 1')
     if (missing.length > 0) {
@@ -199,6 +203,7 @@ export async function parseEmployeeWorkbook(file: File, mapping?: ColumnMapping)
       email: values.email!,
       mobile: values.mobile!,
       designation: values.designation!,
+      role: values.role!,
       employeeCode: values.employeeCode!,
       reportsToEmail: values.reportsToEmail || undefined,
       orgUnitPath,

@@ -34,7 +34,14 @@
     "vendorOrders": "Orders",
     "components": "Components",
     "settings": "Settings",
-    "menuNames": "Menu names"
+    "menuNames": "Menu names",
+    "roles": "Roles",
+    "featureMaster": "Feature Master",
+    "templateMaster": "Template Master",
+    "featuresToTemplate": "Features to Template",
+    "templatesToTemplate": "Templates to Template",
+    "roleToTemplate": "Role to Template",
+    "userToTemplate": "User to Template"
   },
   "action": {
     "activate": "Activate",

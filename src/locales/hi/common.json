@@ -34,7 +34,14 @@
     "vendorOrders": "ऑर्डर",
     "components": "कंपोनेंट्स",
     "settings": "सेटिंग्स",
-    "menuNames": "मेनू के नाम"
+    "menuNames": "मेनू के नाम",
+    "roles": "भूमिकाएँ",
+    "featureMaster": "फीचर मास्टर",
+    "templateMaster": "टेम्पलेट मास्टर",
+    "featuresToTemplate": "फीचर से टेम्पलेट",
+    "templatesToTemplate": "टेम्पलेट से टेम्पलेट",
+    "roleToTemplate": "भूमिका से टेम्पलेट",
+    "userToTemplate": "उपयोगकर्ता से टेम्पलेट"
   },
   "action": {
     "activate": "सक्रिय करें",

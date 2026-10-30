@@ -12,7 +12,7 @@ async function sheetOf(rows: string[][]): Promise<File> {
   return new File([buffer], 'roster.xlsx')
 }
 
-const person = (email: string, ...orgLevels: string[]) => ['Asha', email, '9999999999', 'Manager', 'E1', '', ...orgLevels]
+const person = (email: string, ...orgLevels: string[]) => ['Asha', email, '9999999999', 'Manager', 'Member', 'E1', '', ...orgLevels]
 
 describe('parseEmployeeWorkbook -- whole-company placement', () => {
   it('reads ALL in Org Level 1 as a placement, not a unit name', async () => {
@@ -30,5 +30,15 @@ describe('parseEmployeeWorkbook -- whole-company placement', () => {
   it('still requires Org Level 1 -- a blank never means the whole company', async () => {
     const { errors } = await parseEmployeeWorkbook(await sheetOf([person('a@x.in')]))
     expect(errors[0]).toContain('Org Level 1')
+  })
+
+  it('carries the Role column into the row and requires it', async () => {
+    const withRole = await parseEmployeeWorkbook(await sheetOf([person('a@x.in', 'North')]))
+    expect(withRole.rows[0].role).toBe('Member')
+
+    const blankRole = ['Asha', 'b@x.in', '9999999999', 'Manager', '', 'E1', '', 'North']
+    const { rows, errors } = await parseEmployeeWorkbook(await sheetOf([blankRole]))
+    expect(rows).toEqual([])
+    expect(errors[0]).toContain('Role')
   })
 })

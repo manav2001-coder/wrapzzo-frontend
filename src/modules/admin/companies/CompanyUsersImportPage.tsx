@@ -34,7 +34,7 @@ const XLSX_ACCEPT = { 'application/vnd.openxmlformats-officedocument.spreadsheet
 
 export function CompanyUsersImportPage() {
   const { t } = useTranslation('admin')
-  const { companyId, basePath } = useCompanyUserContext()
+  const { companyId, listPath } = useCompanyUserContext()
   const navigate = useNavigate()
   const location = useLocation()
   const bulkImport = useBulkImportUsers(companyId)
@@ -130,7 +130,7 @@ export function CompanyUsersImportPage() {
   return (
     <div className="space-y-4">
       <MasterPageHeader
-        lead={<IconButton icon={ArrowLeft} label={t('users.back')} onClick={() => navigate(`${basePath}/users`)} />}
+        lead={<IconButton icon={ArrowLeft} label={t('users.back')} onClick={() => navigate(listPath)} />}
         title={t('users.importPage.title')}
         description={t('users.importPage.subtitle')}
         extra={
@@ -196,7 +196,7 @@ export function CompanyUsersImportPage() {
           {result && (
             <div role="status" className="flex flex-wrap items-center gap-3 rounded-md border border-success/30 bg-success/5 p-3 text-sm">
               {t('users.importPage.imported', { created: result.created, updated: result.updated })}
-              <Button size="sm" variant="ghost" onClick={() => navigate(`${basePath}/users`)}>
+              <Button size="sm" variant="ghost" onClick={() => navigate(listPath)}>
                 {t('users.addPage.view')}
                 <ArrowRight />
               </Button>

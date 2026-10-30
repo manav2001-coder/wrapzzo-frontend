@@ -51,7 +51,7 @@ const isBlank = (row: DraftRow) => COLUMNS.every((col) => !row[col.key].trim())
 
 export function CompanyUsersAddPage() {
   const { t } = useTranslation('admin')
-  const { companyId, basePath } = useCompanyUserContext()
+  const { companyId, listPath, importPath } = useCompanyUserContext()
   const navigate = useNavigate()
   const bulkImport = useBulkImportUsers(companyId)
   const showError = useApiErrorToast()
@@ -108,11 +108,11 @@ export function CompanyUsersAddPage() {
   return (
     <div className="space-y-4">
       <MasterPageHeader
-        lead={<IconButton icon={ArrowLeft} label={t('users.back')} onClick={() => navigate(`${basePath}/users`)} />}
+        lead={<IconButton icon={ArrowLeft} label={t('users.back')} onClick={() => navigate(listPath)} />}
         title={t('users.addPage.title')}
         description={t('users.addPage.subtitle')}
         extra={
-          <Button size="sm" variant="outline" className="h-9" onClick={() => navigate(`${basePath}/import-users`)}>
+          <Button size="sm" variant="outline" className="h-9" onClick={() => navigate(importPath)}>
             {t('users.addPage.toImport')}
           </Button>
         }
@@ -176,7 +176,7 @@ export function CompanyUsersAddPage() {
               {bulkImport.isPending ? <Loader2 className="animate-spin" /> : <Check />}
               {t('users.addPage.save')}
             </Button>
-            <Button variant="ghost" onClick={() => navigate(`${basePath}/users`)}>
+            <Button variant="ghost" onClick={() => navigate(listPath)}>
               {t('users.addPage.view')}
             </Button>
           </div>

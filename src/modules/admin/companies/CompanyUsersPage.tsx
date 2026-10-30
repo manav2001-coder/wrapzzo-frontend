@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowLeft, Building, Download, Network, Plus, ShieldMinus, ShieldPlus, Trash2, Upload, Users } from 'lucide-react'
+import { Building, Download, Network, Plus, ShieldMinus, ShieldPlus, Trash2, Upload, Users } from 'lucide-react'
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -22,6 +22,7 @@ import { formatDate } from '@/lib/datetime'
 import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
+import { CompanyPicker } from '../access-control/CompanyPicker'
 import { ExtraOrgUnitsDialog } from './ExtraOrgUnitsDialog'
 
 const COMPANY_ADMIN_ROLE_NAME = 'Company Admin'
@@ -42,7 +43,7 @@ type PendingAction = { kind: 'makeAdmin' | 'removeAdmin' | 'wholeCompany' | 'own
 
 export function CompanyUsersPage() {
   const { t } = useTranslation('admin')
-  const { companyId, companyName, basePath, backTo } = useCompanyUserContext()
+  const { companyId, companyName, isPlatformStaff, setCompany, addPath, importPath } = useCompanyUserContext()
   const navigate = useNavigate()
   const currentUserId = useAppSelector((state) => state.auth.user?.sub)
   const showError = useApiErrorToast()
@@ -92,7 +93,7 @@ export function CompanyUsersPage() {
   function onFileChosen(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
-    if (file) navigate(`${basePath}/import-users`, { state: { file } })
+    if (file) navigate(importPath, { state: { file } })
   }
 
   const columns = useMemo<ColumnDef<CompanyUser, unknown>[]>(
@@ -212,22 +213,22 @@ export function CompanyUsersPage() {
   return (
     <div>
       <MasterPageHeader
-        lead={<IconButton icon={ArrowLeft} label={t('users.back')} onClick={() => navigate(backTo)} />}
         title={t('users.title')}
         description={companyName ? t('users.subtitle', { company: companyName }) : t('users.subtitleNoName')}
         extra={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-end gap-2">
+            {isPlatformStaff && <CompanyPicker id="users-company" value={companyId || null} onChange={setCompany} />}
             <Button size="sm" variant="outline" className="h-9" onClick={() => void downloadEmployeeTemplate()}>
               <Download />
               {t('users.downloadTemplate')}
             </Button>
-            {canCreate && (
+            {canCreate && companyId && (
               <>
                 <Button size="sm" variant="outline" className="h-9" onClick={() => fileInputRef.current?.click()}>
                   <Upload />
                   {t('users.import')}
                 </Button>
-                <Button size="sm" className="h-9" onClick={() => navigate(`${basePath}/add-users`)}>
+                <Button size="sm" className="h-9" onClick={() => navigate(addPath)}>
                   <Plus />
                   {t('users.add')}
                 </Button>

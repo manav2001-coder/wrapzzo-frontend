@@ -67,9 +67,21 @@ const GENERAL: NavSource = {
   ],
 }
 
+/** Masters: the roles and users a company is made of -- roles first, since every user is given one. */
+const MASTERS_NAV: NavSource = {
+  id: 'masters',
+  titleKey: 'nav.masters',
+  type: 'collapse',
+  icon: Users,
+  children: [
+    { id: 'masters-roles', titleKey: 'nav.roles', type: 'item', url: '/masters/roles', icon: BadgeCheck, permission: P.ROLE_VIEW },
+    { id: 'masters-users', titleKey: 'nav.users', type: 'item', url: '/masters/users', icon: Users, permission: P.USER_VIEW },
+  ],
+}
+
 /**
  * Access control (TBAC), the same menu for platform staff and company admins: roles first, then
- * the features and templates they are built from, then who gets what.
+ * the features and templates they are built from, then who gets what (roles and users are in Masters).
  */
 const TBAC_NAV: NavSource = {
   id: 'tbac',
@@ -77,7 +89,6 @@ const TBAC_NAV: NavSource = {
   type: 'collapse',
   icon: ShieldCheck,
   children: [
-    { id: 'tbac-roles', titleKey: 'nav.roles', type: 'item', url: '/access/roles', icon: BadgeCheck, permission: P.ROLE_VIEW },
     { id: 'tbac-features', titleKey: 'nav.featureMaster', type: 'item', url: '/access/features', icon: ListChecks, permission: P.TEMPLATE_VIEW },
     { id: 'tbac-templates', titleKey: 'nav.templateMaster', type: 'item', url: '/access/templates', icon: ShieldCheck, permission: P.TEMPLATE_VIEW },
     { id: 'tbac-features-to-template', titleKey: 'nav.featuresToTemplate', type: 'item', url: '/access/features-to-template', icon: ListChecks, permission: P.TEMPLATE_VIEW },
@@ -100,6 +111,7 @@ export const ADMIN_NAV: NavSource[] = [
       { id: 'platform-orders', titleKey: 'nav.orders', type: 'item', url: '/admin/orders', icon: ShoppingBag, permission: P.PLATFORM_ORDER_VIEW },
     ],
   },
+  MASTERS_NAV,
   TBAC_NAV,
   GENERAL,
 ]
@@ -138,12 +150,12 @@ export const COMPANY_NAV: NavSource[] = [
         icon: ShoppingBag,
         permission: P.ORDER_VIEW,
       },
-      { id: 'company-users', titleKey: 'nav.users', type: 'item', url: '/company/users', icon: Users, permission: P.USER_VIEW },
       { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: P.COMPANY_VENDOR_VIEW },
       { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: P.WAREHOUSE_VIEW },
       { id: 'menu-names', titleKey: 'nav.menuNames', type: 'item', url: '/company/menu-names', icon: PencilLine, permission: P.MENU_EDIT },
     ],
   },
+  MASTERS_NAV,
   TBAC_NAV,
   GENERAL,
 ]

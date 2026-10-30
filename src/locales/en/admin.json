@@ -10,7 +10,6 @@
       "id": "ID",
       "onboarded": "Onboarded"
     },
-    "users": "Users",
     "deactivateTitle": "Deactivate this company?",
     "deactivateBody": "The company and its users lose access to the platform until it is activated again.",
     "activated": "Company activated",

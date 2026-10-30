@@ -41,7 +41,8 @@
     "featuresToTemplate": "फीचर से टेम्पलेट",
     "templatesToTemplate": "टेम्पलेट से टेम्पलेट",
     "roleToTemplate": "भूमिका से टेम्पलेट",
-    "userToTemplate": "उपयोगकर्ता से टेम्पलेट"
+    "userToTemplate": "उपयोगकर्ता से टेम्पलेट",
+    "masters": "मास्टर्स"
   },
   "action": {
     "activate": "सक्रिय करें",

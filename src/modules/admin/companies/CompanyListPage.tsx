@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Building2, Users } from 'lucide-react'
+import { Building2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -8,7 +8,6 @@ import { toast } from 'sonner'
 import type { Company } from '@/api/companies'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
-import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanies, useSetCompanyStatus } from '@/hooks/useCompanies'
@@ -47,9 +46,6 @@ export function CompanyListPage() {
       title: t('companies.deactivateTitle'),
       body: t('companies.deactivateBody'),
     },
-    extraActions: (company) => (
-      <IconButton icon={Users} label={t('companies.users')} onClick={() => navigate(`/admin/companies/${company.id}/users`)} />
-    ),
   })
 
   const columns = useMemo<ColumnDef<Company, unknown>[]>(

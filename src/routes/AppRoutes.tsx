@@ -76,9 +76,6 @@ export function AppRoutes() {
           <Route path="/admin/companies" element={<Guard permission={P.PLATFORM_COMPANY_VIEW}><CompanyListPage /></Guard>} />
           <Route path="/admin/companies/new" element={<Guard permission={P.PLATFORM_COMPANY_CREATE}><CompanyFormPage /></Guard>} />
           <Route path="/admin/companies/:id" element={<Guard permission={P.PLATFORM_COMPANY_VIEW}><CompanyFormPage /></Guard>} />
-          <Route path="/admin/companies/:id/users" element={<Guard permission={P.USER_VIEW}><CompanyUsersPage /></Guard>} />
-          <Route path="/admin/companies/:id/add-users" element={<Guard permission={P.USER_CREATE}><CompanyUsersAddPage /></Guard>} />
-          <Route path="/admin/companies/:id/import-users" element={<Guard permission={P.USER_CREATE}><CompanyUsersImportPage /></Guard>} />
 
           <Route path="/admin/vendors" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
           <Route path="/admin/vendors/:id" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
@@ -90,7 +87,6 @@ export function AppRoutes() {
           <Route path="/admin/orders" element={<Guard permission={P.PLATFORM_ORDER_VIEW}><OrdersPage /></Guard>} />
 
           {/* Access control (TBAC): shared by platform staff and company admins, who each work on their own scope. */}
-          <Route path="/access/roles" element={<Guard permission={P.ROLE_VIEW}><RolesPage /></Guard>} />
           <Route path="/access/features" element={<Guard permission={P.TEMPLATE_VIEW}><FeatureMasterPage /></Guard>} />
           <Route path="/access/templates" element={<Guard permission={P.TEMPLATE_VIEW}><TemplatesPage /></Guard>} />
           <Route path="/access/features-to-template" element={<Guard permission={P.TEMPLATE_VIEW}><FeaturesToTemplatePage /></Guard>} />
@@ -117,9 +113,11 @@ export function AppRoutes() {
           <Route path="/company/menu-names" element={<Guard permission={P.MENU_EDIT}><MenuNamesPage /></Guard>} />
 
           {/* Company Admin's own roster -- same Users pages as the platform-admin route above, just resolving "my company" instead of an :id param. */}
-          <Route path="/company/users" element={<Guard permission={P.USER_VIEW}><CompanyUsersPage /></Guard>} />
-          <Route path="/company/add-users" element={<Guard permission={P.USER_CREATE}><CompanyUsersAddPage /></Guard>} />
-          <Route path="/company/import-users" element={<Guard permission={P.USER_CREATE}><CompanyUsersImportPage /></Guard>} />
+          {/* Masters: roles and users, shared by platform staff (who pick a company) and company admins. */}
+          <Route path="/masters/roles" element={<Guard permission={P.ROLE_VIEW}><RolesPage /></Guard>} />
+          <Route path="/masters/users" element={<Guard permission={P.USER_VIEW}><CompanyUsersPage /></Guard>} />
+          <Route path="/masters/users/add" element={<Guard permission={P.USER_CREATE}><CompanyUsersAddPage /></Guard>} />
+          <Route path="/masters/users/import" element={<Guard permission={P.USER_CREATE}><CompanyUsersImportPage /></Guard>} />
         </Route>
       </Route>
 

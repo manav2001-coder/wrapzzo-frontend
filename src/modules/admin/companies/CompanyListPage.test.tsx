@@ -66,11 +66,10 @@ describe('CompanyListPage', () => {
     expect(api.activateCompany).toHaveBeenCalledWith('c2')
   })
 
-  it("opens a company's users", async () => {
+  it('leaves users to the Users master: no users action on a company row', async () => {
     renderList()
     await screen.findByText('Acme Pharma')
-    await userEvent.click(within(rowOf('Acme Pharma')).getByRole('button', { name: 'Users' }))
-    expect(await screen.findByRole('heading', { name: 'Company users' })).toBeInTheDocument()
+    expect(within(rowOf('Acme Pharma')).queryByRole('button', { name: 'Users' })).not.toBeInTheDocument()
   })
 
   it('says the list failed to load, with a retry, rather than "no companies"', async () => {

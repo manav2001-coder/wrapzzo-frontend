@@ -19,7 +19,7 @@ vi.mock('@/api/doctorRequests', async (importOriginal) => ({
 }))
 // A zonal manager: no Quick Gift approval key, just a team.
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { companyId: 'c1', companyName: 'Alembic', permissions: ['order.track'], managesTeam: true }, isLoading: false }),
+  useCurrentUser: () => ({ data: { companyId: 'c1', companyName: 'Alembic', permissions: ['order.view', 'order.artwork_review'], managesTeam: true }, isLoading: false }),
   CURRENT_USER_QUERY_KEY: ['me'],
 }))
 

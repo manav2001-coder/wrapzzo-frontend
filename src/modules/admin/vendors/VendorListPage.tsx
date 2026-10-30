@@ -17,6 +17,7 @@ import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useAddVendor, useEditVendor, useResendVendorInvite, useSetVendorStatus, useVendors } from '@/hooks/useVendors'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = {
   name: 'text',
@@ -78,8 +79,8 @@ export function VendorListPage() {
     onEdit: (vendor) => navigate(`/admin/vendors/${vendor.id}`),
     onActivate: (vendor) => changeStatus(vendor, true),
     onDeactivate: (vendor) => changeStatus(vendor, false),
-    editPermission: 'vendor.manage',
-    deletePermission: 'vendor.manage',
+    editPermission: P.PLATFORM_VENDOR_STATUS,
+    deletePermission: P.PLATFORM_VENDOR_STATUS,
     deactivateCopy: { label: t('vendors.suspend'), title: t('vendors.suspendTitle'), body: t('vendors.suspendBody') },
     extraActions: (vendor) => <IconButton icon={Mail} label={t('vendors.resendInvite')} onClick={() => void resend(vendor)} />,
   })
@@ -193,7 +194,7 @@ export function VendorListPage() {
         title={t('vendors.title')}
         description={t('vendors.subtitle')}
         createLabel={t('vendors.add')}
-        createPermission="vendor.manage"
+        createPermission={P.PLATFORM_VENDOR_CREATE}
         onCreate={() => navigate('/admin/vendors/new')}
       />
       <DataTable<Vendor>
@@ -229,7 +230,7 @@ export function VendorListPage() {
             values={values}
             mode={creating ? 'create' : 'edit'}
             maxWidgetsPerRow={2}
-            submitPermission="vendor.manage"
+            submitPermission={creating ? P.PLATFORM_VENDOR_CREATE : P.PLATFORM_VENDOR_EDIT}
             onSubmit={onSubmit}
             onReady={setHandle}
             hideCardWrapper

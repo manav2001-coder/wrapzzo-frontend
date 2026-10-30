@@ -14,6 +14,7 @@ import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useMyOrgUnits } from '@/hooks/useMyOrgUnits'
 import { useAddMyVendor, useMyVendors } from '@/hooks/useMyVendors'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
 
 const COMPANY_WIDE = '__company_wide__'
 
@@ -113,7 +114,7 @@ export function VendorsPage() {
         title="Vendors"
         description="The vendors you work with. Only their gifts appear in your Gift Store, scoped to the org unit they serve."
         createLabel="Add vendor"
-        createPermission="company.vendor.manage"
+        createPermission={P.COMPANY_VENDOR_ADD}
         onCreate={() => setAdding(true)}
       />
       <DataTable<CompanyVendor>

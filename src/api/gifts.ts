@@ -62,7 +62,7 @@ export async function listGifts(): Promise<Gift[]> {
   return data
 }
 
-/** The Gift Store, from a company user's side -- active gifts only, no gift.manage required. */
+/** The Gift Store, from a company user's side -- active gifts only, no platform_product.view required. */
 export async function listActiveGifts(): Promise<Gift[]> {
   const { data } = await apiClient.get<Gift[]>('/api/gifts/list')
   return data

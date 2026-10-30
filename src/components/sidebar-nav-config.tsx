@@ -20,14 +20,16 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { P, type PermissionRequirement } from '@/lib/permissions'
 
 /**
  * The nav tree's SOURCE, in MobixFL's shape.
  *
  *  - `titleKey` is a translation key, not a display string: the tree is module-level data, so a
  *    literal title could never respond to a language change.
- *  - `permission` says what the destination requires (any-of for an array). `useNav` filters on
- *    it, so nobody is shown an entry to a screen that answers 403. The API is still the control.
+ *  - `permission` says what the destination requires (any-of for an array) -- the screen's VIEW
+ *    action; buttons inside it gate on the specific action. It matches the route guard in
+ *    AppRoutes, so nobody is shown an entry to a screen that answers 403. The API is the control.
  *
  * Wrappzo has three audiences, each with its own tree: platform staff (Admin), company users,
  * and vendors (a separate login with a fixed capability set, so their tree is ungated).
@@ -40,7 +42,7 @@ export interface NavSource {
   url?: string
   end?: boolean
   /** Any-of. Omit for an entry everyone in this portal may see. */
-  permission?: string | string[]
+  permission?: PermissionRequirement
   /** Also shown to anyone with direct reports, whatever their keys (a manager's own approvals). */
   forManagers?: boolean
   children?: NavSource[]
@@ -72,11 +74,11 @@ export const ADMIN_NAV: NavSource[] = [
     titleKey: 'nav.admin',
     type: 'group',
     children: [
-      { id: 'companies', titleKey: 'nav.companies', type: 'item', url: '/admin/companies', icon: Building2, permission: 'company.manage' },
-      { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: 'vendor.manage' },
-      { id: 'gift-catalogue', titleKey: 'nav.giftCatalogue', type: 'item', url: '/admin/gifts', icon: Gift, permission: 'gift.manage' },
-      { id: 'platform-orders', titleKey: 'nav.orders', type: 'item', url: '/admin/orders', icon: ShoppingBag, permission: 'order.manage' },
-      { id: 'access-control', titleKey: 'nav.accessControl', type: 'item', url: '/admin/access-control', icon: ShieldCheck, permission: 'role.manage' },
+      { id: 'companies', titleKey: 'nav.companies', type: 'item', url: '/admin/companies', icon: Building2, permission: P.PLATFORM_COMPANY_VIEW },
+      { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: P.PLATFORM_VENDOR_VIEW },
+      { id: 'gift-catalogue', titleKey: 'nav.giftCatalogue', type: 'item', url: '/admin/gifts', icon: Gift, permission: P.PLATFORM_PRODUCT_VIEW },
+      { id: 'platform-orders', titleKey: 'nav.orders', type: 'item', url: '/admin/orders', icon: ShoppingBag, permission: P.PLATFORM_ORDER_VIEW },
+      { id: 'access-control', titleKey: 'nav.accessControl', type: 'item', url: '/admin/access-control', icon: ShieldCheck, permission: P.ACCESS_VIEW },
     ],
   },
   GENERAL,
@@ -92,34 +94,34 @@ export const COMPANY_NAV: NavSource[] = [
     titleKey: 'nav.workspace',
     type: 'group',
     children: [
-      { id: 'dashboard', titleKey: 'nav.dashboard', type: 'item', url: '/dashboard', end: true, icon: LayoutDashboard, permission: 'dashboard.view' },
+      { id: 'dashboard', titleKey: 'nav.dashboard', type: 'item', url: '/dashboard', end: true, icon: LayoutDashboard, permission: P.DASHBOARD_VIEW },
       {
         id: 'campaigns',
         titleKey: 'nav.campaigns',
         type: 'collapse',
         icon: Megaphone,
         children: [
-          { id: 'campaigns-create', titleKey: 'nav.campaignsCreate', type: 'item', url: '/campaigns', icon: PlusCircle, permission: 'campaign.manage' },
-          { id: 'campaigns-manage', titleKey: 'nav.campaignsManage', type: 'item', url: '/my-campaigns', icon: ListChecks, permission: 'campaign.submit' },
+          { id: 'campaigns-create', titleKey: 'nav.campaignsCreate', type: 'item', url: '/campaigns', icon: PlusCircle, permission: P.CAMPAIGN_VIEW },
+          { id: 'campaigns-manage', titleKey: 'nav.campaignsManage', type: 'item', url: '/my-campaigns', icon: ListChecks, permission: P.CAMPAIGN_ENTRY_SUBMIT },
         ],
       },
-      { id: 'quick-gift', titleKey: 'nav.quickGift', type: 'item', url: '/quick-gift', icon: Zap, permission: 'quickgift.create' },
-      { id: 'gift-store', titleKey: 'nav.giftStore', type: 'item', url: '/gift-store', icon: Store, permission: 'quickgift.create' },
-      { id: 'recipients', titleKey: 'nav.recipients', type: 'item', url: '/recipients', icon: Contact, permission: 'recipient.manage' },
-      { id: 'my-doctors', titleKey: 'nav.myDoctors', type: 'item', url: '/my-doctors', icon: Stethoscope, permission: ['quickgift.create', 'recipient.manage'] },
-      { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: ['campaign.manage', 'campaign.approve', 'recipient.approve', 'order.design.final'], forManagers: true },
+      { id: 'quick-gift', titleKey: 'nav.quickGift', type: 'item', url: '/quick-gift', icon: Zap, permission: P.REQUEST_CREATE },
+      { id: 'gift-store', titleKey: 'nav.giftStore', type: 'item', url: '/gift-store', icon: Store, permission: P.PRODUCT_VIEW },
+      { id: 'recipients', titleKey: 'nav.recipients', type: 'item', url: '/recipients', icon: Contact, permission: P.RECIPIENT_VIEW },
+      { id: 'my-doctors', titleKey: 'nav.myDoctors', type: 'item', url: '/my-doctors', icon: Stethoscope, permission: [P.RECIPIENT_LIST_MANAGE, P.REQUEST_CREATE] },
+      { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: [P.REQUEST_APPROVE, P.RECIPIENT_LIST_APPROVE, P.ORDER_ARTWORK_FINAL], forManagers: true },
       {
         id: 'company-orders',
         titleKey: 'nav.orders',
         type: 'item',
         url: '/orders',
         icon: ShoppingBag,
-        permission: ['campaign.manage', 'order.track', 'order.design.review'],
+        permission: P.ORDER_VIEW,
       },
-      { id: 'company-users', titleKey: 'nav.users', type: 'item', url: '/company/users', icon: Users, permission: 'user.manage' },
-      { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: 'company.vendor.manage' },
-      { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: 'warehouse.manage' },
-      { id: 'menu-names', titleKey: 'nav.menuNames', type: 'item', url: '/company/menu-names', icon: PencilLine, permission: 'menu.manage' },
+      { id: 'company-users', titleKey: 'nav.users', type: 'item', url: '/company/users', icon: Users, permission: P.USER_VIEW },
+      { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: P.COMPANY_VENDOR_VIEW },
+      { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: P.WAREHOUSE_VIEW },
+      { id: 'menu-names', titleKey: 'nav.menuNames', type: 'item', url: '/company/menu-names', icon: PencilLine, permission: P.MENU_EDIT },
     ],
   },
   GENERAL,

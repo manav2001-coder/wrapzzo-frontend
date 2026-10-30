@@ -20,6 +20,7 @@ const MANAGER: CompanyUser = {
   reportsToName: null,
   orgUnitId: 'north',
   orgUnitName: 'North',
+  companyWide: false,
   extraOrgUnits: [{ id: 'east', name: 'East' }],
   roleId: 'r-1',
   roleName: 'Member',

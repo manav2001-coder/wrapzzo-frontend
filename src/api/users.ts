@@ -22,6 +22,8 @@ export interface CompanyUser {
   reportsToName: string | null
   orgUnitId: string | null
   orgUnitName: string | null
+  /** Placed at the company itself: sees every record in the company. */
+  companyWide: boolean
   /** Units the user covers beyond their own -- what they see widens to these too. */
   extraOrgUnits: { id: string; name: string }[]
   roleId: string
@@ -69,6 +71,12 @@ export async function listCompanyOrgUnits(companyId: string): Promise<OrgUnit[]>
 /** Replace-all of the units a user covers beyond their own (empty clears them). */
 export async function setExtraOrgUnits(companyId: string, userId: string, orgUnitIds: string[]): Promise<CompanyUser> {
   const { data } = await apiClient.put<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/extraOrgUnits`, { orgUnitIds })
+  return data
+}
+
+/** Place the user at the company itself (sees everything) or back at their own unit. */
+export async function setCompanyWide(companyId: string, userId: string, companyWide: boolean): Promise<CompanyUser> {
+  const { data } = await apiClient.put<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/companyWide`, { companyWide })
   return data
 }
 

@@ -15,6 +15,7 @@ import { useCompanies, useSetCompanyStatus } from '@/hooks/useCompanies'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { CompanyAvatar } from './CompanyAvatar'
+import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = { name: 'text', displayId: 'text', createdAt: 'date' }
 
@@ -39,8 +40,8 @@ export function CompanyListPage() {
     onEdit: (company) => navigate(`/admin/companies/${company.id}`),
     onActivate: (company) => changeStatus(company, true),
     onDeactivate: (company) => changeStatus(company, false),
-    editPermission: 'company.manage',
-    deletePermission: 'company.manage',
+    editPermission: P.PLATFORM_COMPANY_STATUS,
+    deletePermission: P.PLATFORM_COMPANY_STATUS,
     deactivateCopy: {
       label: t('action.deactivate', { ns: 'common' }),
       title: t('companies.deactivateTitle'),
@@ -86,7 +87,7 @@ export function CompanyListPage() {
         title={t('companies.title')}
         description={t('companies.subtitle')}
         createLabel={t('companies.add')}
-        createPermission="company.manage"
+        createPermission={P.PLATFORM_COMPANY_CREATE}
         onCreate={() => navigate('/admin/companies/new')}
       />
       <DataTable<Company>

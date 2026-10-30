@@ -18,6 +18,7 @@ import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useApproveDoctorChangeRequest, usePendingDoctorChangeRequests, useRejectDoctorChangeRequest } from '@/hooks/useDoctorRequests'
 import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
 import { usePendingArtworkApprovals, useReviewArtwork } from '@/hooks/useOrderDesigns'
 import { useApproveQuickGiftRequest, usePendingQuickGiftApprovals, useRejectQuickGiftRequest } from '@/hooks/useQuickGifts'
 import { formatDateTime } from '@/lib/datetime'
@@ -84,7 +85,8 @@ export function ApprovalQueuePage() {
   const pageTitle = useMenuLabel('approvals', 'Approvals')
   // A manager reviewing only their team's doctor requests has no Quick Gift approval right: skip
   // that queue (it would only answer 403) and open on the doctor changes.
-  const canApproveQuickGifts = useHasAccess(['campaign.approve', 'campaign.manage'])
+  const canApproveQuickGifts = useHasAccess(P.REQUEST_APPROVE)
+  const canReviewArtwork = useHasAccess([P.ORDER_ARTWORK_REVIEW, P.ORDER_ARTWORK_FINAL])
   const { data: quickGifts, isLoading } = usePendingQuickGiftApprovals(canApproveQuickGifts)
   const { data: doctorRequests, isLoading: doctorsLoading } = usePendingDoctorChangeRequests()
   const approveQuickGift = useApproveQuickGiftRequest()
@@ -92,7 +94,7 @@ export function ApprovalQueuePage() {
   const approveDoctor = useApproveDoctorChangeRequest()
   const rejectDoctor = useRejectDoctorChangeRequest()
   // MR-approved artwork whose current level waits on this user (or that they can cover with Final Artwork Approval).
-  const { data: artwork, isLoading: artworkLoading } = usePendingArtworkApprovals()
+  const { data: artwork, isLoading: artworkLoading } = usePendingArtworkApprovals(canReviewArtwork)
   const reviewArtwork = useReviewArtwork()
 
   const [tab, setTab] = useState(canApproveQuickGifts ? 'quickGift' : 'doctors')

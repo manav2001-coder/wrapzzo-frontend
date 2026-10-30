@@ -30,7 +30,7 @@ vi.mock('@/api/companyVendors', () => roster)
 const flags = vi.hoisted(() => ({ listCompanyFeatureFlags: vi.fn(), setCompanyFeatureFlag: vi.fn() }))
 vi.mock('@/api/companyFeatureFlags', () => flags)
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { companyId: null, companyName: null, permissions: ['company.manage'] }, isLoading: false }),
+  useCurrentUser: () => ({ data: { companyId: null, companyName: null, permissions: ['platform_company.view', 'platform_company.create', 'platform_company.edit', 'platform_company.status', 'platform_company.configure'] }, isLoading: false }),
   CURRENT_USER_QUERY_KEY: ['me'],
 }))
 

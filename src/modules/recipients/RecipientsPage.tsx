@@ -14,6 +14,8 @@ import { formatDateOnly } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { RecipientFormDialog } from './RecipientFormDialog'
 import { UpcomingBirthdaysWidget } from './UpcomingBirthdaysWidget'
+import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = {
   name: 'text',
@@ -28,6 +30,7 @@ export function RecipientsPage() {
   const { t } = useTranslation('recipients')
   const pageTitle = useMenuLabel('recipients', t('directory.title'))
   const { data: recipients, isLoading, error, refetch } = useRecipients()
+  const canEdit = useHasAccess(P.RECIPIENT_EDIT)
   // `undefined` = closed, `null` = adding, a recipient = editing it.
   const [editing, setEditing] = useState<Recipient | null | undefined>(undefined)
 
@@ -64,10 +67,11 @@ export function RecipientsPage() {
         enableColumnFilter: false,
         enableSorting: false,
         meta: { className: 'w-[56px]', pin: 'right' },
-        cell: ({ row }) => <IconButton icon={Pencil} label={t('directory.edit', { name: row.original.name })} onClick={() => setEditing(row.original)} />,
+        cell: ({ row }) =>
+          canEdit && <IconButton icon={Pencil} label={t('directory.edit', { name: row.original.name })} onClick={() => setEditing(row.original)} />,
       },
     ],
-    [t],
+    [t, canEdit],
   )
 
   return (
@@ -76,6 +80,7 @@ export function RecipientsPage() {
         title={pageTitle}
         description={t('directory.subtitle')}
         createLabel={t('directory.add')}
+        createPermission={P.RECIPIENT_CREATE}
         onCreate={() => setEditing(null)}
       />
       <UpcomingBirthdaysWidget />

@@ -14,7 +14,7 @@ const api = vi.hoisted(() => ({
 vi.mock('@/api/companies', () => api)
 
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { companyId: null, companyName: null, permissions: ['company.manage'] }, isLoading: false }),
+  useCurrentUser: () => ({ data: { companyId: null, companyName: null, permissions: ['platform_company.view', 'platform_company.create', 'platform_company.edit', 'platform_company.status', 'platform_company.configure'] }, isLoading: false }),
   CURRENT_USER_QUERY_KEY: ['me'],
 }))
 

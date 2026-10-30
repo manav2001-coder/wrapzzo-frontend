@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
 import { useAudienceOptions, useCampaign, useReplaceCampaignAudience, useSetCampaignStatus, useUpdateCampaign } from '@/hooks/useCampaigns'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useCampaignSubmissions, useMySubmissions } from '@/hooks/useSubmissions'
@@ -70,13 +71,15 @@ export function CampaignDetailPage() {
   const showError = useApiErrorToast()
   const { tab: requestedTab } = (location.state as { tab?: 'submissions' } | null) ?? {}
 
-  // Mirrors the backend: the audience needs campaign.manage; the submissions list takes manage or approve.
-  const canManage = useHasAccess('campaign.manage')
-  const canApprove = useHasAccess('campaign.approve')
-  const canReviewSubmissions = canManage || canApprove
+  // Mirrors the backend: each button takes its own action -- edit (gifts, audience), publish
+  // (activate/close), campaign_entry.submit (submit) -- and the entries list campaign_entry.view.
+  const canEdit = useHasAccess(P.CAMPAIGN_EDIT)
+  const canPublish = useHasAccess(P.CAMPAIGN_PUBLISH)
+  const canSubmit = useHasAccess(P.CAMPAIGN_ENTRY_SUBMIT)
+  const canReviewSubmissions = useHasAccess(P.CAMPAIGN_ENTRY_VIEW)
 
   const { data: campaign, isLoading } = useCampaign(campaignId)
-  const { data: audienceOptions } = useAudienceOptions(canManage)
+  const { data: audienceOptions } = useAudienceOptions(canEdit)
   const { data: activeGifts } = useActiveGifts()
   const submissionsQuery = useCampaignSubmissions(campaignId, canReviewSubmissions)
   const mySubmissionsQuery = useMySubmissions()
@@ -84,7 +87,7 @@ export function CampaignDetailPage() {
   const replaceAudience = useReplaceCampaignAudience(campaignId)
   const updateCampaign = useUpdateCampaign(campaignId)
 
-  const [tab, setTab] = useState(requestedTab === 'submissions' || !canManage ? 'submissions' : 'audience')
+  const [tab, setTab] = useState(requestedTab === 'submissions' || !canEdit ? 'submissions' : 'audience')
   const [orgUnitIdsDraft, setOrgUnitIdsDraft] = useState<Set<string> | null>(null)
   const [giftsDraft, setGiftsDraft] = useState<string[] | null>(null)
   const [search, setSearch] = useState('')
@@ -210,19 +213,19 @@ export function CampaignDetailPage() {
         extra={
           <div className="flex flex-wrap items-center gap-2">
             <CampaignStatusBadge status={campaign.status} />
-            {canManage && campaign.status === 'DRAFT' && (
+            {canPublish && campaign.status === 'DRAFT' && (
               <Button size="sm" className="h-9" onClick={() => setConfirming('activate')}>
                 <Play />
                 Activate
               </Button>
             )}
-            {canManage && campaign.status === 'ACTIVE' && (
+            {canPublish && campaign.status === 'ACTIVE' && (
               <Button size="sm" variant="outline" className="h-9" onClick={() => setConfirming('close')}>
                 <Lock />
                 Close campaign
               </Button>
             )}
-            {campaign.status === 'ACTIVE' && (
+            {canSubmit && campaign.status === 'ACTIVE' && (
               <Button size="sm" className="h-9" onClick={() => navigate(`/campaigns/${campaignId}/submit`)}>
                 <Send />
                 Submit a recipient
@@ -243,7 +246,7 @@ export function CampaignDetailPage() {
           icon={Gift}
           label="Gift(s)"
           action={
-            canManage &&
+            canEdit &&
             campaign.status === 'DRAFT' && (
               <IconButton icon={Pencil} label="Edit gifts" onClick={() => setGiftsDraft(campaign.gifts.map((g) => g.id))} />
             )
@@ -273,7 +276,7 @@ export function CampaignDetailPage() {
           value={tab}
           onValueChange={setTab}
           tabs={[
-            ...(canManage ? [{ value: 'audience', label: 'Audience', content: audiencePanel }] : []),
+            ...(canEdit ? [{ value: 'audience', label: 'Audience', content: audiencePanel }] : []),
             { value: 'submissions', label: 'Submissions', badge: submissionsQuery.data?.length || undefined, content: submissionsPanel },
           ]}
         />

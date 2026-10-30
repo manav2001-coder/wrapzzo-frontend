@@ -23,7 +23,7 @@ vi.mock('@/api/recipients', async (importOriginal) => ({
   listUpcomingBirthdays,
 }))
 const useCurrentUser = vi.hoisted(() =>
-  vi.fn(() => ({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['recipient.manage', 'quickgift.create'] }, isLoading: false })),
+  vi.fn(() => ({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['recipient.view', 'recipient.create', 'recipient.edit', 'recipient_list.manage', 'request.create', 'product.view'] }, isLoading: false })),
 )
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 vi.mock('@/api/doctorRequests', async (importOriginal) => ({

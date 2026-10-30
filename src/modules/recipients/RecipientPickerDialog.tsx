@@ -13,7 +13,7 @@ import { useRecipientSearch } from '@/hooks/useRecipients'
 /**
  * Search the shared directory and pick several recipients at once -- e.g. straight into a Quick
  * Gift form instead of retyping them. A live search, not a full-directory load, so it works for
- * anyone who can send a gift (quickgift.create), not just recipient.manage holders.
+ * anyone who can send a gift (request.create), not just recipient.view holders.
  */
 export function RecipientPickerDialog({
   visible,

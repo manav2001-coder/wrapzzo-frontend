@@ -29,6 +29,8 @@ export interface CurrentUser {
   managesTeam: boolean
   /** The company's own names for its navigation menus (menu id -> name). Absent or empty: the defaults. */
   menuLabels?: Record<string, string>
+  /** Sees the whole company (platform staff always do) -- the only people who may change anyone's placement. */
+  companyWide?: boolean
 }
 
 /** The logged-in user's effective access-control keys and their own company -- lets the UI gate things like "New campaign" without guessing from a role name. */

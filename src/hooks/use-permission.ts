@@ -1,4 +1,5 @@
 import { usePermissions } from '@/components/permission-provider'
+import type { PermissionRequirement } from '@/lib/permissions'
 
 /**
  * Permission checks for the UI. `useHasAccess` is the ONE predicate every gate asks
@@ -14,6 +15,6 @@ import { usePermissions } from '@/components/permission-provider'
  */
 export { usePermissions } from '@/components/permission-provider'
 
-export function useHasAccess(keys: string | readonly string[] | undefined, requireAll = false): boolean {
+export function useHasAccess(keys: PermissionRequirement | undefined, requireAll = false): boolean {
   return usePermissions().can(keys, { requireAll })
 }

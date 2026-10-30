@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowLeft, Download, Network, Plus, ShieldMinus, ShieldPlus, Trash2, Upload, Users } from 'lucide-react'
+import { ArrowLeft, Building, Download, Network, Plus, ShieldMinus, ShieldPlus, Trash2, Upload, Users } from 'lucide-react'
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -15,11 +15,13 @@ import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess, usePermissions } from '@/hooks/use-permission'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
-import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useRemoveCompanyAdmin } from '@/hooks/useUsers'
+import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useRemoveCompanyAdmin, useSetCompanyWide } from '@/hooks/useUsers'
 import { formatDate } from '@/lib/datetime'
 import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
 import { ExtraOrgUnitsDialog } from './ExtraOrgUnitsDialog'
 
 const COMPANY_ADMIN_ROLE_NAME = 'Company Admin'
@@ -36,7 +38,7 @@ const LIST_FIELDS: ListFieldMap = {
   createdAt: 'date',
 }
 
-type PendingAction = { kind: 'makeAdmin' | 'removeAdmin' | 'delete'; user: CompanyUser }
+type PendingAction = { kind: 'makeAdmin' | 'removeAdmin' | 'wholeCompany' | 'ownUnit' | 'delete'; user: CompanyUser }
 
 export function CompanyUsersPage() {
   const { t } = useTranslation('admin')
@@ -49,6 +51,14 @@ export function CompanyUsersPage() {
   const makeCompanyAdmin = useMakeCompanyAdmin(companyId)
   const removeCompanyAdmin = useRemoveCompanyAdmin(companyId)
   const deleteUser = useDeleteUser(companyId)
+  const setCompanyWide = useSetCompanyWide(companyId)
+  const canCreate = useHasAccess(P.USER_CREATE)
+  const canDelete = useHasAccess(P.USER_DELETE)
+  // Changing who sees what takes user.edit AND seeing the whole company yourself (the API refuses
+  // anyone else), so a regional manager can't widen their own reach.
+  const canEditUsers = useHasAccess(P.USER_EDIT)
+  const { companyWide } = usePermissions()
+  const canPlace = canEditUsers && companyWide
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<PendingAction | null>(null)
   const [coveringFor, setCoveringFor] = useState<CompanyUser | null>(null)
@@ -65,6 +75,9 @@ export function CompanyUsersPage() {
       } else if (kind === 'removeAdmin') {
         await removeCompanyAdmin.mutateAsync(user.id)
         toast.success(t('users.removedAdmin', { name: user.name }))
+      } else if (kind === 'wholeCompany' || kind === 'ownUnit') {
+        await setCompanyWide.mutateAsync({ userId: user.id, companyWide: kind === 'wholeCompany' })
+        toast.success(t(kind === 'wholeCompany' ? 'users.wholeCompany.set' : 'users.wholeCompany.cleared', { name: user.name }))
       } else {
         await deleteUser.mutateAsync(user.id)
         toast.success(t('users.deleted', { name: user.name }))
@@ -112,7 +125,7 @@ export function CompanyUsersPage() {
           const extra = row.original.extraOrgUnits
           return (
             <span className="flex items-center gap-1.5" title={extra.map((unit) => unit.name).join(', ') || undefined}>
-              {row.original.orgUnitName ?? '—'}
+              {row.original.companyWide ? <Badge variant="default">{t('users.wholeCompany.badge')}</Badge> : (row.original.orgUnitName ?? '—')}
               {extra.length > 0 && <Badge variant="secondary-soft">{t('users.extraUnits.more', { count: extra.length })}</Badge>}
             </span>
           )
@@ -158,13 +171,22 @@ export function CompanyUsersPage() {
           const isAdmin = user.roleName === COMPANY_ADMIN_ROLE_NAME
           return (
             <div className="flex items-center justify-end gap-0.5">
-              <IconButton icon={Network} label={t('users.extraUnits.action')} onClick={() => setCoveringFor(user)} />
-              {isAdmin ? (
-                <IconButton icon={ShieldMinus} label={t('users.removeAdmin')} onClick={() => setPending({ kind: 'removeAdmin', user })} />
-              ) : (
-                <IconButton icon={ShieldPlus} label={t('users.makeAdmin')} onClick={() => setPending({ kind: 'makeAdmin', user })} />
+              {canPlace && (
+                <>
+                  {!user.companyWide && <IconButton icon={Network} label={t('users.extraUnits.action')} onClick={() => setCoveringFor(user)} />}
+                  <IconButton
+                    icon={Building}
+                    label={user.companyWide ? t('users.wholeCompany.clear') : t('users.wholeCompany.make')}
+                    onClick={() => setPending({ kind: user.companyWide ? 'ownUnit' : 'wholeCompany', user })}
+                  />
+                  {isAdmin ? (
+                    <IconButton icon={ShieldMinus} label={t('users.removeAdmin')} onClick={() => setPending({ kind: 'removeAdmin', user })} />
+                  ) : (
+                    <IconButton icon={ShieldPlus} label={t('users.makeAdmin')} onClick={() => setPending({ kind: 'makeAdmin', user })} />
+                  )}
+                </>
               )}
-              {user.id !== currentUserId && (
+              {canDelete && user.id !== currentUserId && (
                 <IconButton icon={Trash2} label={t('users.delete')} tone="destructive" onClick={() => setPending({ kind: 'delete', user })} />
               )}
             </div>
@@ -172,12 +194,18 @@ export function CompanyUsersPage() {
         },
       },
     ],
-    [t, currentUserId],
+    [t, currentUserId, canPlace, canDelete],
   )
 
   const dialog = pending && {
     makeAdmin: { title: t('users.makeAdmin'), body: t('users.makeAdminBody', { name: pending.user.name, company }), destructive: false },
     removeAdmin: { title: t('users.removeAdmin'), body: t('users.removeAdminBody', { name: pending.user.name }), destructive: false },
+    wholeCompany: { title: t('users.wholeCompany.make'), body: t('users.wholeCompany.makeBody', { name: pending.user.name, company }), destructive: false },
+    ownUnit: {
+      title: t('users.wholeCompany.clear'),
+      body: t('users.wholeCompany.clearBody', { name: pending.user.name, unit: pending.user.orgUnitName ?? t('users.extraUnits.noOwnUnit') }),
+      destructive: false,
+    },
     delete: { title: t('users.delete'), body: t('users.deleteBody', { name: pending.user.name }), destructive: true },
   }[pending.kind]
 
@@ -193,14 +221,18 @@ export function CompanyUsersPage() {
               <Download />
               {t('users.downloadTemplate')}
             </Button>
-            <Button size="sm" variant="outline" className="h-9" onClick={() => fileInputRef.current?.click()}>
-              <Upload />
-              {t('users.import')}
-            </Button>
-            <Button size="sm" className="h-9" onClick={() => navigate(`${basePath}/add-users`)}>
-              <Plus />
-              {t('users.add')}
-            </Button>
+            {canCreate && (
+              <>
+                <Button size="sm" variant="outline" className="h-9" onClick={() => fileInputRef.current?.click()}>
+                  <Upload />
+                  {t('users.import')}
+                </Button>
+                <Button size="sm" className="h-9" onClick={() => navigate(`${basePath}/add-users`)}>
+                  <Plus />
+                  {t('users.add')}
+                </Button>
+              </>
+            )}
             <input ref={fileInputRef} type="file" accept=".xlsx" className="hidden" aria-hidden onChange={onFileChosen} />
           </div>
         }
@@ -234,7 +266,7 @@ export function CompanyUsersPage() {
           confirmLabel={dialog.title}
           cancelLabel={t('action.cancel', { ns: 'common' })}
           confirmVariant={dialog.destructive ? 'destructive' : 'default'}
-          loading={makeCompanyAdmin.isPending || removeCompanyAdmin.isPending || deleteUser.isPending}
+          loading={makeCompanyAdmin.isPending || removeCompanyAdmin.isPending || setCompanyWide.isPending || deleteUser.isPending}
           onConfirm={confirmPending}
         />
       )}

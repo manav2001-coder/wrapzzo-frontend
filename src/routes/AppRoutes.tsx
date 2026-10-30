@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/components/layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
+import { ProtectedRoute as Guard } from '@/components/access-control/protected-route'
+import { P } from '@/lib/permissions'
 import { AccessControlPage } from '@/modules/admin/access-control/AccessControlPage'
 import { CompanyFormPage } from '@/modules/admin/companies/CompanyFormPage'
 import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
@@ -58,48 +60,53 @@ export function AppRoutes() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/components" element={<ComponentsPage />} />
 
+          {/*
+            Every screen names the permission it needs (its VIEW action; create/import screens their
+            create action) -- the same key its sidebar entry filters on. A missing key renders the
+            Access Denied panel in place, keeping the URL. The API enforces the same keys.
+          */}
           {/* Admin module -- add a new module by adding its route tree here and its entry in components/sidebar-nav-config.tsx */}
           <Route path="/admin" element={<Navigate to="/admin/companies" replace />} />
-          <Route path="/admin/companies" element={<CompanyListPage />} />
-          <Route path="/admin/companies/new" element={<CompanyFormPage />} />
-          <Route path="/admin/companies/:id" element={<CompanyFormPage />} />
-          <Route path="/admin/companies/:id/users" element={<CompanyUsersPage />} />
-          <Route path="/admin/companies/:id/add-users" element={<CompanyUsersAddPage />} />
-          <Route path="/admin/companies/:id/import-users" element={<CompanyUsersImportPage />} />
+          <Route path="/admin/companies" element={<Guard permission={P.PLATFORM_COMPANY_VIEW}><CompanyListPage /></Guard>} />
+          <Route path="/admin/companies/new" element={<Guard permission={P.PLATFORM_COMPANY_CREATE}><CompanyFormPage /></Guard>} />
+          <Route path="/admin/companies/:id" element={<Guard permission={P.PLATFORM_COMPANY_VIEW}><CompanyFormPage /></Guard>} />
+          <Route path="/admin/companies/:id/users" element={<Guard permission={P.USER_VIEW}><CompanyUsersPage /></Guard>} />
+          <Route path="/admin/companies/:id/add-users" element={<Guard permission={P.USER_CREATE}><CompanyUsersAddPage /></Guard>} />
+          <Route path="/admin/companies/:id/import-users" element={<Guard permission={P.USER_CREATE}><CompanyUsersImportPage /></Guard>} />
 
-          <Route path="/admin/vendors" element={<VendorListPage />} />
-          <Route path="/admin/vendors/:id" element={<VendorListPage />} />
+          <Route path="/admin/vendors" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
+          <Route path="/admin/vendors/:id" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
 
-          <Route path="/admin/gifts" element={<GiftListPage />} />
-          <Route path="/admin/gifts/new" element={<GiftFormPage />} />
-          <Route path="/admin/gifts/:id" element={<GiftFormPage />} />
+          <Route path="/admin/gifts" element={<Guard permission={P.PLATFORM_PRODUCT_VIEW}><GiftListPage /></Guard>} />
+          <Route path="/admin/gifts/new" element={<Guard permission={P.PLATFORM_PRODUCT_CREATE}><GiftFormPage /></Guard>} />
+          <Route path="/admin/gifts/:id" element={<Guard permission={P.PLATFORM_PRODUCT_VIEW}><GiftFormPage /></Guard>} />
 
-          <Route path="/admin/orders" element={<OrdersPage />} />
+          <Route path="/admin/orders" element={<Guard permission={P.PLATFORM_ORDER_VIEW}><OrdersPage /></Guard>} />
 
-          <Route path="/admin/access-control" element={<AccessControlPage />} />
+          <Route path="/admin/access-control" element={<Guard permission={P.ACCESS_VIEW}><AccessControlPage /></Guard>} />
 
           {/* Campaigns module -- company-side, PRD Part 2.5. Peer of /admin, not nested under it. */}
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/quick-gift" element={<QuickGiftLandingPage />} />
-          <Route path="/quick-gift/new/:giftId" element={<QuickGiftFormPage />} />
-          <Route path="/gift-store" element={<GiftStorePage />} />
-          <Route path="/campaigns" element={<CampaignListPage />} />
-          <Route path="/campaigns/new" element={<CampaignWizardPage />} />
-          <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
-          <Route path="/campaigns/:id/submit" element={<SubmissionFormPage />} />
-          <Route path="/my-campaigns" element={<MyCampaignsPage />} />
-          <Route path="/recipients" element={<RecipientsPage />} />
-          <Route path="/my-doctors" element={<MyDoctorsPage />} />
-          <Route path="/approvals" element={<ApprovalQueuePage />} />
-          <Route path="/orders" element={<CampaignOrdersPage />} />
-          <Route path="/company/vendors" element={<CompanyVendorsPage />} />
-          <Route path="/warehouses" element={<WarehousesPage />} />
-          <Route path="/company/menu-names" element={<MenuNamesPage />} />
+          <Route path="/dashboard" element={<Guard permission={P.DASHBOARD_VIEW}><DashboardPage /></Guard>} />
+          <Route path="/quick-gift" element={<Guard permission={P.REQUEST_CREATE}><QuickGiftLandingPage /></Guard>} />
+          <Route path="/quick-gift/new/:giftId" element={<Guard permission={P.REQUEST_CREATE}><QuickGiftFormPage /></Guard>} />
+          <Route path="/gift-store" element={<Guard permission={P.PRODUCT_VIEW}><GiftStorePage /></Guard>} />
+          <Route path="/campaigns" element={<Guard permission={P.CAMPAIGN_VIEW}><CampaignListPage /></Guard>} />
+          <Route path="/campaigns/new" element={<Guard permission={P.CAMPAIGN_CREATE}><CampaignWizardPage /></Guard>} />
+          <Route path="/campaigns/:id" element={<Guard permissions={[P.CAMPAIGN_VIEW, P.CAMPAIGN_ENTRY_SUBMIT]}><CampaignDetailPage /></Guard>} />
+          <Route path="/campaigns/:id/submit" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><SubmissionFormPage /></Guard>} />
+          <Route path="/my-campaigns" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><MyCampaignsPage /></Guard>} />
+          <Route path="/recipients" element={<Guard permission={P.RECIPIENT_VIEW}><RecipientsPage /></Guard>} />
+          <Route path="/my-doctors" element={<Guard permissions={[P.RECIPIENT_LIST_MANAGE, P.REQUEST_CREATE]}><MyDoctorsPage /></Guard>} />
+          <Route path="/approvals" element={<Guard permissions={[P.REQUEST_APPROVE, P.RECIPIENT_LIST_APPROVE, P.ORDER_ARTWORK_FINAL]} forManagers><ApprovalQueuePage /></Guard>} />
+          <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CampaignOrdersPage /></Guard>} />
+          <Route path="/company/vendors" element={<Guard permission={P.COMPANY_VENDOR_VIEW}><CompanyVendorsPage /></Guard>} />
+          <Route path="/warehouses" element={<Guard permission={P.WAREHOUSE_VIEW}><WarehousesPage /></Guard>} />
+          <Route path="/company/menu-names" element={<Guard permission={P.MENU_EDIT}><MenuNamesPage /></Guard>} />
 
           {/* Company Admin's own roster -- same Users pages as the platform-admin route above, just resolving "my company" instead of an :id param. */}
-          <Route path="/company/users" element={<CompanyUsersPage />} />
-          <Route path="/company/add-users" element={<CompanyUsersAddPage />} />
-          <Route path="/company/import-users" element={<CompanyUsersImportPage />} />
+          <Route path="/company/users" element={<Guard permission={P.USER_VIEW}><CompanyUsersPage /></Guard>} />
+          <Route path="/company/add-users" element={<Guard permission={P.USER_CREATE}><CompanyUsersAddPage /></Guard>} />
+          <Route path="/company/import-users" element={<Guard permission={P.USER_CREATE}><CompanyUsersImportPage /></Guard>} />
         </Route>
       </Route>
 

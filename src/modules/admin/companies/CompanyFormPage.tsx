@@ -30,6 +30,7 @@ import { useAssignCompanyVendor, useCompanyVendors, useUnassignCompanyVendor } f
 import { useVendors } from '@/hooks/useVendors'
 import { formatDate } from '@/lib/datetime'
 import { CompanyAvatar } from './CompanyAvatar'
+import { P } from '@/lib/permissions'
 
 const LOGO_ACCEPT = { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'], 'image/svg+xml': ['.svg'] }
 
@@ -287,7 +288,7 @@ export function CompanyFormPage() {
             values={values}
             mode={isEdit ? 'edit' : 'create'}
             maxWidgetsPerRow={1}
-            submitPermission="company.manage"
+            submitPermission={isEdit ? P.PLATFORM_COMPANY_EDIT : P.PLATFORM_COMPANY_CREATE}
             submitLabel={isEdit ? t('companies.detail.save') : t('companies.detail.create')}
             onSubmit={onSubmit}
             hideCardWrapper

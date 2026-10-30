@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCampaign } from '@/hooks/useCampaigns'
 import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
 import { useCreateSubmission } from '@/hooks/useSubmissions'
 
 type FieldValue = string | number | boolean | string[] | File | undefined
@@ -39,8 +40,8 @@ export function SubmissionFormPage() {
   const navigate = useNavigate()
   // A Member can't edit/manage a campaign, so the near-empty read-only Campaign Detail page
   // is a dead end for them -- send them back to their own board instead.
-  const canManageCampaigns = useHasAccess('campaign.manage')
-  const backTarget = canManageCampaigns ? `/campaigns/${campaignId}` : '/my-campaigns'
+  const canViewCampaigns = useHasAccess(P.CAMPAIGN_VIEW)
+  const backTarget = canViewCampaigns ? `/campaigns/${campaignId}` : '/my-campaigns'
 
   const { data: campaign, isLoading } = useCampaign(campaignId)
   const createSubmission = useCreateSubmission(campaignId)

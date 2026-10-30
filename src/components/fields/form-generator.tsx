@@ -32,6 +32,7 @@ import {
   type ValidationSummaryRow,
 } from "@/components/fields/form-validation-summary";
 import { Stepper } from "@/components/fields/stepper";
+import type { PermissionRequirement } from "@/lib/permissions";
 
 export interface FieldConfig {
   id: string;
@@ -142,7 +143,7 @@ export interface FormGeneratorProps {
    * Permission required to submit. Without it the form renders READ-ONLY rather than
    * showing a button that will 403 — the API enforces the same key regardless.
    */
-  submitPermission?: string | string[];
+  submitPermission?: PermissionRequirement;
   /**
    * Receives a handle for submitting from outside the form — a drawer footer, a dialog's
    * action bar. Pair with `hideSubmitButton`; `hideSubmitButton` alone gives you a form

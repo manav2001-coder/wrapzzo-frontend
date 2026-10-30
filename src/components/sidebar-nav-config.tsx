@@ -107,6 +107,7 @@ export const ADMIN_NAV: NavSource[] = [
     children: [
       { id: 'companies', titleKey: 'nav.companies', type: 'item', url: '/admin/companies', icon: Building2, permission: P.PLATFORM_COMPANY_VIEW },
       { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: P.PLATFORM_VENDOR_VIEW },
+      { id: 'vendor-mapping', titleKey: 'nav.vendorMapping', type: 'item', url: '/admin/vendor-mapping', icon: Truck, permission: P.PLATFORM_COMPANY_CONFIGURE },
       { id: 'gift-catalogue', titleKey: 'nav.giftCatalogue', type: 'item', url: '/admin/gifts', icon: Gift, permission: P.PLATFORM_PRODUCT_VIEW },
       { id: 'platform-orders', titleKey: 'nav.orders', type: 'item', url: '/admin/orders', icon: ShoppingBag, permission: P.PLATFORM_ORDER_VIEW },
     ],

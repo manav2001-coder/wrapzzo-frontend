@@ -20,7 +20,8 @@ export async function assignCompanyVendor(companyId: string, vendorId: string, o
   return data
 }
 
-export async function unassignCompanyVendor(companyId: string, vendorId: string): Promise<CompanyVendor[]> {
-  const { data } = await apiClient.delete<CompanyVendor[]>(`/api/platform/companies/${companyId}/vendors/${vendorId}`)
+/** Removes one mapping (the whole company, or one org unit) -- the vendor keeps its others. */
+export async function unassignCompanyVendor(companyId: string, mappingId: string): Promise<CompanyVendor[]> {
+  const { data } = await apiClient.delete<CompanyVendor[]>(`/api/platform/companies/${companyId}/vendors/mappings/${mappingId}`)
   return data
 }

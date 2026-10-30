@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import { uploadCompanyLogo } from '@/api/companies'
 import type { CompanyFeatureKey } from '@/api/companyFeatureFlags'
 import { AppDialog } from '@/components/app-dialog'
-import { CheckboxField } from '@/components/fields/checkbox-field'
 import { FormGenerator } from '@/components/fields/form-generator'
 import { SwitchField } from '@/components/fields/switch-field'
 import { ToggleGroupField } from '@/components/fields/toggle-group-field'
@@ -26,8 +25,6 @@ import {
   useSetArtworkApprovalLevels,
   useSetCompanyFeatureFlag,
 } from '@/hooks/useCompanyFeatureFlags'
-import { useAssignCompanyVendor, useCompanyVendors, useUnassignCompanyVendor } from '@/hooks/useCompanyVendors'
-import { useVendors } from '@/hooks/useVendors'
 import { formatDate } from '@/lib/datetime'
 import { CompanyAvatar } from './CompanyAvatar'
 import { P } from '@/lib/permissions'
@@ -101,57 +98,6 @@ function FeatureFlagsCard({ companyId }: { companyId: string }) {
           </div>
         ))}
       </div>
-    </SectionCard>
-  )
-}
-
-/** Which vendors this company sees in its Gift Store (company_vendors). */
-function VendorRosterCard({ companyId }: { companyId: string }) {
-  const { t } = useTranslation('admin')
-  const { data: allVendors, isLoading: loadingVendors } = useVendors()
-  const { data: assigned, isLoading: loadingAssigned } = useCompanyVendors(companyId)
-  const assignVendor = useAssignCompanyVendor(companyId)
-  const unassignVendor = useUnassignCompanyVendor(companyId)
-  const showError = useApiErrorToast()
-  const assignedIds = useMemo(() => new Set((assigned ?? []).map((v) => v.vendorId)), [assigned])
-  const busy = assignVendor.isPending || unassignVendor.isPending
-
-  async function toggle(vendorId: string, checked: boolean) {
-    try {
-      await (checked ? assignVendor.mutateAsync(vendorId) : unassignVendor.mutateAsync(vendorId))
-    } catch (error) {
-      showError(error)
-    }
-  }
-
-  return (
-    <SectionCard
-      title={t('companies.detail.vendors')}
-      description={t('companies.detail.vendorsHelp')}
-      loading={loadingVendors || loadingAssigned}
-    >
-      {!allVendors?.length ? (
-        <p className="text-sm text-muted-foreground">{t('companies.detail.noVendors')}</p>
-      ) : (
-        <div className="space-y-2">
-          {allVendors.map((vendor) => (
-            <CheckboxField
-              key={vendor.id}
-              label={
-                <span className="flex items-center gap-2">
-                  {vendor.name}
-                  {vendor.status === 'SUSPENDED' && (
-                    <span className="text-xs text-muted-foreground">({t('companies.detail.suspended')})</span>
-                  )}
-                </span>
-              }
-              checked={assignedIds.has(vendor.id)}
-              disabled={busy}
-              onCheckedChange={(checked) => void toggle(vendor.id, checked)}
-            />
-          ))}
-        </div>
-      )}
     </SectionCard>
   )
 }
@@ -319,7 +265,6 @@ export function CompanyFormPage() {
             </div>
           </SectionCard>
 
-          {company && <VendorRosterCard companyId={company.id} />}
           {company && <FeatureFlagsCard companyId={company.id} />}
         </div>
       </div>

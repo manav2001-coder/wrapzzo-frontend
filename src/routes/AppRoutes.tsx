@@ -23,6 +23,7 @@ import { CompanyUsersPage } from '@/modules/admin/companies/CompanyUsersPage'
 import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
 import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
 import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
+import { VendorMappingPage } from '@/modules/admin/vendors/VendorMappingPage'
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
 import { ApprovalQueuePage } from '@/modules/campaigns/ApprovalQueuePage'
 import { CampaignDetailPage } from '@/modules/campaigns/CampaignDetailPage'
@@ -83,6 +84,7 @@ export function AppRoutes() {
 
           <Route path="/admin/vendors" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
           <Route path="/admin/vendors/:id" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
+          <Route path="/admin/vendor-mapping" element={<Guard permission={P.PLATFORM_COMPANY_CONFIGURE}><VendorMappingPage /></Guard>} />
 
           <Route path="/admin/gifts" element={<Guard permission={P.PLATFORM_PRODUCT_VIEW}><GiftListPage /></Guard>} />
           <Route path="/admin/gifts/new" element={<Guard permission={P.PLATFORM_PRODUCT_CREATE}><GiftFormPage /></Guard>} />

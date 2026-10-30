@@ -42,7 +42,8 @@
     "templatesToTemplate": "Templates to Template",
     "roleToTemplate": "Role to Template",
     "userToTemplate": "User to Template",
-    "masters": "Masters"
+    "masters": "Masters",
+    "vendorMapping": "Vendor Mapping"
   },
   "action": {
     "activate": "Activate",

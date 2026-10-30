@@ -35,10 +35,6 @@
       "logoUploaded": "Logo updated",
       "logoFailedAfterCreate": "Company created, but the logo failed to upload. Add it from the company page.",
       "logoDrop": "Drop a logo here, or click to choose one",
-      "vendors": "Vendors",
-      "vendorsHelp": "Only gifts from checked vendors appear in this company's Gift Store.",
-      "noVendors": "No vendors onboarded yet.",
-      "suspended": "Suspended",
       "features": "Feature flags",
       "featuresHelp": "Optional workflow changes, off by default. Nothing changes for the company until one is turned on.",
       "featureEnabled": "Feature enabled",
@@ -417,5 +413,28 @@
     "assignTitle": "Templates for {{name}}",
     "pickTemplates": "Templates to give",
     "empty": "No users yet."
+  },
+  "vendorMapping": {
+    "title": "Vendor Mapping",
+    "subtitle": "Which vendors serve a company, and where within it: the whole company or particular org units (each covers everything beneath it). A vendor can serve many companies and many org units of one. This scopes the company's Gift Store.",
+    "pickCompany": "Choose a company to see its vendors.",
+    "empty": "No vendors serve this company yet.",
+    "assign": "Assign vendors",
+    "assignTitle": "Assign vendors to this company",
+    "assignHint": "Tick the vendors, and where they serve. One mapping is made for each vendor and place.",
+    "vendors": "Vendors",
+    "serves": "Serves",
+    "wholeCompany": "Whole company",
+    "assigned_one": "Added {{count}} mapping.",
+    "assigned_other": "Added {{count}} mappings.",
+    "removed": "Removed a mapping for {{name}}.",
+    "remove": "Remove {{name}} ({{place}})",
+    "active": "Active",
+    "suspended": "Suspended",
+    "column": {
+      "vendor": "Vendor",
+      "serves": "Serves",
+      "status": "Status"
+    }
   }
 }

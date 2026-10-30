@@ -15,18 +15,6 @@ const companies = vi.hoisted(() => ({
   listCompanies: vi.fn(),
 }))
 vi.mock('@/api/companies', () => companies)
-vi.mock('@/api/vendors', () => ({
-  listVendors: vi.fn().mockResolvedValue([
-    { id: 'v1', name: 'PrintHouse Mumbai', status: 'ACTIVE' },
-    { id: 'v2', name: 'GiftCraft Pune', status: 'SUSPENDED' },
-  ]),
-}))
-const roster = vi.hoisted(() => ({
-  listCompanyVendors: vi.fn(),
-  assignCompanyVendor: vi.fn(),
-  unassignCompanyVendor: vi.fn(),
-}))
-vi.mock('@/api/companyVendors', () => roster)
 const flags = vi.hoisted(() => ({ listCompanyFeatureFlags: vi.fn(), setCompanyFeatureFlag: vi.fn() }))
 vi.mock('@/api/companyFeatureFlags', () => flags)
 vi.mock('@/hooks/use-current-user', () => ({
@@ -50,7 +38,6 @@ describe('CompanyFormPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     companies.getCompany.mockResolvedValue(ACME)
-    roster.listCompanyVendors.mockResolvedValue([{ mappingId: 'm1', vendorId: 'v1', vendorName: 'PrintHouse Mumbai' }])
     flags.listCompanyFeatureFlags.mockResolvedValue([
       { flagKey: 'WAREHOUSE_LOGISTICS', displayName: 'Warehouse Logistics', description: 'Two legs', enabled: false },
     ])
@@ -81,14 +68,10 @@ describe('CompanyFormPage', () => {
     expect(companies.updateCompany).toHaveBeenCalledWith('c1', 'Acme Pharma Ltd')
   })
 
-  it("ticks the vendors on the company's roster and adds one when checked", async () => {
-    roster.assignCompanyVendor.mockResolvedValue([])
+  it('leaves vendors to the vendor mapping screen: no roster on the company page', async () => {
     renderAt('/admin/companies/c1')
-    expect(await screen.findByRole('checkbox', { name: /PrintHouse Mumbai/ })).toBeChecked()
-    const giftCraft = screen.getByRole('checkbox', { name: /GiftCraft Pune/ })
-    expect(giftCraft).not.toBeChecked()
-    await userEvent.click(giftCraft)
-    expect(roster.assignCompanyVendor).toHaveBeenCalledWith('c1', 'v2')
+    await screen.findByRole('switch', { name: /Warehouse Logistics/ })
+    expect(screen.queryByRole('checkbox', { name: /PrintHouse/ })).not.toBeInTheDocument()
   })
 
   it('turns a feature flag on', async () => {

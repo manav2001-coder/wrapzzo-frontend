@@ -14,7 +14,7 @@ export function useCompanyVendors(companyId: string | undefined) {
 export function useAssignCompanyVendor(companyId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (vendorId: string) => assignCompanyVendor(companyId, vendorId),
+    mutationFn: ({ vendorId, orgUnitId }: { vendorId: string; orgUnitId?: string | null }) => assignCompanyVendor(companyId, vendorId, orgUnitId),
     onSuccess: (data) => queryClient.setQueryData(companyVendorsKey(companyId), data),
   })
 }
@@ -22,7 +22,7 @@ export function useAssignCompanyVendor(companyId: string) {
 export function useUnassignCompanyVendor(companyId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (vendorId: string) => unassignCompanyVendor(companyId, vendorId),
+    mutationFn: (mappingId: string) => unassignCompanyVendor(companyId, mappingId),
     onSuccess: (data) => queryClient.setQueryData(companyVendorsKey(companyId), data),
   })
 }

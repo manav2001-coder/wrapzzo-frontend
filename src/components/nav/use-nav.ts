@@ -6,10 +6,11 @@ import { usePermissions } from '@/hooks/use-permission'
 import { useShell } from '@/components/shell-context'
 import { ADMIN_NAV, COMPANY_NAV, VENDOR_NAV, type NavSource } from '@/components/sidebar-nav-config'
 import type { NavItemType } from '@/components/nav/nav-types'
+import type { PermissionRequirement } from '@/lib/permissions'
 
 interface FilterContext {
   t: (key: string) => string
-  can: (permission?: string | string[]) => boolean
+  can: (permission?: PermissionRequirement) => boolean
   managesTeam?: boolean
   /** The company's own menu names, which replace the translated default. */
   labels?: Record<string, string>

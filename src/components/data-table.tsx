@@ -71,6 +71,7 @@ import { SortableHeader } from "@/components/data-table/sortable-header";
 import { TableFilterPanel } from "@/components/data-table/table-filter-panel";
 import { TablePagination, TablePaginationSkeleton } from "@/components/data-table/table-pagination";
 import { TableToolbar } from "@/components/data-table/table-toolbar";
+import type { PermissionRequirement } from "@/lib/permissions";
 import type {
   BulkUploadConfig,
   DownloadAllConfig,
@@ -201,7 +202,7 @@ interface DataTableProps<TData> {
   getRowCanExpand?: (row: TData) => boolean;
   renderSubRow?: (row: TData, isExpanded: boolean) => React.ReactNode;
   rowGroupConfig?: RowGroupConfig<TData>;
-  permission?: string | string[];
+  permission?: PermissionRequirement;
   hideActionsIfNoPermission?: boolean;
   configNamespace?: string;
 }

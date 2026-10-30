@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCampaigns } from '@/hooks/useCampaigns'
 import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
 import { humanize } from '@/lib/format'
 import { CampaignStatusBadge } from './campaign-status'
 
@@ -99,7 +100,7 @@ function CampaignCard({ campaign, onOpen }: { campaign: Campaign; onOpen: () => 
 export function CampaignListPage() {
   const { data: campaigns, isLoading } = useCampaigns()
   const navigate = useNavigate()
-  const canManage = useHasAccess('campaign.manage')
+  const canCreate = useHasAccess(P.CAMPAIGN_CREATE)
   const [status, setStatus] = useState<CampaignStatus | 'ALL'>('ALL')
 
   const list = useMemo(() => campaigns ?? [], [campaigns])
@@ -120,7 +121,7 @@ export function CampaignListPage() {
         title="Campaigns"
         description="Coordinate team-driven gifting: create a campaign, choose who submits recipients, and approved recipients become orders."
         createLabel="New campaign"
-        createPermission="campaign.manage"
+        createPermission={P.CAMPAIGN_CREATE}
         onCreate={() => navigate('/campaigns/new')}
       />
 
@@ -129,11 +130,11 @@ export function CampaignListPage() {
           icon={Megaphone}
           title="No campaigns yet"
           description={
-            canManage
+            canCreate
               ? 'Start your first campaign: pick a gift, choose your team, and approved submissions flow straight into orders.'
               : "You'll see campaigns here once your team starts one you're part of."
           }
-          action={canManage ? { label: 'New campaign', onClick: () => navigate('/campaigns/new') } : undefined}
+          action={canCreate ? { label: 'New campaign', onClick: () => navigate('/campaigns/new') } : undefined}
         />
       ) : (
         <>

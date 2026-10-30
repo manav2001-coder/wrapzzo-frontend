@@ -24,6 +24,7 @@ import {
   downloadEmployeeTemplate,
   getUnmappedRequiredFields,
   getWorkbookHeaders,
+  isCompanyWidePlacement,
   parseEmployeeWorkbook,
   type ColumnMapping,
 } from '@/lib/employeeTemplate'
@@ -116,7 +117,11 @@ export function CompanyUsersImportPage() {
       { accessorKey: 'designation', header: t('users.column.designation') },
       { accessorKey: 'employeeCode', header: t('users.column.employeeCode') },
       { accessorFn: (row) => row.reportsToEmail ?? '', id: 'reportsToEmail', header: t('users.addPage.reportsToEmail') },
-      { accessorFn: (row) => row.orgUnitPath.join(' → '), id: 'orgPath', header: t('users.importPage.orgPath') },
+      {
+        accessorFn: (row) => (isCompanyWidePlacement(row.orgUnitPath) ? t('users.wholeCompany.badge') : row.orgUnitPath.join(' → ')),
+        id: 'orgPath',
+        header: t('users.importPage.orgPath'),
+      },
     ],
     [t],
   )

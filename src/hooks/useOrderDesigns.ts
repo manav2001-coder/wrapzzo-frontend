@@ -38,8 +38,8 @@ export function useRejectOrderDesign(orderId: string) {
 }
 
 /** A manager's queue of MR-approved artwork waiting on their level of approval (empty for anyone else). */
-export function usePendingArtworkApprovals() {
-  return useQuery({ queryKey: ['artwork-approvals'], queryFn: listPendingArtworkApprovals, refetchInterval: LIVE_REFRESH_MS })
+export function usePendingArtworkApprovals(enabled = true) {
+  return useQuery({ queryKey: ['artwork-approvals'], queryFn: listPendingArtworkApprovals, refetchInterval: LIVE_REFRESH_MS, enabled })
 }
 
 /** Approval at the caller's level, or send-back, from the Approvals queue, where each row names its own order. */

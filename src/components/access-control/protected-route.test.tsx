@@ -12,11 +12,11 @@ describe("ProtectedRoute", () => {
 
   it("renders the screen for a caller who holds the permission", () => {
     useCurrentUser.mockReturnValue({
-      data: { roles: [], permissions: ["audit.view"] },
+      data: { roles: [], permissions: ["access.view"] },
       isLoading: false,
     });
     renderWithProviders(
-      <ProtectedRoute permission="audit.view">
+      <ProtectedRoute permission="access.view">
         <h1>Audit log</h1>
       </ProtectedRoute>,
     );
@@ -28,7 +28,7 @@ describe("ProtectedRoute", () => {
     // with no explanation of what happened.
     useCurrentUser.mockReturnValue({ data: { roles: [], permissions: [] }, isLoading: false });
     renderWithProviders(
-      <ProtectedRoute permission="audit.view">
+      <ProtectedRoute permission="access.view">
         <h1>Audit log</h1>
       </ProtectedRoute>,
     );
@@ -44,7 +44,7 @@ describe("ProtectedRoute", () => {
     // Flashing Access Denied at someone who does have access is worse than a skeleton.
     useCurrentUser.mockReturnValue({ data: undefined, isLoading: true });
     renderWithProviders(
-      <ProtectedRoute permission="audit.view">
+      <ProtectedRoute permission="access.view">
         <h1>Audit log</h1>
       </ProtectedRoute>,
     );

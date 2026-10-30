@@ -6,6 +6,7 @@ import {
   listCompanyUsers,
   makeCompanyAdmin,
   removeCompanyAdmin,
+  setCompanyWide,
   setExtraOrgUnits,
   type BulkImportUserRow,
 } from '@/api/users'
@@ -63,6 +64,14 @@ export function useSetExtraOrgUnits(companyId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ userId, orgUnitIds }: { userId: string; orgUnitIds: string[] }) => setExtraOrgUnits(companyId, userId, orgUnitIds),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companyUsers', companyId] }),
+  })
+}
+
+export function useSetCompanyWide(companyId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, companyWide }: { userId: string; companyWide: boolean }) => setCompanyWide(companyId, userId, companyWide),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companyUsers', companyId] }),
   })
 }

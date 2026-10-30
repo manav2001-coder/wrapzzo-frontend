@@ -15,6 +15,7 @@ import { useGifts, useSetGiftStatus } from '@/hooks/useGifts'
 import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { GiftThumbnail } from './GiftThumbnail'
+import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = {
   name: 'text',
@@ -47,8 +48,8 @@ export function GiftListPage() {
     onEdit: (gift) => navigate(`/admin/gifts/${gift.id}`),
     onActivate: (gift) => changeStatus(gift, true),
     onDeactivate: (gift) => changeStatus(gift, false),
-    editPermission: 'gift.manage',
-    deletePermission: 'gift.manage',
+    editPermission: P.PLATFORM_PRODUCT_STATUS,
+    deletePermission: P.PLATFORM_PRODUCT_STATUS,
     deactivateCopy: { label: t('gifts.markOut'), title: t('gifts.outTitle'), body: t('gifts.outBody') },
   })
 
@@ -121,7 +122,7 @@ export function GiftListPage() {
         title={t('gifts.title')}
         description={t('gifts.subtitle')}
         createLabel={t('gifts.add')}
-        createPermission="gift.manage"
+        createPermission={P.PLATFORM_PRODUCT_CREATE}
         onCreate={() => navigate('/admin/gifts/new')}
       />
       <DataTable<Gift>

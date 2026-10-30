@@ -9,6 +9,7 @@ import { AppDialog } from "@/components/app-dialog";
 import { Button } from "@/components/ui/button";
 import { Dot } from "@/components/dot";
 import { IconButton } from "@/components/icon-button";
+import type { PermissionRequirement } from "@/lib/permissions";
 
 /**
  * Page heading + a primary action, shared by every list screen (MobixFL's `MasterPageHeader`).
@@ -30,7 +31,7 @@ export function MasterPageHeader({
   /** Beside the title, e.g. a company logo. */
   lead?: React.ReactNode;
   createLabel?: string;
-  createPermission?: string | string[];
+  createPermission?: PermissionRequirement;
   onCreate?: () => void;
   extra?: React.ReactNode;
 }) {
@@ -103,8 +104,8 @@ export function useMasterColumns<T>({
   onDeactivate?: (row: T) => void | Promise<void>;
   /** Shown on INACTIVE rows only, gated on `editPermission`. */
   onActivate?: (row: T) => void | Promise<void>;
-  editPermission?: string | string[];
-  deletePermission?: string | string[];
+  editPermission?: PermissionRequirement;
+  deletePermission?: PermissionRequirement;
   /** Extra row actions, rendered before edit and deactivate. The caller owns their gating. */
   extraActions?: (row: T) => React.ReactNode;
   /** Wording for an entity whose "deactivate" has its own name (suspending a vendor). */

@@ -14,12 +14,12 @@ function signedInWith(permissions: string[], roles: string[] = []) {
 describe("PermissionGate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    signedInWith(["masters.users.view"]);
+    signedInWith(["user.view"]);
   });
 
   it("renders children for a permission the caller holds", () => {
     renderWithProviders(
-      <PermissionGate permission="masters.users.view">
+      <PermissionGate permission="user.view">
         <span>gated</span>
       </PermissionGate>,
     );
@@ -28,7 +28,7 @@ describe("PermissionGate", () => {
 
   it("hides children - and shows the fallback - when they do not", () => {
     renderWithProviders(
-      <PermissionGate permission="masters.users.delete" fallback={<span>denied</span>}>
+      <PermissionGate permission="user.delete" fallback={<span>denied</span>}>
         <span>gated</span>
       </PermissionGate>,
     );
@@ -60,14 +60,14 @@ describe("PermissionGate", () => {
 
   it("treats a permissions array as ANY-of, and requireAll as ALL-of", () => {
     const any = renderWithProviders(
-      <PermissionGate permissions={["masters.users.view", "masters.users.delete"]}>
+      <PermissionGate permissions={["user.view", "user.delete"]}>
         <span>any</span>
       </PermissionGate>,
     );
     expect(any.getByText("any")).toBeInTheDocument();
 
     renderWithProviders(
-      <PermissionGate permissions={["masters.users.view", "masters.users.delete"]} requireAll>
+      <PermissionGate permissions={["user.view", "user.delete"]} requireAll>
         <span>all</span>
       </PermissionGate>,
     );
@@ -77,7 +77,7 @@ describe("PermissionGate", () => {
   it("gives platform staff no bypass: they pass only on keys the API granted them", () => {
     useCurrentUser.mockReturnValue({ data: { companyId: null, permissions: [] }, isLoading: false });
     renderWithProviders(
-      <PermissionGate permission="company.manage">
+      <PermissionGate permission="platform_company.view">
         <span>staff</span>
       </PermissionGate>,
     );

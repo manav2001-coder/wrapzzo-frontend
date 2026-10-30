@@ -7,7 +7,7 @@ import { parseDateOnly } from '@/lib/format'
 
 /**
  * Read-only Quick Gift detail, opened from the Dashboard's activity feed -- the same
- * `GET /api/quick-gifts/{id}` any Company Admin or Member with quickgift.create can already
+ * `GET /api/quick-gifts/{id}` any Company Admin or Member with request.create can already
  * call for any request in their company (see QuickGiftService.getEntity), so this needs no
  * extra permission check beyond what the feed itself is already gated by. No "request photo
  * link" action here -- that endpoint is requester-only server-side, and this dialog may be

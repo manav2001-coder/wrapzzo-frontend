@@ -6,12 +6,15 @@ import { EmptyState } from "@/components/empty-state";
 import { useShell } from "@/components/shell-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHasAccess, usePermissions } from "@/hooks/use-permission";
+import type { PermissionKey } from "@/lib/permissions";
 
 export interface ProtectedRouteProps {
   children: ReactNode;
-  permission?: string;
-  permissions?: readonly string[];
+  permission?: PermissionKey;
+  permissions?: readonly PermissionKey[];
   requireAll?: boolean;
+  /** Also let in anyone with direct reports, whatever their keys -- a manager's own approvals (mirrors the nav's `forManagers`). */
+  forManagers?: boolean;
   /** Replaces the default Access Denied panel. */
   fallback?: ReactNode;
 }
@@ -34,10 +37,11 @@ export function ProtectedRoute({
   permission,
   permissions,
   requireAll = false,
+  forManagers = false,
   fallback,
 }: ProtectedRouteProps) {
   const { t } = useTranslation();
-  const { loading } = usePermissions();
+  const { loading, managesTeam } = usePermissions();
   const { homePath } = useShell();
   const required = permission ?? permissions;
   const hasAccess = useHasAccess(required, requireAll);
@@ -51,7 +55,7 @@ export function ProtectedRoute({
     );
   }
 
-  if (hasAccess) return <>{children}</>;
+  if (hasAccess || (forManagers && managesTeam)) return <>{children}</>;
   if (fallback) return <>{fallback}</>;
 
   return (

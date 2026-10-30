@@ -8,7 +8,7 @@ const saveMenuLabels = vi.hoisted(() => vi.fn())
 vi.mock('@/api/menuLabels', () => ({ saveMenuLabels, getMenuLabels: async () => ({}) }))
 vi.mock('@/hooks/use-current-user', () => ({
   useCurrentUser: () => ({
-    data: { companyId: 'c1', companyName: 'Alembic', permissions: ['menu.manage'], managesTeam: false, menuLabels: { 'gift-store': 'Prescription Pads' } },
+    data: { companyId: 'c1', companyName: 'Alembic', permissions: ['menu.edit'], managesTeam: false, menuLabels: { 'gift-store': 'Prescription Pads' } },
     isLoading: false,
   }),
   CURRENT_USER_QUERY_KEY: ['me'],

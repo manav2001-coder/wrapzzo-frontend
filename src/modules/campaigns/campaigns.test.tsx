@@ -72,7 +72,7 @@ beforeEach(() => {
   api.listActiveGifts.mockResolvedValue([])
   api.listPendingDoctorChangeRequests.mockResolvedValue([])
   api.listPendingArtworkApprovals.mockResolvedValue([])
-  signedInWith(['campaign.manage', 'campaign.approve', 'campaign.submit'])
+  signedInWith(['campaign.view', 'campaign.create', 'campaign.edit', 'campaign.publish', 'campaign_entry.view', 'request.approve', 'order.view', 'product.view', 'campaign_entry.submit'])
 })
 
 describe('CampaignListPage', () => {
@@ -109,7 +109,7 @@ describe('CampaignDetailPage', () => {
   })
 
   it('shows a member only their own submissions, with no audience or lifecycle controls', async () => {
-    signedInWith(['campaign.submit'])
+    signedInWith(['campaign_entry.submit', 'order.view'])
     api.getCampaign.mockResolvedValue(campaign({ status: 'ACTIVE' }))
     renderDetail()
     expect(await screen.findByText(/You're in the audience for this campaign/)).toBeInTheDocument()

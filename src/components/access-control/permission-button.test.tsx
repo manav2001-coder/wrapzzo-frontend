@@ -15,14 +15,14 @@ function signedInWith(permissions: string[], roles: string[] = []) {
 describe("PermissionButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    signedInWith(["masters.users.create"]);
+    signedInWith(["user.create"]);
   });
 
   it("is enabled and clickable with the permission", async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     renderWithProviders(
-      <PermissionButton permission="masters.users.create" onClick={onClick}>
+      <PermissionButton permission="user.create" onClick={onClick}>
         Add user
       </PermissionButton>,
     );
@@ -35,14 +35,14 @@ describe("PermissionButton", () => {
 
   it("DISABLES rather than hides by default - a row action leaving a gap is worse", () => {
     renderWithProviders(
-      <PermissionButton permission="masters.users.delete">Delete</PermissionButton>,
+      <PermissionButton permission="user.delete">Delete</PermissionButton>,
     );
     expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
   });
 
   it("hides entirely with hideIfNoPermission - for an action nobody should know exists", () => {
     renderWithProviders(
-      <PermissionButton permission="masters.users.delete" hideIfNoPermission>
+      <PermissionButton permission="user.delete" hideIfNoPermission>
         Delete
       </PermissionButton>,
     );
@@ -52,7 +52,7 @@ describe("PermissionButton", () => {
   it("explains the disabled state on hover", async () => {
     const user = userEvent.setup();
     renderWithProviders(
-      <PermissionButton permission="masters.users.delete">Delete</PermissionButton>,
+      <PermissionButton permission="user.delete">Delete</PermissionButton>,
     );
     // A disabled button emits no pointer events, so the trigger wraps it in a span —
     // without that wrapper the tooltip explaining WHY would never appear.
@@ -67,7 +67,7 @@ describe("PermissionButton", () => {
 
   it("stays disabled when the caller passes disabled, even holding the permission", () => {
     renderWithProviders(
-      <PermissionButton permission="masters.users.create" disabled>
+      <PermissionButton permission="user.create" disabled>
         Add user
       </PermissionButton>,
     );

@@ -73,7 +73,7 @@ function design(overrides: Partial<OrderDesign> = {}): OrderDesign {
 
 function signedInAsMr() {
   useCurrentUser.mockReturnValue({
-    data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['quickgift.create', 'order.design.review'] },
+    data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['request.create', 'product.view', 'recipient_list.manage', 'order.view', 'order.artwork_review'] },
     isLoading: false,
   })
 }
@@ -159,7 +159,7 @@ describe('OrdersPage (company)', () => {
   })
 
   it('hides the review controls from someone who may not review artwork', async () => {
-    useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['order.track'] }, isLoading: false })
+    useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['order.view'] }, isLoading: false })
     listOrders.mockResolvedValue([order({ hasPendingDesignReview: true })])
     listOrderDesigns.mockResolvedValue([design()])
     renderWithProviders(<OrdersPage />)

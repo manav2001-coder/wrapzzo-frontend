@@ -23,6 +23,7 @@ import { useMyOrgUnits } from '@/hooks/useMyOrgUnits'
 import { useAdvanceWarehouseOrder, useSaveWarehouse, useWarehouseOrders, useWarehouses } from '@/hooks/useWarehouses'
 import { formatDateTime } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
 
 const COMPANY_WIDE = '__company_wide__'
 
@@ -350,7 +351,7 @@ export function WarehousesPage() {
         title={pageTitle}
         description="Receive orders from vendors and deliver them to the doctor."
         createLabel="Add warehouse"
-        createPermission="warehouse.manage"
+        createPermission={P.WAREHOUSE_SETUP}
         onCreate={() => setDialog(null)}
       />
       <AppTabs

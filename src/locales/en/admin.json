@@ -113,7 +113,7 @@
       "title": "Import employees",
       "subtitle": "Bulk-add a roster from a spreadsheet.",
       "upload": "Upload roster",
-      "intro": "Use our template, or upload your own sheet and match its columns to ours. Every field is required except Reports to email.",
+      "intro": "Use our template, or upload your own sheet and match its columns to ours. Every field is required except Reports to email. Put ALL in Org Level 1 for someone who should see the whole company.",
       "review": "Review the parsed rows below, then import.",
       "drop": "Drop an .xlsx roster here, or click to choose one",
       "mapTitle": "Match the columns of {{file}} to our fields",
@@ -130,6 +130,15 @@
       "importCount_other": "Import {{count}} employees",
       "imported": "Imported: {{created}} added, {{updated}} updated.",
       "orgPath": "Org path"
+    },
+    "wholeCompany": {
+      "badge": "Whole company",
+      "make": "See whole company",
+      "clear": "Back to own unit",
+      "makeBody": "{{name}} will see every order, request and record across {{company}}, whatever their org unit.",
+      "clearBody": "{{name}} will see only their own unit ({{unit}}), the units under it and the people who report to them.",
+      "set": "{{name}} now sees the whole company.",
+      "cleared": "{{name}} now sees their own unit."
     }
   },
   "vendors": {
@@ -241,7 +250,7 @@
   },
   "access": {
     "title": "Access Control",
-    "subtitle": "Pick a company and a designation. Permissions from people's role show ticked and locked; tick anything extra everyone with that designation should get.",
+    "subtitle": "Pick a company and a designation, then tick what its people can do in each module. Actions from people's role show ticked and locked; any action of a module includes viewing it.",
     "company": "Company",
     "pickCompany": "Choose a company",
     "designation": "Designation",
@@ -256,6 +265,8 @@
     "rolesHeld": "Role held: {{roles}}",
     "roleCount_one": "{{role}} ({{count}} person)",
     "roleCount_other": "{{role}} ({{count}} people)",
-    "fromRole": "From role: {{roles}}"
+    "fromRole": "From role: {{roles}}",
+    "impliedView": "Included with this module's other actions",
+    "gridLabel": "What {{designation}} can do"
   }
 }

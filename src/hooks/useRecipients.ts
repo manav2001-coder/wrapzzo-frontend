@@ -9,9 +9,10 @@ import {
   type CreateRecipientInput,
 } from '@/api/recipients'
 import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
 
 export function useRecipients() {
-  const canView = useHasAccess('recipient.manage')
+  const canView = useHasAccess(P.RECIPIENT_VIEW)
   return useQuery({ queryKey: ['recipients'], queryFn: listRecipients, enabled: canView })
 }
 
@@ -20,7 +21,7 @@ export function useMyRecipients() {
   return useQuery({ queryKey: ['recipients', 'mine'], queryFn: listMyRecipients })
 }
 
-/** "Pick an existing doctor" -- works for anyone who can send a gift, not just recipient.manage holders. Empty query returns nothing (no full-directory dump). */
+/** "Pick an existing doctor" -- works for anyone who can send a gift, not just recipient.view holders. Empty query returns nothing (no full-directory dump). */
 export function useRecipientSearch(query: string) {
   const trimmed = query.trim()
   return useQuery({
@@ -53,7 +54,7 @@ export function useUpdateRecipient() {
 }
 
 export function useUpcomingBirthdays(days = 30) {
-  const canView = useHasAccess('recipient.manage')
+  const canView = useHasAccess(P.RECIPIENT_VIEW)
   return useQuery({
     queryKey: ['recipients', 'upcoming-birthdays', days],
     queryFn: () => listUpcomingBirthdays(days),

@@ -13,26 +13,26 @@ function companyUser(permissions: string[], managesTeam = false, menuLabels: Rec
 
 describe('Sidebar', () => {
   beforeEach(() => {
-    companyUser(['dashboard.view', 'campaign.submit', 'quickgift.create'])
+    companyUser(['dashboard.view', 'campaign_entry.submit', 'order.view', 'request.create', 'product.view', 'recipient_list.manage'])
   })
 
   it('shows a company user only the entries their keys open', () => {
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/dashboard')
     expect(screen.getByRole('link', { name: /quick gift/i })).toHaveAttribute('href', '/quick-gift')
-    // campaign.manage is missing, so the Approvals entry and the Campaigns > Create link are not offered.
+    // No campaign.view and no approval action, so the Campaigns > Create link and the Approvals entry are not offered.
     expect(screen.queryByRole('link', { name: /approvals/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Create' })).not.toBeInTheDocument()
   })
 
   it('offers Approvals to a manager with direct reports even without an approval key', () => {
-    companyUser(['dashboard.view', 'quickgift.create', 'order.track'], true)
+    companyUser(['dashboard.view', 'request.create', 'product.view', 'recipient_list.manage', 'order.view'], true)
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /approvals/i })).toHaveAttribute('href', '/approvals')
   })
 
   it("uses the company's own menu names where it has renamed them", () => {
-    companyUser(['dashboard.view', 'quickgift.create'], false, { 'quick-gift': 'Request Prescription Pads', 'gift-store': 'Prescription Pads' })
+    companyUser(['dashboard.view', 'request.create', 'product.view', 'recipient_list.manage'], false, { 'quick-gift': 'Request Prescription Pads', 'gift-store': 'Prescription Pads' })
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: 'Request Prescription Pads' })).toHaveAttribute('href', '/quick-gift')
     expect(screen.getByRole('link', { name: 'Prescription Pads' })).toHaveAttribute('href', '/gift-store')
@@ -41,7 +41,7 @@ describe('Sidebar', () => {
 
   it('shows platform staff the Admin tree instead of the company one', () => {
     useCurrentUser.mockReturnValue({
-      data: { companyId: null, companyName: null, permissions: ['company.manage', 'vendor.manage'] },
+      data: { companyId: null, companyName: null, permissions: ['platform_company.view', 'platform_company.create', 'platform_company.edit', 'platform_company.status', 'platform_company.configure', 'platform_vendor.view', 'platform_vendor.create', 'platform_vendor.edit', 'platform_vendor.status'] },
       isLoading: false,
     })
     renderWithProviders(<Sidebar />, { route: '/admin/companies' })

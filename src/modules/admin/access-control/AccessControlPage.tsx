@@ -3,45 +3,49 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import type { AccessControlItem } from '@/api/accessControls'
 import type { DesignationAccess } from '@/api/designations'
 import { EmptyState } from '@/components/empty-state'
-import { CheckboxField } from '@/components/fields/checkbox-field'
 import { Combobox } from '@/components/fields/combobox'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { SectionCard } from '@/components/section-card'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useCompanies } from '@/hooks/useCompanies'
 import { useAccessControlCatalog, useDesignationAccess, useDesignations, useReplaceDesignationAccess } from '@/hooks/useDesignations'
-
-function groupByCategory(items: AccessControlItem[]): [string, AccessControlItem[]][] {
-  const groups = new Map<string, AccessControlItem[]>()
-  for (const item of items) groups.set(item.category, [...(groups.get(item.category) ?? []), item])
-  return [...groups.entries()]
-}
+import { P } from '@/lib/permissions'
+import { cn } from '@/lib/utils'
+import { groupByModule, withImpliedViews, type AccessModule } from './access-grid'
 
 const sameSet = (a: Set<string>, b: Set<string>) => a.size === b.size && [...a].every((value) => b.has(value))
 
-/** One designation's grants, a checkbox per key grouped by category; Save replaces the whole set. */
+/**
+ * One designation's grants as a grid: a row per module, a checkbox per action. Save replaces the
+ * whole set.
+ *
+ *  - Actions the designation's people already get from their role show ticked and locked, with
+ *    the role named -- the role is changed on the user, not here.
+ *  - Any action of a module includes its View, so View locks on while another action is ticked.
+ */
 function DesignationEditor({
   companyId,
   access,
-  groups,
+  modules,
 }: {
   companyId: string
   access: DesignationAccess
-  groups: [string, AccessControlItem[]][]
+  modules: AccessModule[]
 }) {
   const { t } = useTranslation('admin')
+  const canEdit = useHasAccess(P.ACCESS_EDIT)
   const replaceAccess = useReplaceDesignationAccess(companyId)
   const showError = useApiErrorToast()
   const saved = useMemo(() => new Set(access.accessControlIds), [access])
   const [checked, setChecked] = useState<Set<string>>(saved)
-  const total = groups.reduce((sum, [, items]) => sum + items.length, 0)
-  // Each key its people already get from a role, with the role names that grant it. Those can't
-  // be taken away here -- the role is changed on the user -- so they show ticked and locked.
+  const total = modules.reduce((sum, row) => sum + row.actions.length, 0)
+  // Each key its people already get from a role, with the role names that grant it.
   const fromRole = useMemo(() => {
     const roles = new Map<string, string[]>()
     for (const role of access.roles ?? []) {
@@ -49,7 +53,8 @@ function DesignationEditor({
     }
     return roles
   }, [access])
-  const effective = new Set([...checked, ...fromRole.keys()]).size
+  const toSave = useMemo(() => withImpliedViews(checked, modules), [checked, modules])
+  const effective = useMemo(() => withImpliedViews(new Set([...checked, ...fromRole.keys()]), modules), [checked, fromRole, modules])
   const roleSummary = (access.roles ?? []).map((role) => t('access.roleCount', { role: role.roleName, count: role.userCount })).join(', ')
 
   function toggle(id: string, on: boolean) {
@@ -63,8 +68,8 @@ function DesignationEditor({
 
   async function save() {
     try {
-      await replaceAccess.mutateAsync({ designation: access.designation, accessControlIds: [...checked] })
-      toast.success(t('access.updated', { designation: access.designation, count: checked.size }))
+      await replaceAccess.mutateAsync({ designation: access.designation, accessControlIds: [...toSave] })
+      toast.success(t('access.updated', { designation: access.designation, count: toSave.size }))
     } catch (error) {
       showError(error)
     }
@@ -75,53 +80,74 @@ function DesignationEditor({
       title={access.designation}
       description={
         <>
-          {t('access.effective', { count: effective, total })}
+          {t('access.effective', { count: effective.size, total })}
           {roleSummary && <span className="block">{t('access.rolesHeld', { roles: roleSummary })}</span>}
         </>
       }
       actions={
-        <Button size="sm" onClick={() => void save()} disabled={sameSet(checked, saved) || replaceAccess.isPending}>
-          {replaceAccess.isPending && <Loader2 className="animate-spin" />}
-          {t('access.save')}
-        </Button>
+        canEdit && (
+          <Button size="sm" onClick={() => void save()} disabled={sameSet(toSave, saved) || replaceAccess.isPending}>
+            {replaceAccess.isPending && <Loader2 className="animate-spin" />}
+            {t('access.save')}
+          </Button>
+        )
       }
     >
-      <div className="grid gap-4 md:grid-cols-2">
-        {groups.map(([category, items]) => (
-          <div key={category} className="space-y-3 rounded-md border p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</p>
-            {items.map((item) => {
-              const roles = fromRole.get(item.id)
-              // Granted by the role and not added here: shown ticked, locked, and labelled with its source.
-              const lockedByRole = Boolean(roles) && !checked.has(item.id)
-              return (
-                <CheckboxField
-                  key={item.id}
-                  label={item.name}
-                  helperText={
-                    <>
-                      {item.description}
-                      {roles && (
-                        <span className="mt-0.5 block font-medium text-primary">{t('access.fromRole', { roles: roles.join(', ') })}</span>
+      <div role="table" aria-label={t('access.gridLabel', { designation: access.designation })} className="divide-y rounded-md border">
+        {modules.map((row) => {
+          // View is held for the module's other actions while any of them is on.
+          const viewImplied = row.actions.some((action) => action !== row.view && effective.has(action.id))
+          return (
+            <div key={row.module} role="row" className="grid gap-2 p-3 sm:grid-cols-[200px_1fr] sm:items-center">
+              <div role="rowheader" className="text-sm font-medium">
+                {row.label}
+              </div>
+              <div role="cell" className="flex flex-wrap gap-2">
+                {row.actions.map((action) => {
+                  const roles = fromRole.get(action.id)
+                  const lockedByRole = Boolean(roles) && !checked.has(action.id)
+                  const lockedByView = action === row.view && viewImplied
+                  const on = checked.has(action.id) || lockedByRole || lockedByView
+                  const locked = !canEdit || lockedByRole || lockedByView
+                  const note = lockedByRole
+                    ? t('access.fromRole', { roles: roles!.join(', ') })
+                    : lockedByView
+                      ? t('access.impliedView')
+                      : null
+                  return (
+                    <label
+                      key={action.id}
+                      title={[action.description, note].filter(Boolean).join(' -- ')}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm',
+                        on && 'border-primary/40 bg-primary/5',
+                        locked ? 'cursor-not-allowed' : 'cursor-pointer',
                       )}
-                    </>
-                  }
-                  checked={checked.has(item.id) || lockedByRole}
-                  disabled={lockedByRole}
-                  onCheckedChange={(on) => toggle(item.id, on)}
-                />
-              )
-            })}
-          </div>
-        ))}
+                    >
+                      <Checkbox
+                        aria-label={`${row.label}: ${action.name}`}
+                        checked={on}
+                        disabled={locked}
+                        onCheckedChange={(next) => toggle(action.id, next === true)}
+                      />
+                      <span>{action.name}</span>
+                      {lockedByRole && <span className="text-xs text-primary">{roles!.join(', ')}</span>}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </SectionCard>
   )
 }
 
 /**
- * Designation-level access: every user with a given designation in a company gets these keys on
- * top of their role's (the backend unions the two, see AccessControlCacheService).
+ * Designation-level access: every user with a given designation in a company gets these actions on
+ * top of their role's (the backend unions the two, see AccessControlCacheService). WHAT they can
+ * do is set here; WHICH records they see is their placement in the org tree (Users page).
  */
 export function AccessControlPage() {
   const { t } = useTranslation('admin')
@@ -132,7 +158,7 @@ export function AccessControlPage() {
   const { data: designations } = useDesignations(companyId ?? undefined)
   const { data: catalog } = useAccessControlCatalog()
   const { data: access } = useDesignationAccess(companyId ?? undefined, designation ?? undefined)
-  const groups = useMemo(() => groupByCategory(catalog ?? []), [catalog])
+  const modules = useMemo(() => groupByModule(catalog ?? []), [catalog])
 
   const companyOptions = useMemo(() => (companies ?? []).map((c) => ({ value: c.id, label: c.name })), [companies])
   const designationOptions = useMemo(() => (designations ?? []).map((d) => ({ value: d, label: d })), [designations])
@@ -175,7 +201,7 @@ export function AccessControlPage() {
       {companyId && designations?.length === 0 ? (
         <EmptyState icon={ShieldCheck} size="sm" title={t('access.noDesignations')} />
       ) : companyId && access ? (
-        <DesignationEditor key={`${companyId}:${access.designation}`} companyId={companyId} access={access} groups={groups} />
+        <DesignationEditor key={`${companyId}:${access.designation}`} companyId={companyId} access={access} modules={modules} />
       ) : (
         <EmptyState icon={ShieldCheck} size="sm" title={t('access.pickBoth')} />
       )}

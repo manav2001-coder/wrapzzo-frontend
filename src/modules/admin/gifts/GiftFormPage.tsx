@@ -18,6 +18,7 @@ import { useCreateGift, useDeleteGiftImage, useGift, useGifts, useSetGiftStatus,
 import { formatCurrency } from '@/lib/format'
 import { GIFT_IMAGE_ACCEPT, MAX_GIFT_IMAGES, giftTotalOf, useGiftFormModel } from './gift-form-model'
 import { GiftThumbnail } from './GiftThumbnail'
+import { P } from '@/lib/permissions'
 
 export function GiftFormPage() {
   const { t } = useTranslation('admin')
@@ -165,7 +166,7 @@ export function GiftFormPage() {
             mode={vendorOwned ? 'view' : isEdit ? 'edit' : 'create'}
             maxWidgetsPerRow={2}
             refine={refine}
-            submitPermission="gift.manage"
+            submitPermission={isEdit ? P.PLATFORM_PRODUCT_EDIT : P.PLATFORM_PRODUCT_CREATE}
             submitLabel={isEdit ? t('gifts.detail.save') : t('gifts.detail.create')}
             onChange={(live) => setTotal(giftTotalOf(live))}
             onSubmit={onSubmit}

@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
 import { useOrders, useRequestOrderPhotoLink } from '@/hooks/useOrders'
 import { formatDate } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
@@ -56,7 +57,7 @@ export function OrdersPage() {
   const { t } = useTranslation('orders')
   const pageTitle = useMenuLabel('company-orders', t('company.title'))
   const showError = useApiErrorToast()
-  const canReview = useHasAccess('order.design.review')
+  const canReview = useHasAccess(P.ORDER_ARTWORK_REVIEW)
   const { data: orders, isLoading, error, refetch } = useOrders()
   const requestPhotoLink = useRequestOrderPhotoLink()
 

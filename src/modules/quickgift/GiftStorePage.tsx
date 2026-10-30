@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
 
 /** The company's catalogue: every gift from the vendors serving the user, sendable now or as a campaign. */
 export function GiftStorePage() {
@@ -15,8 +16,8 @@ export function GiftStorePage() {
   const pageTitle = useMenuLabel('gift-store', t('store.title'))
   const navigate = useNavigate()
   const { data: gifts, isLoading } = useActiveGifts()
-  const canQuickGift = useHasAccess('quickgift.create')
-  const canLaunchCampaign = useHasAccess('campaign.manage')
+  const canQuickGift = useHasAccess(P.REQUEST_CREATE)
+  const canLaunchCampaign = useHasAccess(P.CAMPAIGN_CREATE)
 
   return (
     <div>

@@ -3,10 +3,11 @@ import { useTranslation } from "react-i18next";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useHasAccess } from "@/hooks/use-permission";
+import type { PermissionKey } from "@/lib/permissions";
 
 export interface PermissionButtonProps extends ButtonProps {
-  permission?: string;
-  permissions?: readonly string[];
+  permission?: PermissionKey;
+  permissions?: readonly PermissionKey[];
   requireAll?: boolean;
   /** Hide instead of disabling. v4's tables default to hiding for primary actions. */
   hideIfNoPermission?: boolean;

@@ -7,6 +7,12 @@ import { downloadBlob } from '@/lib/download'
 // deeper levels can be left blank for a company with a shallower hierarchy.
 export const ORG_LEVEL_COUNT = 4
 
+/** Org Level 1 value that places someone at the company itself: they see everything. Blank never does. */
+export const COMPANY_WIDE_PLACEMENT = 'ALL'
+
+export const isCompanyWidePlacement = (orgUnitPath: readonly string[]) =>
+  orgUnitPath[0]?.trim().toUpperCase() === COMPANY_WIDE_PLACEMENT
+
 export type EmployeeFieldKey =
   | 'name'
   | 'email'
@@ -181,6 +187,10 @@ export async function parseEmployeeWorkbook(file: File, mapping?: ColumnMapping)
     if (orgUnitPath.length === 0) missing.push('Org Level 1')
     if (missing.length > 0) {
       errors.push(`Row ${rowNumber}: missing required field(s): ${missing.join(', ')}.`)
+      return
+    }
+    if (isCompanyWidePlacement(orgUnitPath) && orgUnitPath.length > 1) {
+      errors.push(`Row ${rowNumber}: ${COMPANY_WIDE_PLACEMENT} in Org Level 1 means the whole company -- leave the other levels empty.`)
       return
     }
 

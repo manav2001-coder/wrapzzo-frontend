@@ -42,7 +42,7 @@ describe('WarehousesPage', () => {
     listWarehouseOrders.mockReset()
     listWarehouses.mockReset().mockResolvedValue([])
     advanceWarehouseOrder.mockReset()
-    useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', permissions: ['warehouse.manage'] }, isLoading: false })
+    useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', permissions: ['warehouse.view', 'warehouse.setup', 'warehouse.operate'] }, isLoading: false })
   })
 
   it('receives an inbound order, the one next step for its stage', async () => {

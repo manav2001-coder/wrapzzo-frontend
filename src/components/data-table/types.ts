@@ -1,4 +1,5 @@
 import type { RowData } from "@tanstack/react-table";
+import type { PermissionRequirement } from "@/lib/permissions";
 
 export type FilterOption = { value: string | number | boolean; label: string };
 
@@ -96,7 +97,7 @@ export interface TableAction<TData> {
   disabled?: (rowSelection: Record<string, boolean>) => boolean;
   hidden?: (rowSelection: Record<string, boolean>) => boolean;
   /** Gated via usePermission().has(...). */
-  permission?: string | string[];
+  permission?: PermissionRequirement;
   /** Default true, matches the old PermissionButton default. */
   hideIfNoPermission?: boolean;
 }

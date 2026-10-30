@@ -4,7 +4,7 @@ import { useCurrentUser } from '@/hooks/use-current-user'
 
 /**
  * The Users pages (list/add/import) are reachable two ways: a platform admin managing one
- * company's roster (/admin/companies/:id/users, superadmin-only, company.manage-gated
+ * company's roster (/admin/companies/:id/users, superadmin-only, platform_company.view-gated
  * useCompany call), or a Company Admin managing their own (/company/users, no id in the
  * URL -- companyId comes from their own account via /api/auth/me, which every company user
  * can already call, no new permission needed). This resolves which mode we're in and gives

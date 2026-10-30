@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { useHasAccess } from "@/hooks/use-permission";
+import type { PermissionKey } from "@/lib/permissions";
 
 export interface PermissionGateProps {
   children: ReactNode;
-  permission?: string;
-  permissions?: readonly string[];
+  permission?: PermissionKey;
+  permissions?: readonly PermissionKey[];
   requireAll?: boolean;
   /** Rendered when access is denied. `null` — hide entirely — is the default, as in v4. */
   fallback?: ReactNode;

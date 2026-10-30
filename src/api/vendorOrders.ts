@@ -34,6 +34,9 @@ export interface VendorOrder {
   /** The newest proof's status and review comment -- null before the first upload. */
   latestDesignStatus: OrderDesignStatus | null
   latestDesignComment: string | null
+  /** While the newest proof is PENDING_FINAL_APPROVAL: the management level it waits on, of how many. */
+  latestDesignApprovalLevel: number | null
+  latestDesignApprovalLevels: number | null
   designVersions: number
   source: OrderSource
   status: OrderStatus

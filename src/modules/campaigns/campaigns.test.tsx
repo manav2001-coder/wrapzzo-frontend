@@ -24,6 +24,7 @@ const api = vi.hoisted(() => ({
   approveQuickGiftRequest: vi.fn(),
   rejectQuickGiftRequest: vi.fn(),
   listPendingDoctorChangeRequests: vi.fn(),
+  listPendingArtworkApprovals: vi.fn(),
   listActiveGifts: vi.fn(),
 }))
 const useCurrentUser = vi.hoisted(() => vi.fn())
@@ -31,6 +32,7 @@ vi.mock('@/api/campaigns', async (o) => ({ ...(await o<object>()), ...api }))
 vi.mock('@/api/submissions', async (o) => ({ ...(await o<object>()), ...api }))
 vi.mock('@/api/quickGifts', async (o) => ({ ...(await o<object>()), ...api }))
 vi.mock('@/api/doctorRequests', async (o) => ({ ...(await o<object>()), ...api }))
+vi.mock('@/api/orderDesigns', async (o) => ({ ...(await o<object>()), ...api }))
 vi.mock('@/api/gifts', async (o) => ({ ...(await o<object>()), ...api }))
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
@@ -69,6 +71,7 @@ beforeEach(() => {
   api.listMySubmissions.mockResolvedValue([])
   api.listActiveGifts.mockResolvedValue([])
   api.listPendingDoctorChangeRequests.mockResolvedValue([])
+  api.listPendingArtworkApprovals.mockResolvedValue([])
   signedInWith(['campaign.manage', 'campaign.approve', 'campaign.submit'])
 })
 

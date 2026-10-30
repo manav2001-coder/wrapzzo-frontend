@@ -10,6 +10,7 @@ import { AppDialog } from '@/components/app-dialog'
 import { CheckboxField } from '@/components/fields/checkbox-field'
 import { FormGenerator } from '@/components/fields/form-generator'
 import { SwitchField } from '@/components/fields/switch-field'
+import { ToggleGroupField } from '@/components/fields/toggle-group-field'
 import { FileDropzone } from '@/components/file-dropzone'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
@@ -19,13 +20,53 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompany, useCreateCompany, useSetCompanyStatus, useUpdateCompany, useUploadCompanyLogo } from '@/hooks/useCompanies'
-import { useCompanyFeatureFlags, useSetCompanyFeatureFlag } from '@/hooks/useCompanyFeatureFlags'
+import {
+  useArtworkApprovalLevels,
+  useCompanyFeatureFlags,
+  useSetArtworkApprovalLevels,
+  useSetCompanyFeatureFlag,
+} from '@/hooks/useCompanyFeatureFlags'
 import { useAssignCompanyVendor, useCompanyVendors, useUnassignCompanyVendor } from '@/hooks/useCompanyVendors'
 import { useVendors } from '@/hooks/useVendors'
 import { formatDate } from '@/lib/datetime'
 import { CompanyAvatar } from './CompanyAvatar'
 
 const LOGO_ACCEPT = { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'], 'image/svg+xml': ['.svg'] }
+
+const LEVEL_OPTIONS = [1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: String(n) }))
+
+/** How many managers above the MR approve artwork (Senior Artwork Approval): 1 = just their manager. */
+function ArtworkApprovalLevelsField({ companyId }: { companyId: string }) {
+  const { t } = useTranslation('admin')
+  const { data: levels } = useArtworkApprovalLevels(companyId)
+  const setLevels = useSetArtworkApprovalLevels(companyId)
+  const showError = useApiErrorToast()
+
+  async function change(value: string | string[]) {
+    const next = Number(Array.isArray(value) ? value[0] : value)
+    if (!next || next === levels) return
+    try {
+      await setLevels.mutateAsync(next)
+      toast.success(t('companies.detail.approvalLevelsSaved', { count: next }))
+    } catch (error) {
+      showError(error)
+    }
+  }
+
+  return (
+    <div className="ml-1 border-l-2 pl-4">
+      <ToggleGroupField
+        label={t('companies.detail.approvalLevels')}
+        helperText={t('companies.detail.approvalLevelsHelp')}
+        options={LEVEL_OPTIONS}
+        exclusive
+        value={levels ? String(levels) : ''}
+        disabled={levels === undefined || setLevels.isPending}
+        onValueChange={(value) => void change(value)}
+      />
+    </div>
+  )
+}
 
 /** Optional workflow changes this company has turned on -- off by default, so nothing changes until a company opts in. */
 function FeatureFlagsCard({ companyId }: { companyId: string }) {
@@ -47,14 +88,16 @@ function FeatureFlagsCard({ companyId }: { companyId: string }) {
     <SectionCard title={t('companies.detail.features')} description={t('companies.detail.featuresHelp')} loading={isLoading}>
       <div className="space-y-4">
         {flags?.map((flag) => (
-          <SwitchField
-            key={flag.flagKey}
-            label={flag.displayName}
-            helperText={flag.description}
-            checked={flag.enabled}
-            disabled={setFlag.isPending}
-            onCheckedChange={(enabled) => void toggle(flag.flagKey, enabled)}
-          />
+          <div key={flag.flagKey} className="space-y-3">
+            <SwitchField
+              label={flag.displayName}
+              helperText={flag.description}
+              checked={flag.enabled}
+              disabled={setFlag.isPending}
+              onCheckedChange={(enabled) => void toggle(flag.flagKey, enabled)}
+            />
+            {flag.flagKey === 'MARKETING_DESIGN_APPROVAL' && flag.enabled && <ArtworkApprovalLevelsField companyId={companyId} />}
+          </div>
         ))}
       </div>
     </SectionCard>

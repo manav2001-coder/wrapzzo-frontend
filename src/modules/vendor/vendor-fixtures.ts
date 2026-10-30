@@ -23,6 +23,8 @@ export function vendorOrder(overrides: Partial<VendorOrder> = {}): VendorOrder {
     artworkApproved: false,
     latestDesignStatus: null,
     latestDesignComment: null,
+    latestDesignApprovalLevel: null,
+    latestDesignApprovalLevels: null,
     designVersions: 0,
     source: 'QUICK_GIFT',
     status: 'PRODUCTION_QUEUE',

@@ -37,12 +37,12 @@ export function useRejectOrderDesign(orderId: string) {
   })
 }
 
-/** A senior's queue of MR-approved artwork awaiting the final approval (empty for anyone else). */
+/** A manager's queue of MR-approved artwork waiting on their level of approval (empty for anyone else). */
 export function usePendingArtworkApprovals() {
   return useQuery({ queryKey: ['artwork-approvals'], queryFn: listPendingArtworkApprovals, refetchInterval: LIVE_REFRESH_MS })
 }
 
-/** Final approval or send-back from the senior's queue, where each row names its own order. */
+/** Approval at the caller's level, or send-back, from the Approvals queue, where each row names its own order. */
 export function useReviewArtwork() {
   const queryClient = useQueryClient()
   return useMutation({

@@ -17,7 +17,7 @@ import { useBulkImportUsers } from '@/hooks/useUsers'
 import { ApiError } from '@/lib/axiosClient'
 import { ErrorList } from './ErrorList'
 
-type Column = 'name' | 'email' | 'mobile' | 'designation' | 'employeeCode' | 'reportsToEmail' | 'orgUnit'
+type Column = 'name' | 'email' | 'mobile' | 'designation' | 'role' | 'employeeCode' | 'reportsToEmail' | 'orgUnit'
 type DraftRow = Record<Column, string> & { key: number }
 
 /**
@@ -29,6 +29,7 @@ const COLUMNS: { key: Column; labelKey: string; required: boolean; placeholder: 
   { key: 'email', labelKey: 'users.column.email', required: true, placeholder: 'jane@company.com' },
   { key: 'mobile', labelKey: 'users.column.mobile', required: true, placeholder: '9876543210' },
   { key: 'designation', labelKey: 'users.column.designation', required: true, placeholder: 'Sales Exec' },
+  { key: 'role', labelKey: 'users.column.role', required: true, placeholder: 'Member' },
   { key: 'employeeCode', labelKey: 'users.column.employeeCode', required: true, placeholder: 'E001' },
   { key: 'reportsToEmail', labelKey: 'users.addPage.reportsToEmail', required: false, placeholder: '' },
   { key: 'orgUnit', labelKey: 'users.column.orgUnit', required: true, placeholder: 'North Zone' },
@@ -41,6 +42,7 @@ const emptyRow = (): DraftRow => ({
   email: '',
   mobile: '',
   designation: '',
+  role: '',
   employeeCode: '',
   reportsToEmail: '',
   orgUnit: '',
@@ -86,6 +88,7 @@ export function CompanyUsersAddPage() {
       email: row.email.trim(),
       mobile: row.mobile.trim(),
       designation: row.designation.trim(),
+      role: row.role.trim(),
       employeeCode: row.employeeCode.trim(),
       reportsToEmail: row.reportsToEmail.trim() || undefined,
       orgUnitPath: [row.orgUnit.trim()],

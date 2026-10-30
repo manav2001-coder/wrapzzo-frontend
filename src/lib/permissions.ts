@@ -41,6 +41,12 @@ export const P = {
   ACCESS_VIEW: 'access.view',
   ACCESS_EDIT: 'access.edit',
 
+  ROLE_VIEW: 'role.view',
+  ROLE_EDIT: 'role.edit',
+
+  TEMPLATE_VIEW: 'template.view',
+  TEMPLATE_EDIT: 'template.edit',
+
   COMPANY_VENDOR_VIEW: 'company_vendor.view',
   COMPANY_VENDOR_ADD: 'company_vendor.add',
 

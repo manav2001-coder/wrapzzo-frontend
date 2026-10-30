@@ -4,7 +4,13 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
 import { ProtectedRoute as Guard } from '@/components/access-control/protected-route'
 import { P } from '@/lib/permissions'
-import { AccessControlPage } from '@/modules/admin/access-control/AccessControlPage'
+import { FeatureMasterPage } from '@/modules/admin/access-control/FeatureMasterPage'
+import { FeaturesToTemplatePage } from '@/modules/admin/access-control/FeaturesToTemplatePage'
+import { RoleToTemplatePage } from '@/modules/admin/access-control/RoleToTemplatePage'
+import { TemplatesPage } from '@/modules/admin/access-control/TemplatesPage'
+import { TemplatesToTemplatePage } from '@/modules/admin/access-control/TemplatesToTemplatePage'
+import { UserToTemplatePage } from '@/modules/admin/access-control/UserToTemplatePage'
+import { RolesPage } from '@/modules/admin/roles/RolesPage'
 import { CompanyFormPage } from '@/modules/admin/companies/CompanyFormPage'
 import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
 import { CompanyUsersAddPage } from '@/modules/admin/companies/CompanyUsersAddPage'
@@ -83,7 +89,14 @@ export function AppRoutes() {
 
           <Route path="/admin/orders" element={<Guard permission={P.PLATFORM_ORDER_VIEW}><OrdersPage /></Guard>} />
 
-          <Route path="/admin/access-control" element={<Guard permission={P.ACCESS_VIEW}><AccessControlPage /></Guard>} />
+          {/* Access control (TBAC): shared by platform staff and company admins, who each work on their own scope. */}
+          <Route path="/access/roles" element={<Guard permission={P.ROLE_VIEW}><RolesPage /></Guard>} />
+          <Route path="/access/features" element={<Guard permission={P.TEMPLATE_VIEW}><FeatureMasterPage /></Guard>} />
+          <Route path="/access/templates" element={<Guard permission={P.TEMPLATE_VIEW}><TemplatesPage /></Guard>} />
+          <Route path="/access/features-to-template" element={<Guard permission={P.TEMPLATE_VIEW}><FeaturesToTemplatePage /></Guard>} />
+          <Route path="/access/templates-to-template" element={<Guard permission={P.TEMPLATE_VIEW}><TemplatesToTemplatePage /></Guard>} />
+          <Route path="/access/role-templates" element={<Guard permission={P.ROLE_VIEW}><RoleToTemplatePage /></Guard>} />
+          <Route path="/access/user-templates" element={<Guard permission={P.ACCESS_VIEW}><UserToTemplatePage /></Guard>} />
 
           {/* Campaigns module -- company-side, PRD Part 2.5. Peer of /admin, not nested under it. */}
           <Route path="/dashboard" element={<Guard permission={P.DASHBOARD_VIEW}><DashboardPage /></Guard>} />

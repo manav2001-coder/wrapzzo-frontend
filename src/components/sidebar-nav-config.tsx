@@ -67,6 +67,26 @@ const GENERAL: NavSource = {
   ],
 }
 
+/**
+ * Access control (TBAC), the same menu for platform staff and company admins: roles first, then
+ * the features and templates they are built from, then who gets what.
+ */
+const TBAC_NAV: NavSource = {
+  id: 'tbac',
+  titleKey: 'nav.accessControl',
+  type: 'collapse',
+  icon: ShieldCheck,
+  children: [
+    { id: 'tbac-roles', titleKey: 'nav.roles', type: 'item', url: '/access/roles', icon: BadgeCheck, permission: P.ROLE_VIEW },
+    { id: 'tbac-features', titleKey: 'nav.featureMaster', type: 'item', url: '/access/features', icon: ListChecks, permission: P.TEMPLATE_VIEW },
+    { id: 'tbac-templates', titleKey: 'nav.templateMaster', type: 'item', url: '/access/templates', icon: ShieldCheck, permission: P.TEMPLATE_VIEW },
+    { id: 'tbac-features-to-template', titleKey: 'nav.featuresToTemplate', type: 'item', url: '/access/features-to-template', icon: ListChecks, permission: P.TEMPLATE_VIEW },
+    { id: 'tbac-templates-to-template', titleKey: 'nav.templatesToTemplate', type: 'item', url: '/access/templates-to-template', icon: ShieldCheck, permission: P.TEMPLATE_VIEW },
+    { id: 'tbac-role-templates', titleKey: 'nav.roleToTemplate', type: 'item', url: '/access/role-templates', icon: BadgeCheck, permission: P.ROLE_VIEW },
+    { id: 'tbac-user-templates', titleKey: 'nav.userToTemplate', type: 'item', url: '/access/user-templates', icon: Users, permission: P.ACCESS_VIEW },
+  ],
+}
+
 /** Wrappzo platform staff. */
 export const ADMIN_NAV: NavSource[] = [
   {
@@ -78,9 +98,9 @@ export const ADMIN_NAV: NavSource[] = [
       { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: P.PLATFORM_VENDOR_VIEW },
       { id: 'gift-catalogue', titleKey: 'nav.giftCatalogue', type: 'item', url: '/admin/gifts', icon: Gift, permission: P.PLATFORM_PRODUCT_VIEW },
       { id: 'platform-orders', titleKey: 'nav.orders', type: 'item', url: '/admin/orders', icon: ShoppingBag, permission: P.PLATFORM_ORDER_VIEW },
-      { id: 'access-control', titleKey: 'nav.accessControl', type: 'item', url: '/admin/access-control', icon: ShieldCheck, permission: P.ACCESS_VIEW },
     ],
   },
+  TBAC_NAV,
   GENERAL,
 ]
 
@@ -124,6 +144,7 @@ export const COMPANY_NAV: NavSource[] = [
       { id: 'menu-names', titleKey: 'nav.menuNames', type: 'item', url: '/company/menu-names', icon: PencilLine, permission: P.MENU_EDIT },
     ],
   },
+  TBAC_NAV,
   GENERAL,
 ]
 

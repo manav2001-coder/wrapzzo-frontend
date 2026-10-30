@@ -6,6 +6,8 @@ export interface BulkImportUserRow {
   email: string
   mobile: string
   designation: string
+  /** Name of an active role of the company (see the Roles master). */
+  role: string
   employeeCode: string
   reportsToEmail?: string
   orgUnitPath: string[]
@@ -54,6 +56,11 @@ export async function listCompanyUsers(companyId: string): Promise<CompanyUser[]
 
 export async function makeCompanyAdmin(companyId: string, userId: string): Promise<CompanyUser> {
   const { data } = await apiClient.post<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/makeCompanyAdmin`)
+  return data
+}
+
+export async function changeUserRole(companyId: string, userId: string, roleId: string): Promise<CompanyUser> {
+  const { data } = await apiClient.put<CompanyUser>(`/api/platform/companies/${companyId}/users/${userId}/role`, { roleId })
   return data
 }
 

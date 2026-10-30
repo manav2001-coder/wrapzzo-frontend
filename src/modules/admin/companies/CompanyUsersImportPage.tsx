@@ -115,6 +115,7 @@ export function CompanyUsersImportPage() {
       { accessorKey: 'email', header: t('users.column.email') },
       { accessorKey: 'mobile', header: t('users.column.mobile') },
       { accessorKey: 'designation', header: t('users.column.designation') },
+      { accessorKey: 'role', header: t('users.column.role') },
       { accessorKey: 'employeeCode', header: t('users.column.employeeCode') },
       { accessorFn: (row) => row.reportsToEmail ?? '', id: 'reportsToEmail', header: t('users.addPage.reportsToEmail') },
       {

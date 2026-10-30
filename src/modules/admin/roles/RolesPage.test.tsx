@@ -1,9 +1,8 @@
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { Role } from '@/api/roles'
-import type { AccessTemplate } from '@/api/templates'
-import { renderWithProviders, screen, waitFor } from '@/test/test-utils'
+import { companyAdmin, role, template } from '@/test/tbac-fixtures'
+import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { RolesPage } from './RolesPage'
 
 const currentUser = vi.hoisted(() => vi.fn())
@@ -15,54 +14,29 @@ vi.mock('@/hooks/use-current-user', async (o) => ({ ...(await o<object>()), useC
 vi.mock('@/api/roles', async (o) => ({ ...(await o<object>()), listRoles, createRole, deleteRole }))
 vi.mock('@/api/templates', async (o) => ({ ...(await o<object>()), listTemplates }))
 
-const signedInWith = (permissions: string[]) =>
-  currentUser.mockReturnValue({
-    data: { companyId: 'c-1', companyName: 'Alembic', permissions, companyWide: true, managesTeam: false },
-    isLoading: false,
-  })
-
-const role = (over: Partial<Role>): Role => ({
-  id: 'r-1',
-  name: 'Member',
-  description: null,
-  active: true,
-  protectedRole: true,
-  userCount: 3,
-  templateIds: ['t-member'],
-  ...over,
-})
-
-const template = (over: Partial<AccessTemplate>): AccessTemplate => ({
-  id: 't-member',
-  companyId: null,
-  name: 'Member',
-  description: null,
-  active: true,
-  system: true,
-  accessControlIds: [],
-  referencedTemplateIds: [],
-  effectiveAccessControlIds: [],
-  roleCount: 1,
-  userCount: 0,
-  ...over,
-})
+const rowOf = (name: string) => screen.getAllByText(name)[0].closest('tr') as HTMLElement
 
 describe('RolesPage', () => {
   beforeEach(() => {
-    signedInWith(['role.view', 'role.edit', 'template.view'])
-    listRoles.mockReset().mockResolvedValue([role({}), role({ id: 'r-2', name: 'Zonal Head', protectedRole: false, userCount: 0, templateIds: [] })])
-    listTemplates.mockReset().mockResolvedValue([template({}), template({ id: 't-zone', name: 'Zone access', system: false, companyId: 'c-1' })])
-    createRole.mockReset().mockResolvedValue(role({ id: 'r-3', name: 'Auditor', protectedRole: false }))
+    currentUser.mockReturnValue(companyAdmin(['role.view', 'role.edit', 'template.view']))
+    listRoles.mockReset().mockResolvedValue([
+      role({ id: 'r-admin', name: 'Company Admin', protectedRole: true, userCount: 3, templateIds: ['t-sys'] }),
+      role({ id: 'r-2', name: 'Zonal Head', userCount: 0, templateIds: [] }),
+    ])
+    listTemplates.mockReset().mockResolvedValue([
+      template({ id: 't-sys', companyId: null, system: true, name: 'Company Admin' }),
+      template({ id: 't-zone', name: 'Zone access' }),
+    ])
+    createRole.mockReset().mockResolvedValue(role({ id: 'r-3', name: 'Auditor' }))
     deleteRole.mockReset().mockResolvedValue(undefined)
   })
 
-  it('lists the company’s roles with their users and mapped templates', async () => {
+  it('lists the company’s roles in a table with their users and templates', async () => {
     renderWithProviders(<RolesPage />)
 
     expect(await screen.findByText('Zonal Head')).toBeInTheDocument()
-    expect(screen.getByText('3 users')).toBeInTheDocument()
-    expect(screen.getByText('Built-in')).toBeInTheDocument()
-    expect(screen.getByText('No templates mapped: this role grants nothing yet.')).toBeInTheDocument()
+    expect(within(rowOf('Zonal Head')).getByText('No templates mapped: this role grants nothing yet.')).toBeInTheDocument()
+    expect(within(rowOf('Company Admin')).getByText('Built-in')).toBeInTheDocument()
     expect(listRoles).toHaveBeenCalledWith('c-1')
   })
 
@@ -80,19 +54,17 @@ describe('RolesPage', () => {
     )
   })
 
-  it('offers removal only for roles that are not built in, and only with role.edit', async () => {
+  it('offers removal only for roles that are not built in', async () => {
     renderWithProviders(<RolesPage />)
     await screen.findByText('Zonal Head')
 
-    expect(screen.getByRole('button', { name: 'Remove Zonal Head' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Remove Member' })).not.toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Remove Zonal Head' }))
+    expect(within(rowOf('Company Admin')).queryByRole('button', { name: 'Remove Company Admin' })).not.toBeInTheDocument()
+    await userEvent.click(within(rowOf('Zonal Head')).getByRole('button', { name: 'Remove Zonal Head' }))
     await waitFor(() => expect(deleteRole).toHaveBeenCalledWith('c-1', 'r-2'))
   })
 
   it('hides creating and removing without role.edit', async () => {
-    signedInWith(['role.view'])
+    currentUser.mockReturnValue(companyAdmin(['role.view']))
     renderWithProviders(<RolesPage />)
     await screen.findByText('Zonal Head')
 

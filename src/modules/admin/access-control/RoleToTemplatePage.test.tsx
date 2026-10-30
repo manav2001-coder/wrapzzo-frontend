@@ -1,8 +1,10 @@
 import userEvent from '@testing-library/user-event'
+import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { companyAdmin, template } from '@/test/tbac-fixtures'
-import { renderWithProviders, screen, waitFor } from '@/test/test-utils'
+import { companyAdmin, role, template } from '@/test/tbac-fixtures'
+import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
+import { RoleToTemplateAssignPage } from './RoleToTemplateAssignPage'
 import { RoleToTemplatePage } from './RoleToTemplatePage'
 
 const currentUser = vi.hoisted(() => vi.fn())
@@ -13,24 +15,31 @@ vi.mock('@/hooks/use-current-user', async (o) => ({ ...(await o<object>()), useC
 vi.mock('@/api/roles', async (o) => ({ ...(await o<object>()), listRoles, replaceRoleTemplates }))
 vi.mock('@/api/templates', async (o) => ({ ...(await o<object>()), listTemplates }))
 
-async function openZonalHead() {
-  renderWithProviders(<RoleToTemplatePage />)
-  await userEvent.click(screen.getByLabelText('Role'))
-  await userEvent.click(await screen.findByText('Zonal Head'))
-}
+const assign = () =>
+  renderWithProviders(
+    <Routes>
+      <Route path="/access/role-templates/:roleId" element={<RoleToTemplateAssignPage />} />
+    </Routes>,
+    { route: '/access/role-templates/r-1' },
+  )
 
-describe('RoleToTemplatePage', () => {
+describe('Role to Template', () => {
   beforeEach(() => {
     currentUser.mockReturnValue(companyAdmin(['role.view', 'role.edit', 'template.view']))
-    listRoles.mockReset().mockResolvedValue([
-      { id: 'r-1', name: 'Zonal Head', description: null, active: true, protectedRole: false, userCount: 2, templateIds: ['t-1'] },
-    ])
+    listRoles.mockReset().mockResolvedValue([role({ templateIds: ['t-1'] })])
     listTemplates.mockReset().mockResolvedValue([template({ id: 't-1', name: 'Zone access' }), template({ id: 't-2', name: 'Orders access' })])
     replaceRoleTemplates.mockReset().mockResolvedValue({})
   })
 
+  it('lists the roles with how many templates each carries', async () => {
+    renderWithProviders(<RoleToTemplatePage />)
+
+    const row = (await screen.findByText('Zonal Head')).closest('tr') as HTMLElement
+    expect(within(row).getByRole('button', { name: 'Assign for Zonal Head' })).toBeInTheDocument()
+  })
+
   it('shows the role’s templates apart from the ones it could take, and saves the new set on add', async () => {
-    await openZonalHead()
+    assign()
 
     await userEvent.click(await screen.findByLabelText('Orders access'))
     await userEvent.click(screen.getByRole('button', { name: /^Add/ }))
@@ -39,7 +48,7 @@ describe('RoleToTemplatePage', () => {
   })
 
   it('saves without a template when it is removed', async () => {
-    await openZonalHead()
+    assign()
 
     await userEvent.click(await screen.findByLabelText('Zone access'))
     await userEvent.click(screen.getByRole('button', { name: /^Remove/ }))
@@ -49,7 +58,7 @@ describe('RoleToTemplatePage', () => {
 
   it('cannot change anything without role.edit', async () => {
     currentUser.mockReturnValue(companyAdmin(['role.view', 'template.view']))
-    await openZonalHead()
+    assign()
 
     expect(await screen.findByLabelText('Orders access')).toBeDisabled()
   })

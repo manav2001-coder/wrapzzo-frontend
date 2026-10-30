@@ -251,7 +251,8 @@
   "access": {
     "company": "Company",
     "pickCompany": "Choose a company",
-    "impliedView": "Included with this module's other actions"
+    "impliedView": "Included with this module's other actions",
+    "showSystem": "Show system records"
   },
   "roles": {
     "title": "Roles",
@@ -271,11 +272,17 @@
     "save": "Save role",
     "saved": "Saved role {{name}}.",
     "deleted": "Removed role {{name}}.",
-    "edit": "Edit {{name}}",
     "delete": "Remove {{name}}",
     "protectedBadge": "Built-in",
-    "userCount_one": "{{count}} user",
-    "userCount_other": "{{count}} users"
+    "column": {
+      "name": "Role",
+      "description": "Description",
+      "users": "Users",
+      "templates": "Templates",
+      "templateCount": "Templates"
+    },
+    "activated": "Activated {{name}}.",
+    "deactivated": "Deactivated {{name}}."
   },
   "templates": {
     "title": "Access Control",
@@ -295,34 +302,63 @@
     "includesHint": "Everything an included template grants is added to this one.",
     "noneToInclude": "There are no other templates to include.",
     "systemBadge": "System",
-    "inactive": "Inactive",
     "save": "Save template",
     "saved": "Saved template {{name}}.",
     "copyName": "{{name}} (copy)",
     "cloned": "Created {{name}}.",
     "deleted": "Removed template {{name}}.",
     "clone": "Clone {{name}}",
-    "edit": "Edit {{name}}",
     "delete": "Remove {{name}}",
-    "summary": "Grants {{direct}} directly, {{total}} in all. Used by {{roles}} roles and {{users}} users."
+    "column": {
+      "name": "Template",
+      "description": "Description",
+      "scope": "Scope",
+      "direct": "Features",
+      "effective": "Effective",
+      "roles": "Roles",
+      "users": "Users",
+      "includes": "Includes"
+    },
+    "scope": {
+      "system": "System",
+      "company": "Company"
+    },
+    "activated": "Activated {{name}}.",
+    "deactivated": "Deactivated {{name}}."
   },
   "features": {
     "title": "Feature Master",
-    "subtitle": "Every permission key, by module. Keys live in code, so none are added here -- platform staff can switch one off (it then grants nothing, wherever a template carries it) or back on.",
-    "search": "Search features",
-    "empty": "No features match.",
-    "platformOnly": "Platform only",
-    "toggle": "Switch {{name}}"
+    "subtitle": "Every permission key a company could hold, and whether it has registered and switched it on. Keys live in code, so adding one registers it for the company. A feature switched off grants nothing, wherever a template carries it.",
+    "empty": "No features.",
+    "toggle": "Switch {{name}}",
+    "pickCompany": "Choose a company to manage its features.",
+    "added": "Features added.",
+    "addOne": "Add",
+    "add": "Add {{name}}",
+    "addAll": "Add all missing ({{count}})",
+    "column": {
+      "module": "Module",
+      "action": "Action",
+      "key": "Key",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "missing": "Not added"
+    }
   },
   "assign": {
-    "template": "Template",
-    "pickTemplate": "Choose a template",
     "search": "Search",
     "add": "Add",
     "remove": "Remove",
     "updated": "Updated {{name}}.",
     "systemReadOnly": "This is a system template: platform staff change it, a company clones it first.",
-    "noEditAccess": "You can view this template but not change it."
+    "noEditAccess": "You can view this template but not change it.",
+    "open": "Assign for {{name}}",
+    "assign": "Assign",
+    "back": "Back",
+    "notFound": "Not found in this company."
   },
   "featuresToTemplate": {
     "title": "Features to Template",
@@ -333,7 +369,9 @@
     "noneAssigned": "This template grants nothing itself yet.",
     "inherited": "Inherited from included templates",
     "inheritedHint": "Change these on the template that grants them.",
-    "noneInherited": "No included template adds anything."
+    "noneInherited": "No included template adds anything.",
+    "listSubtitle": "Pick a template to choose the permission keys it grants.",
+    "assignTitle": "Features for {{name}}"
   },
   "templatesToTemplate": {
     "title": "Templates to Template",
@@ -345,24 +383,23 @@
     "added": "Included {{count}} template(s).",
     "removed": "Removed {{count}} template(s).",
     "refused": "{{count}} not included",
-    "outcome": "{{added}} of {{total}} included."
+    "outcome": "{{added}} of {{total}} included.",
+    "listSubtitle": "Pick a template to choose the templates it includes.",
+    "assignTitle": "Includes for {{name}}"
   },
   "roleToTemplate": {
     "title": "Role to Template",
     "subtitle": "Choose a role, then move the templates it carries across. A role grants nothing itself.",
-    "role": "Role",
-    "pickRole": "Choose a role",
     "available": "Available templates",
     "assigned": "Carried by {{name}}",
     "noneAvailable": "No other template to add.",
-    "noneAssigned": "This role carries no template, so it grants nothing."
+    "noneAssigned": "This role carries no template, so it grants nothing.",
+    "listSubtitle": "Pick a role to choose the templates it carries.",
+    "assignTitle": "Templates for {{name}}"
   },
   "userToTemplate": {
     "title": "User to Template",
     "subtitle": "Templates for one person on top of their role's. Tick one user to edit theirs, or several to give them the same templates at once.",
-    "users": "Users ({{count}} ticked)",
-    "search": "Search users",
-    "pickUsers": "Tick one or more users.",
     "available": "Available templates",
     "assigned": "Given to this user",
     "noneAvailable": "No other template to add.",
@@ -372,6 +409,10 @@
     "assignToUsers": "Assign to {{count}} users",
     "results": "Results",
     "resultOk": "{{added}} added, {{skipped}} already had",
-    "failed": "Failed"
+    "failed": "Failed",
+    "listSubtitle": "Pick a user -- or tick several -- to give them templates on top of their role's.",
+    "assignTitle": "Templates for {{name}}",
+    "pickTemplates": "Templates to give",
+    "empty": "No users yet."
   }
 }

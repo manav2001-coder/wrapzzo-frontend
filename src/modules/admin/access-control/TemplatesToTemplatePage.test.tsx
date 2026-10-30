@@ -1,9 +1,10 @@
 import userEvent from '@testing-library/user-event'
+import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { companyAdmin, template } from '@/test/tbac-fixtures'
 import { renderWithProviders, screen, waitFor } from '@/test/test-utils'
-import { TemplatesToTemplatePage } from './TemplatesToTemplatePage'
+import { TemplatesToTemplateAssignPage } from './TemplatesToTemplateAssignPage'
 
 const currentUser = vi.hoisted(() => vi.fn())
 const listTemplates = vi.hoisted(() => vi.fn())
@@ -14,13 +15,15 @@ vi.mock('@/api/templates', async (o) => ({ ...(await o<object>()), listTemplates
 
 const top = template({ id: 't-top', name: 'Top', referencedTemplateIds: ['t-base'] })
 
-async function openTop() {
-  renderWithProviders(<TemplatesToTemplatePage />)
-  await userEvent.click(screen.getByLabelText('Template'))
-  await userEvent.click(await screen.findByText('Top'))
-}
+const openTop = () =>
+  renderWithProviders(
+    <Routes>
+      <Route path="/access/templates-to-template/:templateId" element={<TemplatesToTemplateAssignPage />} />
+    </Routes>,
+    { route: '/access/templates-to-template/t-top' },
+  )
 
-describe('TemplatesToTemplatePage', () => {
+describe('Templates to Template', () => {
   beforeEach(() => {
     currentUser.mockReturnValue(companyAdmin(['template.view', 'template.edit']))
     listTemplates.mockReset().mockResolvedValue([
@@ -35,7 +38,7 @@ describe('TemplatesToTemplatePage', () => {
   })
 
   it('lists what is included apart from what could be, never the template itself or an inactive one', async () => {
-    await openTop()
+    openTop()
 
     expect(await screen.findByLabelText('Base')).toBeInTheDocument()
     expect(screen.getByLabelText('Other')).toBeInTheDocument()
@@ -44,7 +47,7 @@ describe('TemplatesToTemplatePage', () => {
   })
 
   it('adds several at once and says why a candidate was refused', async () => {
-    await openTop()
+    openTop()
 
     await userEvent.click(await screen.findByLabelText('Other'))
     await userEvent.click(screen.getByLabelText('Loop'))
@@ -56,7 +59,7 @@ describe('TemplatesToTemplatePage', () => {
   })
 
   it('removes an included template', async () => {
-    await openTop()
+    openTop()
 
     await userEvent.click(await screen.findByLabelText('Base'))
     await userEvent.click(screen.getByRole('button', { name: /^Remove/ }))

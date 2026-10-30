@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { listAccessControlCatalog } from '@/api/accessControls'
-import { listFeatures, setFeatureActive } from '@/api/features'
+import { listCompanyFeatures, listFeatureCatalog, registerFeatures, setFeatureActive } from '@/api/features'
 import {
   addTemplateReferences,
   bulkAssignUserTemplates,
@@ -16,13 +15,21 @@ import {
   type TemplateInput,
 } from '@/api/templates'
 
-export function useAccessControlCatalog() {
+/**
+ * The features of a scope: a company's (registered or not, on or off -- the feature master), or,
+ * with no company, the whole catalogue (platform staff, for system templates). Pickers want
+ * {@link assignableFeatures}.
+ */
+export function useFeatures(companyId: string | undefined) {
   return useQuery({
-    queryKey: ['accessControlCatalog'],
-    queryFn: listAccessControlCatalog,
-    staleTime: Infinity,
+    queryKey: ['features', companyId ?? 'catalogue'],
+    queryFn: () => (companyId ? listCompanyFeatures(companyId) : listFeatureCatalog()),
   })
 }
+
+/** What a template in this scope may carry: registered and switched on. */
+export const assignableFeatures = <T extends { registered: boolean; active: boolean }>(features: T[] | undefined): T[] =>
+  (features ?? []).filter((feature) => feature.registered && feature.active)
 
 /** A company's templates plus the system masters; with no company (platform staff), just the system masters. */
 export function useTemplates(companyId: string | undefined) {
@@ -60,19 +67,25 @@ export function useDeleteTemplate() {
   return useTemplateMutation((templateId: string) => deleteTemplate(templateId))
 }
 
-export function useFeatures() {
-  return useQuery({ queryKey: ['features'], queryFn: listFeatures })
-}
-
-export function useSetFeatureActive() {
+function useFeatureMutation<TVariables, TResult>(companyId: string, mutationFn: (variables: TVariables) => Promise<TResult>) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ featureId, active }: { featureId: string; active: boolean }) => setFeatureActive(featureId, active),
+    mutationFn,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['features'] })
+      void queryClient.invalidateQueries({ queryKey: ['templates', companyId] })
       void queryClient.invalidateQueries({ queryKey: ['me'] })
     },
   })
+}
+
+export function useSetFeatureActive(companyId: string) {
+  return useFeatureMutation(companyId, ({ featureId, active }: { featureId: string; active: boolean }) => setFeatureActive(companyId, featureId, active))
+}
+
+/** No ids = every feature the company is missing. */
+export function useRegisterFeatures(companyId: string) {
+  return useFeatureMutation(companyId, (featureIds?: string[]) => registerFeatures(companyId, featureIds))
 }
 
 export function useAddTemplateReferences() {

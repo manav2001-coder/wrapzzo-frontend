@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
-import { useAccessControlCatalog, useCreateTemplate, useUpdateTemplate } from '@/hooks/useTemplates'
+import { assignableFeatures, useCreateTemplate, useFeatures, useUpdateTemplate } from '@/hooks/useTemplates'
 import { cn } from '@/lib/utils'
 import { groupByModule, withImpliedViews } from './access-grid'
 
@@ -33,7 +33,7 @@ export function TemplateDialog({
 }) {
   const { t } = useTranslation('admin')
   const showError = useApiErrorToast()
-  const { data: catalog } = useAccessControlCatalog()
+  const { data: scopeFeatures } = useFeatures(companyId ?? undefined)
   const create = useCreateTemplate(companyId)
   const update = useUpdateTemplate()
   const [name, setName] = useState(template?.name ?? '')
@@ -42,11 +42,8 @@ export function TemplateDialog({
   const [keys, setKeys] = useState<Set<string>>(() => new Set(template?.accessControlIds))
   const [includes, setIncludes] = useState<Set<string>>(() => new Set(template?.referencedTemplateIds))
 
-  const platformOnly = useMemo(() => new Set(companyId ? (catalog ?? []).filter((item) => item.key.startsWith('platform_')).map((i) => i.id) : []), [catalog, companyId])
-  const modules = useMemo(
-    () => groupByModule(catalog ?? []).map((row) => ({ ...row, actions: row.actions.filter((a) => !platformOnly.has(a.id)) })).filter((row) => row.actions.length > 0),
-    [catalog, platformOnly],
-  )
+  // A company template carries what the company has registered and on; a system template, anything in the catalogue.
+  const modules = useMemo(() => groupByModule(assignableFeatures(scopeFeatures)), [scopeFeatures])
   const withViews = useMemo(() => withImpliedViews(keys, modules), [keys, modules])
   const candidates = others.filter((other) => other.id !== template?.id && other.active)
   const pending = create.isPending || update.isPending

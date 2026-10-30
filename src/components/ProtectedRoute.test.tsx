@@ -19,6 +19,7 @@ function renderAt(route: string, signedIn = true) {
         <Route path="/admin/*" element={<h1>Admin</h1>} />
         <Route path="/dashboard" element={<h1>Dashboard</h1>} />
         <Route path="/settings" element={<h1>Settings</h1>} />
+        <Route path="/access/*" element={<h1>Access control</h1>} />
       </Route>
     </Routes>,
     { route, preloadedState: signedIn ? SIGNED_IN : undefined },
@@ -50,6 +51,12 @@ describe('ProtectedRoute', () => {
     useCurrentUser.mockReturnValue(profile(null))
     renderAt('/settings')
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+  })
+
+  it('leaves the access-control screens to platform staff and company admins alike', () => {
+    useCurrentUser.mockReturnValue(profile(null))
+    renderAt('/access/roles')
+    expect(screen.getByRole('heading', { name: 'Access control' })).toBeInTheDocument()
   })
 
   it('does not bounce anyone before the profile says which side they are on', () => {

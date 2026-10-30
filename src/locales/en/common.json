@@ -41,7 +41,8 @@
     "featuresToTemplate": "Features to Template",
     "templatesToTemplate": "Templates to Template",
     "roleToTemplate": "Role to Template",
-    "userToTemplate": "User to Template"
+    "userToTemplate": "User to Template",
+    "masters": "Masters"
   },
   "action": {
     "activate": "Activate",

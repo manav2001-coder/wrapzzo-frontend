@@ -1,4 +1,4 @@
-import { ArrowLeft, Power, RotateCcw, Users } from 'lucide-react'
+import { ArrowLeft, Power, RotateCcw } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -258,10 +258,6 @@ export function CompanyFormPage() {
           company && (
             <div className="flex flex-wrap items-center gap-2">
               <StatusCell active={active} />
-              <Button size="sm" variant="outline" onClick={() => navigate(`/admin/companies/${company.id}/users`)}>
-                <Users />
-                {t('companies.users')}
-              </Button>
               <Button size="sm" variant={active ? 'outline' : 'default'} onClick={() => setConfirmingStatus(true)}>
                 {active ? <Power /> : <RotateCcw />}
                 {active ? t('action.deactivate', { ns: 'common' }) : t('action.activate', { ns: 'common' })}

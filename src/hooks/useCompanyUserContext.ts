@@ -1,27 +1,31 @@
-import { useParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useCompany } from '@/hooks/useCompanies'
 import { useCurrentUser } from '@/hooks/use-current-user'
 
+const USERS_MASTER = '/masters/users'
+
 /**
- * The Users pages (list/add/import) are reachable two ways: a platform admin managing one
- * company's roster (/admin/companies/:id/users, superadmin-only, platform_company.view-gated
- * useCompany call), or a Company Admin managing their own (/company/users, no id in the
- * URL -- companyId comes from their own account via /api/auth/me, which every company user
- * can already call, no new permission needed). This resolves which mode we're in and gives
- * every internal link a consistent base to build off of.
+ * The Users master (list, add, import) serves two audiences from the same screens: a company
+ * admin manages their own company's roster -- the company comes from their account via
+ * /api/auth/me -- and platform staff, who belong to none, pick a company, carried in the URL as
+ * `?company=` so the add and import screens stay on it. This resolves which mode we're in and
+ * builds every link the pages need.
  */
 export function useCompanyUserContext() {
-  const { id } = useParams<{ id?: string }>()
-  const { data: company } = useCompany(id)
   const { data: me } = useCurrentUser()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const isPlatformStaff = Boolean(me) && !me?.companyId
+  const companyId = me?.companyId ?? searchParams.get('company') ?? ''
+  const { data: company } = useCompany(isPlatformStaff && companyId ? companyId : undefined)
+  const withCompany = (path: string) => (isPlatformStaff && companyId ? `${path}?company=${companyId}` : path)
 
-  if (id) {
-    return { companyId: id, companyName: company?.name, basePath: `/admin/companies/${id}`, backTo: `/admin/companies/${id}` }
-  }
   return {
-    companyId: me?.companyId ?? '',
-    companyName: me?.companyName ?? undefined,
-    basePath: '/company',
-    backTo: '/dashboard',
+    companyId,
+    companyName: isPlatformStaff ? company?.name : (me?.companyName ?? undefined),
+    isPlatformStaff,
+    setCompany: (id: string | null) => setSearchParams(id ? { company: id } : {}, { replace: true }),
+    listPath: withCompany(USERS_MASTER),
+    addPath: withCompany(`${USERS_MASTER}/add`),
+    importPath: withCompany(`${USERS_MASTER}/import`),
   }
 }

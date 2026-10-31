@@ -58,6 +58,15 @@ describe('company onboarding drawer', () => {
     expect(screen.getByText('27ABCDE1234F1Z5')).toBeInTheDocument()
   })
 
+  it('opens the onboarding drawer from the Add company button', async () => {
+    renderAt('/admin/companies')
+    await screen.findByText('Asha Rao')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add company' }))
+
+    expect(await screen.findByText('Onboard a company')).toBeInTheDocument()
+  })
+
   it('onboards a company from a drawer: its name and profile, no vendor choice', async () => {
     renderAt('/admin/companies/new')
 

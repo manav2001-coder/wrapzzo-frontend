@@ -79,7 +79,6 @@ export function AppRoutes() {
           {/* Admin module -- add a new module by adding its route tree here and its entry in components/sidebar-nav-config.tsx */}
           <Route path="/admin" element={<Navigate to="/admin/companies" replace />} />
           <Route path="/admin/companies" element={<Guard permission={P.PLATFORM_COMPANY_VIEW}><CompanyListPage /></Guard>} />
-          <Route path="/admin/companies/new" element={<Guard permission={P.PLATFORM_COMPANY_CREATE}><CompanyListPage /></Guard>} />
           <Route path="/admin/companies/:id" element={<Guard permission={P.PLATFORM_COMPANY_VIEW}><CompanyListPage /></Guard>} />
 
           <Route path="/admin/vendors" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />

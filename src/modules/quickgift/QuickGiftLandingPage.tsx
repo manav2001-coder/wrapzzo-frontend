@@ -74,7 +74,7 @@ export function QuickGiftLandingPage() {
         id: 'giftName',
         accessorKey: 'giftName',
         header: t('landing.column.gift'),
-        meta: { className: 'min-w-[200px]', align: 'left' },
+        meta: { className: 'min-w-[200px]' },
         cell: ({ row }) => (
           <button type="button" className="truncate font-medium hover:underline" onClick={() => setViewingId(row.original.id)}>
             {row.original.giftName}
@@ -88,7 +88,7 @@ export function QuickGiftLandingPage() {
         accessorKey: 'quantity',
         header: t('landing.column.quantity'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[70px]', align: 'right' },
+        meta: { className: 'min-w-[70px]' },
       },
       {
         id: 'vendorName',

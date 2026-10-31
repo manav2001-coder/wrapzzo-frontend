@@ -149,14 +149,14 @@ function WarehouseOrdersTab() {
     }
 
     return [
-      { id: 'displayId', accessorKey: 'displayId', header: 'Order', meta: { className: 'min-w-[100px]', align: 'left' } },
+      { id: 'displayId', accessorKey: 'displayId', header: 'Order', meta: { className: 'min-w-[100px]' } },
       { id: 'giftName', accessorFn: (o) => o.giftName ?? '', header: 'Item', meta: { className: 'min-w-[160px]' } },
       {
         id: 'quantity',
         accessorKey: 'quantity',
         header: 'Qty',
         enableColumnFilter: false,
-        meta: { className: 'min-w-[70px]', align: 'right' },
+        meta: { className: 'min-w-[70px]' },
       },
       {
         id: 'recipientName',
@@ -285,7 +285,7 @@ function WarehouseSetupTab({ onEdit }: { onEdit: (warehouse: Warehouse) => void 
 
   const columns = useMemo<ColumnDef<Warehouse, unknown>[]>(
     () => [
-      { id: 'name', accessorKey: 'name', header: 'Warehouse', meta: { className: 'min-w-[180px]', align: 'left' } },
+      { id: 'name', accessorKey: 'name', header: 'Warehouse', meta: { className: 'min-w-[180px]' } },
       {
         id: 'orgUnitName',
         accessorFn: (w) => w.orgUnitName ?? 'Whole company',

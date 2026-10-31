@@ -66,9 +66,9 @@ export function GiftListPage() {
         id: 'name',
         accessorKey: 'name',
         header: t('gifts.column.gift'),
-        meta: { className: 'min-w-[240px]', align: 'left' },
+        meta: { className: 'min-w-[240px]' },
         cell: ({ row }) => (
-          <Link to={`/admin/gifts/${row.original.id}`} className="flex items-center gap-2.5 font-medium hover:underline">
+          <Link to={`/admin/gifts/${row.original.id}`} className="flex items-center justify-center gap-2.5 font-medium hover:underline">
             <GiftThumbnail gift={row.original} />
             <span className="truncate">{row.original.name}</span>
           </Link>
@@ -93,7 +93,7 @@ export function GiftListPage() {
         accessorKey: 'price',
         header: t('gifts.column.price'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[120px]', align: 'right' },
+        meta: { className: 'min-w-[120px]' },
         cell: ({ row }) => formatCurrency(row.original.price),
       },
       {
@@ -101,7 +101,7 @@ export function GiftListPage() {
         accessorKey: 'totalPrice',
         header: t('gifts.column.total'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[120px]', align: 'right' },
+        meta: { className: 'min-w-[120px]' },
         cell: ({ row }) => <span className="font-semibold">{formatCurrency(row.original.totalPrice)}</span>,
       },
       {

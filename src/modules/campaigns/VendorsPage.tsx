@@ -89,7 +89,7 @@ export function VendorsPage() {
 
   const columns = useMemo<ColumnDef<CompanyVendor, unknown>[]>(
     () => [
-      { id: 'vendorName', accessorKey: 'vendorName', header: 'Vendor', meta: { className: 'min-w-[200px]', align: 'left' } },
+      { id: 'vendorName', accessorKey: 'vendorName', header: 'Vendor', meta: { className: 'min-w-[200px]' } },
       {
         id: 'orgUnitName',
         accessorFn: (v) => v.orgUnitName ?? 'Whole company',

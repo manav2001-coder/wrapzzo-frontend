@@ -84,9 +84,9 @@ export function RolesPage() {
         id: 'name',
         accessorKey: 'name',
         header: t('roles.column.name'),
-        meta: { className: 'min-w-[200px]', align: 'left' },
+        meta: { className: 'min-w-[200px]' },
         cell: ({ row }) => (
-          <span className="flex items-center gap-2 font-medium">
+          <span className="flex items-center justify-center gap-2 font-medium">
             {row.original.name}
             {row.original.protectedRole && <Badge variant="secondary">{t('roles.protectedBadge')}</Badge>}
           </span>

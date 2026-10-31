@@ -136,9 +136,9 @@ export function OrdersPage() {
         id: 'giftName',
         accessorFn: (order) => order.giftName ?? '',
         header: t('column.gift'),
-        meta: { className: 'min-w-[180px]', align: 'left' },
+        meta: { className: 'min-w-[180px]' },
         cell: ({ row }) => (
-          <span className="flex items-center gap-2">
+          <span className="flex items-center justify-center gap-2">
             <span className="truncate">{row.original.giftName ?? '-'}</span>
             {row.original.hasPendingDesignReview && (
               <Palette className="h-3.5 w-3.5 shrink-0 text-warning" aria-label={t('needsReview')} />
@@ -151,7 +151,7 @@ export function OrdersPage() {
         accessorKey: 'totalPrice',
         header: t('column.total'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[110px]', align: 'right' },
+        meta: { className: 'min-w-[110px]' },
         cell: ({ row }) => formatCurrency(row.original.totalPrice),
       },
       {
@@ -161,7 +161,7 @@ export function OrdersPage() {
         meta: { className: 'min-w-[170px]' },
         cell: ({ row }) =>
           row.original.assignedVendorName ? (
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center justify-center gap-1.5">
               <span className="truncate">{row.original.assignedVendorName}</span>
               {row.original.assignmentMode === 'AUTO' && <Badge variant="outline">{t('auto')}</Badge>}
             </span>

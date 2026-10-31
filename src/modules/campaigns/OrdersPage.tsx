@@ -88,7 +88,7 @@ export function OrdersPage() {
         id: 'giftName',
         accessorFn: (order) => order.giftName ?? '',
         header: t('column.gift'),
-        meta: { className: 'min-w-[220px]', align: 'left' },
+        meta: { className: 'min-w-[220px]' },
         cell: ({ row }) => (
           <button type="button" className="flex min-w-0 items-center gap-2.5 text-left" onClick={() => setOpenId(row.original.id)}>
             {row.original.giftImageUrl ? (
@@ -116,7 +116,7 @@ export function OrdersPage() {
         accessorKey: 'quantity',
         header: t('column.quantity'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[70px]', align: 'right' },
+        meta: { className: 'min-w-[70px]' },
       },
       {
         id: 'assignedVendorName',
@@ -158,7 +158,7 @@ export function OrdersPage() {
         accessorKey: 'totalPrice',
         header: t('column.total'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[110px]', align: 'right' },
+        meta: { className: 'min-w-[110px]' },
         cell: ({ row }) => formatCurrency(row.original.totalPrice),
       },
       {

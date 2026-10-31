@@ -98,7 +98,7 @@ export function CompanyListPage() {
         id: 'name',
         accessorKey: 'name',
         header: t('companies.column.company'),
-        meta: { className: 'min-w-[200px]', align: 'left' },
+        meta: { className: 'min-w-[200px]' },
         cell: ({ row }) => (
           <button type="button" className="truncate font-medium hover:underline" onClick={() => setDrawer(row.original.id)}>
             {row.original.name}

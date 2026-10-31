@@ -102,9 +102,9 @@ export function CompanyUsersPage() {
         id: 'name',
         accessorKey: 'name',
         header: t('users.column.name'),
-        meta: { className: 'min-w-[200px]', align: 'left' },
+        meta: { className: 'min-w-[200px]' },
         cell: ({ row }) => (
-          <span className="flex items-center gap-2.5 font-medium">
+          <span className="flex items-center justify-center gap-2.5 font-medium">
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
               {row.original.name.charAt(0).toUpperCase()}
             </span>
@@ -125,7 +125,7 @@ export function CompanyUsersPage() {
         cell: ({ row }) => {
           const extra = row.original.extraOrgUnits
           return (
-            <span className="flex items-center gap-1.5" title={extra.map((unit) => unit.name).join(', ') || undefined}>
+            <span className="flex items-center justify-center gap-1.5" title={extra.map((unit) => unit.name).join(', ') || undefined}>
               {row.original.companyWide ? <Badge variant="default">{t('users.wholeCompany.badge')}</Badge> : (row.original.orgUnitName ?? '—')}
               {extra.length > 0 && <Badge variant="secondary-soft">{t('users.extraUnits.more', { count: extra.length })}</Badge>}
             </span>

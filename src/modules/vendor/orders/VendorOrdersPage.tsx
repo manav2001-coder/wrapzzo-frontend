@@ -57,7 +57,7 @@ export function VendorOrdersPage() {
         id: 'displayId',
         accessorKey: 'displayId',
         header: t('orders.column.order'),
-        meta: { className: 'min-w-[110px]', align: 'left' },
+        meta: { className: 'min-w-[110px]' },
         cell: ({ row }) => (
           <Link to={`/vendor/orders/${row.original.id}`} className="font-medium text-primary hover:underline">
             {row.original.displayId}
@@ -82,7 +82,7 @@ export function VendorOrdersPage() {
         accessorKey: 'quantity',
         header: t('orders.column.quantity'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[70px]', align: 'right' },
+        meta: { className: 'min-w-[70px]' },
       },
       {
         id: 'stage',

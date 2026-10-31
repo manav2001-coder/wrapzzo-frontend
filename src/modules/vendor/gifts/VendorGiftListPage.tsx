@@ -40,7 +40,7 @@ export function VendorGiftListPage() {
         id: 'name',
         accessorKey: 'name',
         header: t('gifts.column.gift'),
-        meta: { className: 'min-w-[240px]', align: 'left' },
+        meta: { className: 'min-w-[240px]' },
         cell: ({ row }) => (
           <Link to={`/vendor/gifts/${row.original.id}`} className="flex items-center gap-2.5 font-medium hover:underline">
             <GiftThumbnail gift={row.original} />
@@ -61,7 +61,7 @@ export function VendorGiftListPage() {
         accessorKey: 'price',
         header: t('gifts.column.price'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[110px]', align: 'right' },
+        meta: { className: 'min-w-[110px]' },
         cell: ({ row }) => <span className="font-medium">{formatCurrency(row.original.price)}</span>,
       },
       {
@@ -69,7 +69,7 @@ export function VendorGiftListPage() {
         accessorKey: 'leadTimeDays',
         header: t('gifts.column.leadTime'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[100px]', align: 'right' },
+        meta: { className: 'min-w-[100px]' },
         cell: ({ row }) => (row.original.leadTimeDays != null ? t('gifts.days', { count: row.original.leadTimeDays }) : '—'),
       },
       {

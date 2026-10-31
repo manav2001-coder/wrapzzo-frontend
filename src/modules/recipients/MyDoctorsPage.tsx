@@ -164,7 +164,7 @@ export function MyDoctorsPage() {
 
   const columns = useMemo<ColumnDef<Recipient, unknown>[]>(
     () => [
-      { id: 'name', accessorKey: 'name', header: t('field.doctorName'), meta: { className: 'min-w-[180px]', align: 'left' } },
+      { id: 'name', accessorKey: 'name', header: t('field.doctorName'), meta: { className: 'min-w-[180px]' } },
       {
         id: 'registrationNumber',
         accessorFn: (r) => r.doctor?.registrationNumber ?? '',

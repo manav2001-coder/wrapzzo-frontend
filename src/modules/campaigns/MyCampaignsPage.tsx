@@ -83,7 +83,7 @@ export function MyCampaignsPage() {
         id: 'campaignName',
         accessorKey: 'campaignName',
         header: 'Campaign',
-        meta: { className: 'min-w-[200px]', align: 'left' },
+        meta: { className: 'min-w-[200px]' },
         cell: ({ row }) => (
           <button type="button" className="font-medium hover:underline" onClick={() => setViewingId(row.original.id)}>
             {row.original.campaignName}

@@ -53,14 +53,14 @@ export function RecurringPlansTable() {
 
   const columns = useMemo<ColumnDef<RecurringOrderPlan, unknown>[]>(() => {
     return [
-      { id: 'giftName', accessorKey: 'giftName', header: t('landing.column.gift'), meta: { className: 'min-w-[180px]', align: 'left' } },
+      { id: 'giftName', accessorKey: 'giftName', header: t('landing.column.gift'), meta: { className: 'min-w-[180px]' } },
       { id: 'recipientName', accessorKey: 'recipientName', header: t('landing.column.recipient'), meta: { className: 'min-w-[160px]' } },
       {
         id: 'quantity',
         accessorKey: 'quantity',
         header: t('landing.column.quantity'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[70px]', align: 'right' },
+        meta: { className: 'min-w-[70px]' },
       },
       {
         id: 'nextRunOn',
@@ -72,7 +72,7 @@ export function RecurringPlansTable() {
           row.original.status === 'CANCELLED' ? (
             '—'
           ) : (
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center justify-center gap-1.5">
               {formatDate(row.original.nextRunOn)}
               {row.original.lastError && (
                 <span title={row.original.lastError} className="text-warning">
@@ -87,7 +87,7 @@ export function RecurringPlansTable() {
         accessorKey: 'runsCompleted',
         header: t('monthly.column.placed'),
         enableColumnFilter: false,
-        meta: { className: 'min-w-[80px]', align: 'right' },
+        meta: { className: 'min-w-[80px]' },
       },
       {
         id: 'status',

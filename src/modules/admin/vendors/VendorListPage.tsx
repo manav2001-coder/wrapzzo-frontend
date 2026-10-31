@@ -109,7 +109,7 @@ export function VendorListPage() {
         id: 'name',
         accessorKey: 'name',
         header: t('vendors.column.vendor'),
-        meta: { className: 'min-w-[200px]', align: 'left' },
+        meta: { className: 'min-w-[200px]' },
         cell: ({ row }) => (
           <button
             type="button"

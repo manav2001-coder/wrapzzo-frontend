@@ -36,7 +36,7 @@ export function RecipientsPage() {
 
   const columns = useMemo<ColumnDef<Recipient, unknown>[]>(
     () => [
-      { id: 'name', accessorKey: 'name', header: t('field.name'), meta: { className: 'min-w-[180px]', align: 'left' } },
+      { id: 'name', accessorKey: 'name', header: t('field.name'), meta: { className: 'min-w-[180px]' } },
       { id: 'phone', accessorKey: 'phone', header: t('field.phone'), meta: { className: 'min-w-[130px]' } },
       { id: 'email', accessorFn: (r) => r.email ?? '', header: t('field.email'), meta: { className: 'min-w-[180px]' } },
       {

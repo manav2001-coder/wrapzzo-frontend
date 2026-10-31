@@ -1,42 +1,88 @@
-import { Building2, Gift, Package, Truck, Users } from 'lucide-react'
-import { useMemo } from 'react'
+import { ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
-import { MiniBarChart } from '@/components/charts/mini-bar-chart'
-import { SectionCard } from '@/components/section-card'
-import { StatCard } from '@/components/stat-card'
-import { usePlatformDashboard } from '@/hooks/usePlatformDashboard'
-import { humanize } from '@/lib/format'
-import { statusColor } from '@/lib/statusColors'
+import { useAppSelector } from '@/app/hooks'
+import { flattenNavItems } from '@/components/nav/nav-types'
+import { useNav } from '@/components/nav/use-nav'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useCurrentUser } from '@/hooks/use-current-user'
+import { useCurrentLocale } from '@/hooks/use-current-locale'
+import { useUserTimezone } from '@/hooks/use-user-timezone'
+import { formatDateTime, tzAbbreviation } from '@/lib/datetime'
+import { LOCALE_LABELS } from '@/lib/i18n'
 
-/** Wrappzo staff's overview: what the platform serves across every company, and where its orders stand. */
+/**
+ * Wrappzo staff's landing page, MobixFL's General -> Dashboard: who you are signed in as, then the
+ * masters you can actually reach. It reads no data of its own -- the nav already filters by access.
+ */
 export function PlatformDashboardPage() {
-  const { t } = useTranslation('admin')
-  const { data, isLoading } = usePlatformDashboard()
+  const { t } = useTranslation()
+  const email = useAppSelector((state) => state.auth.user?.email ?? null)
+  const { data: user, isLoading } = useCurrentUser()
+  const locale = useCurrentLocale()
+  const timeZone = useUserTimezone()
+  const nav = useNav()
 
-  const pipeline = useMemo(
-    () => Object.entries(data?.ordersByStatus ?? {}).map(([status, value]) => ({ label: humanize(status), value, color: statusColor(status) })),
-    [data],
-  )
+  const destinations = flattenNavItems(nav).filter((item) => item.url?.startsWith('/admin/') && item.id !== 'platform-dashboard')
 
   return (
-    <div className="space-y-6 pb-6">
-      <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 sm:p-6">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('platformDashboard.title')}</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">{t('platformDashboard.subtitle')}</p>
-      </div>
+    <div className="space-y-8 p-6">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight">{email ? `${t('app.name')} · ${email}` : t('app.name')}</h1>
+        <p className="text-muted-foreground">{t('app.tagline')}</p>
+      </header>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatCard title={t('platformDashboard.companies')} value={data?.companies ?? 0} description={t('platformDashboard.companiesActive', { count: data?.activeCompanies ?? 0 })} icon={Building2} color="primary" loading={isLoading} />
-        <StatCard title={t('platformDashboard.vendors')} value={data?.vendors ?? 0} description={t('platformDashboard.vendorsActive', { count: data?.activeVendors ?? 0 })} icon={Truck} loading={isLoading} />
-        <StatCard title={t('platformDashboard.users')} value={data?.users ?? 0} icon={Users} loading={isLoading} />
-        <StatCard title={t('platformDashboard.gifts')} value={data?.gifts ?? 0} description={t('platformDashboard.giftsActive', { count: data?.activeGifts ?? 0 })} icon={Gift} loading={isLoading} />
-        <StatCard title={t('platformDashboard.orders')} value={data?.orders ?? 0} icon={Package} color="success" loading={isLoading} />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t('settings.localisation')}</CardTitle>
+          <CardDescription>
+            {formatDateTime(new Date(), { timeZone })} ({tzAbbreviation(timeZone)})
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading || !user ? (
+            <Skeleton className="h-12 w-full" />
+          ) : (
+            <div className="flex flex-wrap items-center gap-4">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="text-xs">{(email ?? '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <p className="min-w-0 truncate text-sm font-medium">{email}</p>
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                {user.companyName && <Badge variant="outline">{user.companyName}</Badge>}
+                <Badge variant="outline">{LOCALE_LABELS[locale]}</Badge>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      <SectionCard title={t('platformDashboard.pipeline')}>
-        <MiniBarChart data={pipeline} seriesName={t('platformDashboard.ordersSeries')} emptyText={t('platformDashboard.pipelineEmpty')} />
-      </SectionCard>
+      {destinations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('nav.masters')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {destinations.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.url!}
+                  className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm transition-colors hover:bg-muted/50"
+                >
+                  {item.icon && <item.icon className="h-4 w-4 text-muted-foreground" />}
+                  <span className="font-medium">{item.title}</span>
+                  <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

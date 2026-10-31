@@ -1,32 +1,24 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
+import { P } from '@/lib/permissions'
+import { platformStaff } from '@/test/tbac-fixtures'
 import { renderWithProviders, screen } from '@/test/test-utils'
 import { PlatformDashboardPage } from './PlatformDashboardPage'
 
-const getPlatformDashboard = vi.hoisted(() => vi.fn())
-vi.mock('@/api/platformDashboard', () => ({ getPlatformDashboard }))
+const currentUser = vi.hoisted(() => vi.fn())
+vi.mock('@/hooks/use-current-user', async (o) => ({ ...(await o<object>()), useCurrentUser: currentUser }))
 
 describe('PlatformDashboardPage', () => {
-  beforeEach(() => {
-    getPlatformDashboard.mockResolvedValue({
-      companies: 5,
-      activeCompanies: 4,
-      vendors: 3,
-      activeVendors: 2,
-      users: 40,
-      gifts: 12,
-      activeGifts: 10,
-      orders: 10,
-      ordersByStatus: { PROCESSING: 7, DELIVERED: 3 },
+  it('greets the signed-in user and links to the masters they can reach', async () => {
+    currentUser.mockReturnValue(platformStaff([P.PLATFORM_COMPANY_VIEW, P.PLATFORM_VENDOR_VIEW]))
+
+    renderWithProviders(<PlatformDashboardPage />, {
+      preloadedState: { auth: { accessToken: 't', refreshToken: 'r', rememberMe: false, user: { sub: 'u-1', email: 'staff@wrappzo.com' } } },
     })
-  })
 
-  it('shows the platform-wide counts', async () => {
-    renderWithProviders(<PlatformDashboardPage />)
-
-    expect(await screen.findByText('Platform dashboard')).toBeInTheDocument()
-    expect(await screen.findByText('40')).toBeInTheDocument()
-    expect(screen.getByText('4 active')).toBeInTheDocument()
-    expect(screen.getByText('Orders by status')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /Wrappzo · staff@wrappzo.com/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Companies/ })).toHaveAttribute('href', '/admin/companies')
+    expect(screen.getByRole('link', { name: /Vendors/ })).toHaveAttribute('href', '/admin/vendors')
+    expect(screen.queryByRole('link', { name: /Orders/ })).not.toBeInTheDocument()
   })
 })

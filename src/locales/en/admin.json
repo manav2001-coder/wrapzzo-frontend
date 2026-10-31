@@ -473,5 +473,20 @@
   "scope": {
     "company": "Company",
     "placeholder": "Choose a company"
+  },
+  "platformDashboard": {
+    "title": "Platform dashboard",
+    "subtitle": "Everything Wrappzo serves, across every company.",
+    "companies": "Companies",
+    "companiesActive": "{{count}} active",
+    "vendors": "Vendors",
+    "vendorsActive": "{{count}} active",
+    "users": "Users",
+    "gifts": "Gift catalogue",
+    "giftsActive": "{{count}} active",
+    "orders": "Orders",
+    "pipeline": "Orders by status",
+    "pipelineEmpty": "No orders yet",
+    "ordersSeries": "Orders"
   }
 }

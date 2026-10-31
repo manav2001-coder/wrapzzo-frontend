@@ -24,6 +24,7 @@ import { CompanyUsersPage } from '@/modules/admin/companies/CompanyUsersPage'
 import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
 import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
 import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
+import { PlatformDashboardPage } from '@/modules/admin/dashboard/PlatformDashboardPage'
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
 import { ApprovalQueuePage } from '@/modules/campaigns/ApprovalQueuePage'
 import { CampaignDetailPage } from '@/modules/campaigns/CampaignDetailPage'
@@ -78,6 +79,7 @@ export function AppRoutes() {
           */}
           {/* Admin module -- add a new module by adding its route tree here and its entry in components/sidebar-nav-config.tsx */}
           <Route path="/admin" element={<Navigate to="/admin/companies" replace />} />
+          <Route path="/admin/dashboard" element={<Guard permission={P.PLATFORM_DASHBOARD_VIEW}><PlatformDashboardPage /></Guard>} />
           <Route path="/admin/companies" element={<Guard permission={P.PLATFORM_COMPANY_VIEW}><CompanyListPage /></Guard>} />
 
           <Route path="/admin/vendors" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />

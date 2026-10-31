@@ -86,6 +86,8 @@ export const P = {
 
   PLATFORM_ORDER_VIEW: 'platform_order.view',
   PLATFORM_ORDER_MANAGE: 'platform_order.manage',
+
+  PLATFORM_DASHBOARD_VIEW: 'platform_dashboard.view',
 } as const
 
 export type PermissionKey = (typeof P)[keyof typeof P]

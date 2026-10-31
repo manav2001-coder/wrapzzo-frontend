@@ -146,8 +146,17 @@ const COMPANY_GENERAL: NavSource = {
 }
 
 /** Wrappzo platform staff. */
+/** Platform staff's General: the platform dashboard, then the entries everyone shares. */
+const ADMIN_GENERAL: NavSource = {
+  ...GENERAL,
+  children: [
+    { id: 'platform-dashboard', titleKey: 'nav.dashboard', type: 'item', url: '/admin/dashboard', end: true, icon: LayoutDashboard, permission: P.PLATFORM_DASHBOARD_VIEW },
+    ...(GENERAL.children ?? []),
+  ],
+}
+
 export const ADMIN_NAV: NavSource[] = [
-  GENERAL,
+  ADMIN_GENERAL,
   ADMIN_MASTERS_NAV,
   {
     id: 'operations',

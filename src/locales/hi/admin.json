@@ -473,5 +473,20 @@
   "scope": {
     "company": "कंपनी",
     "placeholder": "कंपनी चुनें"
+  },
+  "platformDashboard": {
+    "title": "प्लेटफ़ॉर्म डैशबोर्ड",
+    "subtitle": "सभी कंपनियों में Wrappzo जो कुछ संभालता है।",
+    "companies": "कंपनियाँ",
+    "companiesActive": "{{count}} सक्रिय",
+    "vendors": "वेंडर",
+    "vendorsActive": "{{count}} सक्रिय",
+    "users": "उपयोगकर्ता",
+    "gifts": "गिफ़्ट कैटलॉग",
+    "giftsActive": "{{count}} सक्रिय",
+    "orders": "ऑर्डर",
+    "pipeline": "स्थिति के अनुसार ऑर्डर",
+    "pipelineEmpty": "अभी कोई ऑर्डर नहीं",
+    "ordersSeries": "ऑर्डर"
   }
 }

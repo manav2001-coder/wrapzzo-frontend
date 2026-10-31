@@ -19,7 +19,7 @@ function renderAt(route: string, signedIn = true) {
         <Route path="/admin/*" element={<h1>Admin</h1>} />
         <Route path="/dashboard" element={<h1>Dashboard</h1>} />
         <Route path="/settings" element={<h1>Settings</h1>} />
-        <Route path="/access/*" element={<h1>Access control</h1>} />
+        <Route path="/tbac/*" element={<h1>Access control</h1>} />
         <Route path="/masters/*" element={<h1>Masters</h1>} />
       </Route>
     </Routes>,
@@ -56,7 +56,7 @@ describe('ProtectedRoute', () => {
 
   it('leaves the access-control screens to platform staff and company admins alike', () => {
     useCurrentUser.mockReturnValue(profile(null))
-    renderAt('/access/roles')
+    renderAt('/tbac/feature-master')
     expect(screen.getByRole('heading', { name: 'Access control' })).toBeInTheDocument()
   })
 

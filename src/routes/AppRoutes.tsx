@@ -4,16 +4,18 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
 import { ProtectedRoute as Guard } from '@/components/access-control/protected-route'
 import { P } from '@/lib/permissions'
-import { FeatureMasterPage } from '@/modules/admin/access-control/FeatureMasterPage'
-import { FeaturesToTemplateAssignPage } from '@/modules/admin/access-control/FeaturesToTemplateAssignPage'
-import { FeaturesToTemplatePage } from '@/modules/admin/access-control/FeaturesToTemplatePage'
-import { RoleToTemplateAssignPage } from '@/modules/admin/access-control/RoleToTemplateAssignPage'
-import { RoleToTemplatePage } from '@/modules/admin/access-control/RoleToTemplatePage'
-import { TemplatesPage } from '@/modules/admin/access-control/TemplatesPage'
-import { TemplatesToTemplateAssignPage } from '@/modules/admin/access-control/TemplatesToTemplateAssignPage'
-import { TemplatesToTemplatePage } from '@/modules/admin/access-control/TemplatesToTemplatePage'
-import { UserToTemplateAssignPage } from '@/modules/admin/access-control/UserToTemplateAssignPage'
-import { UserToTemplatePage } from '@/modules/admin/access-control/UserToTemplatePage'
+import BulkUserTemplateAssignPage from '@/pages/tbac/BulkUserTemplateAssign'
+import FeatureMasterPage from '@/pages/tbac/FeatureMaster'
+import FeaturesToTemplatePage from '@/pages/tbac/FeaturesToTemplate'
+import FeaturesToTemplateAssignPage from '@/pages/tbac/FeaturesToTemplateAssign'
+import RoleTemplateAssignPage from '@/pages/tbac/RoleTemplateAssign'
+import RoleTemplatesPage from '@/pages/tbac/RoleTemplates'
+import TemplateMasterPage from '@/pages/tbac/TemplateMaster'
+import TemplateMasterFormPage from '@/pages/tbac/TemplateMasterForm'
+import TemplatesToTemplatePage from '@/pages/tbac/TemplatesToTemplate'
+import TemplatesToTemplateAssignPage from '@/pages/tbac/TemplatesToTemplateAssign'
+import UserTemplateAssignPage from '@/pages/tbac/UserTemplateAssign'
+import UserTemplatesPage from '@/pages/tbac/UserTemplates'
 import { RolesPage } from '@/modules/admin/roles/RolesPage'
 import { CompanyFormPage } from '@/modules/admin/companies/CompanyFormPage'
 import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
@@ -23,7 +25,6 @@ import { CompanyUsersPage } from '@/modules/admin/companies/CompanyUsersPage'
 import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
 import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
 import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
-import { VendorMappingPage } from '@/modules/admin/vendors/VendorMappingPage'
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
 import { ApprovalQueuePage } from '@/modules/campaigns/ApprovalQueuePage'
 import { CampaignDetailPage } from '@/modules/campaigns/CampaignDetailPage'
@@ -84,7 +85,6 @@ export function AppRoutes() {
 
           <Route path="/admin/vendors" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
           <Route path="/admin/vendors/:id" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
-          <Route path="/admin/vendor-mapping" element={<Guard permission={P.PLATFORM_COMPANY_CONFIGURE}><VendorMappingPage /></Guard>} />
 
           <Route path="/admin/gifts" element={<Guard permission={P.PLATFORM_PRODUCT_VIEW}><GiftListPage /></Guard>} />
           <Route path="/admin/gifts/new" element={<Guard permission={P.PLATFORM_PRODUCT_CREATE}><GiftFormPage /></Guard>} />
@@ -92,17 +92,21 @@ export function AppRoutes() {
 
           <Route path="/admin/orders" element={<Guard permission={P.PLATFORM_ORDER_VIEW}><OrdersPage /></Guard>} />
 
-          {/* Access control (TBAC): shared by platform staff and company admins, who each work on their own scope. */}
-          <Route path="/access/features" element={<Guard permission={P.TEMPLATE_VIEW}><FeatureMasterPage /></Guard>} />
-          <Route path="/access/templates" element={<Guard permission={P.TEMPLATE_VIEW}><TemplatesPage /></Guard>} />
-          <Route path="/access/features-to-template" element={<Guard permission={P.TEMPLATE_VIEW}><FeaturesToTemplatePage /></Guard>} />
-          <Route path="/access/features-to-template/:templateId" element={<Guard permission={P.TEMPLATE_VIEW}><FeaturesToTemplateAssignPage /></Guard>} />
-          <Route path="/access/templates-to-template" element={<Guard permission={P.TEMPLATE_VIEW}><TemplatesToTemplatePage /></Guard>} />
-          <Route path="/access/templates-to-template/:templateId" element={<Guard permission={P.TEMPLATE_VIEW}><TemplatesToTemplateAssignPage /></Guard>} />
-          <Route path="/access/role-templates" element={<Guard permission={P.ROLE_VIEW}><RoleToTemplatePage /></Guard>} />
-          <Route path="/access/role-templates/:roleId" element={<Guard permission={P.ROLE_VIEW}><RoleToTemplateAssignPage /></Guard>} />
-          <Route path="/access/user-templates" element={<Guard permission={P.ACCESS_VIEW}><UserToTemplatePage /></Guard>} />
-          <Route path="/access/user-templates/assign" element={<Guard permission={P.ACCESS_VIEW}><UserToTemplateAssignPage /></Guard>} />
+          {/* Access Control (TBAC), MobixFL's screens: the masters, then the four assignments. */}
+          <Route path="/tbac/feature-master" element={<Guard permission={P.TBAC_FEATURE_MASTER_VIEW}><FeatureMasterPage /></Guard>} />
+          <Route path="/tbac/template-master" element={<Guard permission={P.TBAC_TEMPLATE_MASTER_VIEW}><TemplateMasterPage /></Guard>} />
+          <Route path="/tbac/template-master/create" element={<Guard permission={P.TBAC_TEMPLATE_MASTER_ADD}><TemplateMasterFormPage mode="create" /></Guard>} />
+          <Route path="/tbac/template-master/edit/:id" element={<Guard permission={P.TBAC_TEMPLATE_MASTER_EDIT}><TemplateMasterFormPage mode="edit" /></Guard>} />
+          <Route path="/tbac/template-master/view/:id" element={<Guard permission={P.TBAC_TEMPLATE_MASTER_VIEW}><TemplateMasterFormPage mode="view" /></Guard>} />
+          <Route path="/tbac/features-to-template" element={<Guard permission={P.TBAC_FEATURES_TO_TEMPLATE_MANAGE}><FeaturesToTemplatePage /></Guard>} />
+          <Route path="/tbac/features-to-template/:templateId" element={<Guard permission={P.TBAC_FEATURES_TO_TEMPLATE_MANAGE}><FeaturesToTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/templates-to-template" element={<Guard permission={P.TBAC_TEMPLATES_TO_TEMPLATE_MANAGE}><TemplatesToTemplatePage /></Guard>} />
+          <Route path="/tbac/templates-to-template/:templateId" element={<Guard permission={P.TBAC_TEMPLATES_TO_TEMPLATE_MANAGE}><TemplatesToTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/assignments/users/bulk-assign" element={<Guard permission={P.TBAC_BULK_ASSIGN_USER_TEMPLATES}><BulkUserTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/assignments/users" element={<Guard permission={P.TBAC_USER_TEMPLATE_MANAGE}><UserTemplatesPage /></Guard>} />
+          <Route path="/tbac/assignments/users/:userId" element={<Guard permission={P.TBAC_USER_TEMPLATE_MANAGE}><UserTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/assignments/roles" element={<Guard permission={P.TBAC_ROLE_TEMPLATE_MANAGE}><RoleTemplatesPage /></Guard>} />
+          <Route path="/tbac/assignments/roles/:roleId" element={<Guard permission={P.TBAC_ROLE_TEMPLATE_MANAGE}><RoleTemplateAssignPage /></Guard>} />
 
           {/* Campaigns module -- company-side, PRD Part 2.5. Peer of /admin, not nested under it. */}
           <Route path="/dashboard" element={<Guard permission={P.DASHBOARD_VIEW}><DashboardPage /></Guard>} />

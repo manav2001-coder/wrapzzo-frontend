@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createRole, deleteRole, listRoles, replaceRoleTemplates, updateRole, type RoleInput } from '@/api/roles'
+import { createRole, deleteRole, listRoles, updateRole, type RoleInput } from '@/api/roles'
 
 export function useRoles(companyId: string | undefined) {
   return useQuery({
@@ -16,7 +16,6 @@ function useRoleMutation<TVariables, TResult>(companyId: string, mutationFn: (va
     mutationFn,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['roles', companyId] })
-      void queryClient.invalidateQueries({ queryKey: ['templates', companyId] })
       void queryClient.invalidateQueries({ queryKey: ['me'] })
     },
   })
@@ -28,12 +27,6 @@ export function useCreateRole(companyId: string) {
 
 export function useUpdateRole(companyId: string) {
   return useRoleMutation(companyId, ({ roleId, input }: { roleId: string; input: RoleInput }) => updateRole(companyId, roleId, input))
-}
-
-export function useReplaceRoleTemplates(companyId: string) {
-  return useRoleMutation(companyId, ({ roleId, templateIds }: { roleId: string; templateIds: string[] }) =>
-    replaceRoleTemplates(companyId, roleId, templateIds),
-  )
 }
 
 export function useDeleteRole(companyId: string) {

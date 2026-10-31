@@ -1,5 +1,11 @@
 import {
   BadgeCheck,
+  ClipboardList,
+  KeyRound,
+  Layers,
+  Link2,
+  ShieldHalf,
+  UserCog,
   Blocks,
   Building2,
   Contact,
@@ -84,17 +90,32 @@ const MASTERS_NAV: NavSource = {
  * the features and templates they are built from, then who gets what (roles and users are in Masters).
  */
 const TBAC_NAV: NavSource = {
-  id: 'tbac',
+  id: 'group-tbac',
   titleKey: 'nav.accessControl',
-  type: 'collapse',
-  icon: ShieldCheck,
+  type: 'group',
   children: [
-    { id: 'tbac-features', titleKey: 'nav.featureMaster', type: 'item', url: '/access/features', icon: ListChecks, permission: P.TEMPLATE_VIEW },
-    { id: 'tbac-templates', titleKey: 'nav.templateMaster', type: 'item', url: '/access/templates', icon: ShieldCheck, permission: P.TEMPLATE_VIEW },
-    { id: 'tbac-features-to-template', titleKey: 'nav.featuresToTemplate', type: 'item', url: '/access/features-to-template', icon: ListChecks, permission: P.TEMPLATE_VIEW },
-    { id: 'tbac-templates-to-template', titleKey: 'nav.templatesToTemplate', type: 'item', url: '/access/templates-to-template', icon: ShieldCheck, permission: P.TEMPLATE_VIEW },
-    { id: 'tbac-role-templates', titleKey: 'nav.roleToTemplate', type: 'item', url: '/access/role-templates', icon: BadgeCheck, permission: P.ROLE_VIEW },
-    { id: 'tbac-user-templates', titleKey: 'nav.userToTemplate', type: 'item', url: '/access/user-templates', icon: Users, permission: P.ACCESS_VIEW },
+    {
+      id: 'management',
+      titleKey: 'nav.tbac',
+      type: 'collapse',
+      icon: ShieldHalf,
+      children: [
+        { id: 'feature-master', titleKey: 'nav.featureMaster', type: 'item', url: '/tbac/feature-master', icon: KeyRound, permission: P.TBAC_FEATURE_MASTER_VIEW },
+        { id: 'template-master', titleKey: 'nav.templateMaster', type: 'item', url: '/tbac/template-master', end: true, icon: Layers, permission: P.TBAC_TEMPLATE_MASTER_VIEW },
+        {
+          id: 'assignments',
+          titleKey: 'nav.assignments',
+          type: 'collapse',
+          icon: ClipboardList,
+          children: [
+            { id: 'features-to-template-manage', titleKey: 'nav.featuresToTemplate', type: 'item', url: '/tbac/features-to-template', end: true, icon: KeyRound, permission: P.TBAC_FEATURES_TO_TEMPLATE_MANAGE },
+            { id: 'template-to-template-manage', titleKey: 'nav.templatesToTemplate', type: 'item', url: '/tbac/templates-to-template', end: true, icon: Link2, permission: P.TBAC_TEMPLATES_TO_TEMPLATE_MANAGE },
+            { id: 'user-templates', titleKey: 'nav.templatesToUser', type: 'item', url: '/tbac/assignments/users', end: true, icon: UserCog, permission: P.TBAC_USER_TEMPLATE_MANAGE },
+            { id: 'role-templates', titleKey: 'nav.templatesToRole', type: 'item', url: '/tbac/assignments/roles', end: true, icon: ShieldCheck, permission: P.TBAC_ROLE_TEMPLATE_MANAGE },
+          ],
+        },
+      ],
+    },
   ],
 }
 
@@ -107,7 +128,6 @@ export const ADMIN_NAV: NavSource[] = [
     children: [
       { id: 'companies', titleKey: 'nav.companies', type: 'item', url: '/admin/companies', icon: Building2, permission: P.PLATFORM_COMPANY_VIEW },
       { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: P.PLATFORM_VENDOR_VIEW },
-      { id: 'vendor-mapping', titleKey: 'nav.vendorMapping', type: 'item', url: '/admin/vendor-mapping', icon: Truck, permission: P.PLATFORM_COMPANY_CONFIGURE },
       { id: 'gift-catalogue', titleKey: 'nav.giftCatalogue', type: 'item', url: '/admin/gifts', icon: Gift, permission: P.PLATFORM_PRODUCT_VIEW },
       { id: 'platform-orders', titleKey: 'nav.orders', type: 'item', url: '/admin/orders', icon: ShoppingBag, permission: P.PLATFORM_ORDER_VIEW },
     ],

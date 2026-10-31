@@ -436,5 +436,9 @@
       "serves": "Serves",
       "status": "Status"
     }
+  },
+  "scope": {
+    "company": "Company",
+    "placeholder": "Choose a company"
   }
 }

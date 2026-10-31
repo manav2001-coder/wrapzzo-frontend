@@ -1,27 +1,27 @@
+import { useCompanyScope } from '@/components/masters/company-scope-select'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { useCompany } from '@/hooks/useCompanies'
-import { useAccessCompany } from '@/hooks/useAccessCompany'
 
 const USERS_MASTER = '/masters/users'
 
 /**
- * The Users master (list, add, import) serves two audiences from the same screens: a company
- * admin manages their own company's roster, and platform staff work on the company picked in the
- * scope bar (the first by default), carried in the URL as `?company=` so the add and import
- * screens stay on it. This resolves the company and builds every link the pages need.
+ * The Users master (list, add, import) serves two audiences from the same screens: a company admin
+ * manages their own company's roster, and platform staff work on the company in the scope picker
+ * (the first by default, remembered across screens). This resolves the company and the links the
+ * pages need.
  */
 export function useCompanyUserContext() {
-  const { companyId, isPlatformStaff, setPicked, scoped } = useAccessCompany()
-  const { data: company } = useCompany(isPlatformStaff ? companyId : undefined)
+  const scope = useCompanyScope()
   const { data: me } = useCurrentUser()
+  const companyId = scope.visible ? (scope.companyId ?? '') : (me?.companyId ?? '')
+  const { data: company } = useCompany(scope.visible && companyId ? companyId : undefined)
 
   return {
-    companyId: companyId ?? '',
-    companyName: isPlatformStaff ? company?.name : (me?.companyName ?? undefined),
-    isPlatformStaff,
-    setCompany: setPicked,
-    listPath: scoped(USERS_MASTER),
-    addPath: scoped(`${USERS_MASTER}/add`),
-    importPath: scoped(`${USERS_MASTER}/import`),
+    companyId,
+    companyName: scope.visible ? company?.name : (me?.companyName ?? undefined),
+    scope,
+    listPath: USERS_MASTER,
+    addPath: `${USERS_MASTER}/add`,
+    importPath: `${USERS_MASTER}/import`,
   }
 }

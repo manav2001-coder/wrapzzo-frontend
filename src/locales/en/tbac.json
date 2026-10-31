@@ -1,0 +1,206 @@
+{
+  "featureMaster": {
+    "title": "Feature Master",
+    "subtitle": "Every permission this company has registered. Templates are built from these.",
+    "bulkRegister": "Register features",
+    "fields": {
+      "moduleName": "Module",
+      "key": "Feature key",
+      "actionName": "Action",
+      "description": "Description",
+      "active": "Active",
+      "platform": "Platform"
+    },
+    "empty": "No features registered yet",
+    "emptyBody": "Register the ones this company uses and they become available to every template.",
+    "activate": {
+      "title": "Activate feature?",
+      "body": "It becomes assignable to templates again, and anyone holding a template that already includes it regains access."
+    },
+    "deactivate": {
+      "title": "Deactivate feature?",
+      "body": "Access to it is revoked everywhere at once, including for templates that already include it. Nothing is deleted - reactivate to restore."
+    },
+    "activated": "Feature activated",
+    "deactivated": "Feature deactivated"
+  },
+  "bulkRegister": {
+    "title": "Register features",
+    "subtitle": "Pick what this company uses. Registering again later never duplicates or reactivates anything.",
+    "selectAll": "Select all",
+    "deselectAll": "Clear selection",
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected",
+    "moduleCount_one": "{{count}} feature",
+    "moduleCount_other": "{{count}} features",
+    "submit": "Register",
+    "submitting": "Registering…",
+    "result": "Registered {{registered}}, skipped {{skipped}} already present",
+    "nothingSelected": "Select at least one feature"
+  },
+  "templateMaster": {
+    "title": "Template Master",
+    "subtitle": "Reusable permission bundles. Everything a role or user can do comes from these.",
+    "create": "Create template",
+    "editTitle": "Edit template",
+    "viewTitle": "Template details",
+    "createTitle": "Create template",
+    "fields": {
+      "name": "Template name",
+      "templateKey": "Template key",
+      "templateKeyHelp": "Generated from the name when the template is created, and kept even if you rename it.",
+      "description": "Description",
+      "icon": "Icon",
+      "path": "Path",
+      "active": "Active",
+      "features": "Features",
+      "addedBy": "Added by",
+      "addedOn": "Added on",
+      "updatedBy": "Updated by",
+      "updatedOn": "Updated on"
+    },
+    "created": "Template created",
+    "updated": "Template updated",
+    "activated": "Template activated",
+    "deactivated": "Template deactivated",
+    "activate": {
+      "title": "Activate template?",
+      "body": "Anyone it is assigned to regains everything it grants."
+    },
+    "deactivate": {
+      "title": "Deactivate template?",
+      "body": "Everyone holding it loses what it grants. Nothing is deleted - reactivate to restore."
+    },
+    "empty": "No templates yet",
+    "emptyBody": "Create one, add features to it, then assign it to a role or a user."
+  },
+  "quickCreate": {
+    "title": "Quick create module templates",
+    "subtitle": "Create a ready-made template per module, pre-filled with that module's features.",
+    "available_one": "{{count}} module available",
+    "available_other": "{{count}} modules available",
+    "none": "Every module already has a template.",
+    "createAll": "Create all",
+    "creating": "Creating…",
+    "resultTitle": "Quick create results",
+    "created_one": "{{module}} - {{count}} feature assigned",
+    "created_other": "{{module}} - {{count}} features assigned",
+    "failed": "{{module}} - {{error}}",
+    "successHeading": "Created ({{count}})",
+    "failureHeading": "Failed ({{count}})",
+    "oneCreated_one": "Created {{module}} with {{count}} feature",
+    "oneCreated_other": "Created {{module}} with {{count}} features"
+  },
+  "quickAdd": {
+    "add_one": "Add {{count}} available {{module}} feature",
+    "add_other": "Add {{count}} available {{module}} features",
+    "notAvailable": "This template's name doesn't match a module, so there's nothing to quick-add.",
+    "noneRegistered": "No {{module}} features are registered yet.",
+    "allAssigned": "Every {{module}} feature is already on this template.",
+    "added_one": "Added {{count}} {{module}} feature",
+    "added_other": "Added {{count}} {{module}} features"
+  },
+  "featuresToTemplate": {
+    "title": "Features to Template",
+    "subtitle": "Choose which features each template grants.",
+    "assignedCount_one": "{{count}} feature",
+    "assignedCount_other": "{{count}} features",
+    "noneAssigned": "No features",
+    "manage": "Manage features",
+    "expand": "Expand to quick-add features",
+    "collapse": "Collapse"
+  },
+  "templatesToTemplate": {
+    "title": "Templates to Template",
+    "subtitle": "Let one template include another's features. Included templates are resolved recursively.",
+    "manage": "Manage included templates",
+    "heading": "Included templates",
+    "add": "Include template",
+    "select": "Select templates to include",
+    "empty": "This template doesn't include any others.",
+    "added": "Templates included",
+    "removed": "Template removed",
+    "partial": "{{added}} of {{total}} included"
+  },
+  "userTemplates": {
+    "title": "Templates to User",
+    "subtitle": "Grant a template straight to one person, on top of whatever their roles give them.",
+    "manage": "Manage templates",
+    "heading": "Assigned templates",
+    "select": "Select templates",
+    "empty": "No templates assigned. This user only has what their roles grant.",
+    "assigned": "Templates assigned",
+    "removed": "Template removed",
+    "bulkAssign": "Bulk assign templates",
+    "bulkAssignHint": "Select two or more users to assign in bulk"
+  },
+  "roleTemplates": {
+    "title": "Templates to Role",
+    "subtitle": "Everything a role grants comes from the templates attached here.",
+    "manage": "Manage templates",
+    "heading": "Assigned templates",
+    "select": "Select templates",
+    "empty": "No templates attached. This role grants nothing yet.",
+    "assigned": "Templates assigned",
+    "removed": "Template removed"
+  },
+  "bulkAssign": {
+    "title": "Bulk assign templates",
+    "selectedUsers": "Selected users",
+    "usersSelected_one": "{{count}} user",
+    "usersSelected_other": "{{count}} users",
+    "noUsers": "No users selected",
+    "noUsersBody": "Go back and select the users you want to assign templates to.",
+    "submit_one": "Assign to {{count}} user",
+    "submit_other": "Assign to {{count}} users",
+    "submitting": "Assigning…",
+    "resultTitle": "Assignment results",
+    "totalUsers": "Users processed",
+    "successful": "Succeeded",
+    "created": "Assignments created",
+    "skipped": "Already had it",
+    "perUser": "Per user",
+    "userAdded_one": "{{count}} added",
+    "userAdded_other": "{{count}} added",
+    "userSkipped_one": "{{count}} already held",
+    "userSkipped_other": "{{count}} already held",
+    "done": "Done"
+  },
+  "transfer": {
+    "available": "Available",
+    "assigned": "Assigned",
+    "direct": "Direct ({{count}})",
+    "inherited": "Inherited ({{count}})",
+    "inheritedBadge": "Inherited",
+    "inheritedHint": "Comes from an included template - remove it there, not here.",
+    "searchAvailable": "Search available",
+    "searchAssigned": "Search assigned",
+    "add": "Add",
+    "remove": "Remove",
+    "noneAvailable": "Nothing left to add",
+    "noneAssigned": "Nothing assigned yet",
+    "featuresAdded": "Features added",
+    "featuresRemoved": "Features removed"
+  },
+  "effectiveFeatures": {
+    "title": "Effective features",
+    "subtitle": "Everything this template grants - its own features plus everything it inherits.",
+    "total_one": "{{count}} feature",
+    "total_other": "{{count}} features",
+    "directBadge": "{{count}} direct",
+    "inheritedBadge": "{{count}} inherited",
+    "action": "Action: {{action}}",
+    "empty": "This template grants nothing yet."
+  },
+  "errors": {
+    "cycle": "That would create a circular reference between templates.",
+    "loadFailed": "Couldn't load that. Try again.",
+    "selectTemplates": "Select at least one template",
+    "selectFeatures": "Select at least one feature"
+  },
+  "platform": {
+    "all": "All platforms",
+    "web": "Web",
+    "mobile": "Mobile"
+  }
+}

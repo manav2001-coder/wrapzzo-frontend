@@ -9,6 +9,10 @@ import { AppDialog } from "@/components/app-dialog";
 import { Button } from "@/components/ui/button";
 import { Dot } from "@/components/dot";
 import { IconButton } from "@/components/icon-button";
+import { Badge } from "@/components/ui/badge";
+import { formatDateTime } from "@/lib/datetime";
+import { allStatusesFilterOption } from "@/lib/list-filter";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { PermissionRequirement } from "@/lib/permissions";
 
 /**
@@ -74,6 +78,97 @@ export function StatusCell({ active, label }: { active: boolean; label?: string 
       </span>
     </span>
   );
+}
+
+/** Everything a master row has in common, whatever the entity. */
+export interface AuditedRow {
+  id: string;
+  active?: boolean;
+  // Optional so a row type that only ever renders the Status column still satisfies this.
+  addedOn?: string | null;
+  addedByName?: string | null;
+  updatedOn?: string | null;
+  updatedByName?: string | null;
+}
+
+/** The "System" marker on a shared, company-immutable row. */
+export function SystemBadge({ title }: { title?: string }) {
+  const { t } = useTranslation();
+  return (
+    <Badge variant="secondary" title={title}>
+      {t("field.system")}
+    </Badge>
+  );
+}
+
+/**
+ * The `Status` and audit columns every Access Control listing shares (MobixFL's `useAuditColumns`).
+ * `addedColumns` and `updatedColumns` come back separately for Feature Master, which shows only the
+ * added pair.
+ */
+export function useAuditColumns<T extends AuditedRow>(): {
+  statusColumn: ColumnDef<T, unknown>;
+  addedColumns: ColumnDef<T, unknown>[];
+  updatedColumns: ColumnDef<T, unknown>[];
+  auditColumns: ColumnDef<T, unknown>[];
+} {
+  const { t } = useTranslation();
+  const timeZone = useUserTimezone();
+
+  const statusColumn: ColumnDef<T, unknown> = {
+    id: "active",
+    accessorKey: "active",
+    header: t("field.status"),
+    meta: {
+      className: "min-w-[120px]",
+      filterVariant: "select",
+      // The untouched list is the ACTIVE rows; "All" is its own option that asks for both.
+      filterUnsetLabel: t("field.active"),
+      filterOptions: [
+        { value: false, label: t("field.inactive") },
+        allStatusesFilterOption(t("table.filterAll")),
+      ],
+    },
+    cell: ({ row }) => <StatusCell active={row.original.active ?? false} />,
+  };
+
+  const addedColumns: ColumnDef<T, unknown>[] = [
+    {
+      id: "addedOn",
+      accessorKey: "addedOn",
+      header: t("audit.addedOn"),
+      enableColumnFilter: false,
+      meta: { className: "min-w-[160px]" },
+      cell: ({ row }) => formatDateTime(row.original.addedOn, { timeZone }),
+    },
+    {
+      id: "addedByName",
+      accessorKey: "addedByName",
+      header: t("audit.addedBy"),
+      meta: { className: "min-w-[140px]" },
+      cell: ({ row }) => row.original.addedByName ?? "-",
+    },
+  ];
+
+  const updatedColumns: ColumnDef<T, unknown>[] = [
+    {
+      id: "updatedOn",
+      accessorKey: "updatedOn",
+      header: t("audit.updatedOn"),
+      enableColumnFilter: false,
+      meta: { className: "min-w-[160px]" },
+      cell: ({ row }) => formatDateTime(row.original.updatedOn, { timeZone }),
+    },
+    {
+      id: "updatedByName",
+      accessorKey: "updatedByName",
+      header: t("audit.updatedBy"),
+      meta: { className: "min-w-[140px]" },
+      cell: ({ row }) => row.original.updatedByName ?? "-",
+    },
+  ];
+
+  return { statusColumn, addedColumns, updatedColumns, auditColumns: [...addedColumns, ...updatedColumns] };
 }
 
 /**

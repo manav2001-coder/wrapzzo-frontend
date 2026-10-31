@@ -16,7 +16,7 @@
     "vendors": "विक्रेता",
     "giftCatalogue": "गिफ्ट स्टोर",
     "orders": "ऑर्डर",
-    "accessControl": "एक्सेस कंट्रोल",
+    "accessControl": "अभिगम नियंत्रण",
     "dashboard": "डैशबोर्ड",
     "campaigns": "अभियान",
     "campaignsCreate": "बनाएँ",
@@ -36,14 +36,16 @@
     "settings": "सेटिंग्स",
     "menuNames": "मेनू के नाम",
     "roles": "भूमिकाएँ",
-    "featureMaster": "फीचर मास्टर",
+    "featureMaster": "फ़ीचर मास्टर",
     "templateMaster": "टेम्पलेट मास्टर",
-    "featuresToTemplate": "फीचर से टेम्पलेट",
-    "templatesToTemplate": "टेम्पलेट से टेम्पलेट",
-    "roleToTemplate": "भूमिका से टेम्पलेट",
-    "userToTemplate": "उपयोगकर्ता से टेम्पलेट",
+    "featuresToTemplate": "टेम्पलेट में फ़ीचर",
+    "templatesToTemplate": "टेम्पलेट में टेम्पलेट",
     "masters": "मास्टर्स",
-    "vendorMapping": "वेंडर मैपिंग"
+    "vendorMapping": "वेंडर मैपिंग",
+    "tbac": "टेम्पलेट नियंत्रण",
+    "assignments": "नियतन",
+    "templatesToUser": "उपयोगकर्ता को टेम्पलेट",
+    "templatesToRole": "भूमिका को टेम्पलेट"
   },
   "action": {
     "activate": "सक्रिय करें",
@@ -304,5 +306,11 @@
     "reset": "डिफ़ॉल्ट नाम रखें",
     "resetFor": "{{menu}} का डिफ़ॉल्ट नाम रखें",
     "nameFor": "{{menu}} के लिए आपका नाम"
+  },
+  "audit": {
+    "addedOn": "जोड़ा गया",
+    "addedBy": "जोड़ने वाला",
+    "updatedOn": "अपडेट किया गया",
+    "updatedBy": "अपडेट करने वाला"
   }
 }

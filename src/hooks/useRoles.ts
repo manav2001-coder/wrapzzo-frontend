@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createRole, deleteRole, listRoles, updateRole, type RoleInput } from '@/api/roles'
+import { bulkImportRoles, createRole, deleteRole, listRoles, updateRole, type BulkImportRoleRow, type RoleInput } from '@/api/roles'
 
 export function useRoles(companyId: string | undefined) {
   return useQuery({
@@ -27,6 +27,10 @@ export function useCreateRole(companyId: string) {
 
 export function useUpdateRole(companyId: string) {
   return useRoleMutation(companyId, ({ roleId, input }: { roleId: string; input: RoleInput }) => updateRole(companyId, roleId, input))
+}
+
+export function useBulkImportRoles(companyId: string) {
+  return useRoleMutation(companyId, (rows: BulkImportRoleRow[]) => bulkImportRoles(companyId, rows))
 }
 
 export function useDeleteRole(companyId: string) {

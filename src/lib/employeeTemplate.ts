@@ -70,11 +70,11 @@ export interface ParsedEmployeeSheet {
   errors: string[]
 }
 
-function normalizeHeader(value: unknown): string {
+export function normalizeHeader(value: unknown): string {
   return String(value ?? '').trim().toLowerCase()
 }
 
-function cellText(value: unknown): string {
+export function cellText(value: unknown): string {
   if (value === null || value === undefined) return ''
   if (typeof value === 'object' && value !== null && 'text' in value) {
     return String((value as { text: unknown }).text ?? '').trim()

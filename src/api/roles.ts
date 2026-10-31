@@ -28,6 +28,22 @@ export async function listRoles(companyId: string): Promise<Role[]> {
   return data
 }
 
+export interface BulkImportRoleRow {
+  name: string
+  description?: string
+}
+
+export interface BulkImportRolesResult {
+  createdCount: number
+  updatedCount: number
+  roles: Role[]
+}
+
+export async function bulkImportRoles(companyId: string, rows: BulkImportRoleRow[]): Promise<BulkImportRolesResult> {
+  const { data } = await apiClient.post<BulkImportRolesResult>(`${base(companyId)}/bulk-import`, { rows })
+  return data
+}
+
 export async function createRole(companyId: string, input: RoleInput): Promise<Role> {
   const { data } = await apiClient.post<Role>(base(companyId), input)
   return data

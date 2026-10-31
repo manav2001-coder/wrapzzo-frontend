@@ -315,7 +315,20 @@
       "templateCount": "Templates"
     },
     "activated": "Activated {{name}}.",
-    "deactivated": "Deactivated {{name}}."
+    "deactivated": "Deactivated {{name}}.",
+    "import": {
+      "title": "Import roles",
+      "help": "Upload a sheet with a Name column and, optionally, a Description. A role the company already has keeps its place and takes the new description.",
+      "template": "Download template",
+      "drop": "Drop a roles sheet here or click to choose",
+      "unreadable": "This file couldn't be read as an Excel sheet.",
+      "sheetErrors": "Fix these in the sheet",
+      "serverErrors": "The import was refused, nothing was added",
+      "ready": "{{count}} roles ready to import",
+      "confirm": "Import {{count}} roles",
+      "done": "{{created}} added, {{updated}} updated",
+      "button": "Import"
+    }
   },
   "templates": {
     "title": "Access Control",

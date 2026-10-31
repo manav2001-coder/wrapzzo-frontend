@@ -1,11 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { BadgeCheck, Trash2 } from 'lucide-react'
+import { BadgeCheck, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import type { Role } from '@/api/roles'
 import { ConfirmDialog } from '@/components/confirm-dialog'
+import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
 import { EmptyState } from '@/components/empty-state'
@@ -20,6 +21,7 @@ import type { ListFieldMap } from '@/lib/list-fields'
 import { rowsFetcher } from '@/lib/masters-api'
 import { P } from '@/lib/permissions'
 import { RoleDialog } from './RoleDialog'
+import { RolesImportDialog } from './RolesImportDialog'
 
 const LIST_FIELDS: ListFieldMap = { name: 'text', description: 'text', userCount: 'number', addedOn: 'date', addedByName: 'text', updatedOn: 'date', updatedByName: 'text' }
 
@@ -40,6 +42,7 @@ export function RolesPage() {
   const deleteRole = useDeleteRole(companyId ?? '')
   const [editing, setEditing] = useState<Role | 'new' | null>(null)
   const [deleting, setDeleting] = useState<Role | null>(null)
+  const [importing, setImporting] = useState(false)
 
   async function run(action: () => Promise<unknown>, message: string) {
     try {
@@ -105,7 +108,17 @@ export function RolesPage() {
         description={t('roles.subtitle')}
         createLabel={t('roles.new')}
         createPermission={P.ROLE_EDIT}
-        extra={scope.control}
+        extra={
+          <>
+            {scope.control}
+            {canEdit && companyId && (
+              <Button variant="outline" onClick={() => setImporting(true)}>
+                <Upload className="mr-1.5 h-4 w-4" />
+                {t('roles.import.button')}
+              </Button>
+            )}
+          </>
+        }
         onCreate={companyId ? () => setEditing('new') : undefined}
       />
       {!companyId ? (
@@ -126,6 +139,7 @@ export function RolesPage() {
         />
       )}
       {deactivateDialog}
+      {companyId && <RolesImportDialog companyId={companyId} open={importing} onOpenChange={setImporting} />}
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}

@@ -147,8 +147,8 @@ const COMPANY_GENERAL: NavSource = {
 
 /** Wrappzo platform staff. */
 export const ADMIN_NAV: NavSource[] = [
-  ADMIN_MASTERS_NAV,
   GENERAL,
+  ADMIN_MASTERS_NAV,
   {
     id: 'operations',
     titleKey: 'nav.operations',
@@ -167,8 +167,8 @@ export const ADMIN_NAV: NavSource[] = [
  * than inside it: they are independent workflows, not part of building or running a campaign.
  */
 export const COMPANY_NAV: NavSource[] = [
-  MASTERS_NAV,
   COMPANY_GENERAL,
+  MASTERS_NAV,
   {
     id: 'operations',
     titleKey: 'nav.operations',

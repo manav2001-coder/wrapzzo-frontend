@@ -66,8 +66,6 @@ export const P = {
   WAREHOUSE_SETUP: 'warehouse.setup',
   WAREHOUSE_OPERATE: 'warehouse.operate',
 
-  MENU_EDIT: 'menu.edit',
-
   PLATFORM_COMPANY_VIEW: 'platform_company.view',
   PLATFORM_COMPANY_CREATE: 'platform_company.create',
   PLATFORM_COMPANY_EDIT: 'platform_company.edit',
@@ -91,6 +89,9 @@ export const P = {
 
   PLATFORM_JOBS_VIEW: 'platform_jobs.view',
   PLATFORM_JOBS_MANAGE: 'platform_jobs.manage',
+
+  PLATFORM_MENU_CONFIG_VIEW: 'platform_menu_config.view',
+  PLATFORM_MENU_CONFIG_EDIT: 'platform_menu_config.edit',
 } as const
 
 export type PermissionKey = (typeof P)[keyof typeof P]

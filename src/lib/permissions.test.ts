@@ -5,9 +5,9 @@ import { P, VIEW_ACTION } from './permissions'
 describe('permission catalogue', () => {
   const keys = Object.values(P)
 
-  it('mirrors the backend enum: 45 company actions and 18 platform ones', () => {
-    expect(keys).toHaveLength(63)
-    expect(keys.filter((key) => key.startsWith('platform_'))).toHaveLength(18)
+  it('mirrors the backend enum: 44 company actions and 20 platform ones', () => {
+    expect(keys).toHaveLength(64)
+    expect(keys.filter((key) => key.startsWith('platform_'))).toHaveLength(20)
   })
 
   it('names every key module.action, once', () => {
@@ -19,6 +19,6 @@ describe('permission catalogue', () => {
     const modules = new Set(keys.map((key) => key.split('.')[0]))
     const withoutView = [...modules].filter((module) => !keys.includes(`${module}.${VIEW_ACTION}` as (typeof keys)[number]))
     // The Access Control keys (tbac.<screen>.<action>) are per-screen, with no module-level view.
-    expect(withoutView.sort()).toEqual(['menu', 'recipient_list', 'request', 'tbac'])
+    expect(withoutView.sort()).toEqual(['recipient_list', 'request', 'tbac'])
   })
 })

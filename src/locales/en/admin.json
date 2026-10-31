@@ -515,6 +515,19 @@
       "retriedFailed": "{{job}} ran again and failed again: see the error on its row.",
       "removed": "Run removed.",
       "removeBody": "The record of this run is cleared from the list. The job itself keeps its schedule."
+    },
+    "menu": {
+      "title": "Menu config",
+      "subtitle": "Name the menus in a company's navigation. Everyone in that company sees the names, and each page takes the same name.",
+      "pickCompany": "Choose a company to name its menus.",
+      "cardTitle": "Menus",
+      "cardHelp": "Leave a name blank to keep the default.",
+      "save": "Save",
+      "discard": "Discard changes",
+      "saved": "Menu names saved",
+      "reset": "Use the default name",
+      "resetFor": "Use the default name for {{menu}}",
+      "nameFor": "Company's name for {{menu}}"
     }
   }
 }

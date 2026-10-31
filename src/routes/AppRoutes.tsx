@@ -36,7 +36,7 @@ import { MyCampaignsPage } from '@/modules/campaigns/MyCampaignsPage'
 import { OrdersPage as CampaignOrdersPage } from '@/modules/campaigns/OrdersPage'
 import { SubmissionFormPage } from '@/modules/campaigns/SubmissionFormPage'
 import { VendorsPage as CompanyVendorsPage } from '@/modules/campaigns/VendorsPage'
-import { MenuNamesPage } from '@/modules/company/MenuNamesPage'
+import { MenuConfigPage } from '@/modules/platform-config/MenuConfigPage'
 import { WarehousesPage } from '@/modules/campaigns/WarehousesPage'
 import { DashboardPage } from '@/modules/dashboard/DashboardPage'
 import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
@@ -81,6 +81,7 @@ export function AppRoutes() {
           */}
           {/* Admin module -- add a new module by adding its route tree here and its entry in components/sidebar-nav-config.tsx */}
           <Route path="/home" element={<FirstMenuRedirect />} />
+          <Route path="/platform-config/menu" element={<Guard permission={P.PLATFORM_MENU_CONFIG_VIEW}><MenuConfigPage /></Guard>} />
           <Route path="/platform-config/jobs" element={<Guard permission={P.PLATFORM_JOBS_VIEW}><JobsMonitorPage /></Guard>} />
           <Route path="/admin" element={<FirstMenuRedirect />} />
           <Route path="/admin/dashboard" element={<Guard permission={P.PLATFORM_DASHBOARD_VIEW}><PlatformDashboardPage /></Guard>} />
@@ -126,7 +127,6 @@ export function AppRoutes() {
           <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CampaignOrdersPage /></Guard>} />
           <Route path="/company/vendors" element={<Guard permission={P.COMPANY_VENDOR_VIEW}><CompanyVendorsPage /></Guard>} />
           <Route path="/warehouses" element={<Guard permission={P.WAREHOUSE_VIEW}><WarehousesPage /></Guard>} />
-          <Route path="/company/menu-names" element={<Guard permission={P.MENU_EDIT}><MenuNamesPage /></Guard>} />
 
           {/* Company Admin's own roster -- same Users pages as the platform-admin route above, just resolving "my company" instead of an :id param. */}
           {/* Masters: roles and users, shared by platform staff (who pick a company) and company admins. */}

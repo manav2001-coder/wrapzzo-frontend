@@ -34,7 +34,6 @@
     "vendorOrders": "Orders",
     "components": "Components",
     "settings": "Settings",
-    "menuNames": "Menu names",
     "roles": "Roles",
     "featureMaster": "Feature Master",
     "templateMaster": "Template Master",
@@ -48,7 +47,8 @@
     "templatesToRole": "Templates to Role",
     "operations": "Operations",
     "platformConfig": "Platform Configuration",
-    "jobs": "Background jobs"
+    "jobs": "Background jobs",
+    "menuConfig": "Menu config"
   },
   "action": {
     "activate": "Activate",
@@ -298,17 +298,6 @@
     "nextInvalid_other": "Correct these {{count}} fields before you continue: {{fields}}",
     "stepBadge_one": "{{count}} field needs attention",
     "stepBadge_other": "{{count}} fields need attention"
-  },
-  "menuNames": {
-    "subtitle": "Give the menus in your navigation your own names. Everyone in your company sees them, and each page takes the same name.",
-    "cardTitle": "Menus",
-    "cardHelp": "Leave a name blank to keep the default.",
-    "save": "Save",
-    "discard": "Discard changes",
-    "saved": "Menu names saved",
-    "reset": "Use the default name",
-    "resetFor": "Use the default name for {{menu}}",
-    "nameFor": "Your name for {{menu}}"
   },
   "audit": {
     "addedOn": "Added on",

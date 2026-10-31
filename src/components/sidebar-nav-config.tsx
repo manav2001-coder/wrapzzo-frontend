@@ -170,7 +170,10 @@ const PLATFORM_CONFIG_NAV: NavSource = {
       titleKey: 'nav.platformConfig',
       type: 'collapse',
       icon: Settings2,
-      children: [{ id: 'jobs', titleKey: 'nav.jobs', type: 'item', url: '/platform-config/jobs', end: true, icon: Briefcase, permission: P.PLATFORM_JOBS_VIEW }],
+      children: [
+        { id: 'menu-config', titleKey: 'nav.menuConfig', type: 'item', url: '/platform-config/menu', end: true, icon: PencilLine, permission: P.PLATFORM_MENU_CONFIG_VIEW },
+        { id: 'jobs', titleKey: 'nav.jobs', type: 'item', url: '/platform-config/jobs', end: true, icon: Briefcase, permission: P.PLATFORM_JOBS_VIEW },
+      ],
     },
   ],
 }
@@ -221,7 +224,6 @@ export const COMPANY_NAV: NavSource[] = [
       { id: 'my-doctors', titleKey: 'nav.myDoctors', type: 'item', url: '/my-doctors', icon: Stethoscope, permission: [P.RECIPIENT_LIST_MANAGE, P.REQUEST_CREATE] },
       { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: [P.REQUEST_APPROVE, P.RECIPIENT_LIST_APPROVE, P.ORDER_ARTWORK_FINAL], forManagers: true },
       { id: 'company-orders', titleKey: 'nav.orders', type: 'item', url: '/orders', icon: ShoppingBag, permission: P.ORDER_VIEW },
-      { id: 'menu-names', titleKey: 'nav.menuNames', type: 'item', url: '/company/menu-names', icon: PencilLine, permission: P.MENU_EDIT },
     ],
   },
   TBAC_NAV,

@@ -5,6 +5,7 @@ import {
   KeyRound,
   Layers,
   Link2,
+  Settings2,
   ShieldHalf,
   UserCog,
   Blocks,
@@ -155,6 +156,25 @@ const ADMIN_GENERAL: NavSource = {
   ],
 }
 
+/**
+ * Platform configuration, Super Admin only: the platform's own machinery rather than a company's
+ * data. Every entry is gated on a platform key, which no company can be granted.
+ */
+const PLATFORM_CONFIG_NAV: NavSource = {
+  id: 'group-platform-config',
+  titleKey: 'nav.platformConfig',
+  type: 'group',
+  children: [
+    {
+      id: 'platform-config',
+      titleKey: 'nav.platformConfig',
+      type: 'collapse',
+      icon: Settings2,
+      children: [{ id: 'jobs', titleKey: 'nav.jobs', type: 'item', url: '/platform-config/jobs', end: true, icon: Briefcase, permission: P.PLATFORM_JOBS_VIEW }],
+    },
+  ],
+}
+
 export const ADMIN_NAV: NavSource[] = [
   ADMIN_GENERAL,
   ADMIN_MASTERS_NAV,
@@ -169,6 +189,7 @@ export const ADMIN_NAV: NavSource[] = [
     ],
   },
   TBAC_NAV,
+  PLATFORM_CONFIG_NAV,
 ]
 
 /**

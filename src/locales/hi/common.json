@@ -46,7 +46,9 @@
     "assignments": "नियतन",
     "templatesToUser": "उपयोगकर्ता को टेम्पलेट",
     "templatesToRole": "भूमिका को टेम्पलेट",
-    "operations": "संचालन"
+    "operations": "संचालन",
+    "platformConfig": "प्लेटफ़ॉर्म कॉन्फ़िगरेशन",
+    "jobs": "बैकग्राउंड जॉब"
   },
   "action": {
     "activate": "सक्रिय करें",

@@ -487,5 +487,34 @@
   "scope": {
     "company": "Company",
     "placeholder": "Choose a company"
+  },
+  "platformConfig": {
+    "jobs": {
+      "title": "Background jobs",
+      "subtitle": "Every run of the platform's scheduled jobs: when it ran, who started it and how it ended. Run a failed one again from its row.",
+      "empty": "No job has run yet.",
+      "column": {
+        "job": "Job",
+        "triggeredBy": "Started by",
+        "started": "Started",
+        "attempts": "Attempts"
+      },
+      "status": {
+        "RUNNING": "Running",
+        "COMPLETED": "Completed",
+        "FAILED": "Failed"
+      },
+      "detail": {
+        "started": "Started",
+        "finished": "Finished",
+        "attempts": "Attempts",
+        "result": "Result",
+        "error": "Error"
+      },
+      "retried": "{{job}} ran again.",
+      "retriedFailed": "{{job}} ran again and failed again: see the error on its row.",
+      "removed": "Run removed.",
+      "removeBody": "The record of this run is cleared from the list. The job itself keeps its schedule."
+    }
   }
 }

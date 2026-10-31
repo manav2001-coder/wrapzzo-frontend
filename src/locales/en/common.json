@@ -46,7 +46,9 @@
     "assignments": "Assignments",
     "templatesToUser": "Templates to User",
     "templatesToRole": "Templates to Role",
-    "operations": "Operations"
+    "operations": "Operations",
+    "platformConfig": "Platform Configuration",
+    "jobs": "Background jobs"
   },
   "action": {
     "activate": "Activate",

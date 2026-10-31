@@ -92,7 +92,11 @@ export function CompanyListPage() {
         enableSorting: false,
         enableColumnFilter: false,
         meta: { className: 'w-[72px] min-w-[72px]' },
-        cell: ({ row }) => <CompanyAvatar company={row.original} />,
+        cell: ({ row }) => (
+          <div className="flex justify-center">
+            <CompanyAvatar company={row.original} />
+          </div>
+        ),
       },
       {
         id: 'name',

@@ -70,7 +70,7 @@ export default function FeatureMasterPage() {
           accessorKey: "moduleName",
           header: t("featureMaster.fields.moduleName"),
           cell: ({ row }) => (
-            <span className="flex items-center gap-2">
+            <span className="flex items-center justify-center gap-2">
               {row.original.moduleName}
               {row.original.isSystem && <SystemBadge />}
             </span>

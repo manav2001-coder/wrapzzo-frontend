@@ -90,7 +90,7 @@ export function OrdersPage() {
         header: t('column.gift'),
         meta: { className: 'min-w-[220px]' },
         cell: ({ row }) => (
-          <button type="button" className="flex min-w-0 items-center gap-2.5 text-left" onClick={() => setOpenId(row.original.id)}>
+          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpenId(row.original.id)}>
             {row.original.giftImageUrl ? (
               <img src={row.original.giftImageUrl} alt="" className="h-9 w-9 shrink-0 rounded-md border object-cover" />
             ) : (
@@ -136,7 +136,7 @@ export function OrdersPage() {
           filterOptions: STATUSES.map((value) => ({ value, label: t(`status.${value}`) })),
         },
         cell: ({ row }) => (
-          <span className="flex flex-wrap items-center gap-1.5">
+          <span className="flex flex-wrap items-center justify-center gap-1.5">
             <OrderStatusBadge status={row.original.status} />
             {row.original.hasPendingDesignReview && (
               <Badge variant="primary-soft" className="gap-1 whitespace-nowrap">

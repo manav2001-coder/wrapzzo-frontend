@@ -124,7 +124,7 @@ export default function TemplateMasterPage() {
           accessorKey: "name",
           header: t("templateMaster.fields.name"),
           cell: ({ row }) => (
-            <span className="flex items-center gap-2">
+            <span className="flex items-center justify-center gap-2">
               {row.original.name}
               {row.original.isSystem && <SystemBadge />}
             </span>

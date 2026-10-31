@@ -42,7 +42,7 @@ export function VendorGiftListPage() {
         header: t('gifts.column.gift'),
         meta: { className: 'min-w-[240px]' },
         cell: ({ row }) => (
-          <Link to={`/vendor/gifts/${row.original.id}`} className="flex items-center gap-2.5 font-medium hover:underline">
+          <Link to={`/vendor/gifts/${row.original.id}`} className="flex items-center justify-center gap-2.5 font-medium hover:underline">
             <GiftThumbnail gift={row.original} />
             <span className="truncate">{row.original.name}</span>
           </Link>

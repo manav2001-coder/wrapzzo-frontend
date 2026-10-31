@@ -35,7 +35,7 @@ export default function RoleTemplatesPage() {
         accessorKey: "name",
         header: t("role.fields.name", { ns: "masters" }),
         cell: ({ row }) => (
-          <span className="flex items-center gap-2">
+          <span className="flex items-center justify-center gap-2">
             {row.original.name}
             {row.original.protectedRole && <SystemBadge />}
           </span>

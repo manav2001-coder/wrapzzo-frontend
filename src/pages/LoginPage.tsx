@@ -65,14 +65,8 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } })
 
-  const locationState = location.state as { from?: { pathname: string }; passwordSetUp?: boolean } | null
-  const requestedFrom = locationState?.from?.pathname
+  const locationState = location.state as { passwordSetUp?: boolean } | null
   const passwordSetUp = locationState?.passwordSetUp ?? false
-  // Only honour the redirect-back target on the side that just authenticated: a vendor bounced
-  // here from an app route (or the reverse) would otherwise land where their session can't go.
-  // ProtectedRoute then keeps platform staff and company users on their own sides.
-  const fromForVendor = requestedFrom?.startsWith('/vendor') ? requestedFrom : undefined
-  const fromForApp = requestedFrom && !requestedFrom.startsWith('/vendor') ? requestedFrom : undefined
 
   function lockedMessage(error: ApiError): string {
     const lockedUntil = (error.data as { lockedUntil?: string } | undefined)?.lockedUntil
@@ -86,7 +80,8 @@ export function LoginPage() {
     try {
       const tokens = await login(values.email, values.password)
       dispatch(setCredentials({ ...tokens, email: values.email, rememberMe }))
-      navigate(fromForApp ?? '/home', { replace: true })
+      // Always the first menu of the user's own sidebar -- never the page they were bounced from.
+      navigate('/home', { replace: true })
       return
     } catch (userError) {
       if (userError instanceof ApiError && userError.status === 423) {
@@ -99,7 +94,7 @@ export function LoginPage() {
     try {
       const tokens = await vendorLogin(values.email, values.password)
       dispatch(setVendorCredentials({ ...tokens, email: values.email, rememberMe }))
-      navigate(fromForVendor ?? '/vendor', { replace: true })
+      navigate('/vendor', { replace: true })
     } catch (vendorError) {
       setSubmitError(
         vendorError instanceof ApiError && vendorError.status === 423 ? lockedMessage(vendorError) : t('login.failed'),

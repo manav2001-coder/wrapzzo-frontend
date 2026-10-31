@@ -26,13 +26,22 @@ export function PlatformDashboardPage() {
   const locale = useCurrentLocale()
   const timeZone = useUserTimezone()
   const nav = useNav()
+  // The name when the profile has one; the email until it loads (and for an account with no name).
+  const who = user?.name || email
+  const initials = (who ?? '?')
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 
   const destinations = flattenNavItems(nav).filter((item) => item.url?.startsWith('/admin/') && item.id !== 'platform-dashboard')
 
   return (
     <div className="space-y-8 p-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{email ? `${t('app.name')} · ${email}` : t('app.name')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{who ? `${t('app.name')} · ${who}` : t('app.name')}</h1>
         <p className="text-muted-foreground">{t('app.tagline')}</p>
       </header>
 
@@ -49,9 +58,12 @@ export function PlatformDashboardPage() {
           ) : (
             <div className="flex flex-wrap items-center gap-4">
               <Avatar className="h-10 w-10">
-                <AvatarFallback className="text-xs">{(email ?? '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               </Avatar>
-              <p className="min-w-0 truncate text-sm font-medium">{email}</p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{who}</p>
+                {user.name && email && <p className="truncate text-xs text-muted-foreground">{email}</p>}
+              </div>
               <div className="ml-auto flex flex-wrap items-center gap-2">
                 {user.companyName && <Badge variant="outline">{user.companyName}</Badge>}
                 <Badge variant="outline">{LOCALE_LABELS[locale]}</Badge>

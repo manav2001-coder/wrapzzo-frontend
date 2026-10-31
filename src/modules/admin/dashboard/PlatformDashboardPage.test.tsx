@@ -10,15 +10,27 @@ vi.mock('@/hooks/use-current-user', async (o) => ({ ...(await o<object>()), useC
 
 describe('PlatformDashboardPage', () => {
   it('greets the signed-in user and links to the masters they can reach', async () => {
-    currentUser.mockReturnValue(platformStaff([P.PLATFORM_COMPANY_VIEW, P.PLATFORM_VENDOR_VIEW]))
+    const staff = platformStaff([P.PLATFORM_COMPANY_VIEW, P.PLATFORM_VENDOR_VIEW])
+    currentUser.mockReturnValue({ ...staff, data: { ...staff.data, name: 'Manav Nagpal' } })
 
     renderWithProviders(<PlatformDashboardPage />, {
       preloadedState: { auth: { accessToken: 't', refreshToken: 'r', rememberMe: false, user: { sub: 'u-1', email: 'staff@wrappzo.com' } } },
     })
 
-    expect(await screen.findByRole('heading', { level: 1, name: /Wrappzo · staff@wrappzo.com/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Wrappzo · Manav Nagpal' })).toBeInTheDocument()
+    expect(screen.getByText('staff@wrappzo.com')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Companies/ })).toHaveAttribute('href', '/admin/companies')
     expect(screen.getByRole('link', { name: /Vendors/ })).toHaveAttribute('href', '/admin/vendors')
     expect(screen.queryByRole('link', { name: /Orders/ })).not.toBeInTheDocument()
+  })
+
+  it('greets by email until the profile has a name', async () => {
+    currentUser.mockReturnValue(platformStaff([P.PLATFORM_COMPANY_VIEW]))
+
+    renderWithProviders(<PlatformDashboardPage />, {
+      preloadedState: { auth: { accessToken: 't', refreshToken: 'r', rememberMe: false, user: { sub: 'u-1', email: 'staff@wrappzo.com' } } },
+    })
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Wrappzo · staff@wrappzo.com' })).toBeInTheDocument()
   })
 })

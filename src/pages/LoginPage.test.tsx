@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/lib/axiosClient'
@@ -13,16 +13,17 @@ vi.mock('@/api/vendorAuth', () => ({ vendorLogin }))
 
 const TOKENS = { accessToken: 'h.eyJzdWIiOiJ1MSJ9.s', refreshToken: 'r', expiresInSeconds: 900 }
 
-function renderLogin() {
+function renderLogin(route = '/login') {
   return renderWithProviders(
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/bounced" element={<Navigate to="/login" replace state={{ from: { pathname: '/campaigns' } }} />} />
       <Route path="/home" element={<h1>Home</h1>} />
       <Route path="/dashboard" element={<h1>Dashboard</h1>} />
       <Route path="/campaigns" element={<h1>Campaigns</h1>} />
       <Route path="/vendor" element={<h1>Vendor portal</h1>} />
     </Routes>,
-    { route: '/login' },
+    { route },
   )
 }
 
@@ -51,6 +52,14 @@ describe('LoginPage', () => {
     await signIn()
     expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
     expect(store.getState().auth.user?.email).toBe('priya@acme.com')
+  })
+
+  it('always opens the first menu, not the page the visitor was bounced from', async () => {
+    login.mockResolvedValue(TOKENS)
+    renderLogin('/bounced')
+    await signIn()
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Campaigns' })).not.toBeInTheDocument()
   })
 
   it('falls back to the vendor portal when the email is not a user', async () => {

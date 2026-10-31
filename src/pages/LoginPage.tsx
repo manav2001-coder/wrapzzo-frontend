@@ -86,7 +86,7 @@ export function LoginPage() {
     try {
       const tokens = await login(values.email, values.password)
       dispatch(setCredentials({ ...tokens, email: values.email, rememberMe }))
-      navigate(fromForApp ?? '/dashboard', { replace: true })
+      navigate(fromForApp ?? '/home', { replace: true })
       return
     } catch (userError) {
       if (userError instanceof ApiError && userError.status === 423) {

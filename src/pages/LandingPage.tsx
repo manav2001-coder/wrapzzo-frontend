@@ -60,7 +60,7 @@ export function LandingPage() {
   const accessToken = useAppSelector((state) => state.auth.accessToken)
   const vendorAccessToken = useAppSelector((state) => state.vendorAuth.accessToken)
 
-  if (accessToken) return <Navigate to="/admin/companies" replace />
+  if (accessToken) return <Navigate to="/home" replace />
   if (vendorAccessToken) return <Navigate to="/vendor" replace />
 
   return (

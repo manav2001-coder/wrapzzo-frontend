@@ -17,6 +17,7 @@ function renderLogin() {
   return renderWithProviders(
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/home" element={<h1>Home</h1>} />
       <Route path="/dashboard" element={<h1>Dashboard</h1>} />
       <Route path="/campaigns" element={<h1>Campaigns</h1>} />
       <Route path="/vendor" element={<h1>Vendor portal</h1>} />
@@ -44,11 +45,11 @@ describe('LoginPage', () => {
     expect(login).not.toHaveBeenCalled()
   })
 
-  it('signs a company user in and lands on the dashboard', async () => {
+  it('signs a company user in and lands on their first menu', async () => {
     login.mockResolvedValue(TOKENS)
     const { store } = renderLogin()
     await signIn()
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
     expect(store.getState().auth.user?.email).toBe('priya@acme.com')
   })
 

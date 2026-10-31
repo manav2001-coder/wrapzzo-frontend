@@ -3,7 +3,7 @@ import { useAppSelector } from '@/app/hooks'
 import { usePermissions } from '@/hooks/use-permission'
 
 /** Screens every signed-in user has, platform staff and company users alike. */
-const SHARED_PATHS = ['/settings', '/components', '/tbac', '/masters']
+const SHARED_PATHS = ['/home', '/settings', '/components', '/tbac', '/masters']
 
 /**
  * The signed-in gate for platform and company users. Also keeps each audience on its own side --
@@ -25,8 +25,8 @@ export function ProtectedRoute() {
   if (loading || shared) return <Outlet />
 
   const inAdmin = location.pathname.startsWith('/admin')
-  if (isPlatformStaff && !inAdmin) return <Navigate to="/admin" replace />
-  if (!isPlatformStaff && inAdmin) return <Navigate to="/dashboard" replace />
+  if (isPlatformStaff && !inAdmin) return <Navigate to="/home" replace />
+  if (!isPlatformStaff && inAdmin) return <Navigate to="/home" replace />
 
   return <Outlet />
 }

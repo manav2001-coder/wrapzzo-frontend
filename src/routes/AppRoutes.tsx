@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
+import { FirstMenuRedirect } from '@/components/FirstMenuRedirect'
 import { AppLayout } from '@/components/layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
@@ -78,7 +79,8 @@ export function AppRoutes() {
             Access Denied panel in place, keeping the URL. The API enforces the same keys.
           */}
           {/* Admin module -- add a new module by adding its route tree here and its entry in components/sidebar-nav-config.tsx */}
-          <Route path="/admin" element={<Navigate to="/admin/companies" replace />} />
+          <Route path="/home" element={<FirstMenuRedirect />} />
+          <Route path="/admin" element={<FirstMenuRedirect />} />
           <Route path="/admin/dashboard" element={<Guard permission={P.PLATFORM_DASHBOARD_VIEW}><PlatformDashboardPage /></Guard>} />
           <Route path="/admin/companies" element={<Guard permission={P.PLATFORM_COMPANY_VIEW}><CompanyListPage /></Guard>} />
 

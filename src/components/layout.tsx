@@ -30,7 +30,7 @@ function useShellSession(portal: Portal): ShellSession {
           }
         : {
             portal,
-            homePath: isPlatformStaff ? "/admin" : "/dashboard",
+            homePath: "/home",
             settingsPath: "/settings",
             email: appEmail,
             signOut: appLogout,

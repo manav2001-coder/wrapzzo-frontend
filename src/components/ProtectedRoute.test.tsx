@@ -15,6 +15,7 @@ function renderAt(route: string, signedIn = true) {
   return renderWithProviders(
     <Routes>
       <Route path="/login" element={<h1>Sign in</h1>} />
+      <Route path="/home" element={<h1>Home</h1>} />
       <Route element={<ProtectedRoute />}>
         <Route path="/admin/*" element={<h1>Admin</h1>} />
         <Route path="/dashboard" element={<h1>Dashboard</h1>} />
@@ -39,13 +40,13 @@ describe('ProtectedRoute', () => {
 
   it('keeps a company user out of /admin', () => {
     renderAt('/admin/companies')
-    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument()
   })
 
   it('keeps platform staff in /admin', () => {
     useCurrentUser.mockReturnValue(profile(null))
     renderAt('/dashboard')
-    expect(screen.getByRole('heading', { name: 'Admin' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument()
   })
 
   it('lets both audiences reach the shared screens', () => {

@@ -58,7 +58,7 @@ describe('LandingPage', () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<h1>Sign in</h1>} />
-        <Route path="/admin/companies" element={<h1>Companies</h1>} />
+        <Route path="/home" element={<h1>Home</h1>} />
         <Route path="/vendor" element={<h1>Vendor portal</h1>} />
       </Routes>,
       { route: '/', preloadedState },
@@ -79,7 +79,7 @@ describe('LandingPage', () => {
 
   it('forwards a signed-in user past the landing page', () => {
     renderLanding({ auth: { accessToken: 't', refreshToken: 'r', user: { email: 'a@b.c', sub: 'u1' }, rememberMe: true } })
-    expect(screen.getByRole('heading', { name: 'Companies' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument()
   })
 
   it('forwards a signed-in vendor to the vendor portal', () => {

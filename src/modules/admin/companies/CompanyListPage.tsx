@@ -101,7 +101,6 @@ export function CompanyListPage() {
       { id: 'contactPersonName', accessorFn: (c) => c.contactPersonName ?? '', header: t('companies.column.contact'), meta: { className: 'min-w-[160px]' } },
       { id: 'city', accessorFn: (c) => c.city ?? '', header: t('companies.column.city'), meta: { className: 'min-w-[120px]' } },
       { id: 'gstin', accessorFn: (c) => c.gstin ?? '', header: t('companies.column.gstin'), meta: { className: 'min-w-[160px]' }, cell: ({ row }) => <span className="font-mono text-xs">{row.original.gstin ?? '-'}</span> },
-      statusColumn,
       {
         id: 'createdAt',
         accessorKey: 'createdAt',
@@ -110,6 +109,7 @@ export function CompanyListPage() {
         meta: { className: 'min-w-[140px]' },
         cell: ({ row }) => formatDate(row.original.createdAt),
       },
+      statusColumn,
       actionsColumn,
     ],
     [t, statusColumn, actionsColumn],

@@ -135,7 +135,6 @@ export function VendorListPage() {
         meta: { className: 'min-w-[120px]' },
         cell: ({ row }) => percent(row.original.commission),
       },
-      statusColumn,
       {
         id: 'createdAt',
         accessorKey: 'createdAt',
@@ -144,6 +143,7 @@ export function VendorListPage() {
         meta: { className: 'min-w-[130px]' },
         cell: ({ row }) => formatDate(row.original.createdAt),
       },
+      statusColumn,
       actionsColumn,
     ],
     [t, statusColumn, actionsColumn],

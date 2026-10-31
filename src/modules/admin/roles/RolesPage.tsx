@@ -19,7 +19,7 @@ import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
 import { RoleDialog } from './RoleDialog'
 
-const LIST_FIELDS: ListFieldMap = { name: 'text', description: 'text', userCount: 'number' }
+const LIST_FIELDS: ListFieldMap = { name: 'text', description: 'text', userCount: 'number', addedOn: 'date', addedByName: 'text', updatedOn: 'date', updatedByName: 'text' }
 
 /**
  * The roles master. Roles come first -- a company's roles are created here, users are then given
@@ -52,7 +52,7 @@ export function RolesPage() {
       t(active ? 'roles.activated' : 'roles.deactivated', { name: role.name }),
     )
 
-  const { statusColumn, actionsColumn, deactivateDialog } = useMasterColumns<Role>({
+  const { statusColumn, actionsColumn, auditColumns, deactivateDialog } = useMasterColumns<Role>({
     isActive: (role) => role.active,
     onEdit: (role) => setEditing(role),
     // Company Admin can't be deactivated; the server refuses, so it isn't offered either.
@@ -88,9 +88,10 @@ export function RolesPage() {
       { id: 'description', accessorFn: (role) => role.description ?? '', header: t('roles.column.description'), meta: { className: 'min-w-[200px]' } },
       { id: 'userCount', accessorKey: 'userCount', header: t('roles.column.users'), meta: { className: 'min-w-[90px]' } },
       statusColumn,
+      ...auditColumns,
       actionsColumn,
     ],
-    [t, statusColumn, actionsColumn],
+    [t, statusColumn, auditColumns, actionsColumn],
   )
 
   return (

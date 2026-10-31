@@ -15,13 +15,12 @@ import { MasterDrawer } from '@/components/masters/master-drawer'
 import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanies, useCreateCompany, useSetCompanyStatus, useUpdateCompany } from '@/hooks/useCompanies'
-import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
 import { CompanyAvatar } from './CompanyAvatar'
 import { CompanyFeaturesPanel } from './CompanyFeaturesPanel'
 
-const LIST_FIELDS: ListFieldMap = { name: 'text', displayId: 'text', contactPersonName: 'text', city: 'text', gstin: 'text', createdAt: 'date' }
+const LIST_FIELDS: ListFieldMap = { name: 'text', displayId: 'text', contactPersonName: 'text', city: 'text', gstin: 'text', addedOn: 'date', addedByName: 'text', updatedOn: 'date', updatedByName: 'text' }
 
 const LOGO_ACCEPT = { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'], 'image/svg+xml': ['.svg'] }
 
@@ -69,7 +68,7 @@ export function CompanyListPage() {
     }
   }
 
-  const { statusColumn, actionsColumn, deactivateDialog } = useMasterColumns<Company>({
+  const { statusColumn, actionsColumn, auditColumns, deactivateDialog } = useMasterColumns<Company>({
     isActive: (company) => company.status === 'ACTIVE',
     onEdit: (company) => setDrawer(company.id),
     onActivate: (company) => changeStatus(company, true),
@@ -101,18 +100,11 @@ export function CompanyListPage() {
       { id: 'contactPersonName', accessorFn: (c) => c.contactPersonName ?? '', header: t('companies.column.contact'), meta: { className: 'min-w-[160px]' } },
       { id: 'city', accessorFn: (c) => c.city ?? '', header: t('companies.column.city'), meta: { className: 'min-w-[120px]' } },
       { id: 'gstin', accessorFn: (c) => c.gstin ?? '', header: t('companies.column.gstin'), meta: { className: 'min-w-[160px]' }, cell: ({ row }) => <span className="font-mono text-xs">{row.original.gstin ?? '-'}</span> },
-      {
-        id: 'createdAt',
-        accessorKey: 'createdAt',
-        header: t('companies.column.onboarded'),
-        enableColumnFilter: false,
-        meta: { className: 'min-w-[140px]' },
-        cell: ({ row }) => formatDate(row.original.createdAt),
-      },
       statusColumn,
+      ...auditColumns,
       actionsColumn,
     ],
-    [t, statusColumn, actionsColumn],
+    [t, statusColumn, auditColumns, actionsColumn],
   )
 
   const fields = useMemo(

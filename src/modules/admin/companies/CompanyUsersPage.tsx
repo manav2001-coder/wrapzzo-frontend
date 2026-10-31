@@ -11,14 +11,13 @@ import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
 import { IconButton } from '@/components/icon-button'
-import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
+import { MasterPageHeader, StatusCell, useAuditColumns } from '@/components/masters/master-page'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess, usePermissions } from '@/hooks/use-permission'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useSetCompanyWide } from '@/hooks/useUsers'
-import { formatDate } from '@/lib/datetime'
 import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
@@ -36,13 +35,17 @@ const LIST_FIELDS: ListFieldMap = {
   reportsToName: 'text',
   orgUnitName: 'text',
   roleName: 'text',
-  createdAt: 'date',
+  addedOn: 'date',
+  addedByName: 'text',
+  updatedOn: 'date',
+  updatedByName: 'text',
 }
 
 type PendingAction = { kind: 'makeAdmin' | 'wholeCompany' | 'ownUnit' | 'delete'; user: CompanyUser }
 
 export function CompanyUsersPage() {
   const { t } = useTranslation('admin')
+  const { auditColumns } = useAuditColumns<CompanyUser>()
   const { companyId, companyName, scope, addPath, importPath } = useCompanyUserContext()
   const navigate = useNavigate()
   const currentUserId = useAppSelector((state) => state.auth.user?.sub)
@@ -139,14 +142,6 @@ export function CompanyUsersPage() {
         ),
       },
       {
-        id: 'createdAt',
-        accessorKey: 'createdAt',
-        header: t('users.column.added'),
-        enableColumnFilter: false,
-        meta: { className: 'min-w-[130px]' },
-        cell: ({ row }) => formatDate(row.original.createdAt),
-      },
-      {
         id: 'status',
         accessorKey: 'status',
         header: t('field.status', { ns: 'common' }),
@@ -158,6 +153,7 @@ export function CompanyUsersPage() {
         },
         cell: ({ row }) => <StatusCell active={row.original.status === 'ACTIVE'} label={t(`users.status.${row.original.status}`)} />,
       },
+      ...auditColumns,
       {
         id: 'actions',
         header: t('field.actions', { ns: 'common' }),
@@ -192,7 +188,7 @@ export function CompanyUsersPage() {
         },
       },
     ],
-    [t, currentUserId, canPlace, canDelete],
+    [t, auditColumns, currentUserId, canPlace, canDelete],
   )
 
   const dialog = pending && {

@@ -9,6 +9,10 @@ export interface Role {
   protectedRole: boolean
   userCount: number
   templateIds: string[]
+  addedOn?: string | null
+  addedByName?: string | null
+  updatedOn?: string | null
+  updatedByName?: string | null
 }
 
 export interface RoleInput {

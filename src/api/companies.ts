@@ -19,6 +19,10 @@ export interface Company {
   pincode: string | null
   notes: string | null
   createdAt: string
+  addedOn?: string | null
+  addedByName?: string | null
+  updatedOn?: string | null
+  updatedByName?: string | null
 }
 
 /** What onboarding a company takes: its name, and an optional profile. Anything left out is cleared. */

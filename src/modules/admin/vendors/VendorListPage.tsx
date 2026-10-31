@@ -16,7 +16,6 @@ import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanies } from '@/hooks/useCompanies'
 import { useAddVendor, useEditVendor, useReplaceVendorCoverage, useResendVendorInvite, useSetVendorStatus, useVendorCoverage, useVendors } from '@/hooks/useVendors'
-import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
 import { newCoverageRow, VendorCoverageEditor, type CoverageRow } from './VendorCoverageEditor'
@@ -28,7 +27,10 @@ const LIST_FIELDS: ListFieldMap = {
   contactPhone: 'text',
   markupFees: 'number',
   commission: 'number',
-  createdAt: 'date',
+  addedOn: 'date',
+  addedByName: 'text',
+  updatedOn: 'date',
+  updatedByName: 'text',
 }
 
 const percent = (value: number | null) => (value == null ? '-' : `${value}%`)
@@ -87,7 +89,7 @@ export function VendorListPage() {
     }
   }
 
-  const { statusColumn, actionsColumn, deactivateDialog } = useMasterColumns<Vendor>({
+  const { statusColumn, actionsColumn, auditColumns, deactivateDialog } = useMasterColumns<Vendor>({
     isActive: (vendor) => vendor.status === 'ACTIVE',
     statusLabels: { active: t('vendors.status.ACTIVE'), inactive: t('vendors.status.SUSPENDED') },
     onEdit: (vendor) => setDrawer(vendor.id),
@@ -135,18 +137,11 @@ export function VendorListPage() {
         meta: { className: 'min-w-[120px]' },
         cell: ({ row }) => percent(row.original.commission),
       },
-      {
-        id: 'createdAt',
-        accessorKey: 'createdAt',
-        header: t('vendors.column.onboarded'),
-        enableColumnFilter: false,
-        meta: { className: 'min-w-[130px]' },
-        cell: ({ row }) => formatDate(row.original.createdAt),
-      },
       statusColumn,
+      ...auditColumns,
       actionsColumn,
     ],
-    [t, statusColumn, actionsColumn],
+    [t, statusColumn, auditColumns, actionsColumn],
   )
 
   const fields = useMemo(

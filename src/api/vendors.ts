@@ -12,6 +12,10 @@ export interface Vendor {
   commission: number | null
   status: 'ACTIVE' | 'SUSPENDED'
   createdAt: string
+  addedOn?: string | null
+  addedByName?: string | null
+  updatedOn?: string | null
+  updatedByName?: string | null
 }
 
 export interface AddVendorInput {

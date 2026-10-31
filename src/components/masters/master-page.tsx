@@ -182,7 +182,7 @@ export function useAuditColumns<T extends AuditedRow>(): {
  * toolbar's act on the selection. The column is pinned to the right edge, so a wide table never
  * scrolls a record's only way in out of view.
  */
-export function useMasterColumns<T>({
+export function useMasterColumns<T extends AuditedRow>({
   isActive,
   statusLabels,
   onEdit,
@@ -208,10 +208,13 @@ export function useMasterColumns<T>({
 }): {
   statusColumn: ColumnDef<T, unknown>;
   actionsColumn: ColumnDef<T, unknown>;
+  /** Added on / by and Updated on / by, to sit between Status and Actions. */
+  auditColumns: ColumnDef<T, unknown>[];
   /** Render this once, anywhere in the page. */
   deactivateDialog: React.ReactNode;
 } {
   const { t } = useTranslation();
+  const { auditColumns } = useAuditColumns<T>();
   const canEdit = useHasAccess(editPermission);
   const canDelete = useHasAccess(deletePermission);
   const activeLabel = statusLabels?.active ?? t("field.active");
@@ -299,5 +302,5 @@ export function useMasterColumns<T>({
     />
   );
 
-  return { statusColumn, actionsColumn, deactivateDialog };
+  return { statusColumn, actionsColumn, auditColumns, deactivateDialog };
 }

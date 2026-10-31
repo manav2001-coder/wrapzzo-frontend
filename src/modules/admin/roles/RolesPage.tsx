@@ -93,7 +93,7 @@ export function RolesPage() {
         ),
       },
       { id: 'description', accessorFn: (role) => role.description ?? '', header: t('roles.column.description'), meta: { className: 'min-w-[200px]' } },
-      { id: 'userCount', accessorKey: 'userCount', header: t('roles.column.users'), meta: { className: 'min-w-[90px]' } },
+      { id: 'userCount', accessorKey: 'userCount', header: t('roles.column.users'), enableColumnFilter: false, meta: { className: 'min-w-[90px]' } },
       statusColumn,
       ...auditColumns,
       actionsColumn,

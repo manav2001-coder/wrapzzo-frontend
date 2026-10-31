@@ -105,22 +105,22 @@
   :root {
     --ui-radius: 0.5rem;
 
-    --background: 210 20% 98%;
-    --foreground: 215 28% 9%;
+    --background: 150 20% 98%;
+    --foreground: 160 24% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 215 28% 9%;
+    --card-foreground: 160 24% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 28% 9%;
+    --popover-foreground: 160 24% 9%;
 
-    --primary: 221 83% 53%;
+    --primary: 152 58% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 32% 96%;
-    --secondary-foreground: 221 83% 30%;
-    --muted: 214 32% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 214 32% 94%;
-    --accent-foreground: 221 83% 30%;
+    --secondary: 150 30% 96%;
+    --secondary-foreground: 152 58% 22%;
+    --muted: 150 22% 96%;
+    --muted-foreground: 158 9% 40%;
+    --accent: 150 35% 93%;
+    --accent-foreground: 152 58% 22%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -129,39 +129,39 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --border: 150 16% 89%;
+    --input: 150 16% 89%;
+    --ring: 152 58% 32%;
 
-    /* Sidebar is a fixed dark-navy visual zone — same values in :root and .dark,
+    /* Sidebar is a fixed deep-green visual zone — same values in :root and .dark,
        it does not flip with the light/dark toggle. */
-    --sidebar-bg: 222 47% 9%;
-    --sidebar-hover: 220 40% 14%;
-    --sidebar-active: 221 83% 28%;
-    --sidebar-border: 220 30% 15%;
-    --sidebar-text: 214 40% 80%;
-    --sidebar-muted: 218 18% 48%;
-    --sidebar-accent: 210 100% 70%;
+    --sidebar-bg: 158 36% 17%;
+    --sidebar-hover: 158 32% 23%;
+    --sidebar-active: 152 58% 32%;
+    --sidebar-border: 158 28% 24%;
+    --sidebar-text: 150 22% 86%;
+    --sidebar-muted: 155 14% 60%;
+    --sidebar-accent: 152 55% 55%;
     --sidebar-active-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 222 47% 7%;
-    --foreground: 210 40% 98%;
-    --card: 222 40% 10%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 40% 10%;
-    --popover-foreground: 210 40% 98%;
+    --background: 160 26% 7%;
+    --foreground: 150 30% 97%;
+    --card: 160 22% 10%;
+    --card-foreground: 150 30% 97%;
+    --popover: 160 22% 10%;
+    --popover-foreground: 150 30% 97%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 152 52% 48%;
+    --primary-foreground: 160 40% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --secondary: 160 20% 16%;
+    --secondary-foreground: 150 30% 97%;
+    --muted: 160 20% 16%;
+    --muted-foreground: 155 12% 65%;
+    --accent: 160 20% 16%;
+    --accent-foreground: 150 30% 97%;
 
     /* Light enough to read as TEXT on the dark background, as in light mode. */
     --destructive: 0 84% 60%;
@@ -171,9 +171,9 @@
     --warning: 38 85% 55%;
     --warning-foreground: 0 0% 9%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 160 18% 18%;
+    --input: 160 18% 18%;
+    --ring: 152 52% 42%;
   }
 
   /* Tailwind 3 defaults the kit relies on: themed border color, pointer cursor on buttons,
@@ -280,7 +280,7 @@
   }
 
   .hero-gradient {
-    background: linear-gradient(135deg, #050d1a 0%, #0c1f3f 40%, #0f2d5c 70%, #0a3472 100%);
+    background: linear-gradient(135deg, #08261b 0%, #0e3b2a 40%, #14573d 70%, #1b7a55 100%);
   }
 
   .hero-glow {

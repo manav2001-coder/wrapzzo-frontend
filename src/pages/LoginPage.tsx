@@ -32,14 +32,14 @@ import { ApiError } from '@/lib/axiosClient'
 
 /** Icon + translation key + accent, as on MobixFL's sign-in: eight tinted pills, not grey rows. */
 const FEATURES = [
-  { icon: Store, key: 'giftStore', tone: 'text-sky-300 bg-sky-400/10' },
+  { icon: Store, key: 'giftStore', tone: 'text-emerald-300 bg-emerald-400/10' },
   { icon: Zap, key: 'quickGift', tone: 'text-emerald-300 bg-emerald-400/10' },
   { icon: Megaphone, key: 'campaigns', tone: 'text-violet-300 bg-violet-400/10' },
   { icon: Contact, key: 'recipients', tone: 'text-amber-300 bg-amber-400/10' },
-  { icon: BadgeCheck, key: 'approvals', tone: 'text-cyan-300 bg-cyan-400/10' },
+  { icon: BadgeCheck, key: 'approvals', tone: 'text-teal-300 bg-teal-400/10' },
   { icon: Palette, key: 'artwork', tone: 'text-rose-300 bg-rose-400/10' },
   { icon: Truck, key: 'vendors', tone: 'text-lime-300 bg-lime-400/10' },
-  { icon: ShoppingBag, key: 'tracking', tone: 'text-indigo-300 bg-indigo-400/10' },
+  { icon: ShoppingBag, key: 'tracking', tone: 'text-green-300 bg-green-400/10' },
 ] as const
 
 /** Inputs on the frosted navy card. */
@@ -116,12 +116,12 @@ export function LoginPage() {
 
       <div className="relative flex min-h-svh flex-col">
         <header className="mx-auto flex w-full max-w-screen-xl items-center justify-between px-6 pt-6 sm:px-10">
-          <Link to="/" className="w-fit rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+          <Link to="/" className="w-fit rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
             <WrapzzoLogo height={40} />
           </Link>
           <Link
             to="/"
-            className="hidden items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-white/75 backdrop-blur transition-colors hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:inline-flex"
+            className="hidden items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-white/75 backdrop-blur transition-colors hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:inline-flex"
           >
             <ArrowLeft aria-hidden className="size-3.5" />
             {t('login.backToSite')}
@@ -143,7 +143,7 @@ export function LoginPage() {
               {words.map((word, index) => (
                 <Fragment key={word}>
                   {index > 0 && (
-                    <span aria-hidden className="text-cyan-300">
+                    <span aria-hidden className="text-teal-300">
                       ·
                     </span>
                   )}
@@ -151,7 +151,7 @@ export function LoginPage() {
                 </Fragment>
               ))}
             </p>
-            <p className="mt-2 bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-300 bg-clip-text text-[clamp(1.5rem,2.4vw,2.25rem)] font-bold leading-tight tracking-[-0.03em] text-transparent">
+            <p className="mt-2 bg-gradient-to-r from-emerald-300 via-teal-200 to-lime-300 bg-clip-text text-[clamp(1.5rem,2.4vw,2.25rem)] font-bold leading-tight tracking-[-0.03em] text-transparent">
               {t('hero.byline')}
             </p>
             <p className="mt-5 max-w-md text-base leading-relaxed text-white/70">{t('hero.headline')}</p>
@@ -173,7 +173,7 @@ export function LoginPage() {
 
           {/* The card: frosted navy, a hairline cyan edge and a soft glow. */}
           <div className="relative w-full max-w-[26rem] shrink-0">
-            <div aria-hidden className="absolute -inset-px rounded-3xl bg-gradient-to-b from-cyan-300/40 via-white/10 to-transparent" />
+            <div aria-hidden className="absolute -inset-px rounded-3xl bg-gradient-to-b from-teal-300/40 via-white/10 to-transparent" />
             <div className="relative rounded-3xl bg-[#071226]/30 p-6 shadow-[0_30px_80px_-20px_rgb(0_0_0/0.7),0_0_60px_-20px_rgb(56_189_248/0.35)] backdrop-blur-md sm:p-8">
               <h1 className="text-2xl font-bold tracking-[-0.02em]">{t('login.title')}</h1>
               <p className="mt-1 text-sm text-white/60">{t('login.subtitle')}</p>

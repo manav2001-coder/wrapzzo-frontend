@@ -22,14 +22,14 @@ const CONTACT_EMAIL = 'hello@wrappzo.com'
 
 /** Icon + translation key + tint, the same tinted-tile language the sign-in hero uses. */
 const SOLUTIONS: { key: string; icon: LucideIcon; tone: string }[] = [
-  { key: 'employee', icon: Users, tone: 'text-sky-600 bg-sky-500/10 dark:text-sky-300' },
+  { key: 'employee', icon: Users, tone: 'text-emerald-600 bg-emerald-500/10 dark:text-emerald-300' },
   { key: 'client', icon: Briefcase, tone: 'text-violet-600 bg-violet-500/10 dark:text-violet-300' },
   { key: 'dealer', icon: Truck, tone: 'text-amber-600 bg-amber-500/10 dark:text-amber-300' },
   { key: 'pharma', icon: Stethoscope, tone: 'text-emerald-600 bg-emerald-500/10 dark:text-emerald-300' },
   { key: 'events', icon: CalendarDays, tone: 'text-rose-600 bg-rose-500/10 dark:text-rose-300' },
-  { key: 'welcome', icon: Package, tone: 'text-cyan-600 bg-cyan-500/10 dark:text-cyan-300' },
+  { key: 'welcome', icon: Package, tone: 'text-teal-600 bg-teal-500/10 dark:text-teal-300' },
   { key: 'rewards', icon: Award, tone: 'text-orange-600 bg-orange-500/10 dark:text-orange-300' },
-  { key: 'partner', icon: Handshake, tone: 'text-indigo-600 bg-indigo-500/10 dark:text-indigo-300' },
+  { key: 'partner', icon: Handshake, tone: 'text-green-600 bg-green-500/10 dark:text-green-300' },
 ]
 
 const FOOTER_LINKS = ['giftStore', 'quickGifts', 'bulkGifting', 'campaigns'] as const
@@ -80,7 +80,7 @@ export function LandingPage() {
 
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-6 pt-20 pb-28 text-center">
           <p className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/80 backdrop-blur">
-            <span className="size-1.5 rounded-full bg-sky-300" />
+            <span className="size-1.5 rounded-full bg-emerald-300" />
             {t('landing.hero.badge')}
           </p>
           <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-6xl">{t('landing.hero.title')}</h1>

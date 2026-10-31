@@ -22,7 +22,7 @@ export function WrapzzoLogo({ variant = 'full', height = 28, tone = 'white', cla
   return (
     <span className={cn('inline-flex items-center gap-2', className)} role="img" aria-label={t('a11y.logoAlt')}>
       <span
-        className="flex shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-sidebar-accent text-white shadow-[0_0_14px_rgba(56,132,255,0.5)]"
+        className="flex shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-sidebar-accent text-white shadow-[0_0_14px_rgba(52,211,153,0.45)]"
         style={{ width: height, height }}
         aria-hidden="true"
       >

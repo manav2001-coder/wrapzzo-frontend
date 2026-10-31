@@ -2,7 +2,6 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Building2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { uploadCompanyLogo, type Company, type CompanyInput } from '@/api/companies'
@@ -32,25 +31,25 @@ const text = (value: unknown) => String(value ?? '').trim()
  * Companies, as MobixFL onboards a franchise: a table, and onboarding or editing in a side drawer
  * so the list keeps its place -- a logo, the company's name (its id is issued, never chosen), who
  * to contact, its tax and registration ids, where it is, and notes. The drawer follows the URL
- * (`/admin/companies/new`, `/admin/companies/:id`). Which workflow changes a company has opted
+ * . Which workflow changes a company has opted
  * into sit under the form once it exists. Vendors are not part of onboarding: which vendors serve
  * a company is set on the Vendors screen.
  */
 export function CompanyListPage() {
   const { t } = useTranslation('admin')
-  const navigate = useNavigate()
-  const { id } = useParams<{ id: string }>()
   const showError = useApiErrorToast()
   const { data: companies, isLoading, error, refetch } = useCompanies()
   const createCompany = useCreateCompany()
-  const updateCompany = useUpdateCompany(id ?? '')
   const setStatus = useSetCompanyStatus()
   const [handle, setHandle] = useState<FormGeneratorHandle | null>(null)
 
-  const creating = id === 'new'
-  const editing = !creating && id ? companies?.find((company) => company.id === id) : undefined
+  // The drawer is state, not a route (as in MobixFL): 'new' to onboard, a company's id to edit it.
+  const [drawer, setDrawer] = useState<'new' | string | null>(null)
+  const creating = drawer === 'new'
+  const editing = drawer && !creating ? companies?.find((company) => company.id === drawer) : undefined
   const drawerOpen = creating || Boolean(editing)
-  const closeDrawer = () => navigate('/admin/companies')
+  const closeDrawer = () => setDrawer(null)
+  const updateCompany = useUpdateCompany(editing?.id ?? '')
 
   // The company needs an id before the logo has anywhere to go, so a pick made while creating is
   // held here and uploaded right after the create.
@@ -72,7 +71,7 @@ export function CompanyListPage() {
 
   const { statusColumn, actionsColumn, deactivateDialog } = useMasterColumns<Company>({
     isActive: (company) => company.status === 'ACTIVE',
-    onEdit: (company) => navigate(`/admin/companies/${company.id}`),
+    onEdit: (company) => setDrawer(company.id),
     onActivate: (company) => changeStatus(company, true),
     onDeactivate: (company) => changeStatus(company, false),
     editPermission: P.PLATFORM_COMPANY_STATUS,
@@ -92,7 +91,7 @@ export function CompanyListPage() {
         header: t('companies.column.company'),
         meta: { className: 'min-w-[220px]', align: 'left' },
         cell: ({ row }) => (
-          <button type="button" className="flex items-center gap-2.5 font-medium hover:underline" onClick={() => navigate(`/admin/companies/${row.original.id}`)}>
+          <button type="button" className="flex items-center gap-2.5 font-medium hover:underline" onClick={() => setDrawer(row.original.id)}>
             <CompanyAvatar company={row.original} />
             <span className="truncate">{row.original.name}</span>
           </button>
@@ -113,7 +112,7 @@ export function CompanyListPage() {
       },
       actionsColumn,
     ],
-    [t, navigate, statusColumn, actionsColumn],
+    [t, statusColumn, actionsColumn],
   )
 
   const fields = useMemo(
@@ -223,7 +222,7 @@ export function CompanyListPage() {
         description={t('companies.subtitle')}
         createLabel={t('companies.add')}
         createPermission={P.PLATFORM_COMPANY_CREATE}
-        onCreate={() => navigate('/admin/companies/new')}
+        onCreate={() => setDrawer('new')}
       />
       <DataTable<Company>
         columns={columns}
@@ -270,7 +269,7 @@ export function CompanyListPage() {
               />
             </div>
             <FormGenerator
-              key={id}
+              key={drawer}
               fields={fields}
               values={values}
               mode={creating ? 'create' : 'edit'}

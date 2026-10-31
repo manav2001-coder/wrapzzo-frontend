@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  Briefcase,
   ClipboardList,
   KeyRound,
   Layers,
@@ -82,6 +83,8 @@ const MASTERS_NAV: NavSource = {
   children: [
     { id: 'masters-roles', titleKey: 'nav.roles', type: 'item', url: '/masters/roles', icon: BadgeCheck, permission: P.ROLE_VIEW },
     { id: 'masters-users', titleKey: 'nav.users', type: 'item', url: '/masters/users', icon: Users, permission: P.USER_VIEW },
+    { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: P.COMPANY_VENDOR_VIEW },
+    { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: P.WAREHOUSE_VIEW },
   ],
 }
 
@@ -134,16 +137,17 @@ const ADMIN_MASTERS_NAV: NavSource = {
 
 /** Wrappzo platform staff. */
 export const ADMIN_NAV: NavSource[] = [
+  ADMIN_MASTERS_NAV,
   {
-    id: 'admin',
-    titleKey: 'nav.admin',
-    type: 'group',
+    id: 'operations',
+    titleKey: 'nav.operations',
+    type: 'collapse',
+    icon: Briefcase,
     children: [
       { id: 'gift-catalogue', titleKey: 'nav.giftCatalogue', type: 'item', url: '/admin/gifts', icon: Gift, permission: P.PLATFORM_PRODUCT_VIEW },
       { id: 'platform-orders', titleKey: 'nav.orders', type: 'item', url: '/admin/orders', icon: ShoppingBag, permission: P.PLATFORM_ORDER_VIEW },
     ],
   },
-  ADMIN_MASTERS_NAV,
   TBAC_NAV,
   GENERAL,
 ]
@@ -153,10 +157,12 @@ export const ADMIN_NAV: NavSource[] = [
  * than inside it: they are independent workflows, not part of building or running a campaign.
  */
 export const COMPANY_NAV: NavSource[] = [
+  MASTERS_NAV,
   {
-    id: 'workspace',
-    titleKey: 'nav.workspace',
-    type: 'group',
+    id: 'operations',
+    titleKey: 'nav.operations',
+    type: 'collapse',
+    icon: Briefcase,
     children: [
       { id: 'dashboard', titleKey: 'nav.dashboard', type: 'item', url: '/dashboard', end: true, icon: LayoutDashboard, permission: P.DASHBOARD_VIEW },
       {
@@ -174,20 +180,10 @@ export const COMPANY_NAV: NavSource[] = [
       { id: 'recipients', titleKey: 'nav.recipients', type: 'item', url: '/recipients', icon: Contact, permission: P.RECIPIENT_VIEW },
       { id: 'my-doctors', titleKey: 'nav.myDoctors', type: 'item', url: '/my-doctors', icon: Stethoscope, permission: [P.RECIPIENT_LIST_MANAGE, P.REQUEST_CREATE] },
       { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: [P.REQUEST_APPROVE, P.RECIPIENT_LIST_APPROVE, P.ORDER_ARTWORK_FINAL], forManagers: true },
-      {
-        id: 'company-orders',
-        titleKey: 'nav.orders',
-        type: 'item',
-        url: '/orders',
-        icon: ShoppingBag,
-        permission: P.ORDER_VIEW,
-      },
-      { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: P.COMPANY_VENDOR_VIEW },
-      { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: P.WAREHOUSE_VIEW },
+      { id: 'company-orders', titleKey: 'nav.orders', type: 'item', url: '/orders', icon: ShoppingBag, permission: P.ORDER_VIEW },
       { id: 'menu-names', titleKey: 'nav.menuNames', type: 'item', url: '/company/menu-names', icon: PencilLine, permission: P.MENU_EDIT },
     ],
   },
-  MASTERS_NAV,
   TBAC_NAV,
   GENERAL,
 ]

@@ -45,7 +45,8 @@
     "tbac": "टेम्पलेट नियंत्रण",
     "assignments": "नियतन",
     "templatesToUser": "उपयोगकर्ता को टेम्पलेट",
-    "templatesToRole": "भूमिका को टेम्पलेट"
+    "templatesToRole": "भूमिका को टेम्पलेट",
+    "operations": "संचालन"
   },
   "action": {
     "activate": "सक्रिय करें",

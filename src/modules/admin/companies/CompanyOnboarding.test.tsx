@@ -38,7 +38,6 @@ const renderAt = (route: string) =>
   renderWithProviders(
     <Routes>
       <Route path="/admin/companies" element={<CompanyListPage />} />
-      <Route path="/admin/companies/:id" element={<CompanyListPage />} />
     </Routes>,
     { route },
   )
@@ -65,10 +64,13 @@ describe('company onboarding drawer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add company' }))
 
     expect(await screen.findByText('Onboard a company')).toBeInTheDocument()
+    // The drawer is state, not a route: the address bar stays on the list.
+    expect(window.location.pathname).not.toContain('/new')
   })
 
   it('onboards a company from a drawer: its name and profile, no vendor choice', async () => {
-    renderAt('/admin/companies/new')
+    renderAt('/admin/companies')
+    await userEvent.click(await screen.findByRole('button', { name: 'Add company' }))
 
     await userEvent.type(await screen.findByLabelText(/Company name/), 'Zenith Healthcare')
     await userEvent.type(screen.getByLabelText('Contact person'), 'Ravi Nair')
@@ -82,7 +84,8 @@ describe('company onboarding drawer', () => {
 
   it('edits an existing company in the same drawer, its issued id read-only', async () => {
     api.updateCompany.mockResolvedValue(ACME)
-    renderAt('/admin/companies/c1')
+    renderAt('/admin/companies')
+    await userEvent.click(await screen.findByRole('button', { name: 'Acme Pharma' }))
 
     expect(await screen.findByDisplayValue('CID-1')).toBeDisabled()
     const city = screen.getByLabelText('City')

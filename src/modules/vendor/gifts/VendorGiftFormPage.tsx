@@ -65,8 +65,8 @@ export function VendorGiftFormPage() {
       if (pendingImage) {
         try {
           await uploadVendorGiftImage(created.id, pendingImage, 0)
-        } catch {
-          toast.error(t('gifts.form.imageFailed'))
+        } catch (error) {
+          showError(error, t('gifts.form.imageFailed'))
         }
       }
       toast.success(t('gifts.form.created'))

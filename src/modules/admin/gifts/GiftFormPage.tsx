@@ -62,8 +62,8 @@ export function GiftFormPage() {
       if (pendingImage) {
         try {
           await uploadGiftImage(created.id, pendingImage, 0)
-        } catch {
-          toast.error(t('gifts.detail.imageFailedAfterCreate'))
+        } catch (error) {
+          showError(error, t('gifts.detail.imageFailedAfterCreate'))
         }
       }
       toast.success(t('gifts.detail.created'))

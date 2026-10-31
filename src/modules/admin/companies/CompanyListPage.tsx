@@ -189,8 +189,8 @@ export function CompanyListPage() {
         if (pendingLogo) {
           try {
             await uploadCompanyLogo(created.id, pendingLogo)
-          } catch {
-            toast.error(t('companies.drawer.logoFailedAfterCreate'))
+          } catch (error) {
+            showError(error, t('companies.drawer.logoFailedAfterCreate'))
           }
         }
         toast.success(t('companies.drawer.created', { name: created.name }))

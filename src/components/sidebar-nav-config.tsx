@@ -119,6 +119,19 @@ const TBAC_NAV: NavSource = {
   ],
 }
 
+/**
+ * The masters platform staff keep: the companies and vendors the platform serves, then -- per
+ * company -- its roles and users. (A company's own admins see just roles and users.)
+ */
+const ADMIN_MASTERS_NAV: NavSource = {
+  ...MASTERS_NAV,
+  children: [
+    { id: 'companies', titleKey: 'nav.companies', type: 'item', url: '/admin/companies', icon: Building2, permission: P.PLATFORM_COMPANY_VIEW },
+    { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: P.PLATFORM_VENDOR_VIEW },
+    ...(MASTERS_NAV.children ?? []),
+  ],
+}
+
 /** Wrappzo platform staff. */
 export const ADMIN_NAV: NavSource[] = [
   {
@@ -126,13 +139,11 @@ export const ADMIN_NAV: NavSource[] = [
     titleKey: 'nav.admin',
     type: 'group',
     children: [
-      { id: 'companies', titleKey: 'nav.companies', type: 'item', url: '/admin/companies', icon: Building2, permission: P.PLATFORM_COMPANY_VIEW },
-      { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: P.PLATFORM_VENDOR_VIEW },
       { id: 'gift-catalogue', titleKey: 'nav.giftCatalogue', type: 'item', url: '/admin/gifts', icon: Gift, permission: P.PLATFORM_PRODUCT_VIEW },
       { id: 'platform-orders', titleKey: 'nav.orders', type: 'item', url: '/admin/orders', icon: ShoppingBag, permission: P.PLATFORM_ORDER_VIEW },
     ],
   },
-  MASTERS_NAV,
+  ADMIN_MASTERS_NAV,
   TBAC_NAV,
   GENERAL,
 ]

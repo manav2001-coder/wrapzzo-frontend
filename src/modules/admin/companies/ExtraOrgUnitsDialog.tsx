@@ -11,8 +11,9 @@ import { useCompanyOrgUnits, useSetExtraOrgUnits } from '@/hooks/useUsers'
 
 /**
  * Pick the org units a user covers beyond their own -- a manager over several zones. Ticking a
- * unit covers everything under it too, so the list is grouped by level. The user's own unit is
- * left out: it is always covered. Replace-all on save.
+ * unit covers everything under it too, so the list is grouped by level. What is already covered --
+ * the user's own unit and everything under it, and everything under a unit ticked here -- shows
+ * ticked and locked, so the boxes always say what the user can see. Replace-all on save.
  */
 export function ExtraOrgUnitsDialog({ companyId, user, onClose }: { companyId: string; user: CompanyUser; onClose: () => void }) {
   const { t } = useTranslation('admin')
@@ -23,13 +24,27 @@ export function ExtraOrgUnitsDialog({ companyId, user, onClose }: { companyId: s
 
   const byLevel = useMemo(() => {
     const groups = new Map<string, { id: string; name: string }[]>()
-    for (const unit of units ?? []) {
-      if (unit.id === user.orgUnitId) continue
-      groups.set(unit.levelName, [...(groups.get(unit.levelName) ?? []), unit])
-    }
+    for (const unit of units ?? []) groups.set(unit.levelName, [...(groups.get(unit.levelName) ?? []), unit])
     for (const list of groups.values()) list.sort((a, b) => a.name.localeCompare(b.name))
     return [...groups.entries()]
-  }, [units, user.orgUnitId])
+  }, [units])
+
+  // A unit is covered when it is the user's own, or sits under their own or under a ticked one.
+  const covered = useMemo(() => {
+    const parentOf = new Map((units ?? []).map((unit) => [unit.id, unit.parentId]))
+    const roots = new Set([...selected, ...(user.orgUnitId ? [user.orgUnitId] : [])])
+    const result = new Set<string>()
+    for (const unit of units ?? []) {
+      if (unit.id === user.orgUnitId) result.add(unit.id)
+      for (let ancestor = parentOf.get(unit.id); ancestor; ancestor = parentOf.get(ancestor)) {
+        if (roots.has(ancestor)) {
+          result.add(unit.id)
+          break
+        }
+      }
+    }
+    return result
+  }, [units, selected, user.orgUnitId])
 
   function toggle(id: string, checked: boolean) {
     setSelected((prev) => {
@@ -74,9 +89,15 @@ export function ExtraOrgUnitsDialog({ companyId, user, onClose }: { companyId: s
               <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
                 {list.map((unit) => {
                   const id = `extra-unit-${unit.id}`
+                  const isCovered = covered.has(unit.id)
                   return (
                     <label key={unit.id} htmlFor={id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50">
-                      <Checkbox id={id} checked={selected.has(unit.id)} onCheckedChange={(checked) => toggle(unit.id, checked === true)} />
+                      <Checkbox
+                        id={id}
+                        checked={isCovered || selected.has(unit.id)}
+                        disabled={isCovered}
+                        onCheckedChange={(checked) => toggle(unit.id, checked === true)}
+                      />
                       {unit.name}
                     </label>
                   )

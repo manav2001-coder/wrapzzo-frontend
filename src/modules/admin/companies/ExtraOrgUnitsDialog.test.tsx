@@ -34,22 +34,40 @@ describe('ExtraOrgUnitsDialog', () => {
       { id: 'north', name: 'North', levelName: 'Zone', parentId: 'division' },
       { id: 'south', name: 'South', levelName: 'Zone', parentId: 'division' },
       { id: 'east', name: 'East', levelName: 'Zone', parentId: 'division' },
+      { id: 'north-punjab', name: 'Punjab', levelName: 'State', parentId: 'north' },
+      { id: 'east-bengal', name: 'West Bengal', levelName: 'State', parentId: 'east' },
+      { id: 'south-karnataka', name: 'Karnataka', levelName: 'State', parentId: 'south' },
     ])
     setExtraOrgUnits.mockReset().mockResolvedValue(MANAGER)
   })
 
-  it('lists every unit but the user’s own, starts from what they already cover, and saves the full set', async () => {
+  it('starts from what they already cover, and saves the full set', async () => {
     const onClose = vi.fn()
     renderWithProviders(<ExtraOrgUnitsDialog companyId="c-1" user={MANAGER} onClose={onClose} />)
 
     expect(await screen.findByLabelText('South')).not.toBeChecked()
     expect(screen.getByLabelText('East')).toBeChecked()
-    expect(screen.queryByLabelText('North')).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByLabelText('South'))
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(setExtraOrgUnits).toHaveBeenCalledWith('c-1', 'u-1', expect.arrayContaining(['east', 'south'])))
     expect(setExtraOrgUnits.mock.calls[0][2]).toHaveLength(2)
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('shows what is already covered ticked and locked: their own unit, and everything under it or under a ticked unit', async () => {
+    renderWithProviders(<ExtraOrgUnitsDialog companyId="c-1" user={MANAGER} onClose={vi.fn()} />)
+
+    for (const covered of ['North', 'Punjab', 'West Bengal']) {
+      expect(await screen.findByLabelText(covered)).toBeChecked()
+      expect(screen.getByLabelText(covered)).toBeDisabled()
+    }
+    expect(screen.getByLabelText('South')).not.toBeChecked()
+    expect(screen.getByLabelText('South')).toBeEnabled()
+    expect(screen.getByLabelText('Karnataka')).not.toBeChecked()
+
+    await userEvent.click(screen.getByLabelText('South'))
+    expect(screen.getByLabelText('Karnataka')).toBeChecked()
+    expect(screen.getByLabelText('Karnataka')).toBeDisabled()
   })
 })

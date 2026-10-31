@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   activateCompany,
   createCompany,
+  type CompanyInput,
   deactivateCompany,
   getCompany,
   listCompanies,
@@ -24,7 +25,7 @@ export function useCompany(id: string | undefined) {
 export function useCreateCompany() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (name: string) => createCompany(name),
+    mutationFn: (input: CompanyInput) => createCompany(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: companiesKey }),
   })
 }
@@ -32,7 +33,7 @@ export function useCreateCompany() {
 export function useUpdateCompany(id: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (name: string) => updateCompany(id, name),
+    mutationFn: (input: CompanyInput) => updateCompany(id, input),
     onSuccess: (data) => {
       queryClient.setQueryData(companyKey(id), data)
       queryClient.invalidateQueries({ queryKey: companiesKey })

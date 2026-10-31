@@ -3,7 +3,7 @@ import { useAppSelector } from '@/app/hooks'
 import { usePermissions } from '@/hooks/use-permission'
 
 /** Screens every signed-in user has, platform staff and company users alike. */
-const SHARED_PATHS = ['/settings', '/components', '/access', '/masters']
+const SHARED_PATHS = ['/settings', '/components', '/tbac', '/masters']
 
 /**
  * The signed-in gate for platform and company users. Also keeps each audience on its own side --

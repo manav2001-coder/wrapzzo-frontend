@@ -8,33 +8,16 @@
     "column": {
       "company": "Company",
       "id": "ID",
-      "onboarded": "Onboarded"
+      "onboarded": "Onboarded",
+      "contact": "Contact",
+      "city": "City",
+      "gstin": "GSTIN"
     },
     "deactivateTitle": "Deactivate this company?",
     "deactivateBody": "The company and its users lose access to the platform until it is activated again.",
     "activated": "Company activated",
     "deactivated": "Company deactivated",
     "detail": {
-      "newTitle": "Add company",
-      "newSubtitle": "Onboard a new corporate customer.",
-      "editSubtitle": "Company details, logo, vendor roster and optional features.",
-      "back": "Back to companies",
-      "details": "Company details",
-      "name": "Company name",
-      "namePlaceholder": "Acme Pharma",
-      "onboardedOn": "Onboarded on {{date}}",
-      "create": "Create company",
-      "save": "Save changes",
-      "created": "Company created",
-      "updated": "Company updated",
-      "logo": "Logo",
-      "logoHelp": "PNG, JPG, WebP or SVG, up to 5 MB.",
-      "logoHelpNew": "Optional. Add it now, or after the company is created.",
-      "noLogo": "No logo",
-      "uploadLogo": "Upload logo",
-      "logoUploaded": "Logo updated",
-      "logoFailedAfterCreate": "Company created, but the logo failed to upload. Add it from the company page.",
-      "logoDrop": "Drop a logo here, or click to choose one",
       "features": "Feature flags",
       "featuresHelp": "Optional workflow changes, off by default. Nothing changes for the company until one is turned on.",
       "featureEnabled": "Feature enabled",
@@ -43,6 +26,41 @@
       "approvalLevelsHelp": "How many managers above the MR approve artwork, one after another up their reporting line. If an MR has fewer managers, the top of their line gives the final approval.",
       "approvalLevelsSaved_one": "Artwork now needs {{count}} level of approval",
       "approvalLevelsSaved_other": "Artwork now needs {{count}} levels of approval"
+    },
+    "drawer": {
+      "code": "Company ID",
+      "codeHelp": "Issued when the company is onboarded; it never changes.",
+      "name": "Company name",
+      "namePlaceholder": "e.g. Alembic Pharmaceuticals",
+      "sections": {
+        "contact": "Contact",
+        "compliance": "Tax & registration",
+        "address": "Address",
+        "notes": "Notes"
+      },
+      "contactPerson": "Contact person",
+      "contactEmail": "Contact email",
+      "contactMobile": "Contact mobile",
+      "gstin": "GSTIN",
+      "pan": "PAN",
+      "registrationNumber": "Registration number",
+      "registrationNumberHelp": "The company registration (CIN) number.",
+      "addressLine1": "Address line 1",
+      "addressLine2": "Address line 2",
+      "city": "City",
+      "state": "State",
+      "pincode": "Pincode",
+      "notes": "Notes",
+      "newTitle": "Onboard a company",
+      "editTitle": "Edit company",
+      "newDescription": "Add the company and who to contact. Its roles, users and vendors are set up from Masters afterwards.",
+      "create": "Onboard company",
+      "created": "Onboarded {{name}}.",
+      "updated": "Company updated.",
+      "noLogo": "No logo",
+      "logoDrop": "Drop a logo, or click to choose one",
+      "logoUploaded": "Logo updated.",
+      "logoFailedAfterCreate": "The company was created but its logo failed to upload -- add it from the company."
     }
   },
   "users": {
@@ -179,6 +197,21 @@
       "create": "Create vendor",
       "invited": "Invite sent to {{email}}",
       "updated": "Vendor updated"
+    },
+    "coverage": {
+      "title": "Serves",
+      "help": "The companies this vendor supplies. Choose the whole company, or only particular org units (each covers everything beneath it).",
+      "none": "Not serving any company yet.",
+      "add": "Add a company",
+      "company": "Company",
+      "pickCompany": "Choose a company",
+      "whole": "Whole company",
+      "units": "Some org units",
+      "orgUnits": "Org units",
+      "pickUnits": "Choose org units",
+      "noUnits": "This company has no org units",
+      "remove": "Remove",
+      "needUnits": "Choose at least one org unit, or serve the whole company."
     }
   },
   "gifts": {
@@ -436,5 +469,9 @@
       "serves": "Serves",
       "status": "Status"
     }
+  },
+  "scope": {
+    "company": "Company",
+    "placeholder": "Choose a company"
   }
 }

@@ -40,10 +40,12 @@
     "templateMaster": "Template Master",
     "featuresToTemplate": "Features to Template",
     "templatesToTemplate": "Templates to Template",
-    "roleToTemplate": "Role to Template",
-    "userToTemplate": "User to Template",
     "masters": "Masters",
-    "vendorMapping": "Vendor Mapping"
+    "vendorMapping": "Vendor Mapping",
+    "tbac": "Template Control",
+    "assignments": "Assignments",
+    "templatesToUser": "Templates to User",
+    "templatesToRole": "Templates to Role"
   },
   "action": {
     "activate": "Activate",
@@ -304,5 +306,11 @@
     "reset": "Use the default name",
     "resetFor": "Use the default name for {{menu}}",
     "nameFor": "Your name for {{menu}}"
+  },
+  "audit": {
+    "addedOn": "Added on",
+    "addedBy": "Added by",
+    "updatedOn": "Updated on",
+    "updatedBy": "Updated by"
   }
 }

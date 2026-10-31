@@ -23,7 +23,6 @@ import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
 import { RemoveAdminDialog } from './RemoveAdminDialog'
-import { CompanyPicker } from '../access-control/CompanyPicker'
 import { ExtraOrgUnitsDialog } from './ExtraOrgUnitsDialog'
 
 const COMPANY_ADMIN_ROLE_NAME = 'Company Admin'
@@ -44,7 +43,7 @@ type PendingAction = { kind: 'makeAdmin' | 'wholeCompany' | 'ownUnit' | 'delete'
 
 export function CompanyUsersPage() {
   const { t } = useTranslation('admin')
-  const { companyId, companyName, isPlatformStaff, setCompany, addPath, importPath } = useCompanyUserContext()
+  const { companyId, companyName, scope, addPath, importPath } = useCompanyUserContext()
   const navigate = useNavigate()
   const currentUserId = useAppSelector((state) => state.auth.user?.sub)
   const showError = useApiErrorToast()
@@ -214,7 +213,7 @@ export function CompanyUsersPage() {
         description={companyName ? t('users.subtitle', { company: companyName }) : t('users.subtitleNoName')}
         extra={
           <div className="flex flex-wrap items-end gap-2">
-            {isPlatformStaff && <CompanyPicker id="users-company" value={companyId || null} onChange={setCompany} />}
+            {scope.control}
             <Button size="sm" variant="outline" className="h-9" onClick={() => void downloadEmployeeTemplate()}>
               <Download />
               {t('users.downloadTemplate')}

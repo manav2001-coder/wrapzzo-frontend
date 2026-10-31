@@ -1,0 +1,17 @@
+{
+  "role": {
+    "fields": {
+      "name": "भूमिका",
+      "description": "विवरण",
+      "templates": "टेम्पलेट"
+    }
+  },
+  "user": {
+    "fields": {
+      "name": "नाम",
+      "email": "ईमेल",
+      "mobile": "मोबाइल",
+      "orgUnit": "ऑर्ग यूनिट"
+    }
+  }
+}

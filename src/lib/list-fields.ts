@@ -11,3 +11,11 @@ export type ListFieldMap = Record<string, ListFieldKind>
 /** Narrowest and widest a user can drag any column. */
 export const TABLE_PREFERENCE_MIN_WIDTH = 60
 export const TABLE_PREFERENCE_MAX_WIDTH = 800
+
+/** The columns each Access Control list can filter and sort by (MobixFL publishes these from its API). */
+export const LIST_FIELDS = {
+  feature: { moduleName: 'text', key: 'text', actionName: 'text', description: 'text', active: 'boolean' },
+  template: { name: 'text', templateKey: 'text', description: 'text', active: 'boolean' },
+  role: { name: 'text', description: 'text', userCount: 'number', active: 'boolean' },
+  user: { name: 'text', email: 'text', roleName: 'text', orgUnitName: 'text', active: 'boolean' },
+} satisfies Record<string, ListFieldMap>

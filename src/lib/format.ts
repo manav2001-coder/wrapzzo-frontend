@@ -25,3 +25,8 @@ export function parseDateOnly(value: string): Date {
   const [year, month, day] = value.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
+
+/** A phone number for a table cell; nothing when there is none. */
+export function formatPhoneForDisplay(value: string | null | undefined): string | undefined {
+  return value ? value : undefined
+}

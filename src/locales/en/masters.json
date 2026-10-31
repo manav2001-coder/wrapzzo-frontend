@@ -1,0 +1,17 @@
+{
+  "role": {
+    "fields": {
+      "name": "Role",
+      "description": "Description",
+      "templates": "Templates"
+    }
+  },
+  "user": {
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "mobile": "Mobile",
+      "orgUnit": "Org unit"
+    }
+  }
+}

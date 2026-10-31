@@ -15,8 +15,6 @@ export interface RoleInput {
   name: string
   description?: string
   active?: boolean
-  /** Templates a new role starts with; ignored on edit (use replaceRoleTemplates). */
-  templateIds?: string[]
 }
 
 const base = (companyId: string) => `/api/platform/companies/${companyId}/roles`
@@ -33,11 +31,6 @@ export async function createRole(companyId: string, input: RoleInput): Promise<R
 
 export async function updateRole(companyId: string, roleId: string, input: RoleInput): Promise<Role> {
   const { data } = await apiClient.put<Role>(`${base(companyId)}/${roleId}`, input)
-  return data
-}
-
-export async function replaceRoleTemplates(companyId: string, roleId: string, templateIds: string[]): Promise<Role> {
-  const { data } = await apiClient.put<Role>(`${base(companyId)}/${roleId}/templates`, { templateIds })
   return data
 }
 

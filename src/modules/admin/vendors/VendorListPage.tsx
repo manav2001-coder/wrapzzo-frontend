@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Mail, Truck } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -12,12 +12,15 @@ import { FormGenerator, type FormGeneratorHandle } from '@/components/fields/for
 import { IconButton } from '@/components/icon-button'
 import { decimalField, emailField, phoneField, textField } from '@/components/masters/master-fields'
 import { MasterDrawer } from '@/components/masters/master-drawer'
+import { useCompanyScope } from '@/components/masters/company-scope-select'
 import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
-import { useAddVendor, useEditVendor, useResendVendorInvite, useSetVendorStatus, useVendors } from '@/hooks/useVendors'
+import { useCompanies } from '@/hooks/useCompanies'
+import { useAddVendor, useEditVendor, useReplaceVendorCoverage, useResendVendorInvite, useSetVendorStatus, useVendorCoverage, useVendors } from '@/hooks/useVendors'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
+import { newCoverageRow, VendorCoverageEditor, type CoverageRow } from './VendorCoverageEditor'
 
 const LIST_FIELDS: ListFieldMap = {
   name: 'text',
@@ -43,17 +46,29 @@ export function VendorListPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const showError = useApiErrorToast()
-  const { data: vendors, isLoading, error, refetch } = useVendors()
+  // A vendor serves companies, so the list follows the company in scope: the vendors serving it.
+  const scope = useCompanyScope()
+  const { data: vendors, isLoading, error, refetch } = useVendors(scope.companyId)
+  const { data: companies } = useCompanies()
+  const replaceCoverage = useReplaceVendorCoverage()
   const addVendor = useAddVendor()
   const editVendor = useEditVendor()
   const setStatus = useSetVendorStatus()
   const resendInvite = useResendVendorInvite()
   const [handle, setHandle] = useState<FormGeneratorHandle | null>(null)
+  const [coverage, setCoverage] = useState<CoverageRow[]>([])
 
   const creating = id === 'new'
   const editing = !creating && id ? vendors?.find((vendor) => vendor.id === id) : undefined
   const drawerOpen = creating || Boolean(editing)
   const closeDrawer = () => navigate('/admin/vendors')
+
+  // Where the vendor serves: a new vendor starts on the company in scope; an existing one loads its own.
+  const { data: savedCoverage } = useVendorCoverage(editing?.id)
+  useEffect(() => {
+    if (creating) setCoverage(scope.companyId ? [newCoverageRow(scope.companyId)] : [])
+    else if (savedCoverage) setCoverage(savedCoverage.map((entry) => ({ ...newCoverageRow(entry.companyId), whole: entry.orgUnitIds.length === 0, orgUnitIds: entry.orgUnitIds })))
+  }, [creating, id, savedCoverage, scope.companyId])
 
   async function changeStatus(vendor: Vendor, active: boolean) {
     try {
@@ -173,13 +188,21 @@ export function VendorListPage() {
       markupFees: toNumber(submitted.markupFees),
       commission: toNumber(submitted.commission),
     }
+    const rows = coverage.filter((row) => row.companyId)
+    if (rows.some((row) => !row.whole && row.orgUnitIds.length === 0)) {
+      toast.error(t('vendors.coverage.needUnits'))
+      return
+    }
+    const companiesServed = rows.map((row) => ({ companyId: row.companyId as string, orgUnitIds: row.whole ? [] : row.orgUnitIds }))
     try {
       if (creating) {
         const email = String(submitted.contactEmail).trim()
-        await addVendor.mutateAsync({ ...common, contactEmail: email })
+        const added = await addVendor.mutateAsync({ ...common, contactEmail: email })
+        if (companiesServed.length > 0) await replaceCoverage.mutateAsync({ id: added.id, companies: companiesServed })
         toast.success(t('vendors.drawer.invited', { email }))
       } else if (editing) {
         await editVendor.mutateAsync({ id: editing.id, input: common })
+        await replaceCoverage.mutateAsync({ id: editing.id, companies: companiesServed })
         toast.success(t('vendors.drawer.updated'))
       }
       closeDrawer()
@@ -195,6 +218,7 @@ export function VendorListPage() {
         description={t('vendors.subtitle')}
         createLabel={t('vendors.add')}
         createPermission={P.PLATFORM_VENDOR_CREATE}
+        extra={scope.control}
         onCreate={() => navigate('/admin/vendors/new')}
       />
       <DataTable<Vendor>
@@ -224,18 +248,21 @@ export function VendorListPage() {
         handle={handle}
       >
         {drawerOpen && (
-          <FormGenerator
-            key={id}
-            fields={fields}
-            values={values}
-            mode={creating ? 'create' : 'edit'}
-            maxWidgetsPerRow={2}
-            submitPermission={creating ? P.PLATFORM_VENDOR_CREATE : P.PLATFORM_VENDOR_EDIT}
-            onSubmit={onSubmit}
-            onReady={setHandle}
-            hideCardWrapper
-            hideSubmitButton
-          />
+          <div className="space-y-6">
+            <FormGenerator
+              key={id}
+              fields={fields}
+              values={values}
+              mode={creating ? 'create' : 'edit'}
+              maxWidgetsPerRow={2}
+              submitPermission={creating ? P.PLATFORM_VENDOR_CREATE : P.PLATFORM_VENDOR_EDIT}
+              onSubmit={onSubmit}
+              onReady={setHandle}
+              hideCardWrapper
+              hideSubmitButton
+            />
+            <VendorCoverageEditor value={coverage} onChange={setCoverage} companies={companies ?? []} />
+          </div>
         )}
       </MasterDrawer>
       {deactivateDialog}

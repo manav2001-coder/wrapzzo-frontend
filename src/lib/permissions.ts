@@ -38,14 +38,26 @@ export const P = {
   USER_EDIT: 'user.edit',
   USER_DELETE: 'user.delete',
 
-  ACCESS_VIEW: 'access.view',
-  ACCESS_EDIT: 'access.edit',
-
   ROLE_VIEW: 'role.view',
   ROLE_EDIT: 'role.edit',
 
-  TEMPLATE_VIEW: 'template.view',
-  TEMPLATE_EDIT: 'template.edit',
+  // Access Control, as MobixFL has it: a key per screen and action. `.manage` opens an assignment
+  // screen, `.assignment` writes in it, so assignments can be audited without being changed.
+  TBAC_FEATURE_MASTER_VIEW: 'tbac.feature_master.view',
+  TBAC_FEATURE_MASTER_ADD: 'tbac.feature_master.add',
+  TBAC_FEATURE_MASTER_EDIT: 'tbac.feature_master.edit',
+  TBAC_TEMPLATE_MASTER_VIEW: 'tbac.template_master.view',
+  TBAC_TEMPLATE_MASTER_ADD: 'tbac.template_master.add',
+  TBAC_TEMPLATE_MASTER_EDIT: 'tbac.template_master.edit',
+  TBAC_FEATURES_TO_TEMPLATE_MANAGE: 'tbac.features_to_template.manage',
+  TBAC_FEATURES_TO_TEMPLATE_ASSIGNMENT: 'tbac.features_to_template.assignment',
+  TBAC_TEMPLATES_TO_TEMPLATE_MANAGE: 'tbac.templates_to_template.manage',
+  TBAC_TEMPLATES_TO_TEMPLATE_ASSIGNMENT: 'tbac.templates_to_template.assignment',
+  TBAC_USER_TEMPLATE_MANAGE: 'tbac.user_template.manage',
+  TBAC_USER_TEMPLATE_ASSIGNMENT: 'tbac.user_template.assignment',
+  TBAC_BULK_ASSIGN_USER_TEMPLATES: 'tbac.bulk_assign_user_templates',
+  TBAC_ROLE_TEMPLATE_MANAGE: 'tbac.role_template.manage',
+  TBAC_ROLE_TEMPLATE_ASSIGNMENT: 'tbac.role_template.assignment',
 
   COMPANY_VENDOR_VIEW: 'company_vendor.view',
   COMPANY_VENDOR_ADD: 'company_vendor.add',

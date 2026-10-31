@@ -2,18 +2,39 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addVendor,
   editVendor,
+  getVendorCoverage,
   listVendors,
   reactivateVendor,
+  replaceVendorCoverage,
   resendVendorInvite,
   suspendVendor,
   type AddVendorInput,
+  type CompanyCoverage,
   type EditVendorInput,
 } from '@/api/vendors'
 
 const vendorsKey = ['vendors'] as const
 
-export function useVendors() {
-  return useQuery({ queryKey: vendorsKey, queryFn: listVendors })
+/** All vendors, or -- with a company -- the ones serving it. */
+export function useVendors(companyId?: string | null) {
+  return useQuery({ queryKey: [...vendorsKey, companyId ?? 'all'], queryFn: () => listVendors(companyId) })
+}
+
+export function useVendorCoverage(id: string | undefined) {
+  return useQuery({ queryKey: ['vendor-coverage', id], queryFn: () => getVendorCoverage(id!), enabled: Boolean(id) })
+}
+
+/** Set where a vendor serves; the lists that depend on it (vendors per company, a company's catalogue) refresh. */
+export function useReplaceVendorCoverage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, companies }: { id: string; companies: CompanyCoverage[] }) => replaceVendorCoverage(id, companies),
+    onSuccess: (_data, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: vendorsKey })
+      void queryClient.invalidateQueries({ queryKey: ['vendor-coverage', id] })
+      void queryClient.invalidateQueries({ queryKey: ['company-vendors'] })
+    },
+  })
 }
 
 export function useAddVendor() {

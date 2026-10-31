@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Order } from '@/api/orders'
 import { platformStaff } from '@/test/tbac-fixtures'
-import { renderWithProviders, screen, waitFor } from '@/test/test-utils'
+import { renderWithProviders, screen } from '@/test/test-utils'
 import { OrdersPage } from './OrdersPage'
 
 const currentUser = vi.hoisted(() => vi.fn())
@@ -56,12 +56,5 @@ describe('platform OrdersPage company scope', () => {
 
     expect(await screen.findByText('Dr. Alpha')).toBeInTheDocument()
     expect(screen.queryByText('Dr. Beta')).not.toBeInTheDocument()
-  })
-
-  it('shows the company named in the URL instead', async () => {
-    renderWithProviders(<OrdersPage />, { route: '/admin/orders?company=c-b' })
-
-    await waitFor(() => expect(screen.getByText('Dr. Beta')).toBeInTheDocument())
-    expect(screen.queryByText('Dr. Alpha')).not.toBeInTheDocument()
   })
 })

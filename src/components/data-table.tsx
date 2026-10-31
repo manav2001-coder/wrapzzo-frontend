@@ -276,7 +276,9 @@ export function DataTable<TData>({
   const resolvedColumns = React.useMemo(
     () =>
       columns.map((column) => {
-        const meta = column.meta ?? {};
+        // A row-actions column is always pinned to the right edge, whether or not the screen said
+        // so: it is the one column that must stay reachable however wide the table gets.
+        const meta = { ...(column.meta ?? {}), ...((column as { id?: string }).id === "actions" ? { pin: "right" as const } : {}) };
         const kind = kindOf(listFields, fieldNameOf(column as Parameters<typeof fieldNameOf>[0]));
         // The width a column opens at: its own `size`, else the published kind's, never narrower
         // than its title. A row-actions column (pinned) has no kind and no text title.
@@ -305,6 +307,17 @@ export function DataTable<TData>({
       resolvedColumns
         .map((column) => columnIdOf(column as Parameters<typeof columnIdOf>[0]))
         .filter((id): id is string => Boolean(id)),
+    [resolvedColumns],
+  );
+
+  const pinnedIds = React.useMemo(
+    () =>
+      new Set(
+        resolvedColumns
+          .filter((column) => column.meta?.pin)
+          .map((column) => columnIdOf(column as Parameters<typeof columnIdOf>[0]))
+          .filter((id): id is string => Boolean(id)),
+      ),
     [resolvedColumns],
   );
 
@@ -547,9 +560,11 @@ export function DataTable<TData>({
     () => [
       ...(getRowCanExpand ? [EXPAND_COLUMN_ID] : []),
       ...(showRowSelectionColumn ? [SELECT_COLUMN_ID] : []),
-      ...savedOrder,
+      // Pinned columns (row actions) always close the row, wherever a saved order left them.
+      ...savedOrder.filter((id) => !pinnedIds.has(id)),
+      ...savedOrder.filter((id) => pinnedIds.has(id)),
     ],
-    [getRowCanExpand, showRowSelectionColumn, savedOrder],
+    [getRowCanExpand, showRowSelectionColumn, savedOrder, pinnedIds],
   );
   const handleMoveColumn = (activeId: string, overId: string) =>
     setOrder(moveColumn(savedOrder, activeId, overId));

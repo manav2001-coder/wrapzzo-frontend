@@ -2,7 +2,6 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Mail, Truck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import type { Vendor } from '@/api/vendors'
@@ -43,8 +42,6 @@ const toNumber = (value: unknown) => (value === '' || value == null ? undefined 
  */
 export function VendorListPage() {
   const { t } = useTranslation('admin')
-  const navigate = useNavigate()
-  const { id } = useParams<{ id: string }>()
   const showError = useApiErrorToast()
   // A vendor serves companies, so the list follows the company in scope: the vendors serving it.
   const scope = useCompanyScope()
@@ -58,17 +55,19 @@ export function VendorListPage() {
   const [handle, setHandle] = useState<FormGeneratorHandle | null>(null)
   const [coverage, setCoverage] = useState<CoverageRow[]>([])
 
-  const creating = id === 'new'
-  const editing = !creating && id ? vendors?.find((vendor) => vendor.id === id) : undefined
+  // The drawer is state, not a route (as in MobixFL): 'new' to add, a vendor's id to edit it.
+  const [drawer, setDrawer] = useState<'new' | string | null>(null)
+  const creating = drawer === 'new'
+  const editing = drawer && !creating ? vendors?.find((vendor) => vendor.id === drawer) : undefined
   const drawerOpen = creating || Boolean(editing)
-  const closeDrawer = () => navigate('/admin/vendors')
+  const closeDrawer = () => setDrawer(null)
 
   // Where the vendor serves: a new vendor starts on the company in scope; an existing one loads its own.
   const { data: savedCoverage } = useVendorCoverage(editing?.id)
   useEffect(() => {
     if (creating) setCoverage(scope.companyId ? [newCoverageRow(scope.companyId)] : [])
     else if (savedCoverage) setCoverage(savedCoverage.map((entry) => ({ ...newCoverageRow(entry.companyId), whole: entry.orgUnitIds.length === 0, orgUnitIds: entry.orgUnitIds })))
-  }, [creating, id, savedCoverage, scope.companyId])
+  }, [creating, drawer, savedCoverage, scope.companyId])
 
   async function changeStatus(vendor: Vendor, active: boolean) {
     try {
@@ -91,7 +90,7 @@ export function VendorListPage() {
   const { statusColumn, actionsColumn, deactivateDialog } = useMasterColumns<Vendor>({
     isActive: (vendor) => vendor.status === 'ACTIVE',
     statusLabels: { active: t('vendors.status.ACTIVE'), inactive: t('vendors.status.SUSPENDED') },
-    onEdit: (vendor) => navigate(`/admin/vendors/${vendor.id}`),
+    onEdit: (vendor) => setDrawer(vendor.id),
     onActivate: (vendor) => changeStatus(vendor, true),
     onDeactivate: (vendor) => changeStatus(vendor, false),
     editPermission: P.PLATFORM_VENDOR_STATUS,
@@ -111,7 +110,7 @@ export function VendorListPage() {
           <button
             type="button"
             className="truncate font-medium hover:underline"
-            onClick={() => navigate(`/admin/vendors/${row.original.id}`)}
+            onClick={() => setDrawer(row.original.id)}
           >
             {row.original.name}
           </button>
@@ -147,7 +146,7 @@ export function VendorListPage() {
       },
       actionsColumn,
     ],
-    [t, navigate, statusColumn, actionsColumn],
+    [t, statusColumn, actionsColumn],
   )
 
   const fields = useMemo(
@@ -219,7 +218,7 @@ export function VendorListPage() {
         createLabel={t('vendors.add')}
         createPermission={P.PLATFORM_VENDOR_CREATE}
         extra={scope.control}
-        onCreate={() => navigate('/admin/vendors/new')}
+        onCreate={() => setDrawer('new')}
       />
       <DataTable<Vendor>
         columns={columns}
@@ -250,7 +249,7 @@ export function VendorListPage() {
         {drawerOpen && (
           <div className="space-y-6">
             <FormGenerator
-              key={id}
+              key={drawer}
               fields={fields}
               values={values}
               mode={creating ? 'create' : 'edit'}

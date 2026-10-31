@@ -500,3 +500,19 @@ describe("DataTable - loading", () => {
     expect(container.querySelector(".row-start-4 .animate-pulse")).toBeNull();
   });
 });
+
+describe("DataTable - the row-actions column", () => {
+  it("is pinned to the right edge and last, even when a screen put it first and gave it no meta", () => {
+    const cols: ColumnDef<Row, unknown>[] = [
+      { id: "actions", header: "Actions", cell: () => <button type="button">Edit row</button> },
+      { accessorKey: "id", header: "ID" },
+      { accessorKey: "name", header: "Name" },
+    ];
+    renderWithProviders(<DataTable columns={cols} data={data} />);
+
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers[headers.length - 1]).toHaveTextContent("Actions");
+    expect(headers[headers.length - 1].className).toContain("sticky");
+    expect(headers[0]).not.toHaveTextContent("Actions");
+  });
+});

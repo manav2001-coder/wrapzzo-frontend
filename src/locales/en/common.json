@@ -45,7 +45,8 @@
     "tbac": "Template Control",
     "assignments": "Assignments",
     "templatesToUser": "Templates to User",
-    "templatesToRole": "Templates to Role"
+    "templatesToRole": "Templates to Role",
+    "operations": "Operations"
   },
   "action": {
     "activate": "Activate",

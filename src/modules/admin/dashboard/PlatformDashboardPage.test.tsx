@@ -10,7 +10,7 @@ vi.mock('@/hooks/use-current-user', async (o) => ({ ...(await o<object>()), useC
 
 describe('PlatformDashboardPage', () => {
   it('greets the signed-in user and links to the masters they can reach', async () => {
-    const staff = platformStaff([P.PLATFORM_COMPANY_VIEW, P.PLATFORM_VENDOR_VIEW])
+    const staff = platformStaff([P.PLATFORM_COMPANY_VIEW, P.PLATFORM_VENDOR_VIEW, P.ROLE_VIEW, P.USER_VIEW, P.PLATFORM_ORDER_VIEW, P.PLATFORM_PRODUCT_VIEW])
     currentUser.mockReturnValue({ ...staff, data: { ...staff.data, name: 'Manav Nagpal' } })
 
     renderWithProviders(<PlatformDashboardPage />, {
@@ -21,7 +21,11 @@ describe('PlatformDashboardPage', () => {
     expect(screen.getByText('staff@wrappzo.com')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Companies/ })).toHaveAttribute('href', '/admin/companies')
     expect(screen.getByRole('link', { name: /Vendors/ })).toHaveAttribute('href', '/admin/vendors')
+    expect(screen.getByRole('link', { name: /Roles/ })).toHaveAttribute('href', '/masters/roles')
+    expect(screen.getByRole('link', { name: /Users/ })).toHaveAttribute('href', '/masters/users')
+    // Operations are not masters, even for someone who can open them.
     expect(screen.queryByRole('link', { name: /Orders/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Gift catalogue/ })).not.toBeInTheDocument()
   })
 
   it('greets by email until the profile has a name', async () => {

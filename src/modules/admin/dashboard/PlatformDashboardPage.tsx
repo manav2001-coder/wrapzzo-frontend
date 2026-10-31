@@ -17,7 +17,8 @@ import { LOCALE_LABELS } from '@/lib/i18n'
 
 /**
  * Wrappzo staff's landing page, MobixFL's General -> Dashboard: who you are signed in as, then the
- * masters you can actually reach. It reads no data of its own -- the nav already filters by access.
+ * masters you can actually reach (not operations like the gift catalogue or orders). It reads no data
+ * of its own -- the nav already filters by access.
  */
 export function PlatformDashboardPage() {
   const { t } = useTranslation()
@@ -36,7 +37,8 @@ export function PlatformDashboardPage() {
     .join('')
     .toUpperCase()
 
-  const destinations = flattenNavItems(nav).filter((item) => item.url?.startsWith('/admin/') && item.id !== 'platform-dashboard')
+  // The masters the user can open -- companies, vendors, roles, users -- exactly as the sidebar lists them.
+  const destinations = flattenNavItems(nav.filter((section) => section.id === 'masters'))
 
   return (
     <div className="space-y-8 p-6">

@@ -82,7 +82,51 @@ describe('VendorOrderPage', () => {
     const input = container.querySelector('input[type="file"]') as HTMLInputElement
     const proof = new File(['%PDF'], 'v2.pdf', { type: 'application/pdf' })
     fireEvent.change(input, { target: { files: [proof] } })
+    // A pick is only a pick: nothing is sent until the vendor has looked at it and confirmed.
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Upload this proof?')).toBeInTheDocument()
+    expect(within(dialog).getByText('v2.pdf')).toBeInTheDocument()
+    expect(uploadVendorOrderDesign).not.toHaveBeenCalled()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload proof' }))
     await waitFor(() => expect(uploadVendorOrderDesign).toHaveBeenCalledWith('o-1', proof))
+  })
+
+  it('previews a picked image and sends nothing when the vendor chooses another', async () => {
+    URL.createObjectURL = vi.fn(() => 'blob:preview')
+    URL.revokeObjectURL = vi.fn()
+    const { container } = renderWorkspace(vendorOrder())
+    await screen.findByText('Upload an artwork proof for the customer to approve.')
+
+    const wrong = new File(['x'], 'wrong-logo.png', { type: 'image/png' })
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [wrong] } })
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('img', { name: 'Preview of wrong-logo.png' })).toHaveAttribute('src', 'blob:preview')
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Choose another' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(uploadVendorOrderDesign).not.toHaveBeenCalled()
+  })
+
+  it('shows a small preview of each version in the artwork history', async () => {
+    const version = (id: string, n: number, fileName: string) => ({
+      id,
+      orderId: 'o-1',
+      versionNo: n,
+      fileUrl: `https://files.test/${fileName}`,
+      fileName,
+      status: 'APPROVED',
+      uploadedByVendorName: 'Pad Printers',
+      reviewedByUserName: null,
+      reviewComment: null,
+      reviewedAt: null,
+      createdAt: '2026-10-21T09:00:00Z',
+    })
+    listVendorOrderDesigns.mockResolvedValue([version('d2', 2, 'proof-v2.png'), version('d1', 1, 'proof-v1.pdf')])
+    const { container } = renderWorkspace(vendorOrder({ artworkApproved: true, latestDesignStatus: 'APPROVED', designVersions: 2 }))
+
+    await screen.findByText('Version 2')
+    expect(container.querySelector('img[src="https://files.test/proof-v2.png"]')).not.toBeNull()
+    expect(container.querySelector('img[src="https://files.test/proof-v1.pdf"]')).toBeNull()
   })
 
   it('dispatches a ready order after confirming', async () => {

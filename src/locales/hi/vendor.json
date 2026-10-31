@@ -112,7 +112,13 @@
         "PENDING_FINAL_APPROVAL": "MR ने मंज़ूर किया · मैनेजमेंट मंज़ूरी में"
       },
       "locked": "एक प्रूफ़ पहले से स्वीकृत है। नया अपलोड करने से नई समीक्षा शुरू होगी।",
-      "managementLevel": "मैनेजमेंट मंज़ूरी · स्तर {{level}} / {{total}}"
+      "managementLevel": "मैनेजमेंट मंज़ूरी · स्तर {{level}} / {{total}}",
+      "confirmTitle": "यह प्रूफ़ अपलोड करें?",
+      "confirmBody": "जाँच लें कि फ़ाइल सही है। ग्राहक से इसकी समीक्षा करने को कहा जाएगा।",
+      "confirmLabel": "प्रूफ़ अपलोड करें",
+      "confirmCancel": "दूसरी चुनें",
+      "previewAlt": "{{name}} का पूर्वावलोकन",
+      "pdfPreview": "PDF प्रूफ़ (पूर्वावलोकन नहीं)"
     },
     "action": {
       "markDispatched": "डिस्पैच मार्क करें",

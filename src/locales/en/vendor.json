@@ -112,7 +112,13 @@
         "PENDING_FINAL_APPROVAL": "MR approved · in management approval"
       },
       "locked": "A proof is already approved. Uploading another starts a new review.",
-      "managementLevel": "Management approval · level {{level}} of {{total}}"
+      "managementLevel": "Management approval · level {{level}} of {{total}}",
+      "confirmTitle": "Upload this proof?",
+      "confirmBody": "Check it's the right file. The customer will be asked to review it.",
+      "confirmLabel": "Upload proof",
+      "confirmCancel": "Choose another",
+      "previewAlt": "Preview of {{name}}",
+      "pdfPreview": "PDF proof (no preview)"
     },
     "action": {
       "markDispatched": "Mark as dispatched",

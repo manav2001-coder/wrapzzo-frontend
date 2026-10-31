@@ -3,7 +3,6 @@ import {
   Check,
   Copy,
   ExternalLink,
-  FileText,
   ImageOff,
   Lock,
   MessageSquareWarning,
@@ -36,6 +35,7 @@ import { formatDate, formatDateTime } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { nextStatusOf, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
+import { ArtworkThumb, ArtworkUploadDialog } from './ArtworkPreview'
 import { VendorStageBadge } from './VendorStageBadge'
 
 const PROOF_ACCEPT = {
@@ -232,13 +232,18 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
   const upload = useUploadVendorOrderDesign(order.id)
   const closed = ['DELIVERED', 'CANCELLED', 'RECEIVED_AT_WAREHOUSE', 'OUT_FOR_DELIVERY'].includes(order.status)
 
-  async function onFile(file: File | null) {
-    if (!file) return
+  // A picked file waits for a look at it: a wrong pick would send the customer the wrong proof.
+  const [picked, setPicked] = useState<File | null>(null)
+
+  async function confirmUpload() {
+    if (!picked) return
     try {
-      await upload.mutateAsync(file)
+      await upload.mutateAsync(picked)
       toast.success(t('order.artwork.uploaded'))
     } catch (err) {
       showError(err)
+    } finally {
+      setPicked(null)
     }
   }
 
@@ -273,7 +278,7 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
             )}
             <FileDropzone
               file={null}
-              onChange={(file) => void onFile(file)}
+              onChange={setPicked}
               accept={PROOF_ACCEPT}
               disabled={upload.isPending}
               prompt={t('order.artwork.drop')}
@@ -291,7 +296,7 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
             <ol className="space-y-2">
               {designs.map((design) => (
                 <li key={design.id} className="flex items-start gap-3 rounded-md border p-3">
-                  <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <ArtworkThumb src={design.fileUrl} name={design.fileName} />
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium">{t('order.artwork.version', { n: design.versionNo })}</span>
@@ -318,6 +323,7 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
           )}
         </div>
       </div>
+      <ArtworkUploadDialog file={picked} uploading={upload.isPending} onConfirm={confirmUpload} onCancel={() => setPicked(null)} />
     </SectionCard>
   )
 }

@@ -135,9 +135,19 @@ const ADMIN_MASTERS_NAV: NavSource = {
   ],
 }
 
+/** A company's General: its dashboard, then the entries everyone shares. */
+const COMPANY_GENERAL: NavSource = {
+  ...GENERAL,
+  children: [
+    { id: 'dashboard', titleKey: 'nav.dashboard', type: 'item', url: '/dashboard', end: true, icon: LayoutDashboard, permission: P.DASHBOARD_VIEW },
+    ...(GENERAL.children ?? []),
+  ],
+}
+
 /** Wrappzo platform staff. */
 export const ADMIN_NAV: NavSource[] = [
   ADMIN_MASTERS_NAV,
+  GENERAL,
   {
     id: 'operations',
     titleKey: 'nav.operations',
@@ -149,7 +159,6 @@ export const ADMIN_NAV: NavSource[] = [
     ],
   },
   TBAC_NAV,
-  GENERAL,
 ]
 
 /**
@@ -158,13 +167,13 @@ export const ADMIN_NAV: NavSource[] = [
  */
 export const COMPANY_NAV: NavSource[] = [
   MASTERS_NAV,
+  COMPANY_GENERAL,
   {
     id: 'operations',
     titleKey: 'nav.operations',
     type: 'collapse',
     icon: Briefcase,
     children: [
-      { id: 'dashboard', titleKey: 'nav.dashboard', type: 'item', url: '/dashboard', end: true, icon: LayoutDashboard, permission: P.DASHBOARD_VIEW },
       {
         id: 'campaigns',
         titleKey: 'nav.campaigns',
@@ -185,7 +194,6 @@ export const COMPANY_NAV: NavSource[] = [
     ],
   },
   TBAC_NAV,
-  GENERAL,
 ]
 
 /** A vendor's portal. Every vendor has the same fixed capabilities, so nothing here is gated. */

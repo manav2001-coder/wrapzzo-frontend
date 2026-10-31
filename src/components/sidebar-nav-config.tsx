@@ -131,7 +131,8 @@ const ADMIN_MASTERS_NAV: NavSource = {
   children: [
     { id: 'companies', titleKey: 'nav.companies', type: 'item', url: '/admin/companies', icon: Building2, permission: P.PLATFORM_COMPANY_VIEW },
     { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: P.PLATFORM_VENDOR_VIEW },
-    ...(MASTERS_NAV.children ?? []),
+    // Roles and users only: My Vendors and Warehouses are a company's own screens, and platform staff are kept out of them.
+    ...(MASTERS_NAV.children ?? []).filter((item) => item.id.startsWith('masters-')),
   ],
 }
 

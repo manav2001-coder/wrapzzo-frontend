@@ -139,6 +139,14 @@ export function CompanyUsersPage() {
         ),
       },
       {
+        id: 'createdAt',
+        accessorKey: 'createdAt',
+        header: t('users.column.added'),
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[130px]' },
+        cell: ({ row }) => formatDate(row.original.createdAt),
+      },
+      {
         id: 'status',
         accessorKey: 'status',
         header: t('field.status', { ns: 'common' }),
@@ -149,14 +157,6 @@ export function CompanyUsersPage() {
           filterOptions: (['ACTIVE', 'INVITED', 'SUSPENDED'] as const).map((value) => ({ value, label: t(`users.status.${value}`) })),
         },
         cell: ({ row }) => <StatusCell active={row.original.status === 'ACTIVE'} label={t(`users.status.${row.original.status}`)} />,
-      },
-      {
-        id: 'createdAt',
-        accessorKey: 'createdAt',
-        header: t('users.column.added'),
-        enableColumnFilter: false,
-        meta: { className: 'min-w-[130px]' },
-        cell: ({ row }) => formatDate(row.original.createdAt),
       },
       {
         id: 'actions',

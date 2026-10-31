@@ -29,9 +29,30 @@ export interface EditVendorInput {
   commission?: number
 }
 
-export async function listVendors(): Promise<Vendor[]> {
-  const { data } = await apiClient.get<Vendor[]>('/api/platform/vendors/list')
+/** Every vendor; with a company, only those serving it (in whole or in any of its org units). */
+export async function listVendors(companyId?: string | null): Promise<Vendor[]> {
+  const { data } = await apiClient.get<Vendor[]>('/api/platform/vendors/list', { params: companyId ? { companyId } : undefined })
   return data
+}
+
+/** One company a vendor serves: the whole company (no org units) or only the org units named. */
+export interface CompanyCoverage {
+  companyId: string
+  companyName?: string
+  orgUnitIds: string[]
+}
+
+export async function getVendorCoverage(id: string): Promise<CompanyCoverage[]> {
+  const { data } = await apiClient.get<{ companies: CompanyCoverage[] }>(`/api/platform/vendors/${id}/coverage`)
+  return data.companies
+}
+
+/** Replaces where the vendor serves; whatever it served that is not listed is removed. */
+export async function replaceVendorCoverage(id: string, companies: CompanyCoverage[]): Promise<CompanyCoverage[]> {
+  const { data } = await apiClient.put<{ companies: CompanyCoverage[] }>(`/api/platform/vendors/${id}/coverage`, {
+    companies: companies.map(({ companyId, orgUnitIds }) => ({ companyId, orgUnitIds })),
+  })
+  return data.companies
 }
 
 export async function getVendor(id: string): Promise<Vendor> {

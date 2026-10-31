@@ -1,29 +1,65 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Building2 } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
-import type { Company } from '@/api/companies'
+import { uploadCompanyLogo, type Company, type CompanyInput } from '@/api/companies'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
+import { FormGenerator, type FormGeneratorHandle } from '@/components/fields/form-generator'
+import { sectionField } from '@/components/fields/form-section'
+import { FileDropzone } from '@/components/file-dropzone'
+import { emailField, phoneField, textField } from '@/components/masters/master-fields'
+import { MasterDrawer } from '@/components/masters/master-drawer'
 import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
-import { useCompanies, useSetCompanyStatus } from '@/hooks/useCompanies'
+import { useCompanies, useCreateCompany, useSetCompanyStatus, useUpdateCompany } from '@/hooks/useCompanies'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
-import { CompanyAvatar } from './CompanyAvatar'
 import { P } from '@/lib/permissions'
+import { CompanyAvatar } from './CompanyAvatar'
+import { CompanyFeaturesPanel } from './CompanyFeaturesPanel'
 
-const LIST_FIELDS: ListFieldMap = { name: 'text', displayId: 'text', createdAt: 'date' }
+const LIST_FIELDS: ListFieldMap = { name: 'text', displayId: 'text', contactPersonName: 'text', city: 'text', gstin: 'text', createdAt: 'date' }
 
+const LOGO_ACCEPT = { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'], 'image/svg+xml': ['.svg'] }
+
+const text = (value: unknown) => String(value ?? '').trim()
+
+/**
+ * Companies, as MobixFL onboards a franchise: a table, and onboarding or editing in a side drawer
+ * so the list keeps its place -- a logo, the company's name (its id is issued, never chosen), who
+ * to contact, its tax and registration ids, where it is, and notes. The drawer follows the URL
+ * (`/admin/companies/new`, `/admin/companies/:id`). Which workflow changes a company has opted
+ * into sit under the form once it exists. Vendors are not part of onboarding: which vendors serve
+ * a company is set on the Vendors screen.
+ */
 export function CompanyListPage() {
   const { t } = useTranslation('admin')
   const navigate = useNavigate()
-  const { data: companies, isLoading, error, refetch } = useCompanies()
-  const setStatus = useSetCompanyStatus()
+  const { id } = useParams<{ id: string }>()
   const showError = useApiErrorToast()
+  const { data: companies, isLoading, error, refetch } = useCompanies()
+  const createCompany = useCreateCompany()
+  const updateCompany = useUpdateCompany(id ?? '')
+  const setStatus = useSetCompanyStatus()
+  const [handle, setHandle] = useState<FormGeneratorHandle | null>(null)
+
+  const creating = id === 'new'
+  const editing = !creating && id ? companies?.find((company) => company.id === id) : undefined
+  const drawerOpen = creating || Boolean(editing)
+  const closeDrawer = () => navigate('/admin/companies')
+
+  // The company needs an id before the logo has anywhere to go, so a pick made while creating is
+  // held here and uploaded right after the create.
+  const [pendingLogo, setPendingLogo] = useState<File | null>(null)
+  const pendingPreview = useMemo(() => (pendingLogo ? URL.createObjectURL(pendingLogo) : null), [pendingLogo])
+  useEffect(() => () => void (pendingPreview && URL.revokeObjectURL(pendingPreview)), [pendingPreview])
+  useEffect(() => {
+    if (!drawerOpen) setPendingLogo(null)
+  }, [drawerOpen])
 
   async function changeStatus(company: Company, active: boolean) {
     try {
@@ -56,13 +92,16 @@ export function CompanyListPage() {
         header: t('companies.column.company'),
         meta: { className: 'min-w-[220px]', align: 'left' },
         cell: ({ row }) => (
-          <Link to={`/admin/companies/${row.original.id}`} className="flex items-center gap-2.5 font-medium hover:underline">
+          <button type="button" className="flex items-center gap-2.5 font-medium hover:underline" onClick={() => navigate(`/admin/companies/${row.original.id}`)}>
             <CompanyAvatar company={row.original} />
             <span className="truncate">{row.original.name}</span>
-          </Link>
+          </button>
         ),
       },
       { id: 'displayId', accessorKey: 'displayId', header: t('companies.column.id'), meta: { className: 'min-w-[110px]' } },
+      { id: 'contactPersonName', accessorFn: (c) => c.contactPersonName ?? '', header: t('companies.column.contact'), meta: { className: 'min-w-[160px]' } },
+      { id: 'city', accessorFn: (c) => c.city ?? '', header: t('companies.column.city'), meta: { className: 'min-w-[120px]' } },
+      { id: 'gstin', accessorFn: (c) => c.gstin ?? '', header: t('companies.column.gstin'), meta: { className: 'min-w-[160px]' }, cell: ({ row }) => <span className="font-mono text-xs">{row.original.gstin ?? '-'}</span> },
       statusColumn,
       {
         id: 'createdAt',
@@ -74,8 +113,108 @@ export function CompanyListPage() {
       },
       actionsColumn,
     ],
-    [t, statusColumn, actionsColumn],
+    [t, navigate, statusColumn, actionsColumn],
   )
+
+  const fields = useMemo(
+    () => [
+      // The code is issued, so it only shows once the company exists, and never changes.
+      textField({ id: 'displayId', label: t('companies.drawer.code'), lockedForEdit: true, hidden: () => creating, description: t('companies.drawer.codeHelp') }),
+      textField({ id: 'name', label: t('companies.drawer.name'), placeholder: t('companies.drawer.namePlaceholder'), required: true, max: 160, spanToFullRow: creating }),
+      sectionField('__contact', t('companies.drawer.sections.contact')),
+      textField({ id: 'contactPersonName', label: t('companies.drawer.contactPerson'), max: 160 }),
+      emailField({ id: 'contactEmail', label: t('companies.drawer.contactEmail') }),
+      phoneField({ id: 'contactMobile', label: t('companies.drawer.contactMobile') }),
+      sectionField('__compliance', t('companies.drawer.sections.compliance')),
+      textField({ id: 'gstin', label: t('companies.drawer.gstin'), max: 15, placeholder: '27ABCDE1234F1Z5' }),
+      textField({ id: 'pan', label: t('companies.drawer.pan'), max: 10, placeholder: 'ABCDE1234F' }),
+      textField({ id: 'registrationNumber', label: t('companies.drawer.registrationNumber'), max: 60, description: t('companies.drawer.registrationNumberHelp') }),
+      sectionField('__address', t('companies.drawer.sections.address')),
+      textField({ id: 'addressLine1', label: t('companies.drawer.addressLine1'), max: 200, spanToFullRow: true }),
+      textField({ id: 'addressLine2', label: t('companies.drawer.addressLine2'), max: 200, spanToFullRow: true }),
+      textField({ id: 'city', label: t('companies.drawer.city'), max: 100 }),
+      textField({ id: 'state', label: t('companies.drawer.state'), max: 100 }),
+      textField({ id: 'pincode', label: t('companies.drawer.pincode'), max: 6, placeholder: '411001' }),
+      sectionField('__notes', t('companies.drawer.sections.notes')),
+      textField({ id: 'notes', label: t('companies.drawer.notes'), max: 2000, multiline: true, spanToFullRow: true }),
+    ],
+    [t, creating],
+  )
+
+  const values = useMemo(
+    () =>
+      editing
+        ? {
+            displayId: editing.displayId,
+            name: editing.name,
+            contactPersonName: editing.contactPersonName ?? '',
+            contactEmail: editing.contactEmail ?? '',
+            contactMobile: editing.contactMobile ?? '',
+            gstin: editing.gstin ?? '',
+            pan: editing.pan ?? '',
+            registrationNumber: editing.registrationNumber ?? '',
+            addressLine1: editing.addressLine1 ?? '',
+            addressLine2: editing.addressLine2 ?? '',
+            city: editing.city ?? '',
+            state: editing.state ?? '',
+            pincode: editing.pincode ?? '',
+            notes: editing.notes ?? '',
+          }
+        : undefined,
+    [editing],
+  )
+
+  async function onSubmit(submitted: Record<string, unknown>) {
+    const input: CompanyInput = {
+      name: text(submitted.name),
+      contactPersonName: text(submitted.contactPersonName),
+      contactEmail: text(submitted.contactEmail),
+      contactMobile: text(submitted.contactMobile),
+      gstin: text(submitted.gstin).toUpperCase(),
+      pan: text(submitted.pan).toUpperCase(),
+      registrationNumber: text(submitted.registrationNumber),
+      addressLine1: text(submitted.addressLine1),
+      addressLine2: text(submitted.addressLine2),
+      city: text(submitted.city),
+      state: text(submitted.state),
+      pincode: text(submitted.pincode),
+      notes: text(submitted.notes),
+    }
+    try {
+      if (editing) {
+        await updateCompany.mutateAsync(input)
+        toast.success(t('companies.drawer.updated'))
+      } else {
+        const created = await createCompany.mutateAsync(input)
+        if (pendingLogo) {
+          try {
+            await uploadCompanyLogo(created.id, pendingLogo)
+          } catch {
+            toast.error(t('companies.drawer.logoFailedAfterCreate'))
+          }
+        }
+        toast.success(t('companies.drawer.created', { name: created.name }))
+      }
+      closeDrawer()
+    } catch (err) {
+      showError(err)
+    }
+  }
+
+  async function onLogoPicked(file: File | null) {
+    if (!file) return
+    if (!editing) {
+      setPendingLogo(file)
+      return
+    }
+    try {
+      await uploadCompanyLogo(editing.id, file)
+      await refetch()
+      toast.success(t('companies.drawer.logoUploaded'))
+    } catch (err) {
+      showError(err)
+    }
+  }
 
   return (
     <div>
@@ -104,6 +243,48 @@ export function CompanyListPage() {
           description: t('companies.emptyBody'),
         })}
       />
+      <MasterDrawer
+        open={drawerOpen}
+        onOpenChange={(open) => !open && closeDrawer()}
+        title={creating ? t('companies.drawer.newTitle') : t('companies.drawer.editTitle')}
+        description={creating ? t('companies.drawer.newDescription') : editing?.name}
+        submitLabel={creating ? t('companies.drawer.create') : undefined}
+        handle={handle}
+      >
+        {drawerOpen && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              {editing?.logoUrl || pendingPreview ? (
+                <img src={editing?.logoUrl ?? pendingPreview ?? undefined} alt="" className="h-16 w-16 shrink-0 rounded-lg border object-cover" />
+              ) : (
+                <div className="grid h-16 w-16 shrink-0 place-items-center rounded-lg border border-dashed text-xs text-muted-foreground">
+                  {t('companies.drawer.noLogo')}
+                </div>
+              )}
+              <FileDropzone
+                file={editing ? null : pendingLogo}
+                onChange={(file) => void onLogoPicked(file)}
+                accept={LOGO_ACCEPT}
+                prompt={t('companies.drawer.logoDrop')}
+                className="min-w-0 flex-1"
+              />
+            </div>
+            <FormGenerator
+              key={id}
+              fields={fields}
+              values={values}
+              mode={creating ? 'create' : 'edit'}
+              maxWidgetsPerRow={2}
+              submitPermission={creating ? P.PLATFORM_COMPANY_CREATE : P.PLATFORM_COMPANY_EDIT}
+              onSubmit={onSubmit}
+              onReady={setHandle}
+              hideCardWrapper
+              hideSubmitButton
+            />
+            {editing && <CompanyFeaturesPanel companyId={editing.id} />}
+          </div>
+        )}
+      </MasterDrawer>
       {deactivateDialog}
     </div>
   )

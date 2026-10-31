@@ -6,7 +6,36 @@ export interface Company {
   name: string
   status: 'ACTIVE' | 'INACTIVE'
   logoUrl: string | null
+  contactPersonName: string | null
+  contactEmail: string | null
+  contactMobile: string | null
+  gstin: string | null
+  pan: string | null
+  registrationNumber: string | null
+  addressLine1: string | null
+  addressLine2: string | null
+  city: string | null
+  state: string | null
+  pincode: string | null
+  notes: string | null
   createdAt: string
+}
+
+/** What onboarding a company takes: its name, and an optional profile. Anything left out is cleared. */
+export interface CompanyInput {
+  name: string
+  contactPersonName?: string
+  contactEmail?: string
+  contactMobile?: string
+  gstin?: string
+  pan?: string
+  registrationNumber?: string
+  addressLine1?: string
+  addressLine2?: string
+  city?: string
+  state?: string
+  pincode?: string
+  notes?: string
 }
 
 interface PresignLogoUploadResponse {
@@ -24,13 +53,13 @@ export async function getCompany(id: string): Promise<Company> {
   return data
 }
 
-export async function createCompany(name: string): Promise<Company> {
-  const { data } = await apiClient.post<Company>('/api/platform/companies/add', { name })
+export async function createCompany(input: CompanyInput): Promise<Company> {
+  const { data } = await apiClient.post<Company>('/api/platform/companies/add', input)
   return data
 }
 
-export async function updateCompany(id: string, name: string): Promise<Company> {
-  const { data } = await apiClient.post<Company>(`/api/platform/companies/edit/${id}`, { name })
+export async function updateCompany(id: string, input: CompanyInput): Promise<Company> {
+  const { data } = await apiClient.post<Company>(`/api/platform/companies/edit/${id}`, input)
   return data
 }
 

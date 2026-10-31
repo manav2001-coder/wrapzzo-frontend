@@ -14,6 +14,7 @@ import { MultiValueCombobox, type Option } from "@/components/masters/value-comb
 import { AssignedTemplateList } from "@/components/tbac/assigned-template-list";
 import { usePermissions } from "@/hooks/use-permission";
 import { useApiErrorToast } from "@/hooks/use-api-error-toast";
+import { useCompanyScope } from "@/components/masters/company-scope-select";
 import { createResource, deactivateResource, getResource, listAll } from "@/lib/masters-api";
 
 /**
@@ -23,6 +24,7 @@ import { createResource, deactivateResource, getResource, listAll } from "@/lib/
  * anyone with this role can do arrives through the list below.
  */
 export default function RoleTemplateAssignPage() {
+  const scope = useCompanyScope();
   const { t } = useTranslation(["tbac", "common", "masters"]);
   const { roleId } = useParams<{ roleId: string }>();
   const showError = useApiErrorToast();
@@ -42,7 +44,7 @@ export default function RoleTemplateAssignPage() {
       const [row, current, all] = await Promise.all([
         getResource<Role>(`/api/tbac/roles/${roleId}`),
         getResource<{ data: Template[] }>(`/api/tbac/roles/${roleId}/templates`),
-        listAll<Template>("/api/tbac/templates"),
+        listAll<Template>("/api/tbac/templates", scope.companyId ? { companyId: scope.companyId } : {}),
       ]);
       setRole(row);
       setAssigned(current.data);
@@ -58,7 +60,7 @@ export default function RoleTemplateAssignPage() {
     } finally {
       setLoading(false);
     }
-  }, [roleId, showError]);
+  }, [roleId, scope.companyId, showError]);
 
   React.useEffect(() => {
     void load();

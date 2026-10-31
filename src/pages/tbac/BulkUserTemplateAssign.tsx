@@ -25,6 +25,7 @@ import { MasterPageHeader } from "@/components/masters/master-page";
 import { TransferList, type TransferItem } from "@/components/tbac/transfer-list";
 import { usePermissions } from "@/hooks/use-permission";
 import { useApiErrorToast } from "@/hooks/use-api-error-toast";
+import { useCompanyScope } from "@/components/masters/company-scope-select";
 import { createResource, listAll } from "@/lib/masters-api";
 
 interface SelectedUser {
@@ -46,6 +47,7 @@ interface SelectedUser {
  * a run over 40 users reporting "12 created" looks like 28 failures.
  */
 export default function BulkUserTemplateAssignPage() {
+  const scope = useCompanyScope();
   const { t } = useTranslation(["tbac", "common", "masters"]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,7 +69,7 @@ export default function BulkUserTemplateAssignPage() {
     let cancelled = false;
     void (async () => {
       try {
-        const rows = await listAll<Template>("/api/tbac/templates");
+        const rows = await listAll<Template>("/api/tbac/templates", scope.companyId ? { companyId: scope.companyId } : {});
         if (!cancelled) setTemplates(rows.filter((row) => row.active));
       } catch (error) {
         showError(error);
@@ -76,7 +78,7 @@ export default function BulkUserTemplateAssignPage() {
     return () => {
       cancelled = true;
     };
-  }, [showError]);
+  }, [scope.companyId, showError]);
 
   const toItem = (template: Template): TransferItem => ({
     id: template.id,

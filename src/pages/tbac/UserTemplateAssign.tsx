@@ -15,6 +15,7 @@ import { MultiValueCombobox, type Option } from "@/components/masters/value-comb
 import { AssignedTemplateList } from "@/components/tbac/assigned-template-list";
 import { usePermissions } from "@/hooks/use-permission";
 import { useApiErrorToast } from "@/hooks/use-api-error-toast";
+import { useCompanyScope } from "@/components/masters/company-scope-select";
 import { createResource, deactivateResource, getResource, listAll } from "@/lib/masters-api";
 
 /**
@@ -25,6 +26,7 @@ import { createResource, deactivateResource, getResource, listAll } from "@/lib/
  * that does not require inventing a role for one person.
  */
 export default function UserTemplateAssignPage() {
+  const scope = useCompanyScope();
   const { t } = useTranslation(["tbac", "common", "masters"]);
   const { userId } = useParams<{ userId: string }>();
   const showError = useApiErrorToast();
@@ -44,7 +46,7 @@ export default function UserTemplateAssignPage() {
       const [profile, current, all] = await Promise.all([
         getResource<PublicUser>(`/api/tbac/users/${userId}`),
         getResource<{ data: Template[] }>(`/api/tbac/users/${userId}/templates`),
-        listAll<Template>("/api/tbac/templates"),
+        listAll<Template>("/api/tbac/templates", scope.companyId ? { companyId: scope.companyId } : {}),
       ]);
       setUser(profile);
       setAssigned(current.data);
@@ -60,7 +62,7 @@ export default function UserTemplateAssignPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId, showError]);
+  }, [userId, scope.companyId, showError]);
 
   React.useEffect(() => {
     void load();

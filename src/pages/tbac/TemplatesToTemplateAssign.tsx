@@ -42,10 +42,12 @@ export default function TemplatesToTemplateAssignPage() {
     if (!templateId) return;
     setLoading(true);
     try {
-      const [row, refIds, all] = await Promise.all([
-        getResource<Template>(`${PATH}/${templateId}`),
+      // Which templates can be included depends on the template's own company (a system one only
+      // takes system ones), so it is read first -- platform staff otherwise get only system templates.
+      const row = await getResource<Template>(`${PATH}/${templateId}`);
+      const [refIds, all] = await Promise.all([
         getResource<{ data: string[] }>(`${PATH}/${templateId}/references`),
-        listAll<Template>(PATH),
+        listAll<Template>(PATH, row.companyId ? { companyId: row.companyId } : {}),
       ]);
       setTemplate(row);
 

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import { uploadGiftImage } from '@/api/gifts'
 import { AppDialog } from '@/components/app-dialog'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { FormGenerator } from '@/components/fields/form-generator'
 import { FileDropzone } from '@/components/file-dropzone'
 import { IconButton } from '@/components/icon-button'
@@ -35,6 +36,7 @@ export function GiftFormPage() {
   const uploadImage = useUploadGiftImage(id ?? '')
   const deleteImage = useDeleteGiftImage(id ?? '')
   const [confirmingStatus, setConfirmingStatus] = useState(false)
+  const [removingImageId, setRemovingImageId] = useState<string | null>(null)
   const [total, setTotal] = useState<number | null>(null)
 
   // Create mode: the image is held until the gift exists, then uploaded right after the create.
@@ -185,7 +187,7 @@ export function GiftFormPage() {
                     tone="destructive"
                     label={t('gifts.detail.removeImage')}
                     className="absolute right-2 top-2 bg-background/90"
-                    onClick={() => void removeImage(image.id)}
+                    onClick={() => setRemovingImageId(image.id)}
                   />
                 )}
               </div>
@@ -205,6 +207,15 @@ export function GiftFormPage() {
           </div>
         </SectionCard>
       </div>
+
+      <ConfirmDialog
+        open={removingImageId !== null}
+        onOpenChange={(open) => !open && setRemovingImageId(null)}
+        title={t('confirmDelete.title', { ns: 'common', name: t('gifts.form.image') })}
+        description={t('confirmDelete.body', { ns: 'common' })}
+        confirmLabel={t('action.delete', { ns: 'common' })}
+        onConfirm={() => (removingImageId ? removeImage(removingImageId) : undefined)}
+      />
 
       {gift && (
         <AppDialog

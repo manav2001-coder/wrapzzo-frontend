@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import type { Role } from '@/api/roles'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
 import { EmptyState } from '@/components/empty-state'
@@ -16,6 +17,7 @@ import { useHasAccess } from '@/hooks/use-permission'
 import { useCompanyScope } from '@/components/masters/company-scope-select'
 import { useDeleteRole, useRoles, useUpdateRole } from '@/hooks/useRoles'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { rowsFetcher } from '@/lib/masters-api'
 import { P } from '@/lib/permissions'
 import { RoleDialog } from './RoleDialog'
 
@@ -32,10 +34,12 @@ export function RolesPage() {
   const canEdit = useHasAccess(P.ROLE_EDIT)
   const scope = useCompanyScope()
   const companyId = scope.companyId ?? undefined
-  const { data: roles, isLoading, error, refetch } = useRoles(companyId)
+  const { data: roles, dataUpdatedAt, error, refetch } = useRoles(companyId)
+  const fetchRoles = useMemo(() => rowsFetcher(roles ?? [], (role: Role) => role.active), [roles])
   const updateRole = useUpdateRole(companyId ?? '')
   const deleteRole = useDeleteRole(companyId ?? '')
   const [editing, setEditing] = useState<Role | 'new' | null>(null)
+  const [deleting, setDeleting] = useState<Role | null>(null)
 
   async function run(action: () => Promise<unknown>, message: string) {
     try {
@@ -66,7 +70,7 @@ export function RolesPage() {
           icon={Trash2}
           label={t('roles.delete', { name: role.name })}
           tone="destructive"
-          onClick={() => void run(() => deleteRole.mutateAsync(role.id), t('roles.deleted', { name: role.name }))}
+          onClick={() => setDeleting(role)}
         />
       ),
   })
@@ -109,8 +113,8 @@ export function RolesPage() {
       ) : (
         <DataTable<Role>
           columns={columns}
-          data={roles ?? []}
-          isLoading={isLoading}
+          fetchData={fetchRoles}
+          refreshTrigger={dataUpdatedAt}
           listFields={LIST_FIELDS}
           searchable
           showRowSelectionColumn={false}
@@ -122,6 +126,14 @@ export function RolesPage() {
         />
       )}
       {deactivateDialog}
+      <ConfirmDialog
+        open={deleting !== null}
+        onOpenChange={(open) => !open && setDeleting(null)}
+        title={t('confirmDelete.title', { ns: 'common', name: deleting?.name })}
+        description={t('confirmDelete.body', { ns: 'common' })}
+        confirmLabel={t('action.delete', { ns: 'common' })}
+        onConfirm={() => deleting ? run(() => deleteRole.mutateAsync(deleting.id), t('roles.deleted', { name: deleting.name })) : undefined}
+      />
       {editing && companyId && (
         <RoleDialog
           key={editing === 'new' ? 'new' : editing.id}

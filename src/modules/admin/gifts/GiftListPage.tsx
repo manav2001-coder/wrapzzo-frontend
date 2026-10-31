@@ -15,6 +15,7 @@ import { useGifts, useSetGiftStatus } from '@/hooks/useGifts'
 import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { GiftThumbnail } from './GiftThumbnail'
+import { rowsFetcher } from '@/lib/masters-api'
 import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = {
@@ -30,7 +31,8 @@ export function GiftListPage() {
   const { t } = useTranslation('admin')
   const navigate = useNavigate()
   const showError = useApiErrorToast()
-  const { data: gifts, isLoading, error, refetch } = useGifts()
+  const { data: gifts, dataUpdatedAt, error, refetch } = useGifts()
+  const fetchGifts = useMemo(() => rowsFetcher(gifts ?? [], (gift: Gift) => gift.active), [gifts])
   const setStatus = useSetGiftStatus()
 
   async function changeStatus(gift: Gift, active: boolean) {
@@ -127,8 +129,8 @@ export function GiftListPage() {
       />
       <DataTable<Gift>
         columns={columns}
-        data={gifts ?? []}
-        isLoading={isLoading}
+        fetchData={fetchGifts}
+        refreshTrigger={dataUpdatedAt}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}

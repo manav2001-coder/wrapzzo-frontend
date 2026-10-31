@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { uploadVendorGiftImage } from '@/api/vendorGifts'
 import { FormGenerator } from '@/components/fields/form-generator'
 import { FileDropzone } from '@/components/file-dropzone'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
 import { SectionCard } from '@/components/section-card'
@@ -45,6 +46,7 @@ export function VendorGiftFormPage() {
 
   // Create mode: the image is held until the gift exists, then uploaded right after the create.
   const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const [removingImageId, setRemovingImageId] = useState<string | null>(null)
   const pendingPreview = useMemo(() => (pendingImage ? URL.createObjectURL(pendingImage) : null), [pendingImage])
   useEffect(() => () => void (pendingPreview && URL.revokeObjectURL(pendingPreview)), [pendingPreview])
 
@@ -163,7 +165,7 @@ export function VendorGiftFormPage() {
                   tone="destructive"
                   label={t('gifts.form.removeImage')}
                   className="absolute right-2 top-2 bg-background/90"
-                  onClick={() => void removeImage(image.id)}
+                  onClick={() => setRemovingImageId(image.id)}
                 />
               </div>
             ))}
@@ -180,6 +182,15 @@ export function VendorGiftFormPage() {
           </div>
         </SectionCard>
       </div>
+
+      <ConfirmDialog
+        open={removingImageId !== null}
+        onOpenChange={(open) => !open && setRemovingImageId(null)}
+        title={t('confirmDelete.title', { ns: 'common', name: t('gifts.form.image') })}
+        description={t('confirmDelete.body', { ns: 'common' })}
+        confirmLabel={t('action.delete', { ns: 'common' })}
+        onConfirm={() => (removingImageId ? removeImage(removingImageId) : undefined)}
+      />
     </div>
   )
 }

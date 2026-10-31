@@ -11,7 +11,8 @@
       "onboarded": "Onboarded",
       "contact": "Contact",
       "city": "City",
-      "gstin": "GSTIN"
+      "gstin": "GSTIN",
+      "logo": "Logo"
     },
     "deactivateTitle": "Deactivate this company?",
     "deactivateBody": "The company and its users lose access to the platform until it is activated again.",

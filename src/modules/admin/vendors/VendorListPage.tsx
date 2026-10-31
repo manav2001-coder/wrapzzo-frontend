@@ -17,6 +17,7 @@ import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanies } from '@/hooks/useCompanies'
 import { useAddVendor, useEditVendor, useReplaceVendorCoverage, useResendVendorInvite, useSetVendorStatus, useVendorCoverage, useVendors } from '@/hooks/useVendors'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { rowsFetcher } from '@/lib/masters-api'
 import { P } from '@/lib/permissions'
 import { newCoverageRow, VendorCoverageEditor, type CoverageRow } from './VendorCoverageEditor'
 
@@ -47,7 +48,8 @@ export function VendorListPage() {
   const showError = useApiErrorToast()
   // A vendor serves companies, so the list follows the company in scope: the vendors serving it.
   const scope = useCompanyScope()
-  const { data: vendors, isLoading, error, refetch } = useVendors(scope.companyId)
+  const { data: vendors, dataUpdatedAt, error, refetch } = useVendors(scope.companyId)
+  const fetchVendors = useMemo(() => rowsFetcher(vendors ?? [], (vendor: Vendor) => vendor.status === 'ACTIVE'), [vendors])
   const { data: companies } = useCompanies()
   const replaceCoverage = useReplaceVendorCoverage()
   const addVendor = useAddVendor()
@@ -217,8 +219,8 @@ export function VendorListPage() {
       />
       <DataTable<Vendor>
         columns={columns}
-        data={vendors ?? []}
-        isLoading={isLoading}
+        fetchData={fetchVendors}
+        refreshTrigger={dataUpdatedAt}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}

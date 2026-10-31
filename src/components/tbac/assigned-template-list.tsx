@@ -5,6 +5,7 @@ import type { Template } from "@/types/tbac";
 
 import type { PermissionKey } from "@/lib/permissions";
 import { PermissionGate } from "@/components/access-control/permission-gate";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { IconButton } from "@/components/icon-button";
 import { SystemBadge } from "@/components/masters/master-page";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function AssignedTemplateList({
   const { t } = useTranslation(["tbac", "common"]);
   const showError = useApiErrorToast();
   const [viewing, setViewing] = React.useState<Template | null>(null);
+  const [removing, setRemoving] = React.useState<Template | null>(null);
   const [features, setFeatures] = React.useState<{
     direct: EffectiveFeatureEntry[];
     inherited: EffectiveFeatureEntry[];
@@ -85,13 +87,22 @@ export function AssignedTemplateList({
                 <IconButton
                   icon={Trash2}
                   label={t("action.remove", { ns: "common" })}
-                  onClick={() => void onRemove(template.id)}
+                  onClick={() => setRemoving(template)}
                 />
               </PermissionGate>
             )}
           </li>
         ))}
       </ul>
+
+      <ConfirmDialog
+        open={removing !== null}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        title={t("confirmRemove.title", { ns: "common", name: removing?.name })}
+        description={t("confirmRemove.body", { ns: "common" })}
+        confirmLabel={t("action.remove", { ns: "common" })}
+        onConfirm={() => (removing && onRemove ? onRemove(removing.id) : undefined)}
+      />
 
       <EffectiveFeaturesDialog
         open={viewing !== null}

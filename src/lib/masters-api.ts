@@ -46,29 +46,42 @@ export async function listAll<T>(path: string, params: ListParams = {}): Promise
   return applyListQuery(rows, 0, Math.max(rows.length, 1), params).data
 }
 
+/** One page of `rows` for a `DataTable` `fetchData` call: its filters, search, sort and paging applied. */
+function pageOf<T>(rows: T[], options: FetchOptions, params: ListParams): FetchResult<T> {
+  const tableFilters = options.filters
+    .map((filter) => toFilter(filter.field, filter.value, filter.variant))
+    .filter((filter): filter is ListFilter => filter !== null)
+  const filters = [...(params.filters ?? []), ...tableFilters]
+  const effective: ListParams = {
+    ...params,
+    filters,
+    search: options.search ?? params.search,
+    sort: options.sort ?? params.sort,
+    sortDir: options.sort ? (options.sortDir ?? 'asc') : params.sortDir,
+    includeInactive:
+      params.includeInactive || needsIncludeInactive(filters) || options.filters.some((filter) => filter.value === ALL_STATUSES_FILTER_VALUE),
+  }
+  const page = applyListQuery(rows, options.pageIndex, options.pageSize, effective)
+  return {
+    rows: page.data,
+    pageCount: Math.max(1, Math.ceil(page.total / (page.pageSize || options.pageSize))),
+    totalCount: page.total,
+  }
+}
+
 /** `DataTable`'s `fetchData` for a master endpoint. */
 export function tableFetcher<T>(path: string, params: ListParams = {}) {
-  return async (options: FetchOptions): Promise<FetchResult<T>> => {
-    const tableFilters = options.filters
-      .map((filter) => toFilter(filter.field, filter.value, filter.variant))
-      .filter((filter): filter is ListFilter => filter !== null)
-    const filters = [...(params.filters ?? []), ...tableFilters]
-    const effective: ListParams = {
-      ...params,
-      filters,
-      search: options.search ?? params.search,
-      sort: options.sort ?? params.sort,
-      sortDir: options.sort ? (options.sortDir ?? 'asc') : params.sortDir,
-      includeInactive:
-        params.includeInactive || needsIncludeInactive(filters) || options.filters.some((filter) => filter.value === ALL_STATUSES_FILTER_VALUE),
-    }
-    const page = applyListQuery(await readAll<T>(path, params), options.pageIndex, options.pageSize, effective)
-    return {
-      rows: page.data,
-      pageCount: Math.max(1, Math.ceil(page.total / (page.pageSize || options.pageSize))),
-      totalCount: page.total,
-    }
-  }
+  return async (options: FetchOptions): Promise<FetchResult<T>> => pageOf(await readAll<T>(path, params), options, params)
+}
+
+/**
+ * `fetchData` over rows the screen already holds (the query it refetches after every change). Rows
+ * that spell "active" their own way (`status: "ACTIVE"`) get the `active` flag the Status filter and
+ * its default -- active rows only -- run on.
+ */
+export function rowsFetcher<T>(rows: T[], isActive: (row: T) => boolean) {
+  const withActive = rows.map((row) => ({ ...row, active: isActive(row) }))
+  return async (options: FetchOptions): Promise<FetchResult<T>> => pageOf(withActive, options, {})
 }
 
 export async function getResource<T>(path: string): Promise<T> {

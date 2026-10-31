@@ -18,6 +18,9 @@ vi.mock('@/hooks/use-current-user', () => ({
   CURRENT_USER_QUERY_KEY: ['me'],
 }))
 
+/** The Status column's filter: its untouched state is worded "Active", the default view. */
+const statusFilter = () => screen.getAllByRole('combobox').find((box) => box.textContent === 'Active')!
+
 const ACME = { id: 'c1', displayId: 'CID-1', name: 'Acme Pharma', status: 'ACTIVE', logoUrl: null, createdAt: '2026-08-21T10:00:00Z' }
 const ZENITH = { ...ACME, id: 'c2', displayId: 'CID-2', name: 'Zenith Healthcare', status: 'INACTIVE' }
 
@@ -40,11 +43,30 @@ describe('CompanyListPage', () => {
     api.listCompanies.mockResolvedValue([ACME, ZENITH])
   })
 
-  it('lists every company with its status', async () => {
+  it('lists the active companies by default and hides the inactive ones', async () => {
     renderList()
     expect(await screen.findByText('Acme Pharma')).toBeInTheDocument()
     expect(within(rowOf('Acme Pharma')).getByText('Active')).toBeInTheDocument()
+    expect(screen.queryByText('Zenith Healthcare')).not.toBeInTheDocument()
+  })
+
+  it('shows inactive companies when the Status filter asks for them', async () => {
+    renderList()
+    await screen.findByText('Acme Pharma')
+    await userEvent.click(statusFilter())
+    await userEvent.click(screen.getByRole('option', { name: 'Inactive' }))
+    expect(await screen.findByText('Zenith Healthcare')).toBeInTheDocument()
     expect(within(rowOf('Zenith Healthcare')).getByText('Inactive')).toBeInTheDocument()
+    expect(screen.queryByText('Acme Pharma')).not.toBeInTheDocument()
+  })
+
+  it('shows both with "All"', async () => {
+    renderList()
+    await screen.findByText('Acme Pharma')
+    await userEvent.click(statusFilter())
+    await userEvent.click(screen.getByRole('option', { name: 'All' }))
+    expect(await screen.findByText('Zenith Healthcare')).toBeInTheDocument()
+    expect(screen.getByText('Acme Pharma')).toBeInTheDocument()
   })
 
   it('deactivates only after the confirm', async () => {
@@ -61,6 +83,9 @@ describe('CompanyListPage', () => {
   it('activates an inactive company straight from its row', async () => {
     api.activateCompany.mockResolvedValue({ ...ZENITH, status: 'ACTIVE' })
     renderList()
+    await screen.findByText('Acme Pharma')
+    await userEvent.click(statusFilter())
+    await userEvent.click(screen.getByRole('option', { name: 'Inactive' }))
     await screen.findByText('Zenith Healthcare')
     await userEvent.click(within(rowOf('Zenith Healthcare')).getByRole('button', { name: 'Activate' }))
     expect(api.activateCompany).toHaveBeenCalledWith('c2')

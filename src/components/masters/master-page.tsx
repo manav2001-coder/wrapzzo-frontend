@@ -239,17 +239,17 @@ export function useMasterColumns<T extends AuditedRow>({
   }
 
   const statusColumn: ColumnDef<T, unknown> = {
-    id: "status",
+    id: "active",
     accessorFn: (row) => isActive(row),
     header: t("field.status"),
-    // Client-side filtering on the boolean; `equals` so `false` is a value, not "no filter".
-    filterFn: "equals",
     meta: {
       className: "min-w-[120px]",
       filterVariant: "select",
+      // The untouched list is the ACTIVE rows; "All" is its own option that asks for both.
+      filterUnsetLabel: activeLabel,
       filterOptions: [
-        { value: true, label: activeLabel },
         { value: false, label: inactiveLabel },
+        allStatusesFilterOption(t("table.filterAll")),
       ],
     },
     cell: ({ row }) => {

@@ -313,5 +313,17 @@
     "addedBy": "Added by",
     "updatedOn": "Updated on",
     "updatedBy": "Updated by"
+  },
+  "confirmDelete": {
+    "title": "Delete {{name}}?",
+    "body": "This cannot be undone."
+  },
+  "confirmRemove": {
+    "title": "Remove {{name}}?",
+    "body": "You can add it back later."
+  },
+  "confirmCancelPlan": {
+    "title": "Cancel {{name}}?",
+    "body": "No further orders will be placed. This cannot be undone."
   }
 }

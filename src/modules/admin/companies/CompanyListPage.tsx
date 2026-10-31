@@ -16,6 +16,7 @@ import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanies, useCreateCompany, useSetCompanyStatus, useUpdateCompany } from '@/hooks/useCompanies'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { rowsFetcher } from '@/lib/masters-api'
 import { P } from '@/lib/permissions'
 import { CompanyAvatar } from './CompanyAvatar'
 import { CompanyFeaturesPanel } from './CompanyFeaturesPanel'
@@ -37,7 +38,8 @@ const text = (value: unknown) => String(value ?? '').trim()
 export function CompanyListPage() {
   const { t } = useTranslation('admin')
   const showError = useApiErrorToast()
-  const { data: companies, isLoading, error, refetch } = useCompanies()
+  const { data: companies, dataUpdatedAt, error, refetch } = useCompanies()
+  const fetchCompanies = useMemo(() => rowsFetcher(companies ?? [], (company: Company) => company.status === 'ACTIVE'), [companies])
   const createCompany = useCreateCompany()
   const setStatus = useSetCompanyStatus()
   const [handle, setHandle] = useState<FormGeneratorHandle | null>(null)
@@ -85,14 +87,21 @@ export function CompanyListPage() {
   const columns = useMemo<ColumnDef<Company, unknown>[]>(
     () => [
       {
+        id: 'logoUrl',
+        header: t('companies.column.logo'),
+        enableSorting: false,
+        enableColumnFilter: false,
+        meta: { className: 'w-[72px] min-w-[72px]' },
+        cell: ({ row }) => <CompanyAvatar company={row.original} />,
+      },
+      {
         id: 'name',
         accessorKey: 'name',
         header: t('companies.column.company'),
-        meta: { className: 'min-w-[220px]', align: 'left' },
+        meta: { className: 'min-w-[200px]', align: 'left' },
         cell: ({ row }) => (
-          <button type="button" className="flex items-center gap-2.5 font-medium hover:underline" onClick={() => setDrawer(row.original.id)}>
-            <CompanyAvatar company={row.original} />
-            <span className="truncate">{row.original.name}</span>
+          <button type="button" className="truncate font-medium hover:underline" onClick={() => setDrawer(row.original.id)}>
+            {row.original.name}
           </button>
         ),
       },
@@ -218,8 +227,8 @@ export function CompanyListPage() {
       />
       <DataTable<Company>
         columns={columns}
-        data={companies ?? []}
-        isLoading={isLoading}
+        fetchData={fetchCompanies}
+        refreshTrigger={dataUpdatedAt}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}

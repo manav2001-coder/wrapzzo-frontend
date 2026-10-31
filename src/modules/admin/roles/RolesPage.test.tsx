@@ -50,7 +50,18 @@ describe('RolesPage', () => {
 
     expect(within(rowOf('Company Admin')).queryByRole('button', { name: 'Remove Company Admin' })).not.toBeInTheDocument()
     await userEvent.click(within(rowOf('Zonal Head')).getByRole('button', { name: 'Remove Zonal Head' }))
+    expect(deleteRole).not.toHaveBeenCalled()
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(deleteRole).toHaveBeenCalledWith('c-1', 'r-2'))
+  })
+
+  it('does not delete a role when the confirm is cancelled', async () => {
+    renderWithProviders(<RolesPage />)
+    await screen.findByText('Zonal Head')
+
+    await userEvent.click(within(rowOf('Zonal Head')).getByRole('button', { name: 'Remove Zonal Head' }))
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+    expect(deleteRole).not.toHaveBeenCalled()
   })
 
   it('hides creating and removing without role.edit', async () => {

@@ -1,12 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { AlertTriangle, Pause, Play, Repeat, Send, X } from 'lucide-react'
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import type { RecurringOrderPlan, RecurringPlanAction, RecurringPlanStatus } from '@/api/recurringOrders'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { IconButton } from '@/components/icon-button'
 import { Badge } from '@/components/ui/badge'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
@@ -36,17 +37,21 @@ export function RecurringPlansTable() {
   const showError = useApiErrorToast()
   const { data: plans, isLoading, error, refetch } = useMyRecurringOrderPlans()
   const act = useRecurringOrderPlanAction()
+  const [cancelling, setCancelling] = useState<RecurringOrderPlan | null>(null)
 
-  const columns = useMemo<ColumnDef<RecurringOrderPlan, unknown>[]>(() => {
-    async function run(plan: RecurringOrderPlan, action: RecurringPlanAction) {
+  const run = useCallback(
+    async (plan: RecurringOrderPlan, action: RecurringPlanAction) => {
       try {
         await act.mutateAsync({ id: plan.id, action })
         toast.success(t(`monthly.done.${action}`, { name: plan.recipientName }))
       } catch (err) {
         showError(err)
       }
-    }
+    },
+    [act, t, showError],
+  )
 
+  const columns = useMemo<ColumnDef<RecurringOrderPlan, unknown>[]>(() => {
     return [
       { id: 'giftName', accessorKey: 'giftName', header: t('landing.column.gift'), meta: { className: 'min-w-[180px]', align: 'left' } },
       { id: 'recipientName', accessorKey: 'recipientName', header: t('landing.column.recipient'), meta: { className: 'min-w-[160px]' } },
@@ -113,15 +118,16 @@ export function RecurringPlansTable() {
               ) : (
                 <IconButton icon={Play} label={t('monthly.resume')} disabled={act.isPending} onClick={() => void run(plan, 'resume')} />
               )}
-              <IconButton icon={X} label={t('monthly.cancel')} disabled={act.isPending} onClick={() => void run(plan, 'cancel')} />
+              <IconButton icon={X} label={t('monthly.cancel')} disabled={act.isPending} onClick={() => setCancelling(plan)} />
             </div>
           )
         },
       },
     ]
-  }, [t, act, showError])
+  }, [t, act, run])
 
   return (
+    <>
     <DataTable<RecurringOrderPlan>
       columns={columns}
       data={plans ?? []}
@@ -141,5 +147,14 @@ export function RecurringPlansTable() {
         description: t('monthly.emptyBody'),
       })}
     />
+    <ConfirmDialog
+      open={cancelling !== null}
+      onOpenChange={(open) => !open && setCancelling(null)}
+      title={t('confirmCancelPlan.title', { ns: 'common', name: cancelling?.recipientName })}
+      description={t('confirmCancelPlan.body', { ns: 'common' })}
+      confirmLabel={t('monthly.cancel')}
+      onConfirm={() => (cancelling ? run(cancelling, 'cancel') : undefined)}
+    />
+    </>
   )
 }

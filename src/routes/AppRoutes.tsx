@@ -123,7 +123,7 @@ export function AppRoutes() {
           <Route path="/my-campaigns" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><MyCampaignsPage /></Guard>} />
           <Route path="/recipients" element={<Guard permission={P.RECIPIENT_VIEW}><RecipientsPage /></Guard>} />
           <Route path="/my-doctors" element={<Guard permissions={[P.RECIPIENT_LIST_MANAGE, P.REQUEST_CREATE]}><MyDoctorsPage /></Guard>} />
-          <Route path="/approvals" element={<Guard permissions={[P.REQUEST_APPROVE, P.RECIPIENT_LIST_APPROVE, P.ORDER_ARTWORK_FINAL]} forManagers><ApprovalQueuePage /></Guard>} />
+          <Route path="/approvals" element={<Guard permissions={[P.REQUEST_APPROVE, P.ORDER_ARTWORK_FINAL]} forManagers><ApprovalQueuePage /></Guard>} />
           <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CampaignOrdersPage /></Guard>} />
           <Route path="/company/vendors" element={<Guard permission={P.COMPANY_VENDOR_VIEW}><CompanyVendorsPage /></Guard>} />
           <Route path="/warehouses" element={<Guard permission={P.WAREHOUSE_VIEW}><WarehousesPage /></Guard>} />

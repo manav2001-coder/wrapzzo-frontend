@@ -16,14 +16,14 @@
     "required": "Required"
   },
   "directory": {
-    "title": "Recipients",
-    "subtitle": "Everyone your team has sent a gift to or requested one for, in one shared directory.",
-    "add": "Add recipient",
+    "title": "Doctors",
+    "subtitle": "The doctors in your org unit and below, added by the people who report to you.",
+    "add": "Add doctor",
     "edit": "Edit {{name}}",
-    "emptyTitle": "No recipients yet",
-    "emptyBody": "Recipients from Quick Gift and campaigns appear here automatically, or add one yourself.",
-    "addTitle": "Add recipient",
-    "editTitle": "Edit recipient",
+    "emptyTitle": "No doctors yet",
+    "emptyBody": "Doctors appear here as your team adds them.",
+    "addTitle": "Add doctor",
+    "editTitle": "Edit doctor",
     "save": "Save changes",
     "added": "Recipient added",
     "updated": "Recipient updated"
@@ -36,42 +36,40 @@
     "gift": "Send a gift"
   },
   "picker": {
-    "title": "Pick from the directory",
-    "search": "Search by name, phone or registration no.",
-    "startTitle": "Start typing to search",
-    "startBody": "Find a doctor already in your directory.",
+    "title": "Pick from my doctors",
+    "search": "Search my doctors by name, phone or registration no.",
     "noMatchTitle": "No matches",
-    "noMatchBody": "Nobody matches that search. Add them as a new recipient instead.",
+    "noMatchBody": "No doctor on your list matches. Add them under My Doctors first.",
     "add_one": "Add {{count}} selected",
     "add_other": "Add {{count}} selected",
     "addNone": "Add selected"
   },
   "doctors": {
     "title": "My doctors",
-    "subtitle": "Your own list. Adding, editing or removing a doctor goes to your manager for approval first.",
-    "request": "Request new doctor",
-    "requestEdit": "Request changes to {{name}}",
-    "requestRemove": "Request removal of {{name}}",
+    "subtitle": "Your own list of doctors. Add, edit or remove them whenever you like -- no approval needed.",
     "emptyTitle": "No doctors on your list yet",
-    "emptyBody": "Request your first one. It appears here once your manager approves it.",
-    "addTitle": "Request a new doctor",
-    "editTitle": "Request changes to {{name}}",
-    "send": "Send for approval",
-    "sent": "Request sent to your manager for approval",
+    "emptyBody": "Add your first doctor. They will also be available when you send a Quick Gift.",
+    "addTitle": "Add a doctor",
+    "editTitle": "Edit {{name}}",
     "removeTitle": "Remove {{name}} from your list?",
-    "removeBody": "Your manager approves the removal. The doctor stays in the company directory.",
-    "removeConfirm": "Request removal",
-    "removeSent": "Removal requested",
-    "pendingTitle": "Waiting for your manager",
-    "action": {
-      "ADD": "Add",
-      "EDIT": "Edit",
-      "REMOVE": "Remove"
-    },
-    "status": {
-      "PENDING": "Pending",
-      "APPROVED": "Approved",
-      "REJECTED": "Rejected"
-    }
+    "removeBody": "The doctor stays in the company records, so past gifts are unaffected.",
+    "add": "Add doctor",
+    "edit": "Edit {{name}}",
+    "remove": "Remove {{name}}",
+    "removeConfirm": "Remove",
+    "removed": "Doctor removed from your list"
+  },
+  "import": {
+    "button": "Bulk upload",
+    "title": "Upload doctors",
+    "help": "Add many doctors to your list from a sheet. Doctors already in the company are added to your list, not duplicated.",
+    "template": "Download template",
+    "drop": "Drop your doctors .xlsx here, or click to choose",
+    "unreadable": "This file could not be read as an .xlsx sheet.",
+    "sheetErrors": "Fix these rows in your sheet",
+    "ready": "{{count}} doctors ready to upload.",
+    "confirm_one": "Upload {{count}} doctor",
+    "confirm_other": "Upload {{count}} doctors",
+    "done": "{{created}} new, {{joined}} already in the company, {{unchanged}} already on your list"
   }
 }

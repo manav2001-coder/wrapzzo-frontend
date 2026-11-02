@@ -1,10 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  bulkCreateMyDoctors,
+  createMyDoctor,
   createRecipient,
   listMyRecipients,
   listRecipients,
   listUpcomingBirthdays,
+  removeMyDoctor,
   searchRecipients,
+  updateMyDoctor,
   updateRecipient,
   type CreateRecipientInput,
 } from '@/api/recipients'
@@ -51,6 +55,35 @@ export function useUpdateRecipient() {
       queryClient.invalidateQueries({ queryKey: ['recipients', 'upcoming-birthdays'] })
     },
   })
+}
+
+function useInvalidateRecipients() {
+  const queryClient = useQueryClient()
+  return () => {
+    queryClient.invalidateQueries({ queryKey: ['recipients'] })
+    queryClient.invalidateQueries({ queryKey: ['recipients', 'upcoming-birthdays'] })
+  }
+}
+
+/** The MR's own list: add, edit and remove apply at once. */
+export function useCreateMyDoctor() {
+  const invalidate = useInvalidateRecipients()
+  return useMutation({ mutationFn: (input: CreateRecipientInput) => createMyDoctor(input), onSuccess: invalidate })
+}
+
+export function useUpdateMyDoctor() {
+  const invalidate = useInvalidateRecipients()
+  return useMutation({ mutationFn: ({ id, input }: { id: string; input: CreateRecipientInput }) => updateMyDoctor(id, input), onSuccess: invalidate })
+}
+
+export function useBulkCreateMyDoctors() {
+  const invalidate = useInvalidateRecipients()
+  return useMutation({ mutationFn: (rows: CreateRecipientInput[]) => bulkCreateMyDoctors(rows), onSuccess: invalidate })
+}
+
+export function useRemoveMyDoctor() {
+  const invalidate = useInvalidateRecipients()
+  return useMutation({ mutationFn: (id: string) => removeMyDoctor(id), onSuccess: invalidate })
 }
 
 export function useUpcomingBirthdays(days = 30) {

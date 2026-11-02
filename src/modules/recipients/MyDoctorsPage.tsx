@@ -1,160 +1,42 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Hourglass, Pencil, Stethoscope, Trash2 } from 'lucide-react'
+import { Pencil, Stethoscope, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import type { DoctorChangeStatus } from '@/api/doctorRequests'
 import type { Recipient } from '@/api/recipients'
 import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
-import { DatePicker } from '@/components/fields/date-picker'
-import { LabelledField } from '@/components/fields/labelled-field'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
-import { SectionCard } from '@/components/section-card'
-import { Badge, type BadgeProps } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { DoctorsImportDialog } from '@/modules/recipients/DoctorsImportDialog'
+import { RecipientFormDialog } from '@/modules/recipients/RecipientFormDialog'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
-import { useCreateDoctorChangeRequest, useMyDoctorChangeRequests } from '@/hooks/useDoctorRequests'
-import { useMyRecipients } from '@/hooks/useRecipients'
-import { formatDateTime, fromDateOnly, toDateOnly } from '@/lib/datetime'
+import { useMyRecipients, useRemoveMyDoctor } from '@/hooks/useRecipients'
 import type { ListFieldMap } from '@/lib/list-fields'
 
 const LIST_FIELDS: ListFieldMap = { name: 'text', phone: 'text', email: 'text', registrationNumber: 'text' }
 
-const STATUS_VARIANT: Record<DoctorChangeStatus, BadgeProps['variant']> = {
-  PENDING: 'warning-soft',
-  APPROVED: 'success-soft',
-  REJECTED: 'destructive-soft',
-}
-
-interface Draft {
-  name: string
-  phone: string
-  email: string
-  address: string
-  dob: Date | null
-  registrationNumber: string
-  qualification: string
-  speciality: string
-  clinicName: string
-}
-
-/**
- * Add or edit a doctor -- this files a request; nothing changes until the MR's manager approves
- * it. The parent remounts it per target (`key`), so it starts from that doctor's values.
- */
-function DoctorRequestDialog({ target, onClose }: { target: Recipient | null; onClose: () => void }) {
-  const { t } = useTranslation('recipients')
-  const showError = useApiErrorToast()
-  const createRequest = useCreateDoctorChangeRequest()
-  const [draft, setDraft] = useState<Draft>(() => ({
-    name: target?.name ?? '',
-    phone: target?.phone ?? '',
-    email: target?.email ?? '',
-    address: target?.address ?? '',
-    dob: fromDateOnly(target?.dateOfBirth) ?? null,
-    registrationNumber: target?.doctor?.registrationNumber ?? '',
-    qualification: target?.doctor?.qualification ?? '',
-    speciality: target?.doctor?.speciality ?? '',
-    clinicName: target?.doctor?.clinicName ?? '',
-  }))
-  const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }))
-
-  async function submit() {
-    try {
-      await createRequest.mutateAsync({
-        action: target ? 'EDIT' : 'ADD',
-        recipientId: target?.id,
-        proposedName: draft.name.trim() || undefined,
-        proposedPhone: draft.phone.trim() || undefined,
-        proposedEmail: draft.email.trim() || undefined,
-        proposedAddress: draft.address.trim() || undefined,
-        proposedDob: toDateOnly(draft.dob) ?? undefined,
-        proposedDoctor: {
-          registrationNumber: draft.registrationNumber.trim() || null,
-          qualification: draft.qualification.trim() || null,
-          speciality: draft.speciality.trim() || null,
-          clinicName: draft.clinicName.trim() || null,
-        },
-      })
-      toast.success(t('doctors.sent'))
-      onClose()
-    } catch (err) {
-      showError(err)
-    }
-  }
-
-  return (
-    <AppDialog
-      open
-      onOpenChange={(open) => !open && onClose()}
-      size="md"
-      title={target ? t('doctors.editTitle', { name: target.name }) : t('doctors.addTitle')}
-      confirmLabel={t('doctors.send')}
-      cancelLabel={t('action.cancel', { ns: 'common' })}
-      confirmDisabled={!draft.name.trim() || !draft.phone.trim()}
-      loading={createRequest.isPending}
-      onConfirm={() => void submit()}
-    >
-      <div className="space-y-3">
-        <LabelledField id="doctor-name" label={`${t('field.doctorName')} *`}>
-          <Input id="doctor-name" value={draft.name} onChange={(e) => set({ name: e.target.value })} />
-        </LabelledField>
-        <LabelledField id="doctor-phone" label={`${t('field.phone')} *`}>
-          <Input id="doctor-phone" type="tel" value={draft.phone} onChange={(e) => set({ phone: e.target.value })} />
-        </LabelledField>
-        <LabelledField id="doctor-email" label={t('field.email')}>
-          <Input id="doctor-email" type="email" value={draft.email} onChange={(e) => set({ email: e.target.value })} />
-        </LabelledField>
-        <LabelledField id="doctor-address" label={t('field.clinicAddress')}>
-          <Input id="doctor-address" value={draft.address} onChange={(e) => set({ address: e.target.value })} />
-        </LabelledField>
-        <LabelledField id="doctor-dob" label={t('field.dob')}>
-          <DatePicker id="doctor-dob" value={draft.dob} onChange={(value) => set({ dob: value })} toDate={new Date()} />
-        </LabelledField>
-        <p className="pt-1 text-xs font-semibold text-muted-foreground">{t('field.doctorSection')}</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <LabelledField id="doctor-reg" label={t('field.registrationNumber')}>
-            <Input id="doctor-reg" value={draft.registrationNumber} onChange={(e) => set({ registrationNumber: e.target.value })} />
-          </LabelledField>
-          <LabelledField id="doctor-qualification" label={t('field.qualification')}>
-            <Input id="doctor-qualification" value={draft.qualification} onChange={(e) => set({ qualification: e.target.value })} />
-          </LabelledField>
-          <LabelledField id="doctor-speciality" label={t('field.speciality')}>
-            <Input id="doctor-speciality" value={draft.speciality} onChange={(e) => set({ speciality: e.target.value })} />
-          </LabelledField>
-          <LabelledField id="doctor-clinic" label={t('field.clinicName')}>
-            <Input id="doctor-clinic" value={draft.clinicName} onChange={(e) => set({ clinicName: e.target.value })} />
-          </LabelledField>
-        </div>
-      </div>
-    </AppDialog>
-  )
-}
-
-/** An MR's own doctor list; every add, edit or removal is a request their manager approves. */
+/** An MR's own doctor list: they add, edit and remove doctors themselves, with no approval step. */
 export function MyDoctorsPage() {
   const { t } = useTranslation('recipients')
   const pageTitle = useMenuLabel('my-doctors', t('doctors.title'))
   const showError = useApiErrorToast()
   const { data: doctors, isLoading, error, refetch } = useMyRecipients()
-  const { data: requests } = useMyDoctorChangeRequests()
-  const createRequest = useCreateDoctorChangeRequest()
-  // `undefined` = closed, `null` = requesting a new doctor, a doctor = requesting changes to them.
+  const removeDoctor = useRemoveMyDoctor()
+  // `undefined` = closed, `null` = adding a new doctor, a doctor = editing them.
   const [editing, setEditing] = useState<Recipient | null | undefined>(undefined)
   const [removing, setRemoving] = useState<Recipient | null>(null)
-
-  const pending = (requests ?? []).filter((r) => r.status === 'PENDING')
+  const [importing, setImporting] = useState(false)
 
   async function confirmRemove() {
     if (!removing) return
     try {
-      await createRequest.mutateAsync({ action: 'REMOVE', recipientId: removing.id })
-      toast.success(t('doctors.removeSent'))
+      await removeDoctor.mutateAsync(removing.id)
+      toast.success(t('doctors.removed'))
     } catch (err) {
       showError(err)
     } finally {
@@ -188,11 +70,11 @@ export function MyDoctorsPage() {
         meta: { className: 'w-[96px]', pin: 'right' },
         cell: ({ row }) => (
           <div className="flex justify-end gap-0.5">
-            <IconButton icon={Pencil} label={t('doctors.requestEdit', { name: row.original.name })} onClick={() => setEditing(row.original)} />
+            <IconButton icon={Pencil} label={t('doctors.edit', { name: row.original.name })} onClick={() => setEditing(row.original)} />
             <IconButton
               icon={Trash2}
               tone="destructive"
-              label={t('doctors.requestRemove', { name: row.original.name })}
+              label={t('doctors.remove', { name: row.original.name })}
               onClick={() => setRemoving(row.original)}
             />
           </div>
@@ -207,32 +89,15 @@ export function MyDoctorsPage() {
       <MasterPageHeader
         title={pageTitle}
         description={t('doctors.subtitle')}
-        createLabel={t('doctors.request')}
+        createLabel={t('doctors.add')}
         onCreate={() => setEditing(null)}
+        extra={
+          <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
+            <Upload className="mr-1.5 h-4 w-4" />
+            {t('import.button')}
+          </Button>
+        }
       />
-
-      {pending.length > 0 && (
-        <SectionCard
-          title={
-            <span className="inline-flex items-center gap-2">
-              <Hourglass className="h-4 w-4 text-warning" />
-              {t('doctors.pendingTitle')}
-            </span>
-          }
-        >
-          <ul className="space-y-2">
-            {pending.map((request) => (
-              <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed px-3 py-2 text-sm">
-                <span>
-                  <span className="font-medium">{t(`doctors.action.${request.action}`)}</span> · {request.proposedName ?? request.recipientName}
-                  <span className="ml-2 text-xs text-muted-foreground">{formatDateTime(request.createdAt)}</span>
-                </span>
-                <Badge variant={STATUS_VARIANT[request.status]}>{t(`doctors.status.${request.status}`)}</Badge>
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
-      )}
 
       <DataTable<Recipient>
         columns={columns}
@@ -253,7 +118,8 @@ export function MyDoctorsPage() {
         })}
       />
 
-      {editing !== undefined && <DoctorRequestDialog key={editing?.id ?? 'new'} target={editing} onClose={() => setEditing(undefined)} />}
+      {editing !== undefined && <RecipientFormDialog key={editing?.id ?? 'new'} visible mine recipient={editing} onHide={() => setEditing(undefined)} />}
+      <DoctorsImportDialog open={importing} onOpenChange={setImporting} />
       <AppDialog
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
@@ -263,7 +129,7 @@ export function MyDoctorsPage() {
         confirmLabel={t('doctors.removeConfirm')}
         confirmVariant="destructive"
         cancelLabel={t('action.cancel', { ns: 'common' })}
-        loading={createRequest.isPending}
+        loading={removeDoctor.isPending}
         onConfirm={() => void confirmRemove()}
       />
     </div>

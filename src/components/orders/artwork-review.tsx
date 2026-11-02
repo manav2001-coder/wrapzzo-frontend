@@ -1,4 +1,4 @@
-import { Check, ExternalLink, FileText, Hourglass, MessageSquareWarning, Palette } from 'lucide-react'
+import { Check, Hourglass, MessageSquareWarning, Palette } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import type { OrderDesign } from '@/api/orderDesigns'
 import { AppDialog } from '@/components/app-dialog'
 import { ArtworkApprovalTrail } from '@/components/orders/artwork-approval-trail'
+import { ArtworkProofPreview } from '@/components/orders/artwork-proof-preview'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -22,32 +23,11 @@ const VARIANT: Record<OrderDesign['status'], BadgeProps['variant']> = {
   REJECTED: 'destructive-soft',
 }
 
-const IMAGE_FILE = /\.(png|jpe?g|webp|gif|svg)$/i
-
-function isImage(design: OrderDesign): boolean {
-  return IMAGE_FILE.test(design.fileName ?? '') || IMAGE_FILE.test(design.fileUrl.split('?')[0])
-}
-
-/** The proof itself: an image inline, anything else (a PDF) as a file to open. */
+/** The proof itself: a thumbnail that opens the full proof in a dialog, not a link out to a new tab. */
 function Proof({ design }: { design: OrderDesign }) {
   const { t } = useTranslation('orders')
-  return isImage(design) ? (
-    <a href={design.fileUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border bg-muted">
-      <img src={design.fileUrl} alt={t('artwork.version', { n: design.versionNo })} className="max-h-80 w-full object-contain" />
-    </a>
-  ) : (
-    <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/40 p-3">
-      <span className="flex min-w-0 items-center gap-2 text-sm">
-        <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
-        <span className="truncate">{design.fileName ?? t('artwork.version', { n: design.versionNo })}</span>
-      </span>
-      <Button asChild size="sm" variant="outline">
-        <a href={design.fileUrl} target="_blank" rel="noreferrer">
-          <ExternalLink />
-          {t('artwork.open')}
-        </a>
-      </Button>
-    </div>
+  return (
+    <ArtworkProofPreview fileUrl={design.fileUrl} fileName={design.fileName} title={t('artwork.proofTitle', { n: design.versionNo })} />
   )
 }
 
@@ -180,11 +160,7 @@ export function ArtworkReview({ orderId, artworkRequired }: { orderId: string; a
                       </div>
                       {design.reviewComment && <p className="mt-0.5 text-xs text-muted-foreground">“{design.reviewComment}”</p>}
                     </div>
-                    <Button asChild size="icon-sm" variant="ghost">
-                      <a href={design.fileUrl} target="_blank" rel="noreferrer" aria-label={`${t('artwork.open')} v${design.versionNo}`}>
-                        <ExternalLink />
-                      </a>
-                    </Button>
+                    <ArtworkProofPreview compact fileUrl={design.fileUrl} fileName={design.fileName} title={t('artwork.proofTitle', { n: design.versionNo })} />
                   </li>
                 ))}
               </ol>

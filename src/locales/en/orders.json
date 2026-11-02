@@ -103,7 +103,10 @@
       "onBehalf": "(for {{name}})",
       "waiting": "waiting on {{name}}",
       "waitingAnyone": "waiting on a Final Artwork Approval holder"
-    }
+    },
+    "viewProof": "View proof",
+    "openNewTab": "Open in new tab",
+    "proofTitle": "Version {{n}} proof"
   },
   "photoLink": {
     "title": "Recipient photo requested",

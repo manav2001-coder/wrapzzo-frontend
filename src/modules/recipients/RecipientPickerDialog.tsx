@@ -8,12 +8,12 @@ import { EmptyState } from '@/components/empty-state'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useRecipientSearch } from '@/hooks/useRecipients'
+import { useMyRecipients } from '@/hooks/useRecipients'
 
 /**
- * Search the shared directory and pick several recipients at once -- e.g. straight into a Quick
- * Gift form instead of retyping them. A live search, not a full-directory load, so it works for
- * anyone who can send a gift (request.create), not just recipient.view holders.
+ * Pick several doctors at once from the caller's own list (My Doctors) -- e.g. straight into a
+ * Quick Gift form instead of retyping them. The list is small, so it is loaded whole and the box
+ * only narrows it.
  */
 export function RecipientPickerDialog({
   visible,
@@ -27,8 +27,13 @@ export function RecipientPickerDialog({
   const { t } = useTranslation('recipients')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Map<string, Recipient>>(new Map())
-  const { data: results, isFetching } = useRecipientSearch(search)
-  const hasQuery = search.trim().length > 0
+  const { data: mine, isLoading } = useMyRecipients()
+  const needle = search.trim().toLowerCase()
+  const results = (mine ?? []).filter(
+    (r) =>
+      needle === '' ||
+      [r.name, r.phone, r.email, r.doctor?.registrationNumber, r.doctor?.clinicName].some((v) => v?.toLowerCase().includes(needle)),
+  )
 
   function reset() {
     setSelected(new Map())
@@ -76,15 +81,13 @@ export function RecipientPickerDialog({
           />
         </div>
 
-        {!hasQuery ? (
-          <EmptyState variant="plain" size="sm" icon={Search} title={t('picker.startTitle')} description={t('picker.startBody')} />
-        ) : isFetching && !results ? (
+        {isLoading ? (
           <Skeleton className="h-32 w-full" />
-        ) : (results ?? []).length === 0 ? (
+        ) : results.length === 0 ? (
           <EmptyState variant="plain" size="sm" icon={Contact} title={t('picker.noMatchTitle')} description={t('picker.noMatchBody')} />
         ) : (
           <ul className="max-h-80 divide-y overflow-y-auto rounded-md border">
-            {(results ?? []).map((recipient) => {
+            {results.map((recipient) => {
               const id = `pick-${recipient.id}`
               return (
                 <li key={recipient.id}>

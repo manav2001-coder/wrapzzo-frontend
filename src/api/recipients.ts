@@ -70,3 +70,31 @@ export async function listUpcomingBirthdays(days = 30): Promise<UpcomingBirthday
   const { data } = await apiClient.get<UpcomingBirthday[]>('/api/recipients/upcoming-birthdays', { params: { days } })
   return data
 }
+
+/** An MR's own list: adding, editing and removing take effect at once -- no approval step. */
+export async function createMyDoctor(input: CreateRecipientInput): Promise<Recipient> {
+  const { data } = await apiClient.post<Recipient>('/api/recipients/mine', input)
+  return data
+}
+
+export async function updateMyDoctor(id: string, input: CreateRecipientInput): Promise<Recipient> {
+  const { data } = await apiClient.put<Recipient>(`/api/recipients/mine/${id}`, input)
+  return data
+}
+
+/** Takes the doctor off the caller's list; they stay in the directory. */
+export async function removeMyDoctor(id: string): Promise<void> {
+  await apiClient.delete(`/api/recipients/mine/${id}`)
+}
+
+export interface BulkDoctorsResult {
+  created: number
+  joined: number
+  unchanged: number
+}
+
+/** A sheet of doctors onto the caller's own list, all or none. */
+export async function bulkCreateMyDoctors(rows: CreateRecipientInput[]): Promise<BulkDoctorsResult> {
+  const { data } = await apiClient.post<BulkDoctorsResult>('/api/recipients/mine/bulk', { rows })
+  return data
+}

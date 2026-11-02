@@ -9,7 +9,7 @@ import { LabelledField } from '@/components/fields/labelled-field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
-import { useCreateRecipient, useUpdateRecipient } from '@/hooks/useRecipients'
+import { useCreateMyDoctor, useCreateRecipient, useUpdateMyDoctor, useUpdateRecipient } from '@/hooks/useRecipients'
 import { fromDateOnly, toDateOnly } from '@/lib/datetime'
 
 interface Draft {
@@ -43,11 +43,26 @@ function draftFrom(recipient: Recipient | null | undefined): Draft {
  * registration number). The caller remounts it per recipient (`key`), so it starts from that
  * recipient's values rather than syncing them in an effect.
  */
-export function RecipientFormDialog({ visible, onHide, recipient }: { visible: boolean; onHide: () => void; recipient?: Recipient | null }) {
+export function RecipientFormDialog({
+  visible,
+  onHide,
+  recipient,
+  mine = false,
+}: {
+  visible: boolean
+  onHide: () => void
+  recipient?: Recipient | null
+  /** Save to the caller's own list (My Doctors) instead of the shared directory. */
+  mine?: boolean
+}) {
   const { t } = useTranslation('recipients')
   const showError = useApiErrorToast()
-  const createRecipient = useCreateRecipient()
-  const updateRecipient = useUpdateRecipient()
+  const createDirectory = useCreateRecipient()
+  const updateDirectory = useUpdateRecipient()
+  const createMine = useCreateMyDoctor()
+  const updateMine = useUpdateMyDoctor()
+  const createRecipient = mine ? createMine : createDirectory
+  const updateRecipient = mine ? updateMine : updateDirectory
   const [draft, setDraft] = useState<Draft>(() => draftFrom(recipient))
   const [errors, setErrors] = useState<Partial<Record<'name' | 'phone', string>>>({})
   const isEdit = Boolean(recipient)
@@ -93,7 +108,7 @@ export function RecipientFormDialog({ visible, onHide, recipient }: { visible: b
       open={visible}
       onOpenChange={(open) => !open && onHide()}
       size="md"
-      title={isEdit ? t('directory.editTitle') : t('directory.addTitle')}
+      title={mine ? (recipient ? t('doctors.editTitle', { name: recipient.name }) : t('doctors.addTitle')) : isEdit ? t('directory.editTitle') : t('directory.addTitle')}
       confirmLabel={isEdit ? t('directory.save') : t('directory.add')}
       cancelLabel={t('action.cancel', { ns: 'common' })}
       loading={createRecipient.isPending || updateRecipient.isPending}

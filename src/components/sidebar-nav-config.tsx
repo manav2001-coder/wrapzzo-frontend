@@ -222,7 +222,7 @@ export const COMPANY_NAV: NavSource[] = [
       { id: 'gift-store', titleKey: 'nav.giftStore', type: 'item', url: '/gift-store', icon: Store, permission: P.PRODUCT_VIEW },
       { id: 'recipients', titleKey: 'nav.recipients', type: 'item', url: '/recipients', icon: Contact, permission: P.RECIPIENT_VIEW },
       { id: 'my-doctors', titleKey: 'nav.myDoctors', type: 'item', url: '/my-doctors', icon: Stethoscope, permission: [P.RECIPIENT_LIST_MANAGE, P.REQUEST_CREATE] },
-      { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: [P.REQUEST_APPROVE, P.RECIPIENT_LIST_APPROVE, P.ORDER_ARTWORK_FINAL], forManagers: true },
+      { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: [P.REQUEST_APPROVE, P.ORDER_ARTWORK_FINAL], forManagers: true },
       { id: 'company-orders', titleKey: 'nav.orders', type: 'item', url: '/orders', icon: ShoppingBag, permission: P.ORDER_VIEW },
     ],
   },

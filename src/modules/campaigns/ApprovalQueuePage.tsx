@@ -1,4 +1,4 @@
-import { Check, CheckSquare, ExternalLink, Palette, Search, UserCog, X, Zap } from 'lucide-react'
+import { Check, CheckSquare, Palette, Search, UserCog, X, Zap } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/empty-state'
 import { LabelledField } from '@/components/fields/labelled-field'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { ArtworkApprovalTrail } from '@/components/orders/artwork-approval-trail'
+import { ArtworkProofPreview } from '@/components/orders/artwork-proof-preview'
 import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -256,10 +257,7 @@ export function ApprovalQueuePage() {
           <Detail label="Quantity">{item.quantity}</Detail>
           <Detail label="Vendor">{item.vendorName}</Detail>
           <Detail label="Proof">
-            <a href={item.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-              Version {item.versionNo}
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            <ArtworkProofPreview fileUrl={item.fileUrl} fileName={item.fileName} title={`Version ${item.versionNo} · ${item.orderDisplayId}`} />
           </Detail>
           {item.covering && (
             <div className="sm:col-span-2">

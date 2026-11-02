@@ -122,7 +122,10 @@ describe('OrdersPage (company)', () => {
     renderWithProviders(<OrdersPage />)
     const sheet = await openOrder()
 
-    expect(await within(sheet).findByRole('img', { name: 'Version 1' })).toHaveAttribute('src', 'https://files.test/proof-v1.png')
+    await userEvent.click((await within(sheet).findAllByRole('button', { name: 'View proof' }))[0])
+    const proof = await screen.findByRole('dialog', { name: 'Version 1 proof' })
+    expect(within(proof).getByRole('img', { name: 'Version 1 proof' })).toHaveAttribute('src', 'https://files.test/proof-v1.png')
+    await userEvent.click(within(proof).getAllByRole('button', { name: 'Close' })[0])
     await userEvent.click(within(sheet).getByRole('button', { name: 'Approve' }))
     await waitFor(() => expect(approveOrderDesign).toHaveBeenCalledWith('o-1', 'd-1'))
   })
@@ -144,7 +147,7 @@ describe('OrdersPage (company)', () => {
     await waitFor(() => expect(rejectOrderDesign).toHaveBeenCalledWith('o-1', 'd-1', 'Name is misspelt'))
   })
 
-  it('lists earlier versions with the feedback they got, and offers a PDF proof as a file', async () => {
+  it('lists earlier versions with the feedback they got, and shows a PDF proof in the viewer', async () => {
     listOrders.mockResolvedValue([order({ hasPendingDesignReview: true })])
     listOrderDesigns.mockResolvedValue([
       design({ id: 'd-2', versionNo: 2, fileUrl: 'https://files.test/v2.pdf', fileName: 'v2.pdf' }),
@@ -155,7 +158,10 @@ describe('OrdersPage (company)', () => {
 
     expect(await within(sheet).findByText('Earlier versions')).toBeInTheDocument()
     expect(within(sheet).getByText('“Name is misspelt”')).toBeInTheDocument()
-    expect(within(sheet).getByRole('link', { name: 'Open proof' })).toHaveAttribute('href', 'https://files.test/v2.pdf')
+    await userEvent.click(within(sheet).getAllByRole('button', { name: 'View proof' })[0])
+    const proof = await screen.findByRole('dialog', { name: 'Version 2 proof' })
+    expect(within(proof).getByTitle('Version 2 proof')).toHaveAttribute('src', 'https://files.test/v2.pdf')
+    expect(within(proof).getByRole('link', { name: 'Open in new tab' })).toHaveAttribute('href', 'https://files.test/v2.pdf')
   })
 
   it('hides the review controls from someone who may not review artwork', async () => {

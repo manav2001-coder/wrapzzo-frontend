@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { renderWithProviders, screen, waitFor } from '@/test/test-utils'
+import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { ApprovalQueuePage } from './ApprovalQueuePage'
 
 const listPendingArtworkApprovals = vi.hoisted(() => vi.fn())
@@ -65,6 +65,15 @@ describe('ApprovalQueuePage — artwork final approval', () => {
     expect(screen.queryByText(/Covering for/)).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /approve/i }))
     await waitFor(() => expect(approveOrderDesign).toHaveBeenCalledWith('o-1', 'd-2'))
+  })
+
+  it('opens the proof in a dialog right on the approvals page', async () => {
+    renderWithProviders(<ApprovalQueuePage />)
+    await userEvent.click(await screen.findByRole('tab', { name: /artwork/i }))
+    await userEvent.click((await screen.findAllByRole('button', { name: 'View proof' }))[0])
+
+    const dialog = await screen.findByRole('dialog', { name: /Version \d+ · ORD-42/ })
+    expect(within(dialog).getByTitle(/Version \d+ · ORD-42/)).toHaveAttribute('src', 'https://files.test/proof-v2.pdf')
   })
 
   it('says when the approver is covering a level for the manager it waits on', async () => {

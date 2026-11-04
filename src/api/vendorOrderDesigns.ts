@@ -1,4 +1,5 @@
 import type { OrderDesign } from '@/api/orderDesigns'
+import { UserFacingError } from '@/lib/user-facing-error'
 import { vendorApiClient } from '@/lib/vendorApiClient'
 
 interface PresignDesignResponse {
@@ -20,18 +21,21 @@ export async function listVendorOrderDesigns(orderId: string): Promise<OrderDesi
  * PDFs, and the server names them (PCODE_AMCODE_vN.pdf): the file's own name is not used.
  */
 export async function uploadVendorOrderDesign(orderId: string, file: File): Promise<OrderDesign> {
-  if (file.type !== PDF) throw new Error('Only PDF files can be uploaded.')
+  // Some systems report no type for a .pdf, so the extension counts too.
+  const isPdf = file.type === PDF || (file.type === '' && /\.pdf$/i.test(file.name))
+  if (!isPdf) throw new UserFacingError(`"${file.name}" is not a PDF. Proofs must be PDF files.`)
   const { data: presign } = await vendorApiClient.post<PresignDesignResponse>(`/api/vendor/orders/${orderId}/designs/presign`, {
     contentType: PDF,
   })
 
-  const uploadResponse = await fetch(presign.uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': PDF },
-    body: file,
-  })
+  let uploadResponse: Response
+  try {
+    uploadResponse = await fetch(presign.uploadUrl, { method: 'PUT', headers: { 'Content-Type': PDF }, body: file })
+  } catch {
+    throw new UserFacingError(`"${file.name}" could not be sent to file storage -- check your connection and try again.`)
+  }
   if (!uploadResponse.ok) {
-    throw new Error(`Upload to storage failed with status ${uploadResponse.status}`)
+    throw new UserFacingError(`File storage refused "${file.name}" (status ${uploadResponse.status}). Please try again, and tell us if it keeps happening.`)
   }
 
   const { data } = await vendorApiClient.post<OrderDesign>(`/api/vendor/orders/${orderId}/designs`, {

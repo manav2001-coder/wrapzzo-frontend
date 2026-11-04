@@ -240,6 +240,7 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Can't reach the server. Check your connection and try again.",
+    "server": "The server hit a problem (error {{status}}) and could not finish this. It is not something you did -- try again in a moment.",
     "required": "This field is required",
     "invalidNumber": "Enter a valid number",
     "invalidEmail": "Enter a valid email address",

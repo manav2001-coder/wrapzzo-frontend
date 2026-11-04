@@ -1,3 +1,4 @@
+import JsBarcode from 'jsbarcode'
 import QRCode from 'qrcode'
 
 import type { VendorOrder } from '@/api/vendorOrders'
@@ -49,42 +50,53 @@ export function dispatchLabelOf(order: VendorOrder, artworkFile: string | null):
 
 /** The QR carries the order number, so Ops can scan a parcel and find the order. */
 export async function qrSvgOf(text: string): Promise<string> {
-  return QRCode.toString(text, { type: 'svg', margin: 0, width: 96 })
+  return QRCode.toString(text, { type: 'svg', margin: 0, width: 110 })
 }
 
-export function labelHtml(label: DispatchLabel, qrSvg: string, t: (key: string) => string): string {
-  const row = (name: string, value: string | number | null) =>
-    value === null || value === '' ? '' : `<tr><th>${escapeHtml(t(name))}</th><td>${escapeHtml(String(value))}</td></tr>`
+/** A Code 128 barcode of the same text, as SVG -- for a handheld scanner at the warehouse. */
+export function barcodeSvgOf(text: string): string {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  JsBarcode(svg, text, { format: 'CODE128', displayValue: false, margin: 0, height: 34, width: 2 })
+  return svg.outerHTML
+}
+
+export function labelHtml(label: DispatchLabel, qrSvg: string, barcodeSvg: string, t: (key: string) => string): string {
+  const e = escapeHtml
+  const field = (name: string, value: string | number | null) =>
+    value === null || value === '' ? '' : `<div class="f"><small>${e(t(name))}</small><b>${e(String(value))}</b></div>`
   const doctor = [label.doctorName, label.pcode ? `(${label.pcode})` : null].filter(Boolean).join(' ')
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(label.displayId)}</title>
+  const am = [label.amName, label.amCode ? `(${label.amCode})` : null].filter(Boolean).join(' ')
+  const amLine = [label.amArea, label.amMobile].filter(Boolean).join(' · ')
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${e(label.displayId)}</title>
 <style>
-@page{size:A6;margin:6mm}
-body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0}
-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:3mm;margin-bottom:3mm}
-h1{font-size:20pt;margin:0}h2{font-size:10pt;margin:1mm 0 0;font-weight:normal}
-.to{border:2px solid #000;padding:2mm 3mm;margin-bottom:3mm}.to p{margin:0 0 1mm;font-size:8pt;text-transform:uppercase;letter-spacing:.5pt}
-.to strong{display:block;font-size:15pt}.to span{display:block;font-size:10pt}
-table{border-collapse:collapse;width:100%;font-size:10pt}
-th{text-align:left;vertical-align:top;width:26mm;padding:1mm 2mm 1mm 0;font-weight:bold}
-td{padding:1mm 0}
-.file{margin-top:3mm;font:8pt monospace;word-break:break-all}
+@page{size:100mm 70mm;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;width:100mm;height:70mm}
+body{font-family:Arial,Helvetica,sans-serif;color:#000;padding:4mm 5mm;display:flex;flex-direction:column;gap:2mm}
+small{display:block;font-size:6.5pt;font-weight:bold;text-transform:uppercase;letter-spacing:.4pt;color:#333}
+.top{display:flex;justify-content:space-between;gap:4mm;border-bottom:.6mm solid #000;padding-bottom:2mm}
+.id b{display:block;font-size:22pt;line-height:1.05}
+.id span{font-size:8pt}
+.to{margin-top:1.5mm}.to b{display:block;font-size:13pt;line-height:1.15}.to span{font-size:8.5pt}
+.qr{width:22mm;height:22mm;flex:none}.qr svg{width:100%;height:100%}
+.row{display:flex;gap:4mm}.row .f{flex:1;min-width:0}
+.f b{display:block;font-size:9.5pt;line-height:1.15;overflow-wrap:anywhere}
+.bar{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:3mm}
+.bar svg{height:8mm;width:55mm}
+.file{font:6.5pt monospace;max-width:34mm;overflow-wrap:anywhere;text-align:right}
 </style></head><body>
-<header><div><h1>${escapeHtml(label.displayId)}</h1><h2>${escapeHtml(label.company)}</h2></div>${qrSvg}</header>
-<section class="to"><p>${escapeHtml(t('label.dispatchTo'))}</p><strong>${escapeHtml(label.amName)}${label.amCode ? ` (${escapeHtml(label.amCode)})` : ''}</strong>
-${label.amArea ? `<span>${escapeHtml(label.amArea)}</span>` : ''}${label.amMobile ? `<span>${escapeHtml(label.amMobile)}</span>` : ''}</section>
-<table>
-${row('label.product', label.product)}
-${row('label.quantity', label.quantity)}
-${row('label.forDoctor', doctor)}
-${row('label.clinic', label.clinic)}
-${row('label.phone', label.phone)}
-${row('label.doctorAddress', label.doctorAddress)}
-</table>
-${label.artworkFile ? `<p class="file">${escapeHtml(label.artworkFile)}</p>` : ''}
+<div class="top">
+  <div><div class="id"><small>${e(t('label.order'))}</small><b>${e(label.displayId)}</b><span>${e(label.company)}</span></div>
+  <div class="to"><small>${e(t('label.dispatchTo'))}</small><b>${e(am)}</b>${amLine ? `<span>${e(amLine)}</span>` : ''}</div></div>
+  <div class="qr">${qrSvg}</div>
+</div>
+<div class="row">${field('label.forDoctor', doctor)}${field('label.clinic', label.clinic)}</div>
+<div class="row">${field('label.product', label.product)}${field('label.quantity', label.quantity)}</div>
+<div class="bar">${barcodeSvg}${label.artworkFile ? `<div class="file">${e(label.artworkFile)}</div>` : ''}</div>
 </body></html>`
 }
 
-/** Opens the browser's print dialog on the label alone (choose "Save as PDF" there to download it). */
+/** Opens the browser's print dialog on the label alone (a 100 x 70 mm sticker) (choose "Save as PDF" there to download it). */
 export function printLabel(html: string): void {
   const frame = document.createElement('iframe')
   frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'

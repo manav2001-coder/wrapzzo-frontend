@@ -181,6 +181,6 @@
     "phone": "Phone",
     "dispatchTo": "Dispatch to AM",
     "forDoctor": "For doctor",
-    "doctorAddress": "Doctor's address"
+    "order": "Order"
   }
 }

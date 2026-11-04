@@ -33,7 +33,7 @@ import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useUploadVendorOrderDesign, useVendorOrderDesigns } from '@/hooks/useVendorOrderDesigns'
 import { useUpdateVendorOrderStatus, useVendorOrder } from '@/hooks/useVendorOrders'
 import { formatDate, formatDateTime } from '@/lib/datetime'
-import { dispatchLabelOf, labelHtml, printLabel, qrSvgOf } from '@/lib/dispatch-label'
+import { barcodeSvgOf, dispatchLabelOf, labelHtml, printLabel, qrSvgOf } from '@/lib/dispatch-label'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { nextStatusOf, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
@@ -341,7 +341,7 @@ function DispatchLabelButton({ order }: { order: VendorOrder }) {
     try {
       const approved = designs?.find((d) => d.status === 'APPROVED')
       const label = dispatchLabelOf(order, approved?.fileName ?? null)
-      printLabel(labelHtml(label, await qrSvgOf(order.displayId), (key) => t(key)))
+      printLabel(labelHtml(label, await qrSvgOf(order.displayId), barcodeSvgOf(order.displayId), (key) => t(key)))
     } catch (err) {
       showError(err, t('label.failed'))
     } finally {

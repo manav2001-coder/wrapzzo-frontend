@@ -177,11 +177,10 @@
     "failed": "The dispatch label could not be created.",
     "product": "Product",
     "quantity": "Quantity",
-    "doctor": "Doctor",
     "clinic": "Clinic",
     "phone": "Phone",
-    "shipTo": "Deliver to",
-    "shipToWarehouse": "Ship to warehouse",
-    "am": "Raised by (AM)"
+    "dispatchTo": "Dispatch to AM",
+    "forDoctor": "For doctor",
+    "doctorAddress": "Doctor's address"
   }
 }

@@ -177,11 +177,10 @@
     "failed": "डिस्पैच लेबल नहीं बन सका।",
     "product": "उत्पाद",
     "quantity": "मात्रा",
-    "doctor": "डॉक्टर",
     "clinic": "क्लिनिक",
     "phone": "फ़ोन",
-    "shipTo": "यहाँ पहुँचाएँ",
-    "shipToWarehouse": "वेयरहाउस को भेजें",
-    "am": "ऑर्डर देने वाले (AM)"
+    "dispatchTo": "AM को भेजें",
+    "forDoctor": "डॉक्टर के लिए",
+    "doctorAddress": "डॉक्टर का पता"
   }
 }

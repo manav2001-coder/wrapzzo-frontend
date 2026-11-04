@@ -22,6 +22,8 @@ export interface VendorOrder {
   /** The AM who raised the order and their employee code -- printed on the dispatch label. */
   amName: string
   amCode: string | null
+  amMobile: string | null
+  amArea: string | null
   /** Shown so the vendor can produce a personalized gift correctly -- null until the recipient uploads one. */
   recipientPhotoUrl: string | null
   price: number | null

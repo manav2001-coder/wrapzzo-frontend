@@ -1,4 +1,4 @@
-import { ArrowRight, PackageCheck, Stethoscope } from 'lucide-react'
+import { ArrowRight, FilePlus2, PackageCheck, Stethoscope } from 'lucide-react'
 import type { ComponentType } from 'react'
 
 type PelDrilldown = 'pelsRequested' | 'pelsServed'
@@ -39,7 +39,7 @@ function Stat({
         )}
       </div>
       <div>
-        <p className={`text-4xl font-bold tracking-tight sm:text-5xl ${clickable ? 'text-foreground' : 'text-foreground/25'}`}>{value}</p>
+        <p className={`text-4xl font-bold tracking-tight ${clickable ? 'text-foreground' : 'text-foreground/25'}`}>{value}</p>
         <p className="mt-1.5 text-sm text-muted-foreground">{caption}</p>
       </div>
     </button>
@@ -47,43 +47,55 @@ function Stat({
 }
 
 const count = (n: number) => n.toLocaleString('en-IN')
+const doctorsLabel = (n: number) => `${count(n)} ${n === 1 ? 'doctor' : 'doctors'}`
 
-/** The two numbers the dashboard leads with: PELs requested per doctor, and the total PELs served. Quantities only --
- * no prices or revenue anywhere on the dashboard. Each opens a per-doctor breakdown in the shared drilldown dialog. */
+/** The numbers the dashboard leads with: PELs created, PELs served and the doctors served. Counts only -- no prices or
+ * revenue anywhere on the dashboard. Each opens a per-doctor breakdown in the shared drilldown dialog. */
 export function PelStatsCard({
   requested,
   doctors,
   served,
+  doctorsServed,
   onSelect,
 }: {
   requested: number
   doctors: number
   served: number
+  doctorsServed: number
   onSelect: (dimension: PelDrilldown) => void
 }) {
   const perDoctor = doctors > 0 ? Math.round((requested / doctors) * 10) / 10 : 0
 
   return (
-    <div className="relative flex h-full w-full flex-col justify-between gap-6 overflow-hidden rounded-lg border bg-card p-6">
+    <div className="relative flex h-full w-full flex-col justify-between gap-5 overflow-hidden rounded-lg border bg-card p-6">
       <div
         className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full opacity-[0.12]"
         style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)' }}
       />
       <Stat
-        icon={Stethoscope}
-        label="PELs requested per doctor"
-        value={count(perDoctor)}
-        caption={doctors > 0 ? `${count(requested)} PELs requested across ${count(doctors)} ${doctors === 1 ? 'doctor' : 'doctors'}.` : 'No PELs requested yet.'}
+        icon={FilePlus2}
+        label="PELs created"
+        value={count(requested)}
+        caption={doctors > 0 ? `For ${doctorsLabel(doctors)} · about ${count(perDoctor)} per doctor.` : 'No PELs created yet.'}
         clickable={doctors > 0}
         onClick={() => onSelect('pelsRequested')}
       />
       <div className="border-t" />
       <Stat
         icon={PackageCheck}
-        label="Total PELs served"
+        label="PELs served"
         value={count(served)}
         caption={served > 0 ? 'PELs on orders delivered to doctors.' : 'Delivered PELs appear here.'}
         clickable={served > 0}
+        onClick={() => onSelect('pelsServed')}
+      />
+      <div className="border-t" />
+      <Stat
+        icon={Stethoscope}
+        label="Doctors served"
+        value={count(doctorsServed)}
+        caption={doctorsServed > 0 ? `Doctors who have received their PELs, of ${doctorsLabel(doctors)} requested for.` : 'Doctors appear here once a PEL is delivered.'}
+        clickable={doctorsServed > 0}
         onClick={() => onSelect('pelsServed')}
       />
     </div>

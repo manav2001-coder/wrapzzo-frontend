@@ -110,6 +110,7 @@ export function DashboardPage() {
                 requested={data.pelsRequested}
                 doctors={data.doctorsRequested}
                 served={data.pelsServed}
+                doctorsServed={data.doctorsServed}
                 onSelect={(dimension) => setDrilldown({ dimension, value: '' })}
               />
             </div>

@@ -88,6 +88,8 @@ export interface DashboardSummary {
   doctorsRequested: number
   /** PELs on delivered orders. */
   pelsServed: number
+  /** Distinct doctors those delivered PELs reached. */
+  doctorsServed: number
   /** Order counts by source -- "CAMPAIGN" / "QUICK_GIFT" / "BULK_GIFT". */
   orderSourceBreakdown: Record<string, number>
   /** Quick Gift request counts by status -- "SUBMITTED" / "APPROVED" / "REJECTED". */

@@ -12,6 +12,8 @@ export function vendorOrder(overrides: Partial<VendorOrder> = {}): VendorOrder {
     recipientName: 'Dr. Asha Shah',
     recipientPhone: '9800000001',
     recipientPcode: 'P-1001',
+    amName: 'Ravi Kumar',
+    amCode: 'AM07',
     recipientPhotoUrl: null,
     price: 40,
     quantity: 5,

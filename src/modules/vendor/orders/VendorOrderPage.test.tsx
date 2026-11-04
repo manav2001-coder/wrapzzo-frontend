@@ -137,6 +137,16 @@ describe('VendorOrderPage', () => {
     expect(container.querySelector('img[src="https://files.test/proof-v1.pdf"]')).toBeNull()
   })
 
+  it('offers the parcel label only once the order may be packed', async () => {
+    const first = renderWorkspace(vendorOrder())
+    await screen.findByText('Upload an artwork proof for the customer to approve.')
+    expect(screen.queryByRole('button', { name: 'Download label' })).not.toBeInTheDocument()
+    first.unmount()
+
+    renderWorkspace(vendorOrder({ artworkApproved: true, latestDesignStatus: 'APPROVED', designVersions: 1 }))
+    expect(await screen.findByRole('button', { name: 'Download label' })).toBeEnabled()
+  })
+
   it('dispatches a ready order after confirming', async () => {
     const ready = vendorOrder({ artworkApproved: true, latestDesignStatus: 'APPROVED', designVersions: 1 })
     updateVendorOrderStatus.mockResolvedValue({ ...ready, status: 'DISPATCHED' })

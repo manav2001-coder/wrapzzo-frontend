@@ -19,6 +19,9 @@ export interface VendorOrder {
   recipientPhone: string | null
   /** The doctor's pcode -- printed on a personalised pad; null for a campaign order. */
   recipientPcode: string | null
+  /** The AM who raised the order and their employee code -- printed on the dispatch label. */
+  amName: string
+  amCode: string | null
   /** Shown so the vendor can produce a personalized gift correctly -- null until the recipient uploads one. */
   recipientPhotoUrl: string | null
   price: number | null

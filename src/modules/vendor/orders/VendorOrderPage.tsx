@@ -7,6 +7,7 @@ import {
   Lock,
   MessageSquareWarning,
   Package,
+  Printer,
   Palette,
   Phone,
   Truck,
@@ -32,6 +33,7 @@ import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useUploadVendorOrderDesign, useVendorOrderDesigns } from '@/hooks/useVendorOrderDesigns'
 import { useUpdateVendorOrderStatus, useVendorOrder } from '@/hooks/useVendorOrders'
 import { formatDate, formatDateTime } from '@/lib/datetime'
+import { dispatchLabelOf, labelHtml, printLabel, qrSvgOf } from '@/lib/dispatch-label'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { nextStatusOf, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
@@ -327,6 +329,34 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
 
 type PendingMove = { status: OrderStatus; title: string; body: string; label: string }
 
+/** Downloads the parcel's label (the browser's print dialog -- "Save as PDF" there) once the order may be packed. */
+function DispatchLabelButton({ order }: { order: VendorOrder }) {
+  const { t } = useTranslation('vendor')
+  const showError = useApiErrorToast()
+  const { data: designs } = useVendorOrderDesigns(order.id)
+  const [busy, setBusy] = useState(false)
+
+  async function onClick() {
+    setBusy(true)
+    try {
+      const approved = designs?.find((d) => d.status === 'APPROVED')
+      const label = dispatchLabelOf(order, approved?.fileName ?? null)
+      printLabel(labelHtml(label, await qrSvgOf(order.displayId), (key) => t(key)))
+    } catch (err) {
+      showError(err, t('label.failed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Button variant="outline" loading={busy} onClick={() => void onClick()}>
+      <Printer />
+      {t('label.download')}
+    </Button>
+  )
+}
+
 /**
  * One order, everything the vendor needs to act on it: where it stands, what to do next (with the
  * one button that does it), what to print, where to ship, and the artwork loop with the customer.
@@ -419,6 +449,7 @@ export function VendorOrderPage() {
             <p className="text-sm font-medium">{t(`next.${stage}`)}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {(!order.artworkRequired || order.artworkApproved) && <DispatchLabelButton order={order} />}
             {back && (
               <Button variant="outline" onClick={() => setPending(back)}>
                 <Undo2 />

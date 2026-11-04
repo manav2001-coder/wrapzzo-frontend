@@ -171,5 +171,17 @@
       "removeImage": "Remove image",
       "imageFailed": "The product was created, but its image couldn't be uploaded. Try again from the product."
     }
+  },
+  "label": {
+    "download": "Download label",
+    "failed": "The dispatch label could not be created.",
+    "product": "Product",
+    "quantity": "Quantity",
+    "doctor": "Doctor",
+    "clinic": "Clinic",
+    "phone": "Phone",
+    "shipTo": "Deliver to",
+    "shipToWarehouse": "Ship to warehouse",
+    "am": "Raised by (AM)"
   }
 }

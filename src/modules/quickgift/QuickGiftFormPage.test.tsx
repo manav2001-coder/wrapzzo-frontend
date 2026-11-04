@@ -49,6 +49,7 @@ function renderForm(gift: Gift = PAD) {
 }
 
 async function fillRecipient() {
+  await userEvent.type(screen.getByLabelText('Pcode *'), 'P-1001')
   await userEvent.type(screen.getByLabelText('Name *'), 'Dr. Asha Shah')
   await userEvent.type(screen.getByLabelText('Phone *'), '9800000001')
   await userEvent.type(screen.getByLabelText('Delivery address *'), '12 MG Road, Pune')
@@ -89,7 +90,7 @@ describe('QuickGiftFormPage', () => {
     await setQuantity('0')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
-    expect(screen.getAllByText('Required')).toHaveLength(3)
+    expect(screen.getAllByText('Required')).toHaveLength(4)
     expect(screen.getByText("The doctor's registration number is printed on the pad.")).toBeInTheDocument()
     expect(screen.getByText(/Enter a whole number from 1 to/)).toBeInTheDocument()
     expect(createQuickGiftRequest).not.toHaveBeenCalled()
@@ -109,6 +110,7 @@ describe('QuickGiftFormPage', () => {
     await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
     expect(createQuickGiftRequest.mock.calls[0][0]).toMatchObject({
       giftId: 'g-pad',
+      recipientPcode: 'P-1001',
       recipientName: 'Dr. Asha Shah',
       deliveryAddress: '12 MG Road, Pune',
       quantity: 5,
@@ -137,6 +139,7 @@ describe('QuickGiftFormPage', () => {
       id: 'r-1',
       name: 'Dr. Asha Shah',
       phone: '9800000001',
+      pcode: 'P-1001',
       email: null,
       address: '12 MG Road, Pune',
       dateOfBirth: null,
@@ -198,6 +201,7 @@ describe('QuickGiftFormPage', () => {
     await fillRecipient()
     await userEvent.click(screen.getByRole('button', { name: 'Add recipient' }))
     const names = screen.getAllByLabelText('Name *')
+    await userEvent.type(screen.getAllByLabelText('Pcode *')[1], 'P-2002')
     await userEvent.type(names[1], 'Dr. Ravi Rao')
     await userEvent.type(screen.getAllByLabelText('Phone *')[1], '9800000002')
     await userEvent.type(screen.getAllByLabelText('Delivery address *')[1], '4 Park St, Kolkata')
@@ -214,6 +218,7 @@ describe('QuickGiftFormPage', () => {
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
     await fillRecipient()
     await userEvent.click(screen.getByRole('button', { name: 'Add recipient' }))
+    await userEvent.type(screen.getAllByLabelText('Pcode *')[1], 'P-2002')
     await userEvent.type(screen.getAllByLabelText('Name *')[1], 'Dr. Ravi Rao')
     await userEvent.type(screen.getAllByLabelText('Phone *')[1], '9800000002')
     await userEvent.type(screen.getAllByLabelText('Delivery address *')[1], '4 Park St, Kolkata')

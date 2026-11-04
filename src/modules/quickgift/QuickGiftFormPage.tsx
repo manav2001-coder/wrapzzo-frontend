@@ -45,6 +45,8 @@ interface DraftRecipient {
   recipientId?: string
   recipientName: string
   recipientPhone: string
+  /** A new doctor's pcode; for a picked directory doctor it is theirs (and may be empty if they predate pcodes). */
+  recipientPcode: string
   recipientEmail: string
   deliveryAddress: string
   dateOfBirth: Date | null
@@ -58,12 +60,13 @@ interface DraftRecipient {
   errors: Partial<Record<RowErrorKey, string>>
 }
 
-type RowErrorKey = 'recipientName' | 'recipientPhone' | 'deliveryAddress' | 'photoOrEmail' | 'quantity' | 'registrationNumber' | 'submit'
+type RowErrorKey = 'recipientName' | 'recipientPhone' | 'recipientPcode' | 'deliveryAddress' | 'photoOrEmail' | 'quantity' | 'registrationNumber' | 'submit'
 
 interface RecipientPrefill {
   recipientId?: string
   recipientName?: string
   recipientPhone?: string
+  recipientPcode?: string
   recipientEmail?: string
   deliveryAddress?: string
   dateOfBirth?: Date
@@ -75,6 +78,7 @@ function prefillFrom(recipient: Recipient | UpcomingBirthday): RecipientPrefill 
     recipientId: recipient.id,
     recipientName: recipient.name,
     recipientPhone: recipient.phone,
+    recipientPcode: 'pcode' in recipient ? (recipient.pcode ?? undefined) : undefined,
     recipientEmail: recipient.email ?? undefined,
     deliveryAddress: recipient.address ?? undefined,
     dateOfBirth: fromDateOnly(recipient.dateOfBirth),
@@ -89,6 +93,7 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
     recipientId: prefill?.recipientId,
     recipientName: prefill?.recipientName ?? '',
     recipientPhone: prefill?.recipientPhone ?? '',
+    recipientPcode: prefill?.recipientPcode ?? '',
     recipientEmail: prefill?.recipientEmail ?? '',
     deliveryAddress: prefill?.deliveryAddress ?? '',
     dateOfBirth: prefill?.dateOfBirth ?? null,
@@ -116,7 +121,7 @@ function parseQuantity(value: string, min = 1): number | null {
 }
 
 /** Fields the server reads from the picked doctor's record instead of the request. */
-const RECORD_FIELDS: (keyof DraftRecipient)[] = ['recipientName', 'recipientPhone', 'recipientEmail', 'deliveryAddress', 'dateOfBirth', 'doctor']
+const RECORD_FIELDS: (keyof DraftRecipient)[] = ['recipientName', 'recipientPhone', 'recipientPcode', 'recipientEmail', 'deliveryAddress', 'dateOfBirth', 'doctor']
 
 /** Only the fields actually filled in -- the server stores an absent one as "not given". */
 function doctorInput(doctor: DoctorFields): Partial<DoctorDetails> | undefined {
@@ -192,6 +197,14 @@ function RecipientCard({
             value={row.recipientName}
             aria-invalid={Boolean(row.errors.recipientName)}
             onChange={(e) => onUpdate({ recipientName: e.target.value })}
+          />
+        </LabelledField>
+        <LabelledField id={id('pcode')} label={`${t('form.pcode')} *`} error={row.errors.recipientPcode}>
+          <Input
+            id={id('pcode')}
+            value={row.recipientPcode}
+            aria-invalid={Boolean(row.errors.recipientPcode)}
+            onChange={(e) => onUpdate({ recipientPcode: e.target.value })}
           />
         </LabelledField>
         <LabelledField id={id('phone')} label={`${t('form.phone')} *`} error={row.errors.recipientPhone}>
@@ -380,6 +393,8 @@ export function QuickGiftFormPage() {
     const required = t('form.error.required')
     if (!row.recipientName.trim()) errors.recipientName = required
     if (!row.recipientPhone.trim()) errors.recipientPhone = required
+    // A doctor picked from the directory is identified already; a new one needs a pcode.
+    if (!row.recipientId && !row.recipientPcode.trim()) errors.recipientPcode = required
     if (!row.deliveryAddress.trim()) errors.deliveryAddress = required
     if (gift.photoRequired && !row.photo && !row.recipientEmail.trim()) errors.photoOrEmail = t('form.error.photoOrEmail')
     if (parseQuantity(row.quantity, minQuantity) === null) {
@@ -413,6 +428,7 @@ export function QuickGiftFormPage() {
           recipientId: row.recipientId,
           recipientName: row.recipientName.trim(),
           recipientPhone: row.recipientPhone.trim(),
+          recipientPcode: row.recipientPcode.trim() || undefined,
           recipientEmail: row.recipientEmail.trim() || undefined,
           deliveryAddress: row.deliveryAddress.trim(),
           recipientDob: toDateOnly(row.dateOfBirth) ?? undefined,

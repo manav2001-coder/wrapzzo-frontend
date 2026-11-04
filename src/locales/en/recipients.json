@@ -7,6 +7,8 @@
     "address": "Address",
     "clinicAddress": "Clinic / address",
     "dob": "Date of birth",
+    "pcode": "Pcode",
+    "pcodeHint": "The doctor's unique code. Search by it anywhere.",
     "registrationNumber": "Registration no.",
     "qualification": "Qualification",
     "speciality": "Speciality",
@@ -37,7 +39,7 @@
   },
   "picker": {
     "title": "Pick from my doctors",
-    "search": "Search my doctors by name, phone or registration no.",
+    "search": "Search my doctors by pcode, name, phone or registration no.",
     "noMatchTitle": "No matches",
     "noMatchBody": "No doctor on your list matches. Add them under Doctors first.",
     "add_one": "Add {{count}} selected",

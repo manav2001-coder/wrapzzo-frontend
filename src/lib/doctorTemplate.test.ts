@@ -14,11 +14,12 @@ async function sheetOf(headers: string[], rows: (string | Date)[][]): Promise<Fi
 describe('parseDoctorWorkbook', () => {
   it('reads each doctor with their print details', async () => {
     const { rows, errors } = await parseDoctorWorkbook(
-      await sheetOf(DOCTOR_TEMPLATE_HEADERS, [['Dr Asha Shah', '9800000001', 'a@x.com', 'MG Road', '1980-10-28', 'MH-1', 'MBBS', 'Cardiology', 'Shah Clinic']]),
+      await sheetOf(DOCTOR_TEMPLATE_HEADERS, [['P-1001', 'Dr Asha Shah', '9800000001', 'a@x.com', 'MG Road', '1980-10-28', 'MH-1', 'MBBS', 'Cardiology', 'Shah Clinic']]),
     )
     expect(errors).toEqual([])
     expect(rows).toEqual([
       {
+        pcode: 'P-1001',
         name: 'Dr Asha Shah',
         phone: '9800000001',
         email: 'a@x.com',
@@ -30,20 +31,25 @@ describe('parseDoctorWorkbook', () => {
   })
 
   it('accepts a client sheet using common column names such as PCODE and Mobile', async () => {
-    const { rows, errors } = await parseDoctorWorkbook(await sheetOf(['Dr. Name', 'Mobile', 'PCODE', 'Specialty'], [['Dr Ravi', '9800000002', '576458', 'GP']]))
+    const { rows, errors } = await parseDoctorWorkbook(
+      await sheetOf(['Dr. Name', 'Mobile', 'PCODE', 'Reg No', 'Specialty'], [['Dr Ravi', '9800000002', '576458', 'MH-9', 'GP']]),
+    )
     expect(errors).toEqual([])
-    expect(rows[0]).toMatchObject({ name: 'Dr Ravi', phone: '9800000002', doctor: { registrationNumber: '576458' } })
+    expect(rows[0]).toMatchObject({ pcode: '576458', name: 'Dr Ravi', phone: '9800000002', doctor: { registrationNumber: 'MH-9' } })
   })
 
-  it('reports a row with no phone and skips blank rows', async () => {
-    const { rows, errors } = await parseDoctorWorkbook(await sheetOf(['Doctor Name', 'Phone'], [['', ''], ['Dr No Phone', ''], ['Dr Ok', '9800000003']]))
+  it('reports a row with no phone or no pcode and skips blank rows', async () => {
+    const { rows, errors } = await parseDoctorWorkbook(
+      await sheetOf(['Pcode', 'Doctor Name', 'Phone'], [['', '', ''], ['P-1', 'Dr No Phone', ''], ['', 'Dr No Pcode', '9800000004'], ['P-3', 'Dr Ok', '9800000003']]),
+    )
     expect(rows.map((r) => r.name)).toEqual(['Dr Ok'])
-    expect(errors).toEqual(['Row 3: missing Phone.'])
+    expect(errors).toEqual(['Row 3: missing Phone.', 'Row 4: missing Pcode.'])
   })
 
   it('refuses a sheet with no phone column', async () => {
     const { rows, errors } = await parseDoctorWorkbook(await sheetOf(['Doctor Name'], [['Dr A']]))
     expect(rows).toEqual([])
     expect(errors[0]).toContain('"Phone"')
+    expect(errors[0]).toContain('"Pcode"')
   })
 })

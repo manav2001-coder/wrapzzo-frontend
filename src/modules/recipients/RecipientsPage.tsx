@@ -24,6 +24,7 @@ import { useHasAccess } from '@/hooks/use-permission'
 import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = {
+  pcode: 'text',
   name: 'text',
   phone: 'text',
   email: 'text',
@@ -65,6 +66,7 @@ export function RecipientsPage() {
 
   const columns = useMemo<ColumnDef<Recipient, unknown>[]>(
     () => [
+      { id: 'pcode', accessorFn: (r) => r.pcode ?? '', header: t('field.pcode'), meta: { className: 'min-w-[110px]' } },
       { id: 'name', accessorKey: 'name', header: t('field.name'), meta: { className: 'min-w-[180px]' } },
       { id: 'phone', accessorKey: 'phone', header: t('field.phone'), meta: { className: 'min-w-[130px]' } },
       { id: 'email', accessorFn: (r) => r.email ?? '', header: t('field.email'), meta: { className: 'min-w-[180px]' } },

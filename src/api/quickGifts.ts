@@ -47,6 +47,8 @@ export interface CreateQuickGiftInput {
   recipientId?: string
   recipientName: string
   recipientPhone: string
+  /** A new doctor's pcode -- required when no existing doctor (recipientId) was picked. */
+  recipientPcode?: string
   recipientEmail?: string
   deliveryAddress: string
   recipientDob?: string

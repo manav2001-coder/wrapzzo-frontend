@@ -4,9 +4,10 @@ import { toDateOnly } from '@/lib/datetime'
 import { downloadBlob } from '@/lib/download'
 import { cellText, normalizeHeader } from '@/lib/employeeTemplate'
 
-type DoctorField = 'name' | 'phone' | 'email' | 'address' | 'dateOfBirth' | 'registrationNumber' | 'qualification' | 'speciality' | 'clinicName'
+type DoctorField = 'pcode' | 'name' | 'phone' | 'email' | 'address' | 'dateOfBirth' | 'registrationNumber' | 'qualification' | 'speciality' | 'clinicName'
 
 const DOCTOR_FIELDS: { key: DoctorField; label: string; required: boolean }[] = [
+  { key: 'pcode', label: 'Pcode', required: true },
   { key: 'name', label: 'Doctor Name', required: true },
   { key: 'phone', label: 'Phone', required: true },
   { key: 'email', label: 'Email', required: false },
@@ -22,11 +23,12 @@ export const DOCTOR_TEMPLATE_HEADERS = DOCTOR_FIELDS.map((field) => field.label)
 
 /** Other names a sheet commonly uses for the same column, so a client's own list needs no renaming. */
 const ALIASES: Partial<Record<DoctorField, string[]>> = {
+  pcode: ['p code', 'p-code', 'doctor code', 'dr code'],
   name: ['name', 'dr name', 'dr. name', 'doctor'],
   phone: ['mobile', 'phone number', 'mobile number', 'contact'],
   address: ['address'],
   dateOfBirth: ['dob'],
-  registrationNumber: ['registration number', 'registration no', 'reg no', 'reg. no.', 'pcode'],
+  registrationNumber: ['registration number', 'registration no', 'reg no', 'reg. no.'],
   clinicName: ['clinic', 'hospital', 'clinic name'],
 }
 
@@ -53,7 +55,7 @@ function dateCell(value: unknown): string | null {
   return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : null
 }
 
-/** Reads a doctors sheet, one doctor per row; Doctor Name and Phone are required. */
+/** Reads a doctors sheet, one doctor per row; Pcode, Doctor Name and Phone are required. */
 export async function parseDoctorWorkbook(file: File): Promise<ParsedDoctorSheet> {
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(await file.arrayBuffer())
@@ -89,6 +91,7 @@ export async function parseDoctorWorkbook(file: File): Promise<ParsedDoctorSheet
       return
     }
     rows.push({
+      pcode: values.pcode,
       name: values.name,
       phone: values.phone,
       ...(values.email && { email: values.email }),

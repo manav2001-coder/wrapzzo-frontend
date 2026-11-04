@@ -12,6 +12,8 @@ export interface Recipient {
   id: string
   name: string
   phone: string
+  /** The doctor's unique identifier; null only for a doctor that predates pcodes. */
+  pcode: string | null
   email: string | null
   address: string | null
   dateOfBirth: string | null
@@ -35,6 +37,8 @@ export interface UpcomingBirthday {
 export interface CreateRecipientInput {
   name: string
   phone: string
+  /** Required: the doctor's unique identifier. */
+  pcode: string
   email?: string
   address?: string
   dateOfBirth?: string

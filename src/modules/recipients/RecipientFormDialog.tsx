@@ -15,6 +15,7 @@ import { fromDateOnly, toDateOnly } from '@/lib/datetime'
 interface Draft {
   name: string
   phone: string
+  pcode: string
   email: string
   address: string
   dateOfBirth: Date | null
@@ -28,6 +29,7 @@ function draftFrom(recipient: Recipient | null | undefined): Draft {
   return {
     name: recipient?.name ?? '',
     phone: recipient?.phone ?? '',
+    pcode: recipient?.pcode ?? '',
     email: recipient?.email ?? '',
     address: recipient?.address ?? '',
     dateOfBirth: fromDateOnly(recipient?.dateOfBirth) ?? null,
@@ -39,7 +41,7 @@ function draftFrom(recipient: Recipient | null | undefined): Draft {
 }
 
 /**
- * Add a doctor (they go on the caller's own list, or join it when the registration number is already
+ * Add a doctor (they go on the caller's own list, or join it when the pcode is already
  * a company doctor), or edit one. The caller remounts it per doctor (`key`), so it starts from that
  * doctor's values rather than syncing them in an effect.
  */
@@ -57,7 +59,7 @@ export function RecipientFormDialog({
   const createRecipient = useCreateMyDoctor()
   const updateRecipient = useUpdateRecipient()
   const [draft, setDraft] = useState<Draft>(() => draftFrom(recipient))
-  const [errors, setErrors] = useState<Partial<Record<'name' | 'phone', string>>>({})
+  const [errors, setErrors] = useState<Partial<Record<'name' | 'phone' | 'pcode', string>>>({})
   const isEdit = Boolean(recipient)
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }))
 
@@ -65,12 +67,14 @@ export function RecipientFormDialog({
     const next: typeof errors = {}
     if (!draft.name.trim()) next.name = t('field.required')
     if (!draft.phone.trim()) next.phone = t('field.required')
+    if (!draft.pcode.trim()) next.pcode = t('field.required')
     setErrors(next)
     if (Object.keys(next).length > 0) return
 
     const input = {
       name: draft.name.trim(),
       phone: draft.phone.trim(),
+      pcode: draft.pcode.trim(),
       email: draft.email.trim() || undefined,
       address: draft.address.trim() || undefined,
       dateOfBirth: toDateOnly(draft.dateOfBirth) ?? undefined,
@@ -108,6 +112,9 @@ export function RecipientFormDialog({
       onConfirm={() => void submit()}
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <LabelledField id="recipient-pcode" label={`${t('field.pcode')} *`} error={errors.pcode} hint={t('field.pcodeHint')} className="sm:col-span-2">
+          <Input id="recipient-pcode" value={draft.pcode} aria-invalid={Boolean(errors.pcode)} onChange={(e) => set({ pcode: e.target.value })} />
+        </LabelledField>
         <LabelledField id="recipient-name" label={`${t('field.name')} *`} error={errors.name} className="sm:col-span-2">
           <Input id="recipient-name" value={draft.name} aria-invalid={Boolean(errors.name)} onChange={(e) => set({ name: e.target.value })} />
         </LabelledField>

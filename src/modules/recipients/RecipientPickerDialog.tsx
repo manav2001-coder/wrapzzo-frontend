@@ -32,7 +32,7 @@ export function RecipientPickerDialog({
   const results = (mine ?? []).filter(
     (r) =>
       needle === '' ||
-      [r.name, r.phone, r.email, r.doctor?.registrationNumber, r.doctor?.clinicName].some((v) => v?.toLowerCase().includes(needle)),
+      [r.name, r.pcode, r.phone, r.email, r.doctor?.registrationNumber, r.doctor?.clinicName].some((v) => v?.toLowerCase().includes(needle)),
   )
 
   function reset() {
@@ -96,7 +96,7 @@ export function RecipientPickerDialog({
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{recipient.name}</span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {[recipient.phone, recipient.doctor?.registrationNumber, recipient.doctor?.clinicName, recipient.email]
+                        {[recipient.pcode, recipient.phone, recipient.doctor?.registrationNumber, recipient.doctor?.clinicName, recipient.email]
                           .filter(Boolean)
                           .join(' · ')}
                       </span>

@@ -1,18 +1,24 @@
-import { BarChart3, CalendarDays, Clock, Megaphone, Zap } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { format } from 'date-fns'
+import { BarChart3, Clock, Palette, Plus, Zap } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { AppTabs } from '@/components/app-tabs'
 import { DonutChart } from '@/components/charts/donut-chart'
 import { MiniBarChart } from '@/components/charts/mini-bar-chart'
 import { MultiLineChart } from '@/components/charts/multi-line-chart'
 import { EmptyState } from '@/components/empty-state'
-import { SectionCard } from '@/components/section-card'
-import { StatCard } from '@/components/stat-card'
+import { usePermissions } from '@/components/permission-provider'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useCurrentUser } from '@/hooks/use-current-user'
 import { useDashboard } from '@/hooks/useDashboard'
+import { usePendingArtworkApprovals } from '@/hooks/useOrderDesigns'
 import { humanize } from '@/lib/format'
+import { P } from '@/lib/permissions'
 import { statusColor } from '@/lib/statusColors'
 import { UpcomingBirthdaysWidget } from '@/modules/recipients/UpcomingBirthdaysWidget'
+import { AttentionCard, type AttentionItem } from './AttentionCard'
 import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
 import { OrderTimeline } from './OrderTimeline'
 import { PelStatsCard } from './PelStatsCard'
@@ -24,15 +30,27 @@ import { RecentCampaignsCard } from './RecentCampaignsCard'
 const SOURCE_LABELS: Record<string, string> = { CAMPAIGN: 'Campaign', QUICK_GIFT: 'Quick Gift', BULK_GIFT: 'Bulk Gifting' }
 const SOURCE_COLORS: Record<string, string> = { CAMPAIGN: '#6366f1', QUICK_GIFT: '#f59e0b', BULK_GIFT: '#0d9488' }
 
-function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+function greetingFor(date: Date): string {
+  const hour = date.getHours()
+  return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+}
+
+function SectionTitle({ title, description }: { title: string; description?: string }) {
   return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="text-sm font-semibold">{title}</h2>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
-      </div>
-      {children}
-    </section>
+    <div className="mb-3">
+      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+      {description && <p className="text-xs text-muted-foreground">{description}</p>}
+    </div>
+  )
+}
+
+function ChartPanel({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      {description && <p className="mb-2 text-xs text-muted-foreground">{description}</p>}
+      <div className="mt-2">{children}</div>
+    </div>
   )
 }
 
@@ -40,6 +58,10 @@ function Section({ title, description, children }: { title: string; description?
 export function DashboardPage() {
   const { data, isLoading } = useDashboard()
   const navigate = useNavigate()
+  const { data: me } = useCurrentUser()
+  const { hasPermission, hasAnyPermission } = usePermissions()
+  const canReviewArtwork = hasAnyPermission([P.ARTWORK_REVIEW, P.ARTWORK_FINAL_APPROVE])
+  const { data: pendingArtwork } = usePendingArtworkApprovals(canReviewArtwork)
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
   const [selectedQuickGiftId, setSelectedQuickGiftId] = useState<string | null>(null)
 
@@ -57,14 +79,14 @@ export function DashboardPage() {
 
   if (isLoading || !data || !breakdowns) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-28 w-full" />
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
+      <div className="space-y-5">
+        <Skeleton className="h-36 w-full rounded-2xl" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-[150px] rounded-2xl" />
           ))}
         </div>
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     )
   }
@@ -78,19 +100,81 @@ export function DashboardPage() {
     data.recentCampaigns.length > 0 ||
     data.recentActivity.length > 0
 
-  return (
-    <div className="space-y-6 pb-6">
-      <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 sm:p-6">
-        <p className="text-xs font-semibold tracking-wide text-primary uppercase">Welcome back</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{data.companyName}</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          {data.companyWide
-            ? "Here's everything happening across your campaigns, orders and Quick Gift requests."
-            : "Here's what's happening with your campaigns, orders and Quick Gift requests."}
-        </p>
-      </div>
+  const attention: AttentionItem[] = [
+    ...(canReviewArtwork
+      ? [
+          {
+            key: 'artwork',
+            icon: Palette,
+            label: 'Artwork proofs to review',
+            hint: pendingArtwork?.[0] ? `Next: ${pendingArtwork[0].orderDisplayId} · ${pendingArtwork[0].recipientName ?? pendingArtwork[0].giftName ?? ''}` : 'Open your approvals',
+            count: pendingArtwork?.length ?? 0,
+            onClick: () => navigate('/approvals'),
+          },
+        ]
+      : []),
+    {
+      key: 'quickGift',
+      icon: Zap,
+      label: 'Quick Gift requests pending',
+      hint: data.companyWide ? 'Waiting for approval' : 'Waiting on your approver',
+      count: data.quickGiftsPending,
+      onClick: () => navigate(data.companyWide ? '/approvals' : '/quick-gift'),
+    },
+    {
+      key: 'submissions',
+      icon: Clock,
+      label: 'Campaign submissions pending',
+      hint: 'Waiting for review',
+      count: data.submissionsPending,
+      onClick: () => navigate(data.companyWide ? '/approvals' : '/my-campaigns'),
+    },
+  ]
 
-      <UpcomingBirthdaysWidget />
+  const now = new Date()
+  const firstName = me?.name?.trim().split(/\s+/)[0]
+
+  return (
+    <div className="space-y-7 pb-8">
+      <header className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-6 sm:p-8">
+        <div className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-primary uppercase">{format(now, 'EEEE, d MMMM')}</p>
+            <h1 className="mt-1.5 text-3xl font-bold tracking-tight sm:text-4xl">
+              {greetingFor(now)}
+              {firstName ? `, ${firstName}` : ''}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{data.companyName}</span>
+              {' · '}
+              {data.companyWide ? 'Everything happening across your company' : 'Everything happening in your area'}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setDrilldown({ dimension: 'quickGiftsThisMonth', value: '' })}
+                className="rounded-full border bg-background/70 px-3 py-1 text-xs font-medium backdrop-blur transition-colors hover:bg-background"
+              >
+                <span className="font-bold tabular-nums">{data.quickGiftsThisMonth}</span> Quick Gifts this month
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(data.companyWide ? '/campaigns' : '/my-campaigns')}
+                className="rounded-full border bg-background/70 px-3 py-1 text-xs font-medium backdrop-blur transition-colors hover:bg-background"
+              >
+                <span className="font-bold tabular-nums">{data.campaignsRunning}</span> Campaigns running
+              </button>
+            </div>
+          </div>
+          {hasPermission(P.QUICK_GIFT_CREATE) && (
+            <Button size="lg" onClick={() => navigate('/quick-gift')}>
+              <Plus />
+              New PEL request
+            </Button>
+          )}
+        </div>
+      </header>
 
       {!hasAnyActivity ? (
         <EmptyState
@@ -104,17 +188,16 @@ export function DashboardPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-            <div className="lg:col-span-5">
-              <PelStatsCard
-                requested={data.pelsRequested}
-                doctors={data.doctorsRequested}
-                served={data.pelsServed}
-                doctorsServed={data.doctorsServed}
-                onSelect={(dimension) => setDrilldown({ dimension, value: '' })}
-              />
-            </div>
-            <div className="lg:col-span-7">
+          <PelStatsCard
+            requested={data.pelsRequested}
+            doctors={data.doctorsRequested}
+            served={data.pelsServed}
+            doctorsServed={data.doctorsServed}
+            onSelect={(dimension) => setDrilldown({ dimension, value: '' })}
+          />
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+            <div className="lg:col-span-3">
               <PipelineFlow
                 inProgress={data.giftsInProgress}
                 dispatched={data.dispatched}
@@ -122,118 +205,116 @@ export function DashboardPage() {
                 onSelectStage={(stage) => setDrilldown({ dimension: 'pipelineStage', value: stage })}
               />
             </div>
+            <div className="lg:col-span-2">
+              <AttentionCard items={attention} />
+            </div>
           </div>
 
-          <Section
-            title="Order timeline"
-            description={data.companyWide ? 'Every gift order in the company, ordered to delivered.' : 'Your gift orders, ordered to delivered.'}
-          >
-            <OrderTimeline orders={data.recentOrders} />
-          </Section>
+          <UpcomingBirthdaysWidget />
 
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard
-              title="Campaigns running"
-              value={data.campaignsRunning}
-              icon={Megaphone}
-              onClick={() => navigate(data.companyWide ? '/campaigns' : '/my-campaigns')}
-            />
-            <StatCard
-              title="Submissions pending"
-              value={data.submissionsPending}
-              icon={Clock}
-              color={data.submissionsPending > 0 ? 'destructive' : 'default'}
-              onClick={() => navigate(data.companyWide ? '/approvals' : '/my-campaigns')}
-            />
-            <StatCard
-              title="Quick Gifts pending"
-              value={data.quickGiftsPending}
-              icon={Zap}
-              color={data.quickGiftsPending > 0 ? 'destructive' : 'default'}
-              onClick={() => navigate(data.companyWide ? '/approvals' : '/quick-gift')}
-            />
-            <StatCard
-              title="Quick Gifts this month"
-              value={data.quickGiftsThisMonth}
-              icon={CalendarDays}
-              onClick={() => setDrilldown({ dimension: 'quickGiftsThisMonth', value: '' })}
-            />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+            <section className="lg:col-span-3">
+              <SectionTitle
+                title="Recent orders"
+                description={data.companyWide ? 'Every gift order in the company, ordered to delivered.' : 'Your gift orders, ordered to delivered.'}
+              />
+              <OrderTimeline orders={data.recentOrders} />
+            </section>
+            <section className="flex flex-col lg:col-span-2">
+              <SectionTitle title="Latest activity" description="What your team has been doing." />
+              <RecentActivityFeed className="flex-1" items={data.recentActivity} onSelectQuickGift={setSelectedQuickGiftId} />
+            </section>
           </div>
 
-          <SectionCard title="Weekly activity" description="Last 12 weeks. Click a point to see its records.">
-            <MultiLineChart
-              data={breakdowns.trend}
-              series={[
-                { key: 'CAMPAIGN', label: 'Campaign submissions', color: SOURCE_COLORS.CAMPAIGN },
-                { key: 'QUICK_GIFT', label: 'Quick Gift requests', color: SOURCE_COLORS.QUICK_GIFT },
+          <section>
+            <SectionTitle title="Insights" description="Click a point, slice or bar to see the records behind it." />
+            <AppTabs
+              variant="pills"
+              defaultValue="activity"
+              tabs={[
+                {
+                  value: 'activity',
+                  label: 'Weekly activity',
+                  content: (
+                    <ChartPanel title="Last 12 weeks">
+                      <MultiLineChart
+                        data={breakdowns.trend}
+                        series={[
+                          { key: 'CAMPAIGN', label: 'Campaign submissions', color: SOURCE_COLORS.CAMPAIGN },
+                          { key: 'QUICK_GIFT', label: 'Quick Gift requests', color: SOURCE_COLORS.QUICK_GIFT },
+                        ]}
+                        onSelect={(index, seriesKey) => {
+                          const point = data.activityTrend[index]
+                          if (point) setDrilldown({ dimension: 'week', value: `${point.weekStart}:${seriesKey}` })
+                        }}
+                      />
+                    </ChartPanel>
+                  ),
+                },
+                {
+                  value: 'status',
+                  label: 'Status',
+                  content: (
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                      <ChartPanel title="Orders by source">
+                        <DonutChart data={breakdowns.source} emptyText="No orders yet." onSelect={(key) => setDrilldown({ dimension: 'orderSource', value: key })} />
+                      </ChartPanel>
+                      <ChartPanel title="Quick Gift status">
+                        <DonutChart
+                          data={breakdowns.quickGift}
+                          emptyText="No Quick Gift requests yet."
+                          onSelect={(key) => setDrilldown({ dimension: 'quickGiftStatus', value: key })}
+                        />
+                      </ChartPanel>
+                      <ChartPanel title="Campaign submission status">
+                        <DonutChart
+                          data={breakdowns.submission}
+                          emptyText="No submissions yet."
+                          onSelect={(key) => setDrilldown({ dimension: 'submissionStatus', value: key })}
+                        />
+                      </ChartPanel>
+                    </div>
+                  ),
+                },
+                {
+                  value: 'top',
+                  label: "What's performing",
+                  content: (
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                      <ChartPanel title="Top gifts">
+                        <MiniBarChart
+                          data={data.topGifts.map((g) => ({ label: g.giftName, value: g.orderCount, color: SOURCE_COLORS.CAMPAIGN }))}
+                          seriesName="Orders"
+                          emptyText="No orders yet."
+                          onSelect={(bar) => setDrilldown({ dimension: 'topGift', value: bar.label })}
+                        />
+                      </ChartPanel>
+                      <ChartPanel title="Top campaigns">
+                        <MiniBarChart
+                          data={data.topCampaigns.map((c) => ({ label: c.campaignName, value: c.orderCount, color: SOURCE_COLORS.QUICK_GIFT }))}
+                          seriesName="Orders"
+                          emptyText="No campaign orders yet."
+                          onSelect={(bar) => {
+                            const campaign = data.topCampaigns.find((c) => c.campaignName === bar.label)
+                            if (campaign) navigate(`/campaigns/${campaign.campaignId}`)
+                          }}
+                        />
+                      </ChartPanel>
+                      <ChartPanel title={data.companyWide ? 'Top departments' : 'Your department'}>
+                        <MiniBarChart
+                          data={data.topDepartments.map((d) => ({ label: d.departmentName, value: d.orderCount, color: '#7c3aed' }))}
+                          seriesName="Orders"
+                          emptyText="No orders yet."
+                          onSelect={(bar) => setDrilldown({ dimension: 'topDepartment', value: bar.label })}
+                        />
+                      </ChartPanel>
+                    </div>
+                  ),
+                },
+                { value: 'campaigns', label: 'Campaigns', content: <RecentCampaignsCard campaigns={data.recentCampaigns} /> },
               ]}
-              onSelect={(index, seriesKey) => {
-                const point = data.activityTrend[index]
-                if (point) setDrilldown({ dimension: 'week', value: `${point.weekStart}:${seriesKey}` })
-              }}
             />
-          </SectionCard>
-
-          <Section title="Where things stand">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <SectionCard title="Orders by source">
-                <DonutChart data={breakdowns.source} emptyText="No orders yet." onSelect={(key) => setDrilldown({ dimension: 'orderSource', value: key })} />
-              </SectionCard>
-              <SectionCard title="Quick Gift status">
-                <DonutChart
-                  data={breakdowns.quickGift}
-                  emptyText="No Quick Gift requests yet."
-                  onSelect={(key) => setDrilldown({ dimension: 'quickGiftStatus', value: key })}
-                />
-              </SectionCard>
-              <SectionCard title="Campaign submission status">
-                <DonutChart
-                  data={breakdowns.submission}
-                  emptyText="No submissions yet."
-                  onSelect={(key) => setDrilldown({ dimension: 'submissionStatus', value: key })}
-                />
-              </SectionCard>
-            </div>
-          </Section>
-
-          <Section title="What's performing">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <SectionCard title="Top gifts">
-                <MiniBarChart
-                  data={data.topGifts.map((g) => ({ label: g.giftName, value: g.orderCount, color: SOURCE_COLORS.CAMPAIGN }))}
-                  seriesName="Orders"
-                  emptyText="No orders yet."
-                  onSelect={(bar) => setDrilldown({ dimension: 'topGift', value: bar.label })}
-                />
-              </SectionCard>
-              <SectionCard title="Top campaigns">
-                <MiniBarChart
-                  data={data.topCampaigns.map((c) => ({ label: c.campaignName, value: c.orderCount, color: SOURCE_COLORS.QUICK_GIFT }))}
-                  seriesName="Orders"
-                  emptyText="No campaign orders yet."
-                  onSelect={(bar) => {
-                    const campaign = data.topCampaigns.find((c) => c.campaignName === bar.label)
-                    if (campaign) navigate(`/campaigns/${campaign.campaignId}`)
-                  }}
-                />
-              </SectionCard>
-              <SectionCard title={data.companyWide ? 'Top departments' : 'Your department'}>
-                <MiniBarChart
-                  data={data.topDepartments.map((d) => ({ label: d.departmentName, value: d.orderCount, color: '#7c3aed' }))}
-                  seriesName="Orders"
-                  emptyText="No orders yet."
-                  onSelect={(bar) => setDrilldown({ dimension: 'topDepartment', value: bar.label })}
-                />
-              </SectionCard>
-            </div>
-          </Section>
-
-          <Section title="What's happening">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <RecentCampaignsCard campaigns={data.recentCampaigns} />
-              <RecentActivityFeed items={data.recentActivity} onSelectQuickGift={setSelectedQuickGiftId} />
-            </div>
-          </Section>
+          </section>
         </>
       )}
 

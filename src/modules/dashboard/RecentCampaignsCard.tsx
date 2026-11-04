@@ -10,7 +10,7 @@ export function RecentCampaignsCard({ campaigns }: { campaigns: RecentCampaign[]
   const navigate = useNavigate()
 
   return (
-    <div className="flex h-[420px] flex-col rounded-lg border bg-card p-5">
+    <div className="flex h-[420px] flex-col rounded-2xl border bg-card p-5 shadow-sm">
       <div className="mb-3 flex shrink-0 items-center gap-2">
         <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
           <Megaphone className="h-4 w-4" />

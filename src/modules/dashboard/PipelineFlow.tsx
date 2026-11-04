@@ -1,4 +1,6 @@
-import { ArrowLeftRight, CheckCircle2, ChevronRight, Cog, Send, type LucideIcon } from 'lucide-react'
+import { CheckCircle2, Cog, Send, type LucideIcon } from 'lucide-react'
+
+import { cn } from '@/lib/utils'
 
 export type PipelineStage = 'inProgress' | 'dispatched' | 'delivered'
 
@@ -7,11 +9,12 @@ interface Stage {
   label: string
   value: number
   icon: LucideIcon
-  colorClass: string
+  bar: string
+  chip: string
 }
 
-/** The order fulfillment pipeline (In progress -> Dispatched -> Delivered) as a connected flow, since that's
- * literally what these three numbers are -- a sequence, not three unrelated stats. */
+/** Where every order stands, In progress -> Dispatched -> Delivered: one bar sized by how many orders sit in each
+ * stage, with a tile under it per stage. Each stage opens the orders in it. */
 export function PipelineFlow({
   inProgress,
   dispatched,
@@ -24,44 +27,42 @@ export function PipelineFlow({
   onSelectStage: (stage: PipelineStage) => void
 }) {
   const stages: Stage[] = [
-    { key: 'inProgress', label: 'In progress', value: inProgress, icon: Cog, colorClass: 'from-amber-500/15 to-amber-500/5 text-amber-500' },
-    { key: 'dispatched', label: 'Dispatched', value: dispatched, icon: Send, colorClass: 'from-sky-500/15 to-sky-500/5 text-sky-500' },
-    {
-      key: 'delivered',
-      label: 'Delivered',
-      value: delivered,
-      icon: CheckCircle2,
-      colorClass: 'from-emerald-500/15 to-emerald-500/5 text-emerald-500',
-    },
+    { key: 'inProgress', label: 'In progress', value: inProgress, icon: Cog, bar: 'bg-amber-400', chip: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+    { key: 'dispatched', label: 'Dispatched', value: dispatched, icon: Send, bar: 'bg-sky-400', chip: 'bg-sky-500/15 text-sky-600 dark:text-sky-400' },
+    { key: 'delivered', label: 'Delivered', value: delivered, icon: CheckCircle2, bar: 'bg-emerald-500', chip: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
   ]
+  const total = inProgress + dispatched + delivered
 
   return (
-    <div className="flex h-full flex-col rounded-lg border bg-card p-6">
-      <div className="mb-5 flex items-center gap-2 text-muted-foreground">
-        <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
-          <ArrowLeftRight className="h-4 w-4" />
-        </div>
-        <span className="text-xs font-semibold tracking-wide uppercase">Fulfillment pipeline</span>
+    <section className="flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-sm font-semibold">Order pipeline</h2>
+        <span className="text-xs text-muted-foreground tabular-nums">{total.toLocaleString('en-IN')} orders</span>
       </div>
 
-      <div className="flex flex-1 items-center">
-        {stages.map((stage, i) => (
-          <div key={stage.label} className="flex flex-1 items-center">
-            <button
-              type="button"
-              onClick={() => onSelectStage(stage.key)}
-              className="flex w-full flex-col items-center gap-2 rounded-xl border-none bg-transparent p-2 text-center transition-transform hover:-translate-y-0.5"
-            >
-              <div className={`grid h-12 w-12 place-items-center rounded-lg bg-gradient-to-br ${stage.colorClass}`}>
-                <stage.icon className="h-6 w-6" />
-              </div>
-              <span className="text-2xl leading-none font-bold tracking-tight text-foreground">{stage.value}</span>
-              <span className="text-xs font-medium text-muted-foreground">{stage.label}</span>
-            </button>
-            {i < stages.length - 1 && <ChevronRight className="mx-1 h-5 w-5 shrink-0 text-border" />}
-          </div>
+      <div className="mt-4 flex h-3 w-full gap-1 overflow-hidden rounded-full bg-muted" role="img" aria-label="Orders by stage">
+        {total > 0 &&
+          stages.map((s) =>
+            s.value > 0 ? <div key={s.key} className={cn('h-full rounded-full transition-all duration-700', s.bar)} style={{ flexGrow: s.value }} /> : null,
+          )}
+      </div>
+
+      <div className="mt-5 grid flex-1 grid-cols-3 gap-3">
+        {stages.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => onSelectStage(s.key)}
+            className="flex flex-col items-start gap-2 rounded-xl border bg-background/50 p-3 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+          >
+            <span className={cn('grid h-8 w-8 place-items-center rounded-lg', s.chip)}>
+              <s.icon className="h-4 w-4" />
+            </span>
+            <span className="text-2xl leading-none font-bold tabular-nums">{s.value}</span>
+            <span className="text-xs font-medium text-muted-foreground">{s.label}</span>
+          </button>
         ))}
       </div>
-    </div>
+    </section>
   )
 }

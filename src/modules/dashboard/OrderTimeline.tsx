@@ -33,33 +33,37 @@ export function OrderTimeline({ orders }: { orders: OrderTimelineItem[] }) {
 
   return (
     <div>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <ul className="divide-y rounded-2xl border bg-card shadow-sm">
         {orders.map((order) => (
-          <button
-            key={order.id}
-            type="button"
-            onClick={() => setSelected(order)}
-            className="flex w-[170px] shrink-0 flex-col gap-2 rounded-lg border bg-card p-3 text-left shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div className="flex items-center gap-2">
-              <Thumb url={order.giftImageUrl} />
+          <li key={order.id}>
+            <button
+              type="button"
+              onClick={() => setSelected(order)}
+              className="flex w-full items-center gap-3 p-3.5 text-left transition-colors first:rounded-t-2xl hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+            >
+              <Thumb url={order.giftImageUrl} size={44} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold">{order.giftName}</p>
-                <p className="truncate text-[11px] text-muted-foreground">{order.recipientName}</p>
+                <p className="truncate text-sm font-semibold">{order.giftName}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {order.recipientName} · {order.displayId}
+                </p>
               </div>
-            </div>
-            <OrderProgressBar status={order.status} />
-            <p className="text-[10px] font-medium text-muted-foreground">{t(`status.${order.status}`)}</p>
-          </button>
+              <div className="hidden w-40 shrink-0 sm:block">
+                <OrderProgressBar status={order.status} />
+              </div>
+              <div className="shrink-0">
+                <OrderStatusBadge status={order.status} />
+              </div>
+            </button>
+          </li>
         ))}
-        <Link
-          to="/orders"
-          className="flex w-[170px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed p-3 text-center text-primary transition-colors hover:bg-muted/50"
-        >
-          <ArrowRight className="h-5 w-5" />
-          <span className="text-xs font-medium">View all orders</span>
-        </Link>
-      </div>
+        <li>
+          <Link to="/orders" className="flex items-center justify-center gap-1.5 rounded-b-2xl p-3 text-sm font-medium text-primary transition-colors hover:bg-muted/60">
+            View all orders
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </li>
+      </ul>
 
       <AppDialog
         open={selected !== null}

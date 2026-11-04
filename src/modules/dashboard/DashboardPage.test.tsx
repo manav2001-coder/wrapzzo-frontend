@@ -60,8 +60,9 @@ describe('DashboardPage', () => {
 
   it('greets the company and shows its numbers', async () => {
     renderWithProviders(<DashboardPage />)
-    expect(await screen.findByRole('heading', { name: 'Alembic' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Quick Gifts pending\s*3/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /Good (morning|afternoon|evening)/ })).toBeInTheDocument()
+    expect(screen.getByText('Alembic')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Quick Gift requests pending.*3/ })).toBeInTheDocument()
     expect(screen.getByText('Prescription Pad')).toBeInTheDocument()
   })
 
@@ -82,7 +83,8 @@ describe('DashboardPage', () => {
     renderWithProviders(<DashboardPage />)
     const created = await screen.findByRole('button', { name: /PELs created/ })
     expect(created).toHaveTextContent('1,500')
-    expect(created).toHaveTextContent('For 6 doctors · about 250 per doctor')
+    expect(created).toHaveTextContent('For 6 doctors')
+    expect(created).not.toHaveTextContent(/per doctor/)
     expect(screen.getByRole('button', { name: /PELs served/ })).toHaveTextContent('900')
     expect(screen.getByRole('button', { name: /Doctors served/ })).toHaveTextContent('4')
     expect(screen.queryByText(/spend|revenue/i)).not.toBeInTheDocument()
@@ -105,6 +107,18 @@ describe('DashboardPage', () => {
     await userEvent.click(screen.getAllByRole('button', { name: 'Close' })[0])
     await userEvent.click(screen.getByRole('button', { name: /Doctors served/ }))
     await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('pelsServed', ''))
+  })
+
+  it('says plainly when nothing is waiting on you', async () => {
+    getDashboard.mockResolvedValue({ ...SUMMARY, quickGiftsPending: 0, submissionsPending: 0 })
+    renderWithProviders(<DashboardPage />)
+    expect(await screen.findByText('You’re all caught up')).toBeInTheDocument()
+  })
+
+  it('shows how much of what was created has been served', async () => {
+    renderWithProviders(<DashboardPage />)
+    expect(await screen.findByRole('button', { name: /PELs served/ })).toHaveTextContent('60%')
+    expect(screen.getByRole('button', { name: /Doctors served/ })).toHaveTextContent('67%')
   })
 
   it('says when there is nothing to show yet', async () => {

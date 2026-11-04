@@ -1,4 +1,4 @@
-import { Bolt, CheckCircle2, Circle, History, PlusCircle, Send, XCircle, type LucideIcon } from 'lucide-react'
+import { Bolt, CheckCircle2, Circle, PlusCircle, Send, XCircle, type LucideIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
 import type { ActivityItem } from '@/api/dashboard'
@@ -22,15 +22,18 @@ function activityStyle(verb: string): { icon: LucideIcon; colorClass: string } {
 
 /** A real icon-coded timeline (connected by a rail) instead of a flat list of blue dots -- what kind of
  * event each row is should be visible before reading a single word of the sentence. */
-export function RecentActivityFeed({ items, onSelectQuickGift }: { items: ActivityItem[]; onSelectQuickGift: (id: string) => void }) {
+export function RecentActivityFeed({
+  items,
+  onSelectQuickGift,
+  className = 'h-[420px]',
+}: {
+  items: ActivityItem[]
+  onSelectQuickGift: (id: string) => void
+  /** Sizing of the card -- a fixed height by default, or `flex-1` to fill a taller neighbour's row. */
+  className?: string
+}) {
   return (
-    <div className="flex h-[420px] flex-col rounded-lg border bg-card p-5">
-      <div className="mb-3 flex shrink-0 items-center gap-2">
-        <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
-          <History className="h-4 w-4" />
-        </div>
-        <p className="text-sm font-semibold text-foreground">Recent activity</p>
-      </div>
+    <div className={`flex min-h-[260px] flex-col rounded-2xl border bg-card p-5 shadow-sm ${className}`}>
 
       {items.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">

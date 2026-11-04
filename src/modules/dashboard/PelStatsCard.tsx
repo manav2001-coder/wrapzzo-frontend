@@ -1,13 +1,22 @@
-import { ArrowRight, FilePlus2, PackageCheck, Stethoscope } from 'lucide-react'
+import { ArrowUpRight, FilePlus2, PackageCheck, Stethoscope } from 'lucide-react'
 import type { ComponentType } from 'react'
+
+import { cn } from '@/lib/utils'
+import { ProgressRing } from './ProgressRing'
 
 type PelDrilldown = 'pelsRequested' | 'pelsServed'
 
-function Stat({
+const count = (n: number) => n.toLocaleString('en-IN')
+const doctorsLabel = (n: number) => `${count(n)} ${n === 1 ? 'doctor' : 'doctors'}`
+const percentOf = (part: number, whole: number) => (whole > 0 ? (part / whole) * 100 : 0)
+
+function Kpi({
   icon: Icon,
   label,
   value,
   caption,
+  percent,
+  tone,
   clickable,
   onClick,
 }: {
@@ -15,6 +24,9 @@ function Stat({
   label: string
   value: string
   caption: string
+  /** Shown as a ring when given -- how much of the whole this number is. */
+  percent?: number
+  tone: string
   clickable: boolean
   onClick: () => void
 }) {
@@ -23,34 +35,37 @@ function Stat({
       type="button"
       onClick={clickable ? onClick : undefined}
       disabled={!clickable}
-      className={`relative flex w-full flex-col gap-3 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
+      className={cn(
+        'group relative flex min-h-[150px] w-full flex-col justify-between overflow-hidden rounded-2xl border bg-card p-5 text-left shadow-sm transition-all',
+        clickable ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none' : 'cursor-default',
+      )}
     >
-      <div className="flex items-center justify-between gap-2 text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
+      <div className={cn('pointer-events-none absolute -top-10 -right-10 h-36 w-36 rounded-full opacity-60 blur-2xl', tone)} />
+      <div className="relative flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          <span className={cn('grid h-8 w-8 place-items-center rounded-xl text-primary', tone)}>
             <Icon className="h-4 w-4" />
-          </div>
-          <span className="text-xs font-semibold tracking-wide uppercase">{label}</span>
-        </div>
-        {clickable && (
-          <span className="flex items-center gap-1 text-xs font-medium text-primary">
-            View details <ArrowRight className="h-3 w-3" />
           </span>
-        )}
+          {label}
+        </span>
+        {clickable && <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />}
       </div>
-      <div>
-        <p className={`text-4xl font-bold tracking-tight ${clickable ? 'text-foreground' : 'text-foreground/25'}`}>{value}</p>
-        <p className="mt-1.5 text-sm text-muted-foreground">{caption}</p>
+      <div className="relative mt-4 flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-4xl leading-none font-bold tracking-tight tabular-nums">{value}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{caption}</p>
+        </div>
+        {percent !== undefined && <ProgressRing percent={percent} />}
       </div>
     </button>
   )
 }
 
-const count = (n: number) => n.toLocaleString('en-IN')
-const doctorsLabel = (n: number) => `${count(n)} ${n === 1 ? 'doctor' : 'doctors'}`
-
-/** The numbers the dashboard leads with: PELs created, PELs served and the doctors served. Counts only -- no prices or
- * revenue anywhere on the dashboard. Each opens a per-doctor breakdown in the shared drilldown dialog. */
+/**
+ * The three numbers the dashboard leads with: PELs created, PELs served and the doctors served -- counts only, no
+ * prices. The two "served" cards show what share of what was created has been delivered; each opens a per-doctor
+ * breakdown in the shared drilldown dialog.
+ */
 export function PelStatsCard({
   requested,
   doctors,
@@ -64,37 +79,34 @@ export function PelStatsCard({
   doctorsServed: number
   onSelect: (dimension: PelDrilldown) => void
 }) {
-  const perDoctor = doctors > 0 ? Math.round((requested / doctors) * 10) / 10 : 0
-
   return (
-    <div className="relative flex h-full w-full flex-col justify-between gap-5 overflow-hidden rounded-lg border bg-card p-6">
-      <div
-        className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full opacity-[0.12]"
-        style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)' }}
-      />
-      <Stat
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <Kpi
         icon={FilePlus2}
         label="PELs created"
         value={count(requested)}
-        caption={doctors > 0 ? `For ${doctorsLabel(doctors)} · about ${count(perDoctor)} per doctor.` : 'No PELs created yet.'}
+        caption={doctors > 0 ? `For ${doctorsLabel(doctors)}` : 'No PELs created yet.'}
+        tone="bg-primary/10"
         clickable={doctors > 0}
         onClick={() => onSelect('pelsRequested')}
       />
-      <div className="border-t" />
-      <Stat
+      <Kpi
         icon={PackageCheck}
         label="PELs served"
         value={count(served)}
-        caption={served > 0 ? 'PELs on orders delivered to doctors.' : 'Delivered PELs appear here.'}
+        caption={served > 0 ? 'Delivered to doctors' : 'Delivered PELs appear here.'}
+        percent={requested > 0 ? percentOf(served, requested) : undefined}
+        tone="bg-success/15"
         clickable={served > 0}
         onClick={() => onSelect('pelsServed')}
       />
-      <div className="border-t" />
-      <Stat
+      <Kpi
         icon={Stethoscope}
         label="Doctors served"
         value={count(doctorsServed)}
-        caption={doctorsServed > 0 ? `Doctors who have received their PELs, of ${doctorsLabel(doctors)} requested for.` : 'Doctors appear here once a PEL is delivered.'}
+        caption={doctorsServed > 0 ? `of ${doctorsLabel(doctors)} requested for` : 'Appear once a PEL is delivered.'}
+        percent={doctors > 0 ? percentOf(doctorsServed, doctors) : undefined}
+        tone="bg-sky-500/15"
         clickable={doctorsServed > 0}
         onClick={() => onSelect('pelsServed')}
       />

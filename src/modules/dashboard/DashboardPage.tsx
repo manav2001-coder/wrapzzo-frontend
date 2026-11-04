@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { BarChart3, Clock, Palette, Plus, Zap } from 'lucide-react'
+import { BarChart3, Clock, Palette, Zap } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -9,7 +9,6 @@ import { MiniBarChart } from '@/components/charts/mini-bar-chart'
 import { MultiLineChart } from '@/components/charts/multi-line-chart'
 import { EmptyState } from '@/components/empty-state'
 import { usePermissions } from '@/components/permission-provider'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { useDashboard } from '@/hooks/useDashboard'
@@ -59,7 +58,7 @@ export function DashboardPage() {
   const { data, isLoading } = useDashboard()
   const navigate = useNavigate()
   const { data: me } = useCurrentUser()
-  const { hasPermission, hasAnyPermission } = usePermissions()
+  const { hasAnyPermission } = usePermissions()
   const canReviewArtwork = hasAnyPermission([P.ARTWORK_REVIEW, P.ARTWORK_FINAL_APPROVE])
   const { data: pendingArtwork } = usePendingArtworkApprovals(canReviewArtwork)
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
@@ -167,12 +166,6 @@ export function DashboardPage() {
               </button>
             </div>
           </div>
-          {hasPermission(P.QUICK_GIFT_CREATE) && (
-            <Button size="lg" onClick={() => navigate('/quick-gift')}>
-              <Plus />
-              New PEL request
-            </Button>
-          )}
         </div>
       </header>
 

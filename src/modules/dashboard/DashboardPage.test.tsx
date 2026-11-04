@@ -21,7 +21,9 @@ const SUMMARY: DashboardSummary = {
   submissionsPending: 0,
   quickGiftsThisMonth: 5,
   quickGiftsPending: 3,
-  monthlySpend: 12000,
+  pelsRequested: 1500,
+  doctorsRequested: 6,
+  pelsServed: 900,
   orderSourceBreakdown: { CAMPAIGN: 6, QUICK_GIFT: 5 },
   quickGiftStatusBreakdown: { APPROVED: 4, SUBMITTED: 1 },
   submissionStatusBreakdown: {},
@@ -51,7 +53,7 @@ const SUMMARY: DashboardSummary = {
 describe('DashboardPage', () => {
   beforeEach(() => {
     getDashboard.mockReset().mockResolvedValue(SUMMARY)
-    getDashboardDrilldown.mockReset().mockResolvedValue({ title: 'Monthly spend', rows: [] })
+    getDashboardDrilldown.mockReset().mockResolvedValue({ title: 'PELs requested per doctor', rows: [] })
     listUpcomingBirthdays.mockReset().mockResolvedValue([])
   })
 
@@ -73,6 +75,34 @@ describe('DashboardPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Quick Gifts this month/ }))
     await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalled())
     expect(await screen.findByText('Nothing here yet')).toBeInTheDocument()
+  })
+
+  it('leads with PELs requested per doctor and total PELs served, and shows no prices', async () => {
+    renderWithProviders(<DashboardPage />)
+    const requested = await screen.findByRole('button', { name: /PELs requested per doctor/ })
+    expect(requested).toHaveTextContent('250')
+    expect(requested).toHaveTextContent('1,500 PELs requested across 6 doctors')
+    expect(screen.getByRole('button', { name: /Total PELs served/ })).toHaveTextContent('900')
+    expect(screen.queryByText(/spend|revenue/i)).not.toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/₹|\bINR\b/)
+  })
+
+  it('breaks the PELs down per doctor', async () => {
+    getDashboardDrilldown.mockResolvedValue({
+      title: 'PELs requested per doctor',
+      rows: [{ displayId: null, title: 'Dr. Asha Shah', subtitle: '2 orders', status: null, at: '2026-10-20T10:00:00Z', campaignId: null, quantity: 300 }],
+    })
+    renderWithProviders(<DashboardPage />)
+    await userEvent.click(await screen.findByRole('button', { name: /PELs requested per doctor/ }))
+    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('pelsRequested', ''))
+    const dialog = await screen.findByRole('dialog', { name: 'PELs requested per doctor' })
+    expect(dialog).toHaveTextContent('Dr. Asha Shah')
+    expect(dialog).toHaveTextContent('300 PELs')
+    expect(dialog.textContent).not.toMatch(/₹/)
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Close' })[0])
+    await userEvent.click(screen.getByRole('button', { name: /Total PELs served/ }))
+    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('pelsServed', ''))
   })
 
   it('says when there is nothing to show yet', async () => {

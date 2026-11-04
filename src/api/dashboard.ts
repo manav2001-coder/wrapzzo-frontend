@@ -82,8 +82,12 @@ export interface DashboardSummary {
   submissionsPending: number
   quickGiftsThisMonth: number
   quickGiftsPending: number
-  /** Sum of totalPrice for every non-cancelled order approved (i.e. created) this calendar month. */
-  monthlySpend: number
+  /** PELs (units) on every order placed, cancelled ones aside. */
+  pelsRequested: number
+  /** Distinct doctors those PELs were requested for. */
+  doctorsRequested: number
+  /** PELs on delivered orders. */
+  pelsServed: number
   /** Order counts by source -- "CAMPAIGN" / "QUICK_GIFT" / "BULK_GIFT". */
   orderSourceBreakdown: Record<string, number>
   /** Quick Gift request counts by status -- "SUBMITTED" / "APPROVED" / "REJECTED". */
@@ -109,14 +113,13 @@ export interface DrilldownRow {
   displayId: string | null
   title: string
   subtitle: string
-  status: string
+  /** Null on a per-doctor row, which sums several orders. */
+  status: string | null
   at: string
   /** Set when the row traces back to a campaign -- makes it clickable. */
   campaignId: string | null
-  /** Set only where an order's price is meaningful (order/monthly-spend rows) -- null elsewhere. */
-  amount: number | null
-  /** 'CAMPAIGN' | 'QUICK_GIFT' | 'BULK_GIFT' -- set only on monthly-spend rows, for grouping. Null elsewhere. */
-  source: string | null
+  /** The PELs on the row (an order, or a doctor's total) -- null where a row has none. */
+  quantity: number | null
 }
 
 export interface DashboardDrilldown {
@@ -131,7 +134,8 @@ export type DrilldownDimension =
   | 'topGift'
   | 'topDepartment'
   | 'week'
-  | 'monthlySpend'
+  | 'pelsRequested'
+  | 'pelsServed'
   | 'pipelineStage'
   | 'quickGiftsThisMonth'
 

@@ -14,8 +14,8 @@ import { humanize } from '@/lib/format'
 import { statusColor } from '@/lib/statusColors'
 import { UpcomingBirthdaysWidget } from '@/modules/recipients/UpcomingBirthdaysWidget'
 import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
-import { HeroSpendCard } from './HeroSpendCard'
 import { OrderTimeline } from './OrderTimeline'
+import { PelStatsCard } from './PelStatsCard'
 import { PipelineFlow } from './PipelineFlow'
 import { QuickGiftActivityDialog } from './QuickGiftActivityDialog'
 import { RecentActivityFeed } from './RecentActivityFeed'
@@ -106,7 +106,12 @@ export function DashboardPage() {
         <>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="lg:col-span-5">
-              <HeroSpendCard amount={data.monthlySpend} onClick={() => setDrilldown({ dimension: 'monthlySpend', value: '' })} />
+              <PelStatsCard
+                requested={data.pelsRequested}
+                doctors={data.doctorsRequested}
+                served={data.pelsServed}
+                onSelect={(dimension) => setDrilldown({ dimension, value: '' })}
+              />
             </div>
             <div className="lg:col-span-7">
               <PipelineFlow

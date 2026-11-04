@@ -38,12 +38,8 @@ import { nextStatusOf, vendorStageOf, type VendorStage } from '@/lib/vendor-orde
 import { ArtworkThumb, ArtworkUploadDialog } from './ArtworkPreview'
 import { VendorStageBadge } from './VendorStageBadge'
 
-const PROOF_ACCEPT = {
-  'application/pdf': ['.pdf'],
-  'image/png': ['.png'],
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/webp': ['.webp'],
-}
+// Proofs are PDFs only.
+const PROOF_ACCEPT = { 'application/pdf': ['.pdf'] }
 
 const DESIGN_VARIANT: Record<OrderDesign['status'], BadgeProps['variant']> = {
   PENDING_REVIEW: 'primary-soft',
@@ -306,6 +302,7 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
                           : t(`order.artwork.status.${design.status}`)}
                       </Badge>
                     </div>
+                    {design.fileName && <p className="truncate font-mono text-xs">{design.fileName}</p>}
                     <p className="text-xs text-muted-foreground">
                       {formatDateTime(design.createdAt)}
                       {design.reviewedByUserName && ` · ${t('order.artwork.reviewedBy', { name: design.reviewedByUserName })}`}

@@ -218,6 +218,7 @@ export function ApprovalQueuePage() {
                 <section className="space-y-3">
                   <h3 className="text-sm font-semibold">Proof · version {open.versionNo}</h3>
                   <ArtworkProofPreview fileUrl={open.fileUrl} fileName={open.fileName} title={`Version ${open.versionNo} · ${open.orderDisplayId}`} />
+                  {open.fileName && <p className="truncate font-mono text-xs text-muted-foreground">{open.fileName}</p>}
                 </section>
 
                 <section className="space-y-3">

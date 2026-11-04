@@ -27,7 +27,10 @@ const VARIANT: Record<OrderDesign['status'], BadgeProps['variant']> = {
 function Proof({ design }: { design: OrderDesign }) {
   const { t } = useTranslation('orders')
   return (
-    <ArtworkProofPreview fileUrl={design.fileUrl} fileName={design.fileName} title={t('artwork.proofTitle', { n: design.versionNo })} />
+    <div className="space-y-1">
+      <ArtworkProofPreview fileUrl={design.fileUrl} fileName={design.fileName} title={t('artwork.proofTitle', { n: design.versionNo })} />
+      {design.fileName && <p className="truncate font-mono text-xs text-muted-foreground">{design.fileName}</p>}
+    </div>
   )
 }
 
@@ -158,6 +161,7 @@ export function ArtworkReview({ orderId, artworkRequired }: { orderId: string; a
                         <span className="text-sm">{t('artwork.version', { n: design.versionNo })}</span>
                         <Badge variant={VARIANT[design.status]}>{t(`artwork.status.${design.status}`)}</Badge>
                       </div>
+                      {design.fileName && <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{design.fileName}</p>}
                       {design.reviewComment && <p className="mt-0.5 text-xs text-muted-foreground">“{design.reviewComment}”</p>}
                     </div>
                     <ArtworkProofPreview compact fileUrl={design.fileUrl} fileName={design.fileName} title={t('artwork.proofTitle', { n: design.versionNo })} />

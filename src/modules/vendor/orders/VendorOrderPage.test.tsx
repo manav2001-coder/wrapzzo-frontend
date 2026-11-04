@@ -91,18 +91,26 @@ describe('VendorOrderPage', () => {
     await waitFor(() => expect(uploadVendorOrderDesign).toHaveBeenCalledWith('o-1', proof))
   })
 
-  it('previews a picked image and sends nothing when the vendor chooses another', async () => {
-    URL.createObjectURL = vi.fn(() => 'blob:preview')
-    URL.revokeObjectURL = vi.fn()
+  it('shows a picked PDF for confirmation and sends nothing when the vendor chooses another', async () => {
     const { container } = renderWorkspace(vendorOrder())
     await screen.findByText('Upload an artwork proof for the customer to approve.')
 
-    const wrong = new File(['x'], 'wrong-logo.png', { type: 'image/png' })
+    const wrong = new File(['x'], 'wrong-proof.pdf', { type: 'application/pdf' })
     fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [wrong] } })
     const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).getByRole('img', { name: 'Preview of wrong-logo.png' })).toHaveAttribute('src', 'blob:preview')
+    expect(within(dialog).getByText('PDF proof (no preview)')).toBeInTheDocument()
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Choose another' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(uploadVendorOrderDesign).not.toHaveBeenCalled()
+  })
+
+  it('turns an image away: proofs are PDFs only', async () => {
+    const { container } = renderWorkspace(vendorOrder())
+    await screen.findByText('Upload an artwork proof for the customer to approve.')
+
+    const image = new File(['x'], 'logo.png', { type: 'image/png' })
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [image] } })
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(uploadVendorOrderDesign).not.toHaveBeenCalled()
   })

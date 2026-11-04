@@ -53,10 +53,11 @@ const REQUEST: QuickGiftRequest = {
   requestedByName: 'MR North',
   recipientName: 'Dr. Asha Shah',
   recipientPhone: '9800000001',
+  recipientPcode: 'P-1001',
   recipientEmail: 'asha@clinic.in',
   deliveryAddress: '12 MG Road, Pune',
   recipientDob: null,
-  doctor: { qualification: 'MBBS, MD', registrationNumber: 'MH-12345', speciality: null, clinicName: 'Shah Heart Clinic' },
+  doctor: { qualification: 'MBBS, MD', speciality: null, clinicName: 'Shah Heart Clinic' },
   quantity: 5,
   vendorName: 'Pad Printers',
   orgUnitName: 'N1',
@@ -109,7 +110,7 @@ describe('QuickGiftLandingPage', () => {
 
     await userEvent.click(within(row).getByRole('button', { name: 'Prescription Pad' }))
     const sheet = await screen.findByRole('dialog')
-    expect(within(sheet).getByText('MH-12345')).toBeInTheDocument()
+    expect(within(sheet).getByText('P-1001')).toBeInTheDocument()
     expect(within(sheet).getByText('Shah Heart Clinic')).toBeInTheDocument()
     expect(within(sheet).getByText('ORD-101')).toBeInTheDocument()
   })

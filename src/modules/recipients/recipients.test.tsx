@@ -42,7 +42,7 @@ function recipient(overrides: Partial<Recipient> = {}): Recipient {
     email: null,
     address: null,
     dateOfBirth: null,
-    doctor: { qualification: 'MBBS', registrationNumber: 'MH-12345', speciality: 'Cardiology', clinicName: 'Shah Clinic' },
+    doctor: { qualification: 'MBBS', speciality: 'Cardiology', clinicName: 'Shah Clinic' },
     createdByName: 'Rahul',
     createdAt: '2026-10-01T00:00:00Z',
     inMyList: true,
@@ -65,7 +65,6 @@ describe('Doctors page', () => {
     renderWithProviders(<RecipientsPage />)
     const row = (await screen.findByText('Dr. Asha Shah')).closest('tr')!
     expect(within(row).getByText('P-1001')).toBeInTheDocument()
-    expect(within(row).getByText('MH-12345')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: /Add doctor/ }))
     const dialog = await screen.findByRole('dialog', { name: 'Add doctor' })
@@ -75,11 +74,11 @@ describe('Doctors page', () => {
     await userEvent.type(within(dialog).getByLabelText('Pcode *'), 'P-2002')
     await userEvent.type(within(dialog).getByLabelText('Name *'), 'Dr. Ravi Rao')
     await userEvent.type(within(dialog).getByLabelText('Phone *'), '9800000002')
-    await userEvent.type(within(dialog).getByLabelText('Registration no.'), 'KA-777')
+    await userEvent.type(within(dialog).getByLabelText('Speciality'), 'Cardiology')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Add doctor' }))
     await waitFor(() =>
       expect(createMyDoctor).toHaveBeenCalledWith(
-        expect.objectContaining({ pcode: 'P-2002', name: 'Dr. Ravi Rao', doctor: expect.objectContaining({ registrationNumber: 'KA-777' }) }),
+        expect.objectContaining({ pcode: 'P-2002', name: 'Dr. Ravi Rao', doctor: expect.objectContaining({ speciality: 'Cardiology' }) }),
       ),
     )
   })
@@ -91,7 +90,6 @@ describe('Doctors page', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Edit Dr. Asha Shah' }))
     const dialog = await screen.findByRole('dialog', { name: 'Edit doctor' })
     expect(within(dialog).getByLabelText('Pcode *')).toHaveValue('P-1001')
-    expect(within(dialog).getByLabelText('Registration no.')).toHaveValue('MH-12345')
     expect(within(dialog).getByLabelText('Clinic / hospital')).toHaveValue('Shah Clinic')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }))
     await waitFor(() => expect(updateRecipient).toHaveBeenCalledWith('r-1', expect.objectContaining({ name: 'Dr. Asha Shah' })))
@@ -144,12 +142,12 @@ describe('Doctors page', () => {
 
 describe('RecipientPickerDialog', () => {
   it('lists my doctors, narrows them as you type, and returns the ones picked', async () => {
-    listMyRecipients.mockResolvedValue([recipient(), recipient({ id: 'r-2', name: 'Dr. Ravi Rao', pcode: 'P-2002', doctor: { qualification: null, registrationNumber: 'KA-777', speciality: null, clinicName: null } })])
+    listMyRecipients.mockResolvedValue([recipient(), recipient({ id: 'r-2', name: 'Dr. Ravi Rao', pcode: 'P-2002', doctor: { qualification: null, speciality: null, clinicName: null } })])
     const onConfirm = vi.fn()
     renderWithProviders(<RecipientPickerDialog visible onHide={() => {}} onConfirm={onConfirm} />)
     expect(await screen.findByLabelText(/Dr\. Asha Shah/)).toBeInTheDocument()
 
-    await userEvent.type(screen.getByLabelText('Search my doctors by pcode, name, phone or registration no.'), 'p-2002')
+    await userEvent.type(screen.getByLabelText('Search my doctors by pcode, name or phone'), 'p-2002')
     expect(screen.queryByLabelText(/Dr\. Asha Shah/)).not.toBeInTheDocument()
     await userEvent.click(await screen.findByLabelText(/Dr\. Ravi Rao/))
     await userEvent.click(screen.getByRole('button', { name: 'Add 1 selected' }))

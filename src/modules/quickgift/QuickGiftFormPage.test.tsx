@@ -70,28 +70,30 @@ describe('QuickGiftFormPage', () => {
     toast.error.mockReset()
   })
 
-  it('names the gift and its vendor, and asks for the doctor details a pad is printed with', async () => {
+  it('names the gift and its vendor, and asks for the pcode and the doctor details a pad is printed with', async () => {
     renderForm()
     expect(await screen.findByRole('heading', { name: 'Send Prescription Pad' })).toBeInTheDocument()
     expect(screen.getByText('Supplied by Pad Printers')).toBeInTheDocument()
-    expect(screen.getByLabelText('Registration no. *')).toBeInTheDocument()
+    expect(screen.getByLabelText('Pcode *')).toBeInTheDocument()
+    expect(screen.getByLabelText('Qualification')).toBeInTheDocument()
     expect(screen.getByLabelText('Quantity *')).toHaveValue('1')
   })
 
   it('hides the doctor details for a gift that is not personalised', async () => {
     renderForm({ ...PAD, artworkRequired: false })
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
-    expect(screen.queryByLabelText('Registration no. *')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Qualification')).not.toBeInTheDocument()
+    // The pcode identifies the doctor whatever the gift.
+    expect(screen.getByLabelText('Pcode *')).toBeInTheDocument()
   })
 
-  it('will not send without the required fields, the registration number or a valid quantity', async () => {
+  it('will not send without the required fields or a valid quantity', async () => {
     renderForm()
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
     await setQuantity('0')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     expect(screen.getAllByText('Required')).toHaveLength(4)
-    expect(screen.getByText("The doctor's registration number is printed on the pad.")).toBeInTheDocument()
     expect(screen.getByText(/Enter a whole number from 1 to/)).toBeInTheDocument()
     expect(createQuickGiftRequest).not.toHaveBeenCalled()
     expect(toast.error).toHaveBeenCalledWith('Fix the highlighted recipients')
@@ -102,7 +104,6 @@ describe('QuickGiftFormPage', () => {
     renderForm()
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
     await fillRecipient()
-    await userEvent.type(screen.getByLabelText('Registration no. *'), 'MH-12345')
     await userEvent.type(screen.getByLabelText('Qualification'), 'MBBS')
     await setQuantity('5')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
@@ -114,7 +115,7 @@ describe('QuickGiftFormPage', () => {
       recipientName: 'Dr. Asha Shah',
       deliveryAddress: '12 MG Road, Pune',
       quantity: 5,
-      doctor: { registrationNumber: 'MH-12345', qualification: 'MBBS' },
+      doctor: { qualification: 'MBBS' },
     })
     expect(await screen.findByRole('heading', { name: 'My quick gifts' })).toBeInTheDocument()
     expect(toast.success).toHaveBeenCalledWith('Order placed', { description: expect.stringContaining('Pad Printers') })
@@ -125,7 +126,6 @@ describe('QuickGiftFormPage', () => {
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
     expect(screen.getByText('Minimum order: 50')).toBeInTheDocument()
     await fillRecipient()
-    await userEvent.type(screen.getByLabelText('Registration no. *'), 'MH-12345')
     await setQuantity('5')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
@@ -143,7 +143,7 @@ describe('QuickGiftFormPage', () => {
       email: null,
       address: '12 MG Road, Pune',
       dateOfBirth: null,
-      doctor: { qualification: 'MBBS', registrationNumber: 'MH-12345', speciality: null, clinicName: null },
+      doctor: { qualification: 'MBBS', speciality: null, clinicName: null },
     }
     listActiveGifts.mockResolvedValue([PAD])
     const view = renderWithProviders(

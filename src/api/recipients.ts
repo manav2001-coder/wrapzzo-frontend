@@ -1,9 +1,8 @@
 import { apiClient } from '@/lib/axiosClient'
 
-/** What a personalised prescription pad is printed with. The registration number is the doctor's dedupe key. */
+/** What a personalised prescription pad is printed with, beyond the doctor's name and pcode. */
 export interface DoctorDetails {
   qualification: string | null
-  registrationNumber: string | null
   speciality: string | null
   clinicName: string | null
 }

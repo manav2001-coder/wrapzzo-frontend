@@ -46,7 +46,7 @@ export function QuickGiftRequestSheet({
 }) {
   const { t } = useTranslation('gifts')
   const doctor = request?.doctor
-  const hasDoctor = Boolean(doctor && (doctor.registrationNumber || doctor.qualification || doctor.speciality || doctor.clinicName))
+  const hasDoctor = Boolean(doctor && (request.recipientPcode || doctor.qualification || doctor.speciality || doctor.clinicName))
 
   return (
     <Sheet open={request !== null} onOpenChange={(open) => !open && onClose()}>
@@ -104,7 +104,7 @@ export function QuickGiftRequestSheet({
                 <section className="space-y-3">
                   <h3 className="text-sm font-semibold">{t('detail.doctor')}</h3>
                   <dl className="grid grid-cols-2 gap-4 rounded-md border bg-muted/40 p-3">
-                    {doctor.registrationNumber && <Detail label={t('detail.registrationNumber')}>{doctor.registrationNumber}</Detail>}
+                    {request.recipientPcode && <Detail label={t('detail.pcode')}>{request.recipientPcode}</Detail>}
                     {doctor.qualification && <Detail label={t('detail.qualification')}>{doctor.qualification}</Detail>}
                     {doctor.speciality && <Detail label={t('detail.speciality')}>{doctor.speciality}</Detail>}
                     {doctor.clinicName && <Detail label={t('detail.clinicName')}>{doctor.clinicName}</Detail>}

@@ -121,11 +121,11 @@ function PrintCard({ order }: { order: VendorOrder }) {
     order.recipientName,
     doctor?.qualification,
     doctor?.speciality,
-    doctor?.registrationNumber ? t('order.print.registration', { value: doctor.registrationNumber }) : null,
+    order.recipientPcode ? t('order.print.pcode', { value: order.recipientPcode }) : null,
     doctor?.clinicName,
     order.recipientPhone,
   ].filter((line): line is string => Boolean(line))
-  const personalised = Boolean(doctor && (doctor.registrationNumber || doctor.qualification || doctor.speciality || doctor.clinicName))
+  const personalised = Boolean(order.recipientPcode || (doctor && (doctor.qualification || doctor.speciality || doctor.clinicName)))
 
   async function copy() {
     await navigator.clipboard.writeText(lines.join('\n'))
@@ -150,7 +150,7 @@ function PrintCard({ order }: { order: VendorOrder }) {
           <p className="text-lg font-bold leading-tight">{order.recipientName}</p>
           {doctor?.qualification && <p className="text-sm">{doctor.qualification}</p>}
           {doctor?.speciality && <p className="text-sm italic text-muted-foreground">{doctor.speciality}</p>}
-          {doctor?.registrationNumber && <p className="mt-1 text-xs">{t('order.print.registration', { value: doctor.registrationNumber })}</p>}
+          {order.recipientPcode && <p className="mt-1 text-xs">{t('order.print.pcode', { value: order.recipientPcode })}</p>}
           <div className="mt-3 border-t pt-2 text-xs text-muted-foreground">
             {doctor?.clinicName && <p className="font-medium text-foreground">{doctor.clinicName}</p>}
             {order.deliveryAddress && <p>{order.deliveryAddress}</p>}

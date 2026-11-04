@@ -4,7 +4,7 @@ import { toDateOnly } from '@/lib/datetime'
 import { downloadBlob } from '@/lib/download'
 import { cellText, normalizeHeader } from '@/lib/employeeTemplate'
 
-type DoctorField = 'pcode' | 'name' | 'phone' | 'email' | 'address' | 'dateOfBirth' | 'registrationNumber' | 'qualification' | 'speciality' | 'clinicName'
+type DoctorField = 'pcode' | 'name' | 'phone' | 'email' | 'address' | 'dateOfBirth' | 'qualification' | 'speciality' | 'clinicName'
 
 const DOCTOR_FIELDS: { key: DoctorField; label: string; required: boolean }[] = [
   { key: 'pcode', label: 'Pcode', required: true },
@@ -13,7 +13,6 @@ const DOCTOR_FIELDS: { key: DoctorField; label: string; required: boolean }[] = 
   { key: 'email', label: 'Email', required: false },
   { key: 'address', label: 'Clinic Address', required: false },
   { key: 'dateOfBirth', label: 'Date of Birth', required: false },
-  { key: 'registrationNumber', label: 'Registration No.', required: false },
   { key: 'qualification', label: 'Qualification', required: false },
   { key: 'speciality', label: 'Speciality', required: false },
   { key: 'clinicName', label: 'Clinic / Hospital', required: false },
@@ -28,7 +27,6 @@ const ALIASES: Partial<Record<DoctorField, string[]>> = {
   phone: ['mobile', 'phone number', 'mobile number', 'contact'],
   address: ['address'],
   dateOfBirth: ['dob'],
-  registrationNumber: ['registration number', 'registration no', 'reg no', 'reg. no.'],
   clinicName: ['clinic', 'hospital', 'clinic name'],
 }
 
@@ -98,7 +96,6 @@ export async function parseDoctorWorkbook(file: File): Promise<ParsedDoctorSheet
       ...(values.address && { address: values.address }),
       ...(dob && { dateOfBirth: dob }),
       doctor: {
-        registrationNumber: values.registrationNumber || null,
         qualification: values.qualification || null,
         speciality: values.speciality || null,
         clinicName: values.clinicName || null,

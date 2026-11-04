@@ -77,7 +77,7 @@
       "subtitle": "Exactly as the customer sent it.",
       "copy": "Copy details",
       "copied": "Print details copied",
-      "registration": "Reg. no. {{value}}",
+      "pcode": "Pcode {{value}}",
       "none": "No personalisation for this order."
     },
     "shipping": {

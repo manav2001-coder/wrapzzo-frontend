@@ -17,6 +17,8 @@ export interface VendorOrder {
   giftName: string | null
   recipientName: string | null
   recipientPhone: string | null
+  /** The doctor's pcode -- printed on a personalised pad; null for a campaign order. */
+  recipientPcode: string | null
   /** Shown so the vendor can produce a personalized gift correctly -- null until the recipient uploads one. */
   recipientPhotoUrl: string | null
   price: number | null

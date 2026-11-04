@@ -40,7 +40,7 @@ describe('VendorOrderPage', () => {
   it('lays out what to print, how many and where it goes', async () => {
     renderWorkspace(vendorOrder())
     expect(await screen.findByRole('heading', { name: /ORD-101 · Prescription Pad/ })).toBeInTheDocument()
-    expect(screen.getAllByText('Reg. no. MH-12345').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Pcode P-1001').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Shah Heart Clinic').length).toBeGreaterThan(0)
     expect(screen.getByText('Quantity').nextElementSibling).toHaveTextContent('5')
     expect(screen.getAllByText('12 MG Road, Pune').length).toBeGreaterThan(0)

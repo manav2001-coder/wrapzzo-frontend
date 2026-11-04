@@ -30,7 +30,6 @@ const MAX_QUANTITY = 100_000
 /** The prescription-pad print details, as typed (empty string = not given). */
 interface DoctorFields {
   qualification: string
-  registrationNumber: string
   speciality: string
   clinicName: string
 }
@@ -60,7 +59,7 @@ interface DraftRecipient {
   errors: Partial<Record<RowErrorKey, string>>
 }
 
-type RowErrorKey = 'recipientName' | 'recipientPhone' | 'recipientPcode' | 'deliveryAddress' | 'photoOrEmail' | 'quantity' | 'registrationNumber' | 'submit'
+type RowErrorKey = 'recipientName' | 'recipientPhone' | 'recipientPcode' | 'deliveryAddress' | 'photoOrEmail' | 'quantity' | 'submit'
 
 interface RecipientPrefill {
   recipientId?: string
@@ -102,7 +101,6 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
     quantity: '1',
     doctor: {
       qualification: prefill?.doctor?.qualification ?? '',
-      registrationNumber: prefill?.doctor?.registrationNumber ?? '',
       speciality: prefill?.doctor?.speciality ?? '',
       clinicName: prefill?.doctor?.clinicName ?? '',
     },
@@ -248,15 +246,6 @@ function RecipientCard({
               <Palette className="h-3.5 w-3.5" />
               {t('form.doctorSection')}
             </p>
-            <LabelledField id={id('reg')} label={`${t('form.registrationNumber')} *`} error={row.errors.registrationNumber}>
-              <Input
-                id={id('reg')}
-                value={row.doctor.registrationNumber}
-                placeholder={t('form.registrationPlaceholder')}
-                aria-invalid={Boolean(row.errors.registrationNumber)}
-                onChange={(e) => setDoctor({ registrationNumber: e.target.value })}
-              />
-            </LabelledField>
             <LabelledField id={id('qualification')} label={t('form.qualification')}>
               <Input
                 id={id('qualification')}
@@ -400,8 +389,6 @@ export function QuickGiftFormPage() {
     if (parseQuantity(row.quantity, minQuantity) === null) {
       errors.quantity = t('form.error.quantity', { min: minQuantity.toLocaleString(), max: MAX_QUANTITY.toLocaleString() })
     }
-    // A printed prescription pad has to carry the doctor's registration number.
-    if (gift.artworkRequired && !row.doctor.registrationNumber.trim()) errors.registrationNumber = t('form.error.registrationNumber')
     return errors
   }
 

@@ -15,6 +15,8 @@ export interface QuickGiftRequest {
   requestedByName: string | null
   recipientName: string
   recipientPhone: string
+  /** The doctor's pcode when ordered. */
+  recipientPcode: string | null
   recipientEmail: string | null
   deliveryAddress: string
   recipientDob: string | null

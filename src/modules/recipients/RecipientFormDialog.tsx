@@ -20,7 +20,6 @@ interface Draft {
   address: string
   dateOfBirth: Date | null
   qualification: string
-  registrationNumber: string
   speciality: string
   clinicName: string
 }
@@ -34,7 +33,6 @@ function draftFrom(recipient: Recipient | null | undefined): Draft {
     address: recipient?.address ?? '',
     dateOfBirth: fromDateOnly(recipient?.dateOfBirth) ?? null,
     qualification: recipient?.doctor?.qualification ?? '',
-    registrationNumber: recipient?.doctor?.registrationNumber ?? '',
     speciality: recipient?.doctor?.speciality ?? '',
     clinicName: recipient?.doctor?.clinicName ?? '',
   }
@@ -81,7 +79,6 @@ export function RecipientFormDialog({
       // Always sent from this form (it shows them), so clearing a field here really clears it.
       doctor: {
         qualification: draft.qualification.trim() || null,
-        registrationNumber: draft.registrationNumber.trim() || null,
         speciality: draft.speciality.trim() || null,
         clinicName: draft.clinicName.trim() || null,
       },
@@ -132,9 +129,6 @@ export function RecipientFormDialog({
         </LabelledField>
 
         <p className="pt-1 text-xs font-semibold text-muted-foreground sm:col-span-2">{t('field.doctorSection')}</p>
-        <LabelledField id="recipient-reg" label={t('field.registrationNumber')}>
-          <Input id="recipient-reg" value={draft.registrationNumber} onChange={(e) => set({ registrationNumber: e.target.value })} />
-        </LabelledField>
         <LabelledField id="recipient-qualification" label={t('field.qualification')}>
           <Input id="recipient-qualification" value={draft.qualification} onChange={(e) => set({ qualification: e.target.value })} />
         </LabelledField>

@@ -28,7 +28,6 @@ const LIST_FIELDS: ListFieldMap = {
   name: 'text',
   phone: 'text',
   email: 'text',
-  registrationNumber: 'text',
   createdByName: 'text',
 }
 
@@ -70,12 +69,6 @@ export function RecipientsPage() {
       { id: 'name', accessorKey: 'name', header: t('field.name'), meta: { className: 'min-w-[180px]' } },
       { id: 'phone', accessorKey: 'phone', header: t('field.phone'), meta: { className: 'min-w-[130px]' } },
       { id: 'email', accessorFn: (r) => r.email ?? '', header: t('field.email'), meta: { className: 'min-w-[180px]' } },
-      {
-        id: 'registrationNumber',
-        accessorFn: (r) => r.doctor?.registrationNumber ?? '',
-        header: t('field.registrationNumber'),
-        meta: { className: 'min-w-[130px]' },
-      },
       {
         id: 'speciality',
         accessorFn: (r) => r.doctor?.speciality ?? '',

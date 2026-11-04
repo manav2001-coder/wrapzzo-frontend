@@ -56,7 +56,8 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true)
 
   const schema = z.object({
-    email: z.string().min(1, t('login.emailRequired')).email(t('login.emailInvalid')),
+    // Trimmed and lower-cased before anything else, so " Priya@Acme.com " signs in as priya@acme.com.
+    email: z.string().trim().toLowerCase().min(1, t('login.emailRequired')).email(t('login.emailInvalid')),
     password: z.string().min(1, t('login.passwordRequired')),
   })
   const {

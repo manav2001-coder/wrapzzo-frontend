@@ -54,6 +54,15 @@ describe('LoginPage', () => {
     expect(store.getState().auth.user?.email).toBe('priya@acme.com')
   })
 
+  it('signs in whatever the capitals and stray spaces in the email', async () => {
+    login.mockResolvedValue(TOKENS)
+    const { store } = renderLogin()
+    await signIn('  Priya@Acme.COM  ')
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    expect(login).toHaveBeenCalledWith('priya@acme.com', 'secret')
+    expect(store.getState().auth.user?.email).toBe('priya@acme.com')
+  })
+
   it('always opens the first menu, not the page the visitor was bounced from', async () => {
     login.mockResolvedValue(TOKENS)
     renderLogin('/bounced')

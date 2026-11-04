@@ -31,6 +31,17 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: /approvals/i })).toHaveAttribute('href', '/approvals')
   })
 
+  it('offers Artwork approval settings only to whoever holds the key for it', () => {
+    renderWithProviders(<Sidebar />, { route: '/dashboard' })
+    expect(screen.queryByRole('link', { name: 'Artwork approval' })).not.toBeInTheDocument()
+  })
+
+  it('shows Artwork approval to a company admin', () => {
+    companyUser(['dashboard.view', 'role.view', 'artwork_approval.view', 'artwork_approval.configure'])
+    renderWithProviders(<Sidebar />, { route: '/dashboard' })
+    expect(screen.getByRole('link', { name: 'Artwork approval' })).toHaveAttribute('href', '/masters/artwork-approval')
+  })
+
   it('has one Doctors entry, and no separate My Doctors', () => {
     companyUser(['dashboard.view', 'quick_gift.create', 'doctor.view'])
     renderWithProviders(<Sidebar />, { route: '/dashboard' })

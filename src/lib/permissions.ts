@@ -26,6 +26,8 @@ export const P = {
   ORDER_REQUEST_PHOTO: 'order.request_photo',
   ARTWORK_REVIEW: 'artwork.review',
   ARTWORK_FINAL_APPROVE: 'artwork.final_approve',
+  ARTWORK_APPROVAL_VIEW: 'artwork_approval.view',
+  ARTWORK_APPROVAL_CONFIGURE: 'artwork_approval.configure',
 
   DOCTOR_VIEW: 'doctor.view',
   DOCTOR_CREATE: 'doctor.create',

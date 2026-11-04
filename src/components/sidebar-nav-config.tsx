@@ -17,6 +17,7 @@ import {
   Megaphone,
   PencilLine,
   PlusCircle,
+  Palette,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -85,6 +86,7 @@ const MASTERS_NAV: NavSource = {
     { id: 'masters-users', titleKey: 'nav.users', type: 'item', url: '/masters/users', icon: Users, permission: P.USER_VIEW },
     { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: P.COMPANY_VENDOR_VIEW },
     { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: P.WAREHOUSE_VIEW },
+    { id: 'artwork-approval', titleKey: 'nav.artworkApproval', type: 'item', url: '/masters/artwork-approval', icon: Palette, permission: P.ARTWORK_APPROVAL_VIEW },
   ],
 }
 

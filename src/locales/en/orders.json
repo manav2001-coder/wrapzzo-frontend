@@ -80,6 +80,7 @@
     "rejected": "Version {{n}} sent back to the vendor",
     "approvedBadge": "v{{n}} approved",
     "yourFeedback": "Feedback sent:",
+    "feedback": "Feedback:",
     "earlier": "Earlier versions",
     "rejectTitle": "Request changes to version {{n}}",
     "rejectBody": "Tell the vendor what to fix. They'll see this note with the proof.",

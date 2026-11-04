@@ -242,7 +242,7 @@ export function OrdersPage() {
         onClose={() => setOpenId(null)}
         onRequestPhotoLink={canRequestPhoto ? (order) => void sendPhotoLink(order) : undefined}
         requestingPhotoLink={requestPhotoLink.isPending}
-        actions={open && canReview ? <ArtworkReview orderId={open.id} artworkRequired={open.artworkRequired} /> : undefined}
+        actions={open ? <ArtworkReview orderId={open.id} artworkRequired={open.artworkRequired} readOnly={!canReview} /> : undefined}
       />
       <PhotoLinkDialog prompt={photoPrompt} onClose={() => setPhotoPrompt(null)} />
     </div>

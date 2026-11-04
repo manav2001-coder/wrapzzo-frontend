@@ -164,14 +164,18 @@ describe('OrdersPage (company)', () => {
     expect(within(proof).getByRole('link', { name: 'Open in new tab' })).toHaveAttribute('href', 'https://files.test/v2.pdf')
   })
 
-  it('hides the review controls from someone who may not review artwork', async () => {
+  it('lets someone who may not review artwork watch the proofs without deciding on them', async () => {
     useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['order.view'] }, isLoading: false })
     listOrders.mockResolvedValue([order({ hasPendingDesignReview: true })])
     listOrderDesigns.mockResolvedValue([design()])
     renderWithProviders(<OrdersPage />)
     const sheet = await openOrder()
 
+    // The proof is there to look at...
+    expect((await within(sheet).findAllByRole('button', { name: 'View proof' })).length).toBeGreaterThan(0)
+    // ...but not to approve or send back, and there is no review tab.
     expect(within(sheet).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument()
+    expect(within(sheet).queryByRole('button', { name: 'Request changes' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Needs your review/ })).not.toBeInTheDocument()
   })
 })

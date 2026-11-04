@@ -5,8 +5,8 @@ import { P, VIEW_ACTION } from './permissions'
 describe('permission catalogue', () => {
   const keys = Object.values(P)
 
-  it('mirrors the backend enum: 46 company actions and 20 platform ones', () => {
-    expect(keys).toHaveLength(66)
+  it('mirrors the backend enum: 48 company actions and 20 platform ones', () => {
+    expect(keys).toHaveLength(68)
     expect(keys.filter((key) => key.startsWith('platform_'))).toHaveLength(20)
   })
 

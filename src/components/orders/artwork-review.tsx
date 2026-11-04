@@ -38,8 +38,10 @@ function Proof({ design }: { design: OrderDesign }) {
  * The company side of the artwork loop: the vendor's newest proof up front with Approve / Request
  * changes, and every earlier version with its verdict below. A rejection needs a comment -- it is
  * what the vendor works from. Approving is what unlocks dispatch for an artwork-required order.
+ * `readOnly` is for someone who watches an order go by -- a ZM above the approvers, say: the proofs and the approval
+ * trail, without the decisions.
  */
-export function ArtworkReview({ orderId, artworkRequired }: { orderId: string; artworkRequired: boolean }) {
+export function ArtworkReview({ orderId, artworkRequired, readOnly = false }: { orderId: string; artworkRequired: boolean; readOnly?: boolean }) {
   const { t } = useTranslation('orders')
   const showError = useApiErrorToast()
   const { data: designs, isLoading } = useOrderDesigns(orderId)
@@ -114,6 +116,7 @@ export function ArtworkReview({ orderId, artworkRequired }: { orderId: string; a
             </div>
             <Proof design={latest} />
             {latest.status === 'PENDING_REVIEW' ? (
+              !readOnly && (
               <div className="flex flex-wrap gap-2">
                 <Button loading={approve.isPending} onClick={() => void onApprove(latest)}>
                   <Check />
@@ -124,10 +127,11 @@ export function ArtworkReview({ orderId, artworkRequired }: { orderId: string; a
                   {t('artwork.requestChanges')}
                 </Button>
               </div>
+              )
             ) : (
               latest.reviewComment && (
                 <p className="rounded-md bg-destructive/5 px-3 py-2 text-sm">
-                  <span className="font-medium">{t('artwork.yourFeedback')}</span> “{latest.reviewComment}”
+                  <span className="font-medium">{readOnly ? t('artwork.feedback') : t('artwork.yourFeedback')}</span> “{latest.reviewComment}”
                 </p>
               )
             )}

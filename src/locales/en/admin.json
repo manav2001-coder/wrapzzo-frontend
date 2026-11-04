@@ -22,11 +22,7 @@
       "features": "Feature flags",
       "featuresHelp": "Optional workflow changes, off by default. Nothing changes for the company until one is turned on.",
       "featureEnabled": "Feature enabled",
-      "featureDisabled": "Feature disabled",
-      "approvalLevels": "Approval levels",
-      "approvalLevelsHelp": "How many managers above the MR approve artwork, one after another up their reporting line. If an MR has fewer managers, the top of their line gives the final approval.",
-      "approvalLevelsSaved_one": "Artwork now needs {{count}} level of approval",
-      "approvalLevelsSaved_other": "Artwork now needs {{count}} levels of approval"
+      "featureDisabled": "Feature disabled"
     },
     "drawer": {
       "code": "Company ID",
@@ -528,6 +524,29 @@
       "reset": "Use the default name",
       "resetFor": "Use the default name for {{menu}}",
       "nameFor": "Company's name for {{menu}}"
+    }
+  },
+  "artworkApproval": {
+    "title": "Artwork approval",
+    "subtitle": "Who approves a vendor's artwork proof after the AM, and in what order.",
+    "steps": "Approval steps after the AM",
+    "stepsHelp": "In order. Each step is a role and where to find the person holding it for the order. Anyone else in the chain, a ZM say, only watches. A rejection at any step sends the proof back to the vendor with the reviewer's note.",
+    "none": "No steps set: a proof goes up the AM's reporting line, one manager per level ({{count}} level).",
+    "notEnabled": "Senior artwork approval is not switched on for your company, so steps cannot be set yet. Ask Wrappzo to enable it.",
+    "stepN": "Step {{n}}",
+    "role": "Role",
+    "pickRole": "Choose a role",
+    "findThem": "Find them",
+    "add": "Add a step",
+    "remove": "Remove step {{n}}",
+    "save": "Save steps",
+    "discard": "Discard changes",
+    "saved_one": "Artwork now goes through {{count}} approval step after the AM",
+    "saved_other": "Artwork now goes through {{count}} approval steps after the AM",
+    "cleared": "Steps removed: proofs go up the AM's reporting line again",
+    "scope": {
+      "REPORTING_LINE": "The first one above the AM in their reporting line",
+      "DIVISION": "Anyone in the AM's division (the first to act decides)"
     }
   }
 }

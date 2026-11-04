@@ -3,9 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Campaign } from '@/api/campaigns'
-import type { QuickGiftRequest } from '@/api/quickGifts'
 import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
-import { ApprovalQueuePage } from './ApprovalQueuePage'
 import { CampaignDetailPage } from './CampaignDetailPage'
 import { CampaignListPage } from './CampaignListPage'
 import { MyCampaignsPage } from './MyCampaignsPage'
@@ -149,44 +147,5 @@ describe('SubmissionFormPage', () => {
       expect(api.createSubmission).toHaveBeenCalledWith('c-1', 'g-1', { recipientName: 'Dr. Asha', recipientPhone: '9800000001' }),
     )
     expect(await screen.findByRole('heading', { name: 'Campaign page' })).toBeInTheDocument()
-  })
-})
-
-describe('ApprovalQueuePage', () => {
-  const request = {
-    id: 'q-1',
-    giftName: 'Desk Plant',
-    recipientName: 'Dr. Asha',
-    recipientPhone: '9800000001',
-    deliveryAddress: 'Pune',
-    requestedByName: 'Rahul',
-    quantity: 2,
-    vendorName: 'Pad Printers',
-    giftMessage: null,
-    createdAt: '2026-10-20T10:00:00Z',
-  } as unknown as QuickGiftRequest
-
-  it('approves a Quick Gift request, and rejects one only with a reason', async () => {
-    api.listPendingQuickGiftApprovals.mockResolvedValue([request])
-    api.approveQuickGiftRequest.mockResolvedValue({ ...request, recipientUploadUrl: null })
-    api.rejectQuickGiftRequest.mockResolvedValue(request)
-    renderWithProviders(<ApprovalQueuePage />)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Approve' }))
-    await waitFor(() => expect(api.approveQuickGiftRequest).toHaveBeenCalledWith('q-1'))
-
-    await userEvent.click(screen.getByRole('button', { name: 'Reject' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Reject Quick Gift request' })
-    const reject = within(dialog).getByRole('button', { name: 'Reject' })
-    expect(reject).toBeDisabled()
-    await userEvent.type(within(dialog).getByLabelText('Reason (shown to the requester)'), 'Duplicate')
-    await userEvent.click(reject)
-    await waitFor(() => expect(api.rejectQuickGiftRequest).toHaveBeenCalledWith('q-1', 'Duplicate'))
-  })
-
-  it('says when nothing is waiting', async () => {
-    api.listPendingQuickGiftApprovals.mockResolvedValue([])
-    renderWithProviders(<ApprovalQueuePage />)
-    expect(await screen.findByText('Nothing pending')).toBeInTheDocument()
   })
 })

@@ -13,10 +13,6 @@ vi.mock('@/api/orderDesigns', async (importOriginal) => ({
   approveOrderDesign,
   rejectOrderDesign,
 }))
-vi.mock('@/api/doctorRequests', async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  listPendingDoctorChangeRequests: async () => [],
-}))
 // A zonal manager: no Quick Gift approval key, just a team.
 vi.mock('@/hooks/use-current-user', () => ({
   useCurrentUser: () => ({ data: { companyId: 'c1', companyName: 'Alembic', permissions: ['order.view', 'artwork.review'], managesTeam: true }, isLoading: false }),
@@ -46,51 +42,65 @@ const PROOF = {
   ],
 }
 
-describe('ApprovalQueuePage — artwork final approval', () => {
+describe('ApprovalQueuePage — artwork only', () => {
   beforeEach(() => {
     listPendingArtworkApprovals.mockReset().mockResolvedValue([PROOF])
     approveOrderDesign.mockReset().mockResolvedValue({ ...PROOF, id: 'd-2', status: 'APPROVED' })
     rejectOrderDesign.mockReset().mockResolvedValue({ ...PROOF, id: 'd-2', status: 'REJECTED' })
   })
 
-  it("shows the MR-approved proof and gives the manager's final approval", async () => {
-    renderWithProviders(<ApprovalQueuePage />)
-    // No Quick Gift tab for a manager without that key.
-    expect(screen.queryByRole('tab', { name: /quick gift/i })).not.toBeInTheDocument()
-    await userEvent.click(await screen.findByRole('tab', { name: /artwork/i }))
+  async function openDrawer() {
+    await userEvent.click(await screen.findByRole('button', { name: /Rx Pad A5/ }))
+    return screen.findByRole('dialog')
+  }
 
-    expect(await screen.findByText('Rx Pad A5 · ORD-42')).toBeInTheDocument()
-    expect(screen.getByText(/Level 1 of 2 · MR approved by Rahul Deshmukh/)).toBeInTheDocument()
-    expect(screen.getByText(/waiting on Sanjay Kulkarni/)).toBeInTheDocument()
-    expect(screen.queryByText(/Covering for/)).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /approve/i }))
+  it('lists the proofs as a table, with no tabs and no other request kinds', async () => {
+    renderWithProviders(<ApprovalQueuePage />)
+    expect(await screen.findByText('Rx Pad A5')).toBeInTheDocument()
+    expect(screen.getByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(screen.getByText('Level 1 of 2')).toBeInTheDocument()
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+  })
+
+  it("opens a drawer with the proof and trail, and gives the manager's approval", async () => {
+    renderWithProviders(<ApprovalQueuePage />)
+    const drawer = await openDrawer()
+    expect(within(drawer).getByText('Waiting on').nextElementSibling).toHaveTextContent('Sanjay Kulkarni')
+    expect(within(drawer).queryByText(/Covering for/)).not.toBeInTheDocument()
+    await userEvent.click(within(drawer).getByRole('button', { name: /approve/i }))
     await waitFor(() => expect(approveOrderDesign).toHaveBeenCalledWith('o-1', 'd-2'))
   })
 
-  it('opens the proof in a dialog right on the approvals page', async () => {
+  it('opens the proof in a dialog from the drawer', async () => {
     renderWithProviders(<ApprovalQueuePage />)
-    await userEvent.click(await screen.findByRole('tab', { name: /artwork/i }))
-    await userEvent.click((await screen.findAllByRole('button', { name: 'View proof' }))[0])
-
+    const drawer = await openDrawer()
+    await userEvent.click(within(drawer).getAllByRole('button', { name: 'View proof' })[0])
     const dialog = await screen.findByRole('dialog', { name: /Version \d+ · ORD-42/ })
     expect(within(dialog).getByTitle(/Version \d+ · ORD-42/)).toHaveAttribute('src', 'https://files.test/proof-v2.pdf')
   })
 
   it('says when the approver is covering a level for the manager it waits on', async () => {
     listPendingArtworkApprovals.mockResolvedValue([{ ...PROOF, approvalLevel: 2, covering: true, waitingOnName: 'Ravi Menon' }])
-    approveOrderDesign.mockResolvedValue({ ...PROOF, id: 'd-2', status: 'APPROVED' })
     renderWithProviders(<ApprovalQueuePage />)
-    await userEvent.click(await screen.findByRole('tab', { name: /artwork/i }))
-    expect(await screen.findByText('Covering for Ravi Menon')).toBeInTheDocument()
-    expect(screen.getByText(/Level 2 of 2/)).toBeInTheDocument()
+    const drawer = await openDrawer()
+    expect(within(drawer).getByText('Covering for Ravi Menon')).toBeInTheDocument()
+    expect(within(drawer).getAllByText(/Level 2 of 2/).length).toBeGreaterThan(0)
   })
 
-  it('sends the proof back to the vendor with a note', async () => {
+  it('sends the proof back to the vendor only with a note', async () => {
     renderWithProviders(<ApprovalQueuePage />)
-    await userEvent.click(await screen.findByRole('tab', { name: /artwork/i }))
-    await userEvent.click(await screen.findByRole('button', { name: /request changes/i }))
+    const drawer = await openDrawer()
+    await userEvent.click(within(drawer).getByRole('button', { name: /request changes/i }))
+    const send = await screen.findByRole('button', { name: 'Send back to vendor' })
+    expect(send).toBeDisabled()
     await userEvent.type(screen.getByLabelText(/what should change/i), 'Use the new clinic address')
-    await userEvent.click(screen.getByRole('button', { name: 'Send back to vendor' }))
+    await userEvent.click(send)
     await waitFor(() => expect(rejectOrderDesign).toHaveBeenCalledWith('o-1', 'd-2', 'Use the new clinic address'))
+  })
+
+  it('says when nothing is waiting', async () => {
+    listPendingArtworkApprovals.mockResolvedValue([])
+    renderWithProviders(<ApprovalQueuePage />)
+    expect(await screen.findByText('No artwork waiting for your approval')).toBeInTheDocument()
   })
 })

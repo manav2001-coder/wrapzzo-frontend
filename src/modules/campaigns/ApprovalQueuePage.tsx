@@ -1,143 +1,72 @@
-import { Check, CheckSquare, Palette, Search, UserCog, X, Zap } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Check, Eye, Palette, X } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
+import type { PendingArtworkApproval } from '@/api/orderDesigns'
 import { AppDialog } from '@/components/app-dialog'
-import { AppTabs } from '@/components/app-tabs'
-import { EmptyState } from '@/components/empty-state'
+import { DataTable } from '@/components/data-table'
+import { listEmptyBody } from '@/components/data-table/list-body'
 import { LabelledField } from '@/components/fields/labelled-field'
+import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { ArtworkApprovalTrail } from '@/components/orders/artwork-approval-trail'
 import { ArtworkProofPreview } from '@/components/orders/artwork-proof-preview'
-import { PhotoLinkDialog, type PhotoLinkPrompt } from '@/components/orders/photo-link-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
-import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
-import { useApproveDoctorChangeRequest, usePendingDoctorChangeRequests, useRejectDoctorChangeRequest } from '@/hooks/useDoctorRequests'
+import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useHasAccess } from '@/hooks/use-permission'
-import { P } from '@/lib/permissions'
 import { usePendingArtworkApprovals, useReviewArtwork } from '@/hooks/useOrderDesigns'
-import { useApproveQuickGiftRequest, usePendingQuickGiftApprovals, useRejectQuickGiftRequest } from '@/hooks/useQuickGifts'
-import { formatDateTime } from '@/lib/datetime'
-import { humanize } from '@/lib/format'
+import { formatDate, formatDateTime } from '@/lib/datetime'
+import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
 
-function Detail({ label, children, wide }: { label: string; children: ReactNode; wide?: boolean }) {
+const LIST_FIELDS: ListFieldMap = {
+  orderDisplayId: 'text',
+  giftName: 'text',
+  recipientName: 'text',
+  vendorName: 'text',
+  quantity: 'number',
+}
+
+function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className={wide ? 'min-w-0 sm:col-span-2' : 'min-w-0'}>
-      <span className="text-muted-foreground">{label}: </span>
-      <span>{children}</span>
+    <div className="min-w-0">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="truncate text-sm font-medium">{children || '-'}</dd>
     </div>
   )
 }
 
-/** One pending item: what it is, who asked, its details, and Approve / Reject. */
-function RequestCard({
-  icon,
-  title,
-  subtitle,
-  children,
-  approving,
-  onApprove,
-  onReject,
-  rejectLabel = 'Reject',
-}: {
-  icon: ReactNode
-  title: string
-  subtitle: string
-  children: ReactNode
-  approving: boolean
-  onApprove: () => void
-  onReject: () => void
-  rejectLabel?: string
-}) {
-  return (
-    <article className="rounded-lg border bg-card p-4 shadow-sm">
-      <header className="flex items-center gap-2.5">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">{icon}</span>
-        <div className="min-w-0">
-          <h3 className="truncate font-semibold">{title}</h3>
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
-        </div>
-      </header>
-      <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2">{children}</div>
-      <div className="mt-3 flex gap-2">
-        <Button size="sm" loading={approving} onClick={onApprove}>
-          <Check />
-          Approve
-        </Button>
-        <Button size="sm" variant="outline" onClick={onReject}>
-          <X />
-          {rejectLabel}
-        </Button>
-      </div>
-    </article>
-  )
+/** Where the proof stands: which level it waits on, and whose it is. */
+function levelLabel(item: PendingArtworkApproval) {
+  return `Level ${item.approvalLevel} of ${item.approvalLevels}`
 }
 
-type Rejecting = { kind: 'quickGift' | 'doctor'; id: string } | { kind: 'artwork'; id: string; orderId: string } | null
-
-/** Quick Gift requests and doctor changes from the team, waiting on the user's decision. Campaign submissions never land here. */
+/**
+ * Approvals are artwork only: the MR-approved proofs whose current level waits on this user (or that
+ * they can cover with Final Artwork Approval). A table like the rest of the app; a row opens a drawer
+ * with the proof, its approval trail and the decision.
+ */
 export function ApprovalQueuePage() {
   const showError = useApiErrorToast()
   const pageTitle = useMenuLabel('approvals', 'Approvals')
-  // A manager reviewing only their team's doctor requests has no Quick Gift approval right: skip
-  // that queue (it would only answer 403) and open on the doctor changes.
-  const canApproveQuickGifts = useHasAccess(P.QUICK_GIFT_APPROVE)
-  const canReviewArtwork = useHasAccess([P.ARTWORK_REVIEW, P.ARTWORK_FINAL_APPROVE])
-  const { data: quickGifts, isLoading } = usePendingQuickGiftApprovals(canApproveQuickGifts)
-  const { data: doctorRequests, isLoading: doctorsLoading } = usePendingDoctorChangeRequests()
-  const approveQuickGift = useApproveQuickGiftRequest()
-  const rejectQuickGift = useRejectQuickGiftRequest()
-  const approveDoctor = useApproveDoctorChangeRequest()
-  const rejectDoctor = useRejectDoctorChangeRequest()
-  // MR-approved artwork whose current level waits on this user (or that they can cover with Final Artwork Approval).
-  const { data: artwork, isLoading: artworkLoading } = usePendingArtworkApprovals(canReviewArtwork)
+  const canReview = useHasAccess([P.ARTWORK_REVIEW, P.ARTWORK_FINAL_APPROVE])
+  const { data: artwork, isLoading, error, refetch } = usePendingArtworkApprovals(canReview)
   const reviewArtwork = useReviewArtwork()
 
-  const [tab, setTab] = useState(canApproveQuickGifts ? 'quickGift' : 'doctors')
-  const [search, setSearch] = useState('')
-  const [rejecting, setRejecting] = useState<Rejecting>(null)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [rejecting, setRejecting] = useState<PendingArtworkApproval | null>(null)
   const [reason, setReason] = useState('')
-  const [photoPrompt, setPhotoPrompt] = useState<PhotoLinkPrompt | null>(null)
+  // Kept by id so the drawer follows the list as it refreshes (and closes once the proof is decided).
+  const open = artwork?.find((item) => item.designId === openId) ?? null
 
-  const q = search.trim().toLowerCase()
-  const filteredQuickGifts = useMemo(
-    () =>
-      (quickGifts ?? []).filter(
-        (r) => !q || [r.giftName, r.recipientName, r.requestedByName ?? ''].some((value) => value.toLowerCase().includes(q)),
-      ),
-    [quickGifts, q],
-  )
-  const total = (quickGifts?.length ?? 0) + (doctorRequests?.length ?? 0) + (artwork?.length ?? 0)
-
-  async function approveGift(id: string) {
+  async function approve(item: PendingArtworkApproval) {
     try {
-      const result = await approveQuickGift.mutateAsync(id)
-      toast.success('Approved', { description: 'An order has been created.' })
-      if (result.recipientUploadUrl) {
-        setPhotoPrompt({ link: result.recipientUploadUrl, phone: result.recipientPhone, recipientName: result.recipientName })
-      }
-    } catch (err) {
-      showError(err)
-    }
-  }
-
-  async function approveDoctorChange(id: string) {
-    try {
-      await approveDoctor.mutateAsync(id)
-      toast.success('Approved')
-    } catch (err) {
-      showError(err)
-    }
-  }
-
-  async function approveArtwork(orderId: string, designId: string) {
-    try {
-      const design = await reviewArtwork.mutateAsync({ orderId, designId })
+      const design = await reviewArtwork.mutateAsync({ orderId: item.orderId, designId: item.designId })
       if (design.status === 'PENDING_FINAL_APPROVAL') {
         toast.success('Artwork approved', {
           description: `It moves to level ${design.approvalLevel} of ${design.approvalLevels}${design.waitingOnName ? ` (${design.waitingOnName})` : ''}.`,
@@ -145,179 +74,194 @@ export function ApprovalQueuePage() {
       } else {
         toast.success('Artwork approved', { description: 'The vendor can now print and dispatch.' })
       }
+      setOpenId(null)
     } catch (err) {
       showError(err)
     }
   }
 
-  async function confirmReject() {
+  async function sendBack() {
     if (!rejecting || !reason.trim()) return
     try {
-      if (rejecting.kind === 'quickGift') await rejectQuickGift.mutateAsync({ id: rejecting.id, reason: reason.trim() })
-      else if (rejecting.kind === 'artwork') await reviewArtwork.mutateAsync({ orderId: rejecting.orderId, designId: rejecting.id, comment: reason.trim() })
-      else await rejectDoctor.mutateAsync({ id: rejecting.id, reason: reason.trim() })
-      toast.success(rejecting.kind === 'artwork' ? 'Sent back to the vendor' : 'Rejected')
+      await reviewArtwork.mutateAsync({ orderId: rejecting.orderId, designId: rejecting.designId, comment: reason.trim() })
+      toast.success('Sent back to the vendor')
       setRejecting(null)
       setReason('')
+      setOpenId(null)
     } catch (err) {
       showError(err)
     }
   }
 
-  const quickGiftPanel = (
-    <div className="space-y-3">
-      <div className="relative w-full sm:w-80">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by gift, recipient or requester" aria-label="Search requests" className="pl-8" />
-      </div>
-      {isLoading ? (
-        <Skeleton className="h-40 w-full" />
-      ) : filteredQuickGifts.length === 0 ? (
-        <EmptyState variant="plain" icon={Zap} title={q ? 'No requests match' : 'No Quick Gift requests waiting'} />
-      ) : (
-        filteredQuickGifts.map((request) => (
-          <RequestCard
-            key={request.id}
-            icon={<Zap className="h-4 w-4" />}
-            title={request.giftName}
-            subtitle={`Requested by ${request.requestedByName ?? 'a team member'} · ${formatDateTime(request.createdAt)}`}
-            approving={approveQuickGift.isPending}
-            onApprove={() => void approveGift(request.id)}
-            onReject={() => setRejecting({ kind: 'quickGift', id: request.id })}
-          >
-            <Detail label="Recipient">{request.recipientName}</Detail>
-            <Detail label="Phone">{request.recipientPhone}</Detail>
-            <Detail label="Quantity">{request.quantity}</Detail>
-            {request.vendorName && <Detail label="Vendor">{request.vendorName}</Detail>}
-            <Detail label="Deliver to" wide>
-              {request.deliveryAddress}
-            </Detail>
-            {request.giftMessage && (
-              <Detail label="Gift message" wide>
-                {request.giftMessage}
-              </Detail>
-            )}
-          </RequestCard>
-        ))
-      )}
-    </div>
-  )
-
-  const doctorPanel = doctorsLoading ? (
-    <Skeleton className="h-40 w-full" />
-  ) : (doctorRequests ?? []).length === 0 ? (
-    <EmptyState variant="plain" icon={UserCog} title="No doctor changes waiting" />
-  ) : (
-    <div className="space-y-3">
-      {(doctorRequests ?? []).map((request) => (
-        <RequestCard
-          key={request.id}
-          icon={<UserCog className="h-4 w-4" />}
-          title={`${humanize(request.action)} doctor`}
-          subtitle={`Requested by ${request.requestedByName} · ${formatDateTime(request.createdAt)}`}
-          approving={approveDoctor.isPending}
-          onApprove={() => void approveDoctorChange(request.id)}
-          onReject={() => setRejecting({ kind: 'doctor', id: request.id })}
-        >
-          <Detail label="Doctor">{request.proposedName ?? request.recipientName}</Detail>
-          {request.proposedPhone && <Detail label="Phone">{request.proposedPhone}</Detail>}
-          {request.proposedEmail && <Detail label="Email">{request.proposedEmail}</Detail>}
-          {request.proposedAddress && (
-            <Detail label="Address" wide>
-              {request.proposedAddress}
-            </Detail>
-          )}
-          {request.proposedDoctor?.registrationNumber && <Detail label="Registration no.">{request.proposedDoctor.registrationNumber}</Detail>}
-          {request.proposedDoctor?.qualification && <Detail label="Qualification">{request.proposedDoctor.qualification}</Detail>}
-          {request.proposedDoctor?.speciality && <Detail label="Speciality">{request.proposedDoctor.speciality}</Detail>}
-          {request.proposedDoctor?.clinicName && <Detail label="Clinic / hospital">{request.proposedDoctor.clinicName}</Detail>}
-        </RequestCard>
-      ))}
-    </div>
-  )
-
-  const artworkPanel = artworkLoading ? (
-    <Skeleton className="h-40 w-full" />
-  ) : (artwork ?? []).length === 0 ? (
-    <EmptyState variant="plain" icon={Palette} title="No artwork waiting for your approval" />
-  ) : (
-    <div className="space-y-3">
-      {(artwork ?? []).map((item) => (
-        <RequestCard
-          key={item.designId}
-          icon={<Palette className="h-4 w-4" />}
-          title={`${item.giftName ?? 'Artwork'} · ${item.orderDisplayId}`}
-          subtitle={`Level ${item.approvalLevel} of ${item.approvalLevels} · MR approved by ${item.mrApprovedByName ?? 'the MR'}${item.mrApprovedAt ? ` · ${formatDateTime(item.mrApprovedAt)}` : ''}`}
-          approving={reviewArtwork.isPending}
-          onApprove={() => void approveArtwork(item.orderId, item.designId)}
-          onReject={() => setRejecting({ kind: 'artwork', id: item.designId, orderId: item.orderId })}
-          rejectLabel="Request changes"
-        >
-          <Detail label="Doctor">{item.recipientName ?? '—'}</Detail>
-          <Detail label="Quantity">{item.quantity}</Detail>
-          <Detail label="Vendor">{item.vendorName}</Detail>
-          <Detail label="Proof">
-            <ArtworkProofPreview fileUrl={item.fileUrl} fileName={item.fileName} title={`Version ${item.versionNo} · ${item.orderDisplayId}`} />
-          </Detail>
-          {item.covering && (
-            <div className="sm:col-span-2">
-              <Badge variant="warning-soft">
-                {item.waitingOnName ? `Covering for ${item.waitingOnName}` : 'No manager above the MR: you sign as Final Artwork Approval'}
-              </Badge>
-            </div>
-          )}
-          <div className="mt-1 sm:col-span-2">
-            <ArtworkApprovalTrail steps={item.approvals} pending={{ level: item.approvalLevel, waitingOnName: item.waitingOnName }} />
-          </div>
-        </RequestCard>
-      ))}
-    </div>
+  const columns = useMemo<ColumnDef<PendingArtworkApproval, unknown>[]>(
+    () => [
+      {
+        id: 'giftName',
+        accessorFn: (item) => item.giftName ?? '',
+        header: 'Gift',
+        meta: { className: 'min-w-[220px]' },
+        cell: ({ row }) => (
+          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpenId(row.original.designId)}>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+              <Palette className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate font-medium hover:underline">{row.original.giftName ?? 'Artwork'}</span>
+              <span className="block text-xs text-muted-foreground">{row.original.orderDisplayId}</span>
+            </span>
+          </button>
+        ),
+      },
+      { id: 'recipientName', accessorFn: (item) => item.recipientName ?? '', header: 'Doctor', meta: { className: 'min-w-[160px]' } },
+      { id: 'quantity', accessorKey: 'quantity', header: 'Quantity', enableColumnFilter: false, meta: { className: 'min-w-[80px]' } },
+      { id: 'vendorName', accessorKey: 'vendorName', header: 'Vendor', meta: { className: 'min-w-[160px]' } },
+      {
+        id: 'versionNo',
+        accessorKey: 'versionNo',
+        header: 'Version',
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[80px]' },
+        cell: ({ row }) => `v${row.original.versionNo}`,
+      },
+      {
+        id: 'level',
+        accessorFn: (item) => item.approvalLevel,
+        header: 'Waiting on',
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[200px]' },
+        cell: ({ row }) => (
+          <span className="flex flex-wrap items-center justify-center gap-1.5">
+            <span className="whitespace-nowrap">{levelLabel(row.original)}</span>
+            {row.original.covering && <Badge variant="warning-soft">Covering</Badge>}
+          </span>
+        ),
+      },
+      {
+        id: 'mrApprovedAt',
+        accessorFn: (item) => item.mrApprovedAt ?? '',
+        header: 'MR approved',
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[120px]' },
+        cell: ({ row }) => (row.original.mrApprovedAt ? formatDate(row.original.mrApprovedAt) : '—'),
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableColumnFilter: false,
+        enableSorting: false,
+        meta: { className: 'w-[56px]', pin: 'right' },
+        cell: ({ row }) => <IconButton icon={Eye} label={`Review ${row.original.orderDisplayId}`} onClick={() => setOpenId(row.original.designId)} />,
+      },
+    ],
+    [],
   )
 
   return (
-    <div className="space-y-4">
-      <MasterPageHeader title={pageTitle} description="Quick Gift requests, doctor changes and artwork from your team, waiting on your decision." />
+    <div>
+      <MasterPageHeader title={pageTitle} description="Artwork proofs from your team, waiting on your approval." />
 
-      {!isLoading && !doctorsLoading && !artworkLoading && total === 0 ? (
-        <EmptyState icon={CheckSquare} title="Nothing pending" description="You're all caught up. New requests appear here." />
-      ) : (
-        <AppTabs
-          value={tab}
-          onValueChange={setTab}
-          tabs={[
-            ...(canApproveQuickGifts
-              ? [{ value: 'quickGift', label: 'Quick Gift requests', badge: quickGifts?.length || undefined, content: quickGiftPanel }]
-              : []),
-            { value: 'doctors', label: 'Doctor changes', badge: doctorRequests?.length || undefined, content: doctorPanel },
-            { value: 'artwork', label: 'Artwork', badge: artwork?.length || undefined, content: artworkPanel },
-          ]}
-        />
-      )}
+      <DataTable<PendingArtworkApproval>
+        columns={columns}
+        data={artwork ?? []}
+        isLoading={isLoading}
+        listFields={LIST_FIELDS}
+        searchable
+        showRowSelectionColumn={false}
+        defaultSort={{ id: 'mrApprovedAt', desc: true }}
+        getRowId={(item) => item.designId}
+        tableId="artwork-approvals"
+        configNamespace="artwork-approvals"
+        emptyState={listEmptyBody({
+          error,
+          onRetry: () => void refetch(),
+          icon: <Palette className="h-8 w-8 opacity-50" />,
+          message: 'No artwork waiting for your approval',
+          description: "You're all caught up. New proofs appear here.",
+        })}
+      />
+
+      <Sheet open={open !== null} onOpenChange={(next) => !next && setOpenId(null)}>
+        <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
+          {open && (
+            <>
+              <SheetHeader className="border-b px-6 py-4 pr-10 text-left">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-11 w-11 place-items-center rounded-md bg-primary/10 text-primary">
+                    <Palette className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <SheetTitle className="truncate">{open.giftName ?? 'Artwork'}</SheetTitle>
+                    <SheetDescription>
+                      {open.orderDisplayId} · {levelLabel(open)}
+                    </SheetDescription>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+                <dl className="grid grid-cols-2 gap-4">
+                  <Detail label="Doctor">{open.recipientName}</Detail>
+                  <Detail label="Quantity">{open.quantity}</Detail>
+                  <Detail label="Vendor">{open.vendorName}</Detail>
+                  <Detail label="Requested by">{open.requestedByName}</Detail>
+                  <Detail label="MR approved by">{open.mrApprovedByName}</Detail>
+                  <Detail label="MR approved on">{open.mrApprovedAt ? formatDateTime(open.mrApprovedAt) : '—'}</Detail>
+                  <Detail label="Waiting on">{open.waitingOnName ?? 'No manager above the MR'}</Detail>
+                </dl>
+
+                {open.covering && (
+                  <Badge variant="warning-soft">
+                    {open.waitingOnName ? `Covering for ${open.waitingOnName}` : 'No manager above the MR: you sign as Final Artwork Approval'}
+                  </Badge>
+                )}
+
+                <section className="space-y-3">
+                  <h3 className="text-sm font-semibold">Proof · version {open.versionNo}</h3>
+                  <ArtworkProofPreview fileUrl={open.fileUrl} fileName={open.fileName} title={`Version ${open.versionNo} · ${open.orderDisplayId}`} />
+                </section>
+
+                <section className="space-y-3">
+                  <h3 className="text-sm font-semibold">Approval trail</h3>
+                  <ArtworkApprovalTrail steps={open.approvals} pending={{ level: open.approvalLevel, waitingOnName: open.waitingOnName }} />
+                </section>
+              </div>
+
+              <div className="flex gap-2 border-t px-6 py-4">
+                <Button loading={reviewArtwork.isPending} onClick={() => void approve(open)}>
+                  <Check />
+                  Approve
+                </Button>
+                <Button variant="outline" onClick={() => setRejecting(open)}>
+                  <X />
+                  Request changes
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <AppDialog
         open={rejecting !== null}
-        onOpenChange={(open) => {
-          if (!open) {
+        onOpenChange={(next) => {
+          if (!next) {
             setRejecting(null)
             setReason('')
           }
         }}
         size="sm"
-        title={
-          rejecting?.kind === 'artwork' ? 'Send artwork back to the vendor' : rejecting?.kind === 'doctor' ? 'Reject doctor change' : 'Reject Quick Gift request'
-        }
-        confirmLabel={rejecting?.kind === 'artwork' ? 'Send back to vendor' : 'Reject'}
+        title="Send artwork back to the vendor"
+        confirmLabel="Send back to vendor"
         confirmVariant="destructive"
         cancelLabel="Cancel"
         confirmDisabled={!reason.trim()}
-        loading={rejectQuickGift.isPending || rejectDoctor.isPending || reviewArtwork.isPending}
-        onConfirm={() => void confirmReject()}
+        loading={reviewArtwork.isPending}
+        onConfirm={() => void sendBack()}
       >
-        <LabelledField id="reject-reason" label={rejecting?.kind === 'artwork' ? 'What should change? (shown to the vendor)' : 'Reason (shown to the requester)'}>
+        <LabelledField id="reject-reason" label="What should change? (shown to the vendor)">
           <Textarea id="reject-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} />
         </LabelledField>
       </AppDialog>
-      <PhotoLinkDialog prompt={photoPrompt} onClose={() => setPhotoPrompt(null)} />
     </div>
   )
 }

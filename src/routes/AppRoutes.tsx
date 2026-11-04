@@ -123,7 +123,7 @@ export function AppRoutes() {
           <Route path="/recipients" element={<Guard permission={P.DOCTOR_VIEW}><RecipientsPage /></Guard>} />
           {/* My Doctors was folded into Doctors; keep old links working. */}
           <Route path="/my-doctors" element={<Navigate to="/recipients" replace />} />
-          <Route path="/approvals" element={<Guard permissions={[P.QUICK_GIFT_APPROVE, P.ARTWORK_FINAL_APPROVE]} forManagers><ApprovalQueuePage /></Guard>} />
+          <Route path="/approvals" element={<Guard permissions={[P.ARTWORK_REVIEW, P.ARTWORK_FINAL_APPROVE]}><ApprovalQueuePage /></Guard>} />
           <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CampaignOrdersPage /></Guard>} />
           <Route path="/company/vendors" element={<Guard permission={P.COMPANY_VENDOR_VIEW}><CompanyVendorsPage /></Guard>} />
           <Route path="/warehouses" element={<Guard permission={P.WAREHOUSE_VIEW}><WarehousesPage /></Guard>} />

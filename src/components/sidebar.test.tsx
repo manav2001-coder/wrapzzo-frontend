@@ -20,13 +20,13 @@ describe('Sidebar', () => {
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/dashboard')
     expect(screen.getByRole('link', { name: /quick gift/i })).toHaveAttribute('href', '/quick-gift')
-    // No campaign.view and no approval action, so the Campaigns > Create link and the Approvals entry are not offered.
+    // No campaign.view and no artwork key, so the Campaigns > Create link and the Approvals entry are not offered.
     expect(screen.queryByRole('link', { name: /approvals/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Create' })).not.toBeInTheDocument()
   })
 
-  it('offers Approvals to a manager with direct reports even without an approval key', () => {
-    companyUser(['dashboard.view', 'quick_gift.create', 'gift_store.view', 'doctor.view', 'order.view'], true)
+  it('offers Approvals to whoever may review artwork, and to no one else', () => {
+    companyUser(['dashboard.view', 'order.view', 'artwork.review'], true)
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /approvals/i })).toHaveAttribute('href', '/approvals')
   })

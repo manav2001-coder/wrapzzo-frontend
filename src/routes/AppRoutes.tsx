@@ -89,41 +89,41 @@ export function AppRoutes() {
 
           <Route path="/admin/vendors" element={<Guard permission={P.PLATFORM_VENDOR_VIEW}><VendorListPage /></Guard>} />
 
-          <Route path="/admin/gifts" element={<Guard permission={P.PLATFORM_PRODUCT_VIEW}><GiftListPage /></Guard>} />
-          <Route path="/admin/gifts/new" element={<Guard permission={P.PLATFORM_PRODUCT_CREATE}><GiftFormPage /></Guard>} />
-          <Route path="/admin/gifts/:id" element={<Guard permission={P.PLATFORM_PRODUCT_VIEW}><GiftFormPage /></Guard>} />
+          <Route path="/admin/gifts" element={<Guard permission={P.PLATFORM_GIFT_VIEW}><GiftListPage /></Guard>} />
+          <Route path="/admin/gifts/new" element={<Guard permission={P.PLATFORM_GIFT_CREATE}><GiftFormPage /></Guard>} />
+          <Route path="/admin/gifts/:id" element={<Guard permission={P.PLATFORM_GIFT_VIEW}><GiftFormPage /></Guard>} />
 
           <Route path="/admin/orders" element={<Guard permission={P.PLATFORM_ORDER_VIEW}><OrdersPage /></Guard>} />
 
           {/* Access Control (TBAC), MobixFL's screens: the masters, then the four assignments. */}
-          <Route path="/tbac/feature-master" element={<Guard permission={P.TBAC_FEATURE_MASTER_VIEW}><FeatureMasterPage /></Guard>} />
-          <Route path="/tbac/template-master" element={<Guard permission={P.TBAC_TEMPLATE_MASTER_VIEW}><TemplateMasterPage /></Guard>} />
-          <Route path="/tbac/template-master/create" element={<Guard permission={P.TBAC_TEMPLATE_MASTER_ADD}><TemplateMasterFormPage mode="create" /></Guard>} />
-          <Route path="/tbac/template-master/edit/:id" element={<Guard permission={P.TBAC_TEMPLATE_MASTER_EDIT}><TemplateMasterFormPage mode="edit" /></Guard>} />
-          <Route path="/tbac/template-master/view/:id" element={<Guard permission={P.TBAC_TEMPLATE_MASTER_VIEW}><TemplateMasterFormPage mode="view" /></Guard>} />
-          <Route path="/tbac/features-to-template" element={<Guard permission={P.TBAC_FEATURES_TO_TEMPLATE_MANAGE}><FeaturesToTemplatePage /></Guard>} />
-          <Route path="/tbac/features-to-template/:templateId" element={<Guard permission={P.TBAC_FEATURES_TO_TEMPLATE_MANAGE}><FeaturesToTemplateAssignPage /></Guard>} />
-          <Route path="/tbac/templates-to-template" element={<Guard permission={P.TBAC_TEMPLATES_TO_TEMPLATE_MANAGE}><TemplatesToTemplatePage /></Guard>} />
-          <Route path="/tbac/templates-to-template/:templateId" element={<Guard permission={P.TBAC_TEMPLATES_TO_TEMPLATE_MANAGE}><TemplatesToTemplateAssignPage /></Guard>} />
-          <Route path="/tbac/assignments/users/bulk-assign" element={<Guard permission={P.TBAC_BULK_ASSIGN_USER_TEMPLATES}><BulkUserTemplateAssignPage /></Guard>} />
-          <Route path="/tbac/assignments/users" element={<Guard permission={P.TBAC_USER_TEMPLATE_MANAGE}><UserTemplatesPage /></Guard>} />
-          <Route path="/tbac/assignments/users/:userId" element={<Guard permission={P.TBAC_USER_TEMPLATE_MANAGE}><UserTemplateAssignPage /></Guard>} />
-          <Route path="/tbac/assignments/roles" element={<Guard permission={P.TBAC_ROLE_TEMPLATE_MANAGE}><RoleTemplatesPage /></Guard>} />
-          <Route path="/tbac/assignments/roles/:roleId" element={<Guard permission={P.TBAC_ROLE_TEMPLATE_MANAGE}><RoleTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/feature-master" element={<Guard permission={P.FEATURE_MASTER_VIEW}><FeatureMasterPage /></Guard>} />
+          <Route path="/tbac/template-master" element={<Guard permission={P.TEMPLATE_MASTER_VIEW}><TemplateMasterPage /></Guard>} />
+          <Route path="/tbac/template-master/create" element={<Guard permission={P.TEMPLATE_MASTER_ADD}><TemplateMasterFormPage mode="create" /></Guard>} />
+          <Route path="/tbac/template-master/edit/:id" element={<Guard permission={P.TEMPLATE_MASTER_EDIT}><TemplateMasterFormPage mode="edit" /></Guard>} />
+          <Route path="/tbac/template-master/view/:id" element={<Guard permission={P.TEMPLATE_MASTER_VIEW}><TemplateMasterFormPage mode="view" /></Guard>} />
+          <Route path="/tbac/features-to-template" element={<Guard permission={P.FEATURES_TO_TEMPLATE_VIEW}><FeaturesToTemplatePage /></Guard>} />
+          <Route path="/tbac/features-to-template/:templateId" element={<Guard permission={P.FEATURES_TO_TEMPLATE_VIEW}><FeaturesToTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/templates-to-template" element={<Guard permission={P.TEMPLATES_TO_TEMPLATE_VIEW}><TemplatesToTemplatePage /></Guard>} />
+          <Route path="/tbac/templates-to-template/:templateId" element={<Guard permission={P.TEMPLATES_TO_TEMPLATE_VIEW}><TemplatesToTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/assignments/users/bulk-assign" element={<Guard permission={P.USER_TEMPLATE_BULK_ASSIGN}><BulkUserTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/assignments/users" element={<Guard permission={P.USER_TEMPLATE_VIEW}><UserTemplatesPage /></Guard>} />
+          <Route path="/tbac/assignments/users/:userId" element={<Guard permission={P.USER_TEMPLATE_VIEW}><UserTemplateAssignPage /></Guard>} />
+          <Route path="/tbac/assignments/roles" element={<Guard permission={P.ROLE_TEMPLATE_VIEW}><RoleTemplatesPage /></Guard>} />
+          <Route path="/tbac/assignments/roles/:roleId" element={<Guard permission={P.ROLE_TEMPLATE_VIEW}><RoleTemplateAssignPage /></Guard>} />
 
           {/* Campaigns module -- company-side, PRD Part 2.5. Peer of /admin, not nested under it. */}
           <Route path="/dashboard" element={<Guard permission={P.DASHBOARD_VIEW}><DashboardPage /></Guard>} />
-          <Route path="/quick-gift" element={<Guard permission={P.REQUEST_CREATE}><QuickGiftLandingPage /></Guard>} />
-          <Route path="/quick-gift/new/:giftId" element={<Guard permission={P.REQUEST_CREATE}><QuickGiftFormPage /></Guard>} />
-          <Route path="/gift-store" element={<Guard permission={P.PRODUCT_VIEW}><GiftStorePage /></Guard>} />
+          <Route path="/quick-gift" element={<Guard permission={P.QUICK_GIFT_CREATE}><QuickGiftLandingPage /></Guard>} />
+          <Route path="/quick-gift/new/:giftId" element={<Guard permission={P.QUICK_GIFT_CREATE}><QuickGiftFormPage /></Guard>} />
+          <Route path="/gift-store" element={<Guard permission={P.GIFT_STORE_VIEW}><GiftStorePage /></Guard>} />
           <Route path="/campaigns" element={<Guard permission={P.CAMPAIGN_VIEW}><CampaignListPage /></Guard>} />
           <Route path="/campaigns/new" element={<Guard permission={P.CAMPAIGN_CREATE}><CampaignWizardPage /></Guard>} />
           <Route path="/campaigns/:id" element={<Guard permissions={[P.CAMPAIGN_VIEW, P.CAMPAIGN_ENTRY_SUBMIT]}><CampaignDetailPage /></Guard>} />
           <Route path="/campaigns/:id/submit" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><SubmissionFormPage /></Guard>} />
           <Route path="/my-campaigns" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><MyCampaignsPage /></Guard>} />
-          <Route path="/recipients" element={<Guard permission={P.RECIPIENT_VIEW}><RecipientsPage /></Guard>} />
-          <Route path="/my-doctors" element={<Guard permissions={[P.RECIPIENT_LIST_MANAGE, P.REQUEST_CREATE]}><MyDoctorsPage /></Guard>} />
-          <Route path="/approvals" element={<Guard permissions={[P.REQUEST_APPROVE, P.ORDER_ARTWORK_FINAL]} forManagers><ApprovalQueuePage /></Guard>} />
+          <Route path="/recipients" element={<Guard permission={P.DOCTOR_VIEW}><RecipientsPage /></Guard>} />
+          <Route path="/my-doctors" element={<Guard permissions={[P.MY_DOCTORS_MANAGE, P.QUICK_GIFT_CREATE]}><MyDoctorsPage /></Guard>} />
+          <Route path="/approvals" element={<Guard permissions={[P.QUICK_GIFT_APPROVE, P.ARTWORK_FINAL_APPROVE]} forManagers><ApprovalQueuePage /></Guard>} />
           <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CampaignOrdersPage /></Guard>} />
           <Route path="/company/vendors" element={<Guard permission={P.COMPANY_VENDOR_VIEW}><CompanyVendorsPage /></Guard>} />
           <Route path="/warehouses" element={<Guard permission={P.WAREHOUSE_VIEW}><WarehousesPage /></Guard>} />

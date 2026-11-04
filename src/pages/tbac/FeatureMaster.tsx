@@ -101,7 +101,7 @@ export default function FeatureMasterPage() {
           enableColumnFilter: false,
           enableSorting: false,
           cell: ({ row }) => (
-            <PermissionGate permission="tbac.feature_master.edit">
+            <PermissionGate permission="feature_master.edit">
               <IconButton
                 icon={row.original.active ? Trash2 : CheckCircle2}
                 label={
@@ -125,7 +125,7 @@ export default function FeatureMasterPage() {
         title={t("featureMaster.title")}
         description={t("featureMaster.subtitle")}
         createLabel={t("featureMaster.bulkRegister")}
-        createPermission="tbac.feature_master.add"
+        createPermission="feature_master.add"
         extra={scope.control}
         onCreate={() => setRegisterOpen(true)}
       />
@@ -139,7 +139,7 @@ export default function FeatureMasterPage() {
         getRowId={(row) => row.id}
         showRowSelectionColumn={false}
         refreshTrigger={refreshTrigger}
-        permission="tbac.feature_master.view"
+        permission="feature_master.view"
       />
 
       <BulkFeatureRegisterDialog

@@ -73,7 +73,7 @@ function design(overrides: Partial<OrderDesign> = {}): OrderDesign {
 
 function signedInAsMr() {
   useCurrentUser.mockReturnValue({
-    data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['request.create', 'product.view', 'recipient_list.manage', 'order.view', 'order.artwork_review'] },
+    data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['quick_gift.create', 'gift_store.view', 'my_doctors.manage', 'order.view', 'artwork.review'] },
     isLoading: false,
   })
 }

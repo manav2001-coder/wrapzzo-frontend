@@ -16,7 +16,7 @@ export function GiftStorePage() {
   const pageTitle = useMenuLabel('gift-store', t('store.title'))
   const navigate = useNavigate()
   const { data: gifts, isLoading } = useActiveGifts()
-  const canQuickGift = useHasAccess(P.REQUEST_CREATE)
+  const canQuickGift = useHasAccess(P.QUICK_GIFT_CREATE)
   const canLaunchCampaign = useHasAccess(P.CAMPAIGN_CREATE)
 
   return (

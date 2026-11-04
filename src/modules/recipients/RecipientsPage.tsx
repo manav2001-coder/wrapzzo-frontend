@@ -30,7 +30,7 @@ export function RecipientsPage() {
   const { t } = useTranslation('recipients')
   const pageTitle = useMenuLabel('recipients', t('directory.title'))
   const { data: recipients, isLoading, error, refetch } = useRecipients()
-  const canEdit = useHasAccess(P.RECIPIENT_EDIT)
+  const canEdit = useHasAccess(P.DOCTOR_EDIT)
   // `undefined` = closed, `null` = adding, a recipient = editing it.
   const [editing, setEditing] = useState<Recipient | null | undefined>(undefined)
 
@@ -80,7 +80,7 @@ export function RecipientsPage() {
         title={pageTitle}
         description={t('directory.subtitle')}
         createLabel={t('directory.add')}
-        createPermission={P.RECIPIENT_CREATE}
+        createPermission={P.DOCTOR_CREATE}
         onCreate={() => setEditing(null)}
       />
       <UpcomingBirthdaysWidget />

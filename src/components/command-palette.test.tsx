@@ -7,7 +7,7 @@ import { CommandPalette } from './command-palette'
 
 vi.mock('@/hooks/use-current-user', () => ({
   useCurrentUser: () => ({
-    data: { companyId: 'c1', companyName: 'Acme', permissions: ['dashboard.view', 'request.create', 'product.view', 'recipient_list.manage'] },
+    data: { companyId: 'c1', companyName: 'Acme', permissions: ['dashboard.view', 'quick_gift.create', 'gift_store.view', 'my_doctors.manage'] },
     isLoading: false,
   }),
   CURRENT_USER_QUERY_KEY: ['me'],

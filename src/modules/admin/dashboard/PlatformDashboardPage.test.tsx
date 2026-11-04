@@ -10,7 +10,7 @@ vi.mock('@/hooks/use-current-user', async (o) => ({ ...(await o<object>()), useC
 
 describe('PlatformDashboardPage', () => {
   it('greets the signed-in user and links to the masters they can reach', async () => {
-    const staff = platformStaff([P.PLATFORM_COMPANY_VIEW, P.PLATFORM_VENDOR_VIEW, P.ROLE_VIEW, P.USER_VIEW, P.PLATFORM_ORDER_VIEW, P.PLATFORM_PRODUCT_VIEW])
+    const staff = platformStaff([P.PLATFORM_COMPANY_VIEW, P.PLATFORM_VENDOR_VIEW, P.ROLE_VIEW, P.USER_VIEW, P.PLATFORM_ORDER_VIEW, P.PLATFORM_GIFT_VIEW])
     currentUser.mockReturnValue({ ...staff, data: { ...staff.data, name: 'Manav Nagpal' } })
 
     renderWithProviders(<PlatformDashboardPage />, {

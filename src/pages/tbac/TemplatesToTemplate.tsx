@@ -70,7 +70,7 @@ export default function TemplatesToTemplatePage() {
         enableColumnFilter: false,
         enableSorting: false,
         cell: ({ row }) => (
-          <PermissionGate permission="tbac.templates_to_template.manage">
+          <PermissionGate permission="templates_to_template.view">
             <IconButton
               icon={Settings2}
               label={t("templatesToTemplate.manage")}
@@ -99,7 +99,7 @@ export default function TemplatesToTemplatePage() {
         fetchData={fetchTemplates}
         getRowId={(row) => row.id}
         showRowSelectionColumn={false}
-        permission="tbac.templates_to_template.manage"
+        permission="templates_to_template.view"
       />
     </div>
   );

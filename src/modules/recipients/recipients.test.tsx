@@ -27,7 +27,7 @@ vi.mock('@/api/recipients', async (importOriginal) => ({
   removeMyDoctor,
 }))
 const useCurrentUser = vi.hoisted(() =>
-  vi.fn(() => ({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['recipient.view', 'recipient.create', 'recipient.edit', 'recipient_list.manage', 'request.create', 'product.view'] }, isLoading: false })),
+  vi.fn(() => ({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['doctor.view', 'doctor.create', 'doctor.edit', 'my_doctors.manage', 'quick_gift.create', 'gift_store.view'] }, isLoading: false })),
 )
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
@@ -138,5 +138,17 @@ describe('MyDoctorsPage', () => {
     expect(within(dialog).getByLabelText('Clinic / hospital')).toHaveValue('Shah Clinic')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }))
     await waitFor(() => expect(updateMyDoctor).toHaveBeenCalledWith('r-1', expect.objectContaining({ name: 'Dr. Asha Shah' })))
+  })
+
+  it('lists the doctors but offers no changes to someone without my_doctors.manage', async () => {
+    useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['quick_gift.create', 'gift_store.view'] }, isLoading: false })
+    listMyRecipients.mockResolvedValue([recipient()])
+    renderWithProviders(<MyDoctorsPage />)
+
+    expect(await screen.findByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Add doctor/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Bulk upload/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit Dr. Asha Shah' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove Dr. Asha Shah' })).not.toBeInTheDocument()
   })
 })

@@ -166,7 +166,7 @@ export default function FeaturesToTemplatePage() {
                           <StatusCell active={template.active} />
                         </TableCell>
                         <TableCell className="text-right">
-                          <PermissionGate permission="tbac.features_to_template.manage">
+                          <PermissionGate permission="features_to_template.view">
                             <IconButton
                               icon={Settings2}
                               label={t("featuresToTemplate.manage")}
@@ -179,7 +179,7 @@ export default function FeaturesToTemplatePage() {
                       {open && (
                         <TableRow>
                           <TableCell colSpan={columnCount} className="p-0">
-                            <PermissionGate permission="tbac.features_to_template.assignment">
+                            <PermissionGate permission="features_to_template.assign">
                               <TemplateQuickAddRow
                                 template={template}
                                 onCountUpdate={handleCountUpdate}

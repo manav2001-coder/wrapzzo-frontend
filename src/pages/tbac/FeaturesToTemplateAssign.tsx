@@ -180,7 +180,7 @@ export default function FeaturesToTemplateAssignPage() {
         inherited={effective.inherited.map(toItem)}
         onAdd={handleAdd}
         onRemove={handleRemove}
-        permission="tbac.features_to_template.assignment"
+        permission="features_to_template.assign"
         availableSearch={search}
         onAvailableSearchChange={setSearch}
         availableTotal={

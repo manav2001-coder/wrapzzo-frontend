@@ -7,11 +7,17 @@ import { RecurringPlansTable } from './RecurringPlansTable'
 
 const listMyRecurringOrderPlans = vi.hoisted(() => vi.fn())
 const actOnRecurringOrderPlan = vi.hoisted(() => vi.fn())
+const useCurrentUser = vi.hoisted(() => vi.fn())
 vi.mock('@/api/recurringOrders', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   listMyRecurringOrderPlans,
   actOnRecurringOrderPlan,
 }))
+vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
+
+function signedInWith(...permissions: string[]) {
+  useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', companyName: 'Alembic', permissions }, isLoading: false })
+}
 
 function plan(overrides: Partial<RecurringOrderPlan> = {}): RecurringOrderPlan {
   return {
@@ -36,6 +42,7 @@ describe('RecurringPlansTable', () => {
   beforeEach(() => {
     listMyRecurringOrderPlans.mockReset()
     actOnRecurringOrderPlan.mockReset()
+    signedInWith('quick_gift.create')
   })
 
   it('places the next order on demand', async () => {
@@ -61,5 +68,16 @@ describe('RecurringPlansTable', () => {
     expect(screen.getAllByRole('button', { name: 'Resume' })).toHaveLength(1)
     expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Stop these orders' })).toHaveLength(1)
+  })
+
+  it('shows the plans but no actions to someone who may not send gifts', async () => {
+    signedInWith('order.view')
+    listMyRecurringOrderPlans.mockResolvedValue([plan()])
+    renderWithProviders(<RecurringPlansTable />)
+
+    expect(await screen.findByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Place next order now' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Stop these orders' })).not.toBeInTheDocument()
   })
 })

@@ -216,7 +216,7 @@ export default function TemplateMasterFormPage({ mode }: { mode: TemplateFormMod
         }
         hideSubmitButton={readOnly}
         submitPermission={
-          mode === "edit" ? "tbac.template_master.edit" : "tbac.template_master.add"
+          mode === "edit" ? "template_master.edit" : "template_master.add"
         }
         onSubmit={handleSubmit}
       />

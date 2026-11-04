@@ -50,8 +50,8 @@ export function GiftListPage() {
     onEdit: (gift) => navigate(`/admin/gifts/${gift.id}`),
     onActivate: (gift) => changeStatus(gift, true),
     onDeactivate: (gift) => changeStatus(gift, false),
-    editPermission: P.PLATFORM_PRODUCT_STATUS,
-    deletePermission: P.PLATFORM_PRODUCT_STATUS,
+    editPermission: P.PLATFORM_GIFT_EDIT,
+    statusPermission: P.PLATFORM_GIFT_STATUS,
     deactivateCopy: { label: t('gifts.markOut'), title: t('gifts.outTitle'), body: t('gifts.outBody') },
   })
 
@@ -124,7 +124,7 @@ export function GiftListPage() {
         title={t('gifts.title')}
         description={t('gifts.subtitle')}
         createLabel={t('gifts.add')}
-        createPermission={P.PLATFORM_PRODUCT_CREATE}
+        createPermission={P.PLATFORM_GIFT_CREATE}
         onCreate={() => navigate('/admin/gifts/new')}
       />
       <DataTable<Gift>

@@ -11,9 +11,11 @@ import { ConfirmDialog } from '@/components/confirm-dialog'
 import { IconButton } from '@/components/icon-button'
 import { Badge } from '@/components/ui/badge'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useMyRecurringOrderPlans, useRecurringOrderPlanAction } from '@/hooks/useRecurringOrders'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = {
   giftName: 'text',
@@ -37,6 +39,7 @@ export function RecurringPlansTable() {
   const showError = useApiErrorToast()
   const { data: plans, isLoading, error, refetch } = useMyRecurringOrderPlans()
   const act = useRecurringOrderPlanAction()
+  const canManage = useHasAccess(P.QUICK_GIFT_CREATE)
   const [cancelling, setCancelling] = useState<RecurringOrderPlan | null>(null)
 
   const run = useCallback(
@@ -109,7 +112,7 @@ export function RecurringPlansTable() {
         meta: { className: 'w-[140px]', pin: 'right' },
         cell: ({ row }) => {
           const plan = row.original
-          if (plan.status === 'CANCELLED') return null
+          if (plan.status === 'CANCELLED' || !canManage) return null
           return (
             <div className="flex justify-end gap-1">
               <IconButton icon={Send} label={t('monthly.placeNextNow')} disabled={act.isPending} onClick={() => void run(plan, 'placeNextNow')} />
@@ -124,7 +127,7 @@ export function RecurringPlansTable() {
         },
       },
     ]
-  }, [t, act, run])
+  }, [t, act, run, canManage])
 
   return (
     <>

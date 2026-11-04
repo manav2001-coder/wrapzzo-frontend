@@ -19,6 +19,7 @@ import { StatCard } from '@/components/stat-card'
 import { Button } from '@/components/ui/button'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useMyOrgUnits } from '@/hooks/useMyOrgUnits'
 import { useAdvanceWarehouseOrder, useSaveWarehouse, useWarehouseOrders, useWarehouses } from '@/hooks/useWarehouses'
 import { formatDateTime } from '@/lib/datetime'
@@ -132,6 +133,7 @@ function WarehouseOrdersTab() {
   const showError = useApiErrorToast()
   const { data: orders, isLoading, error, refetch } = useWarehouseOrders()
   const advance = useAdvanceWarehouseOrder()
+  const canOperate = useHasAccess(P.WAREHOUSE_OPERATE)
   const [statusFilter, setStatusFilter] = useState<OrderStatus | null>(null)
 
   const count = (status: OrderStatus) => (orders ?? []).filter((o) => o.status === status).length
@@ -207,6 +209,7 @@ function WarehouseOrdersTab() {
               <span className="text-xs text-muted-foreground">With the vendor</span>
             ) : null
           }
+          if (!canOperate) return null
           return (
             <Button size="sm" disabled={advance.isPending} onClick={() => void move(row.original, next.status, next.label)}>
               {next.label}
@@ -215,7 +218,7 @@ function WarehouseOrdersTab() {
         },
       },
     ]
-  }, [advance, showError, t])
+  }, [advance, canOperate, showError, t])
 
   return (
     <div className="space-y-4">
@@ -282,6 +285,7 @@ function WarehouseOrdersTab() {
 
 function WarehouseSetupTab({ onEdit }: { onEdit: (warehouse: Warehouse) => void }) {
   const { data: warehouses, isLoading, error, refetch } = useWarehouses()
+  const canSetup = useHasAccess(P.WAREHOUSE_SETUP)
 
   const columns = useMemo<ColumnDef<Warehouse, unknown>[]>(
     () => [
@@ -307,10 +311,10 @@ function WarehouseSetupTab({ onEdit }: { onEdit: (warehouse: Warehouse) => void 
         enableColumnFilter: false,
         enableSorting: false,
         meta: { className: 'w-[56px]', pin: 'right' },
-        cell: ({ row }) => <IconButton icon={Pencil} label={`Edit ${row.original.name}`} onClick={() => onEdit(row.original)} />,
+        cell: ({ row }) => (canSetup ? <IconButton icon={Pencil} label={`Edit ${row.original.name}`} onClick={() => onEdit(row.original)} /> : null),
       },
     ],
-    [onEdit],
+    [onEdit, canSetup],
   )
 
   return (

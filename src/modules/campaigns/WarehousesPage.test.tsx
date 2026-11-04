@@ -69,4 +69,14 @@ describe('WarehousesPage', () => {
     expect(screen.getByText('With the vendor')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Mark received' })).not.toBeInTheDocument()
   })
+
+  it('shows the orders but no way to move them or to add a warehouse without the operate and setup actions', async () => {
+    useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', permissions: ['warehouse.view'] }, isLoading: false })
+    listWarehouseOrders.mockResolvedValue([order()])
+    renderWithProviders(<WarehousesPage />)
+
+    expect(await screen.findByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Mark received' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Add warehouse/ })).not.toBeInTheDocument()
+  })
 })

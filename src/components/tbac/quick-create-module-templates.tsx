@@ -149,7 +149,7 @@ export function QuickCreateModuleTemplates({
               </CollapsibleTrigger>
               {availableModules.length > 0 && (
                 <PermissionButton
-                  permission="tbac.template_master.add"
+                  permission="template_master.add"
                   size="sm"
                   onClick={() => void handleAll()}
                   disabled={creatingAll || busyModule !== null}

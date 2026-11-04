@@ -57,7 +57,8 @@ export function OrdersPage() {
   const { t } = useTranslation('orders')
   const pageTitle = useMenuLabel('company-orders', t('company.title'))
   const showError = useApiErrorToast()
-  const canReview = useHasAccess(P.ORDER_ARTWORK_REVIEW)
+  const canReview = useHasAccess(P.ARTWORK_REVIEW)
+  const canRequestPhoto = useHasAccess(P.ORDER_REQUEST_PHOTO)
   const { data: orders, isLoading, error, refetch } = useOrders()
   const requestPhotoLink = useRequestOrderPhotoLink()
 
@@ -239,7 +240,7 @@ export function OrdersPage() {
       <OrderDetailSheet
         order={open}
         onClose={() => setOpenId(null)}
-        onRequestPhotoLink={(order) => void sendPhotoLink(order)}
+        onRequestPhotoLink={canRequestPhoto ? (order) => void sendPhotoLink(order) : undefined}
         requestingPhotoLink={requestPhotoLink.isPending}
         actions={open && canReview ? <ArtworkReview orderId={open.id} artworkRequired={open.artworkRequired} /> : undefined}
       />

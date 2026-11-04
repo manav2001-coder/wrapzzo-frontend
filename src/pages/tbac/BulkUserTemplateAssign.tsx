@@ -189,7 +189,7 @@ export default function BulkUserTemplateAssignPage() {
         direct={selected}
         onAdd={(ids) => setSelectedIds((prev) => [...new Set([...prev, ...ids])])}
         onRemove={(ids) => setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)))}
-        permission="tbac.bulk_assign_user_templates"
+        permission="user_template.bulk_assign"
         availableSearch={search}
         onAvailableSearchChange={setSearch}
         labels={{ assigned: t("bulkAssign.title") }}
@@ -200,7 +200,7 @@ export default function BulkUserTemplateAssignPage() {
           {t("action.cancel", { ns: "common" })}
         </Button>
         <PermissionButton
-          permission="tbac.bulk_assign_user_templates"
+          permission="user_template.bulk_assign"
           onClick={() => void handleSubmit()}
           disabled={selectedIds.length === 0 || submitting}
         >

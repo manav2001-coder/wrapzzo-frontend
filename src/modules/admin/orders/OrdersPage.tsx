@@ -21,11 +21,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess } from '@/hooks/use-permission'
 import { usePlatformOrders, useRequestPlatformOrderPhotoLink } from '@/hooks/useOrders'
 import { useVendors } from '@/hooks/useVendors'
 import { formatDate } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
@@ -58,6 +60,7 @@ export function OrdersPage() {
   const orders = useMemo(() => (companyId ? (allOrders ?? []).filter((order) => order.companyId === companyId) : []), [allOrders, companyId])
   const { data: vendors } = useVendors()
   const requestPhotoLink = useRequestPlatformOrderPhotoLink()
+  const canManage = useHasAccess(P.PLATFORM_ORDER_MANAGE)
 
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [assigning, setAssigning] = useState<Order[] | null>(null)
@@ -203,7 +206,7 @@ export function OrdersPage() {
           return (
             <div className="flex items-center justify-end gap-0.5">
               <IconButton icon={Eye} label={t('detail.title', { id: order.displayId })} onClick={() => setOpenOrderId(order.id)} />
-              {assignable(order) && (
+              {canManage && assignable(order) && (
                 <>
                   <IconButton
                     icon={Wand2}
@@ -226,7 +229,7 @@ export function OrdersPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t],
+    [t, canManage],
   )
 
   return (
@@ -255,11 +258,11 @@ export function OrdersPage() {
         refreshTrigger={refreshTrigger}
         defaultSort={{ id: 'createdAt', desc: true }}
         getRowId={(order) => order.id}
-        getRowCanSelect={assignable}
+        getRowCanSelect={(order) => canManage && assignable(order)}
         tableId="platform-orders"
         configNamespace="platform-orders"
         renderBulkActions={(_options, selected) =>
-          selected.length > 0 && (
+          canManage && selected.length > 0 && (
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -322,7 +325,7 @@ export function OrdersPage() {
       <OrderDetailSheet
         order={openOrder}
         onClose={() => setOpenOrderId(null)}
-        onRequestPhotoLink={(order) => void sendPhotoLink(order)}
+        onRequestPhotoLink={canManage ? (order) => void sendPhotoLink(order) : undefined}
         requestingPhotoLink={requestPhotoLink.isPending}
       />
       <PhotoLinkDialog prompt={photoPrompt} onClose={() => setPhotoPrompt(null)} />

@@ -14,6 +14,7 @@ import { MasterDrawer } from '@/components/masters/master-drawer'
 import { useCompanyScope } from '@/components/masters/company-scope-select'
 import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useCompanies } from '@/hooks/useCompanies'
 import { useAddVendor, useEditVendor, useReplaceVendorCoverage, useResendVendorInvite, useSetVendorStatus, useVendorCoverage, useVendors } from '@/hooks/useVendors'
 import type { ListFieldMap } from '@/lib/list-fields'
@@ -46,6 +47,7 @@ const toNumber = (value: unknown) => (value === '' || value == null ? undefined 
 export function VendorListPage() {
   const { t } = useTranslation('admin')
   const showError = useApiErrorToast()
+  const canEditVendor = useHasAccess(P.PLATFORM_VENDOR_EDIT)
   // A vendor serves companies, so the list follows the company in scope: the vendors serving it.
   const scope = useCompanyScope()
   const { data: vendors, dataUpdatedAt, error, refetch } = useVendors(scope.companyId)
@@ -97,10 +99,10 @@ export function VendorListPage() {
     onEdit: (vendor) => setDrawer(vendor.id),
     onActivate: (vendor) => changeStatus(vendor, true),
     onDeactivate: (vendor) => changeStatus(vendor, false),
-    editPermission: P.PLATFORM_VENDOR_STATUS,
-    deletePermission: P.PLATFORM_VENDOR_STATUS,
+    editPermission: P.PLATFORM_VENDOR_EDIT,
+    statusPermission: P.PLATFORM_VENDOR_STATUS,
     deactivateCopy: { label: t('vendors.suspend'), title: t('vendors.suspendTitle'), body: t('vendors.suspendBody') },
-    extraActions: (vendor) => <IconButton icon={Mail} label={t('vendors.resendInvite')} onClick={() => void resend(vendor)} />,
+    extraActions: (vendor) => (canEditVendor ? <IconButton icon={Mail} label={t('vendors.resendInvite')} onClick={() => void resend(vendor)} /> : null),
   })
 
   const columns = useMemo<ColumnDef<Vendor, unknown>[]>(

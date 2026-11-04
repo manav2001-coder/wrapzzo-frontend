@@ -72,7 +72,7 @@ beforeEach(() => {
   api.listActiveGifts.mockResolvedValue([])
   api.listPendingDoctorChangeRequests.mockResolvedValue([])
   api.listPendingArtworkApprovals.mockResolvedValue([])
-  signedInWith(['campaign.view', 'campaign.create', 'campaign.edit', 'campaign.publish', 'campaign_entry.view', 'request.approve', 'order.view', 'product.view', 'campaign_entry.submit'])
+  signedInWith(['campaign.view', 'campaign.create', 'campaign.edit', 'campaign.publish', 'campaign_entry.view', 'quick_gift.approve', 'order.view', 'gift_store.view', 'campaign_entry.submit'])
 })
 
 describe('CampaignListPage', () => {

@@ -16,7 +16,7 @@ import { useHasAccess } from '@/hooks/use-permission'
 import { P } from '@/lib/permissions'
 
 export function useRecipients() {
-  const canView = useHasAccess(P.RECIPIENT_VIEW)
+  const canView = useHasAccess(P.DOCTOR_VIEW)
   return useQuery({ queryKey: ['recipients'], queryFn: listRecipients, enabled: canView })
 }
 
@@ -87,7 +87,7 @@ export function useRemoveMyDoctor() {
 }
 
 export function useUpcomingBirthdays(days = 30) {
-  const canView = useHasAccess(P.RECIPIENT_VIEW)
+  const canView = useHasAccess(P.DOCTOR_VIEW)
   return useQuery({
     queryKey: ['recipients', 'upcoming-birthdays', days],
     queryFn: () => listUpcomingBirthdays(days),

@@ -14,6 +14,7 @@ import { emailField, phoneField, textField } from '@/components/masters/master-f
 import { MasterDrawer } from '@/components/masters/master-drawer'
 import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useCompanies, useCreateCompany, useSetCompanyStatus, useUpdateCompany } from '@/hooks/useCompanies'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { rowsFetcher } from '@/lib/masters-api'
@@ -38,6 +39,8 @@ const text = (value: unknown) => String(value ?? '').trim()
 export function CompanyListPage() {
   const { t } = useTranslation('admin')
   const showError = useApiErrorToast()
+  // The features panel (feature flags, artwork approval levels) is its own permission, apart from editing the company.
+  const canConfigure = useHasAccess(P.PLATFORM_COMPANY_CONFIGURE)
   const { data: companies, dataUpdatedAt, error, refetch } = useCompanies()
   const fetchCompanies = useMemo(() => rowsFetcher(companies ?? [], (company: Company) => company.status === 'ACTIVE'), [companies])
   const createCompany = useCreateCompany()
@@ -75,8 +78,8 @@ export function CompanyListPage() {
     onEdit: (company) => setDrawer(company.id),
     onActivate: (company) => changeStatus(company, true),
     onDeactivate: (company) => changeStatus(company, false),
-    editPermission: P.PLATFORM_COMPANY_STATUS,
-    deletePermission: P.PLATFORM_COMPANY_STATUS,
+    editPermission: P.PLATFORM_COMPANY_EDIT,
+    statusPermission: P.PLATFORM_COMPANY_STATUS,
     deactivateCopy: {
       label: t('action.deactivate', { ns: 'common' }),
       title: t('companies.deactivateTitle'),
@@ -285,7 +288,7 @@ export function CompanyListPage() {
               hideCardWrapper
               hideSubmitButton
             />
-            {editing && <CompanyFeaturesPanel companyId={editing.id} />}
+            {editing && canConfigure && <CompanyFeaturesPanel companyId={editing.id} />}
           </div>
         )}
       </MasterDrawer>

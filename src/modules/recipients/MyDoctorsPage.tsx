@@ -15,8 +15,10 @@ import { DoctorsImportDialog } from '@/modules/recipients/DoctorsImportDialog'
 import { RecipientFormDialog } from '@/modules/recipients/RecipientFormDialog'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useMyRecipients, useRemoveMyDoctor } from '@/hooks/useRecipients'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
 
 const LIST_FIELDS: ListFieldMap = { name: 'text', phone: 'text', email: 'text', registrationNumber: 'text' }
 
@@ -27,6 +29,8 @@ export function MyDoctorsPage() {
   const showError = useApiErrorToast()
   const { data: doctors, isLoading, error, refetch } = useMyRecipients()
   const removeDoctor = useRemoveMyDoctor()
+  // Reading the list is open to anyone who sends gifts; changing it takes my_doctors.manage.
+  const canManage = useHasAccess(P.MY_DOCTORS_MANAGE)
   // `undefined` = closed, `null` = adding a new doctor, a doctor = editing them.
   const [editing, setEditing] = useState<Recipient | null | undefined>(undefined)
   const [removing, setRemoving] = useState<Recipient | null>(null)
@@ -68,20 +72,21 @@ export function MyDoctorsPage() {
         enableColumnFilter: false,
         enableSorting: false,
         meta: { className: 'w-[96px]', pin: 'right' },
-        cell: ({ row }) => (
-          <div className="flex justify-end gap-0.5">
-            <IconButton icon={Pencil} label={t('doctors.edit', { name: row.original.name })} onClick={() => setEditing(row.original)} />
-            <IconButton
-              icon={Trash2}
-              tone="destructive"
-              label={t('doctors.remove', { name: row.original.name })}
-              onClick={() => setRemoving(row.original)}
-            />
-          </div>
-        ),
+        cell: ({ row }) =>
+          canManage ? (
+            <div className="flex justify-end gap-0.5">
+              <IconButton icon={Pencil} label={t('doctors.edit', { name: row.original.name })} onClick={() => setEditing(row.original)} />
+              <IconButton
+                icon={Trash2}
+                tone="destructive"
+                label={t('doctors.remove', { name: row.original.name })}
+                onClick={() => setRemoving(row.original)}
+              />
+            </div>
+          ) : null,
       },
     ],
-    [t],
+    [t, canManage],
   )
 
   return (
@@ -90,12 +95,15 @@ export function MyDoctorsPage() {
         title={pageTitle}
         description={t('doctors.subtitle')}
         createLabel={t('doctors.add')}
+        createPermission={P.MY_DOCTORS_MANAGE}
         onCreate={() => setEditing(null)}
         extra={
-          <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
-            <Upload className="mr-1.5 h-4 w-4" />
-            {t('import.button')}
-          </Button>
+          canManage && (
+            <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
+              <Upload className="mr-1.5 h-4 w-4" />
+              {t('import.button')}
+            </Button>
+          )
         }
       />
 

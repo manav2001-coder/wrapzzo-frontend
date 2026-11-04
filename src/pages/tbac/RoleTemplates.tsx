@@ -61,7 +61,7 @@ export default function RoleTemplatesPage() {
         enableColumnFilter: false,
         enableSorting: false,
         cell: ({ row }) => (
-          <PermissionGate permission="tbac.role_template.manage">
+          <PermissionGate permission="role_template.view">
             <IconButton
               icon={Settings2}
               label={t("roleTemplates.manage")}
@@ -90,7 +90,7 @@ export default function RoleTemplatesPage() {
         fetchData={fetchRoles}
         getRowId={(row) => row.id}
         showRowSelectionColumn={false}
-        permission="tbac.role_template.manage"
+        permission="role_template.view"
       />
     </div>
   );

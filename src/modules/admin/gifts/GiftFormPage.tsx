@@ -168,7 +168,7 @@ export function GiftFormPage() {
             mode={vendorOwned ? 'view' : isEdit ? 'edit' : 'create'}
             maxWidgetsPerRow={2}
             refine={refine}
-            submitPermission={isEdit ? P.PLATFORM_PRODUCT_EDIT : P.PLATFORM_PRODUCT_CREATE}
+            submitPermission={isEdit ? P.PLATFORM_GIFT_EDIT : P.PLATFORM_GIFT_CREATE}
             submitLabel={isEdit ? t('gifts.detail.save') : t('gifts.detail.create')}
             onChange={(live) => setTotal(giftTotalOf(live))}
             onSubmit={onSubmit}

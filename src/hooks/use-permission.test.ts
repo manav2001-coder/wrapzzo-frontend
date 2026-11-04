@@ -59,7 +59,7 @@ describe('usePermissions', () => {
 
 describe('useHasAccess', () => {
   beforeEach(() => {
-    useCurrentUser.mockReturnValue(profile(['campaign_entry.submit', 'request.create']))
+    useCurrentUser.mockReturnValue(profile(['campaign_entry.submit', 'quick_gift.create']))
   })
 
   it('passes with no requirement', () => {

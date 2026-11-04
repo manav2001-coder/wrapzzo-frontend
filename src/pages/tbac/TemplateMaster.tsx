@@ -166,7 +166,7 @@ export default function TemplateMasterPage() {
                 {/* A system template is shared by every tenant and the API answers 403 —
                     so don't offer the action at all. */}
                 {!template.isSystem && (
-                  <PermissionGate permission="tbac.template_master.edit">
+                  <PermissionGate permission="template_master.edit">
                     <IconButton
                       icon={Pencil}
                       label={t("action.edit", { ns: "common" })}
@@ -198,12 +198,12 @@ export default function TemplateMasterPage() {
         title={t("templateMaster.title")}
         description={t("templateMaster.subtitle")}
         createLabel={t("templateMaster.create")}
-        createPermission="tbac.template_master.add"
+        createPermission="template_master.add"
         extra={scope.control}
         onCreate={() => navigate("/tbac/template-master/create")}
       />
 
-      <PermissionGate permission="tbac.template_master.add">
+      <PermissionGate permission="template_master.add">
         <QuickCreateModuleTemplates
           existingNames={existingNames}
           companyId={scope.companyId}
@@ -220,7 +220,7 @@ export default function TemplateMasterPage() {
         getRowId={(row) => row.id}
         showRowSelectionColumn={false}
         refreshTrigger={refreshTrigger}
-        permission="tbac.template_master.view"
+        permission="template_master.view"
       />
 
       <EffectiveFeaturesDialog

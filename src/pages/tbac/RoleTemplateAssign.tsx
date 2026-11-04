@@ -133,7 +133,7 @@ export default function RoleTemplateAssignPage() {
               />
             </div>
             <PermissionButton
-              permission="tbac.role_template.assignment"
+              permission="role_template.assign"
               onClick={() => void handleAdd()}
               disabled={selected.length === 0 || busy}
             >
@@ -158,7 +158,7 @@ export default function RoleTemplateAssignPage() {
           <AssignedTemplateList
             templates={assigned}
             onRemove={handleRemove}
-            removePermission="tbac.role_template.assignment"
+            removePermission="role_template.assign"
             emptyMessage={t("roleTemplates.empty")}
           />
         </SectionCard>

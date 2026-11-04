@@ -190,6 +190,7 @@ export function useMasterColumns<T extends AuditedRow>({
   onActivate,
   editPermission,
   deletePermission,
+  statusPermission,
   extraActions,
   deactivateCopy,
 }: {
@@ -197,10 +198,14 @@ export function useMasterColumns<T extends AuditedRow>({
   statusLabels?: { active: string; inactive: string };
   onEdit?: (row: T) => void;
   onDeactivate?: (row: T) => void | Promise<void>;
-  /** Shown on INACTIVE rows only, gated on `editPermission`. */
+  /** Shown on INACTIVE rows only, gated on `statusPermission` (else `editPermission`). */
   onActivate?: (row: T) => void | Promise<void>;
+  /** The Edit pencil. */
   editPermission?: PermissionRequirement;
+  /** Deactivate, when `statusPermission` is not given. */
   deletePermission?: PermissionRequirement;
+  /** Activate and Deactivate together, for a feature whose status is its own permission (platform_vendor.status). */
+  statusPermission?: PermissionRequirement;
   /** Extra row actions, rendered before edit and deactivate. The caller owns their gating. */
   extraActions?: (row: T) => React.ReactNode;
   /** Wording for an entity whose "deactivate" has its own name (suspending a vendor). */
@@ -216,7 +221,8 @@ export function useMasterColumns<T extends AuditedRow>({
   const { t } = useTranslation();
   const { auditColumns } = useAuditColumns<T>();
   const canEdit = useHasAccess(editPermission);
-  const canDelete = useHasAccess(deletePermission);
+  const canActivate = useHasAccess(statusPermission ?? editPermission);
+  const canDelete = useHasAccess(statusPermission ?? deletePermission);
   const activeLabel = statusLabels?.active ?? t("field.active");
   const inactiveLabel = statusLabels?.inactive ?? t("field.inactive");
   const deactivateLabel = deactivateCopy?.label ?? t("action.deactivate");
@@ -272,7 +278,7 @@ export function useMasterColumns<T extends AuditedRow>({
           {canEdit && onEdit && (
             <IconButton icon={Pencil} label={t("action.edit")} onClick={() => onEdit(row.original)} />
           )}
-          {canEdit && onActivate && !active && (
+          {canActivate && onActivate && !active && (
             <IconButton
               icon={RotateCcw}
               label={t("action.activate")}

@@ -58,7 +58,7 @@ export default function UserTemplatesPage() {
         enableColumnFilter: false,
         enableSorting: false,
         cell: ({ row }) => (
-          <PermissionGate permission="tbac.user_template.manage">
+          <PermissionGate permission="user_template.view">
             <IconButton
               icon={Settings2}
               label={t("userTemplates.manage")}
@@ -87,12 +87,12 @@ export default function UserTemplatesPage() {
         fetchData={fetchUsers}
         getRowId={(row) => row.id}
         showRowSelectionColumn
-        permission="tbac.user_template.manage"
+        permission="user_template.view"
         primaryActions={[
           {
             label: t("userTemplates.bulkAssign"),
             icon: <UsersRound className="h-4 w-4" />,
-            permission: "tbac.bulk_assign_user_templates",
+            permission: "user_template.bulk_assign",
             // v4's rule: one user is better served by their own screen, which also shows
             // what they already hold.
             disabled: (rowSelection) => Object.keys(rowSelection).length <= 1,

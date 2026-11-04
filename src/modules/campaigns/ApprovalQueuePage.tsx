@@ -86,8 +86,8 @@ export function ApprovalQueuePage() {
   const pageTitle = useMenuLabel('approvals', 'Approvals')
   // A manager reviewing only their team's doctor requests has no Quick Gift approval right: skip
   // that queue (it would only answer 403) and open on the doctor changes.
-  const canApproveQuickGifts = useHasAccess(P.REQUEST_APPROVE)
-  const canReviewArtwork = useHasAccess([P.ORDER_ARTWORK_REVIEW, P.ORDER_ARTWORK_FINAL])
+  const canApproveQuickGifts = useHasAccess(P.QUICK_GIFT_APPROVE)
+  const canReviewArtwork = useHasAccess([P.ARTWORK_REVIEW, P.ARTWORK_FINAL_APPROVE])
   const { data: quickGifts, isLoading } = usePendingQuickGiftApprovals(canApproveQuickGifts)
   const { data: doctorRequests, isLoading: doctorsLoading } = usePendingDoctorChangeRequests()
   const approveQuickGift = useApproveQuickGiftRequest()

@@ -57,4 +57,19 @@ describe('platform OrdersPage company scope', () => {
     expect(await screen.findByText('Dr. Alpha')).toBeInTheDocument()
     expect(screen.queryByText('Dr. Beta')).not.toBeInTheDocument()
   })
+
+  it('offers vendor assignment only to someone who may manage orders', async () => {
+    renderWithProviders(<OrdersPage />)
+    expect(await screen.findByText('Dr. Alpha')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Auto-assign' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Assign vendor' })).not.toBeInTheDocument()
+  })
+
+  it('shows the assignment actions to someone with platform_order.manage', async () => {
+    currentUser.mockReturnValue(platformStaff(['platform_order.view', 'platform_order.manage']))
+    renderWithProviders(<OrdersPage />)
+    expect(await screen.findByText('Dr. Alpha')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Auto-assign' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Assign vendor' })).toBeInTheDocument()
+  })
 })

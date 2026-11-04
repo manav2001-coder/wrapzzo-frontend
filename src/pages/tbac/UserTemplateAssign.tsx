@@ -155,7 +155,7 @@ export default function UserTemplateAssignPage() {
               />
             </div>
             <PermissionButton
-              permission="tbac.user_template.assignment"
+              permission="user_template.assign"
               onClick={() => void handleAdd()}
               disabled={selected.length === 0 || busy}
             >
@@ -180,7 +180,7 @@ export default function UserTemplateAssignPage() {
           <AssignedTemplateList
             templates={assigned}
             onRemove={handleRemove}
-            removePermission="tbac.user_template.assignment"
+            removePermission="user_template.assign"
             emptyMessage={t("userTemplates.empty")}
           />
         </SectionCard>

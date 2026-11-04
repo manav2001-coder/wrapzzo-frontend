@@ -2,13 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   bulkCreateMyDoctors,
   createMyDoctor,
-  createRecipient,
   listMyRecipients,
   listRecipients,
   listUpcomingBirthdays,
   removeMyDoctor,
   searchRecipients,
-  updateMyDoctor,
   updateRecipient,
   type CreateRecipientInput,
 } from '@/api/recipients'
@@ -20,29 +18,18 @@ export function useRecipients() {
   return useQuery({ queryKey: ['recipients'], queryFn: listRecipients, enabled: canView })
 }
 
-/** An MR's own working list -- not the full shared directory. */
+/** The doctors on the caller's own list. */
 export function useMyRecipients() {
   return useQuery({ queryKey: ['recipients', 'mine'], queryFn: listMyRecipients })
 }
 
-/** "Pick an existing doctor" -- works for anyone who can send a gift, not just recipient.view holders. Empty query returns nothing (no full-directory dump). */
+/** "Pick an existing doctor" -- works for anyone who can send a gift, not just doctor.view holders. Empty query returns nothing (no full-directory dump). */
 export function useRecipientSearch(query: string) {
   const trimmed = query.trim()
   return useQuery({
     queryKey: ['recipients', 'search', trimmed],
     queryFn: () => searchRecipients(trimmed),
     enabled: trimmed.length > 0,
-  })
-}
-
-export function useCreateRecipient() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: CreateRecipientInput) => createRecipient(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipients'] })
-      queryClient.invalidateQueries({ queryKey: ['recipients', 'upcoming-birthdays'] })
-    },
   })
 }
 
@@ -65,15 +52,10 @@ function useInvalidateRecipients() {
   }
 }
 
-/** The MR's own list: add, edit and remove apply at once. */
+/** Adding to, and removing from, the caller's own list apply at once. */
 export function useCreateMyDoctor() {
   const invalidate = useInvalidateRecipients()
   return useMutation({ mutationFn: (input: CreateRecipientInput) => createMyDoctor(input), onSuccess: invalidate })
-}
-
-export function useUpdateMyDoctor() {
-  const invalidate = useInvalidateRecipients()
-  return useMutation({ mutationFn: ({ id, input }: { id: string; input: CreateRecipientInput }) => updateMyDoctor(id, input), onSuccess: invalidate })
 }
 
 export function useBulkCreateMyDoctors() {

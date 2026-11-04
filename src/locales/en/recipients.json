@@ -17,16 +17,16 @@
   },
   "directory": {
     "title": "Doctors",
-    "subtitle": "The doctors in your org unit and below, added by the people who report to you.",
+    "subtitle": "The doctors you added or are mapped to. Managers also see the doctors in their region or zone.",
     "add": "Add doctor",
     "edit": "Edit {{name}}",
     "emptyTitle": "No doctors yet",
-    "emptyBody": "Doctors appear here as your team adds them.",
+    "emptyBody": "Add your first doctor, or bulk upload a sheet. They are also available when you send a Quick Gift.",
     "addTitle": "Add doctor",
     "editTitle": "Edit doctor",
     "save": "Save changes",
-    "added": "Recipient added",
-    "updated": "Recipient updated"
+    "added": "Doctor added",
+    "updated": "Doctor updated"
   },
   "birthdays": {
     "title": "Upcoming birthdays",
@@ -39,22 +39,14 @@
     "title": "Pick from my doctors",
     "search": "Search my doctors by name, phone or registration no.",
     "noMatchTitle": "No matches",
-    "noMatchBody": "No doctor on your list matches. Add them under My Doctors first.",
+    "noMatchBody": "No doctor on your list matches. Add them under Doctors first.",
     "add_one": "Add {{count}} selected",
     "add_other": "Add {{count}} selected",
     "addNone": "Add selected"
   },
   "doctors": {
-    "title": "My doctors",
-    "subtitle": "Your own list of doctors. Add, edit or remove them whenever you like -- no approval needed.",
-    "emptyTitle": "No doctors on your list yet",
-    "emptyBody": "Add your first doctor. They will also be available when you send a Quick Gift.",
-    "addTitle": "Add a doctor",
-    "editTitle": "Edit {{name}}",
     "removeTitle": "Remove {{name}} from your list?",
     "removeBody": "The doctor stays in the company records, so past gifts are unaffected.",
-    "add": "Add doctor",
-    "edit": "Edit {{name}}",
     "remove": "Remove {{name}}",
     "removeConfirm": "Remove",
     "removed": "Doctor removed from your list"

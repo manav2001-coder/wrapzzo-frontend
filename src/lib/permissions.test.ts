@@ -5,8 +5,8 @@ import { P, VIEW_ACTION } from './permissions'
 describe('permission catalogue', () => {
   const keys = Object.values(P)
 
-  it('mirrors the backend enum: 45 company actions and 20 platform ones', () => {
-    expect(keys).toHaveLength(65)
+  it('mirrors the backend enum: 46 company actions and 20 platform ones', () => {
+    expect(keys).toHaveLength(66)
     expect(keys.filter((key) => key.startsWith('platform_'))).toHaveLength(20)
   })
 
@@ -18,7 +18,7 @@ describe('permission catalogue', () => {
   it('gives every module that has other actions a way to be read, except the action-only ones', () => {
     const modules = new Set(keys.map((key) => key.split('.')[0]))
     const withoutView = [...modules].filter((module) => !keys.includes(`${module}.${VIEW_ACTION}` as (typeof keys)[number]))
-    // Artwork is read through orders; Quick Gift and My Doctors have only actions.
-    expect(withoutView.sort()).toEqual(['artwork', 'my_doctors', 'quick_gift'])
+    // Artwork is read through orders; Quick Gift has only actions.
+    expect(withoutView.sort()).toEqual(['artwork', 'quick_gift'])
   })
 })

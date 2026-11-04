@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useMyRecipients } from '@/hooks/useRecipients'
 
 /**
- * Pick several doctors at once from the caller's own list (My Doctors) -- e.g. straight into a
+ * Pick several doctors at once from the caller's own list (the doctors they added or are mapped to) -- e.g. straight into a
  * Quick Gift form instead of retyping them. The list is small, so it is loaded whole and the box
  * only narrows it.
  */

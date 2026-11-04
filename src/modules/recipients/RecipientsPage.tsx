@@ -1,17 +1,23 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Contact, Pencil } from 'lucide-react'
+import { Contact, Pencil, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { toast } from 'sonner'
+
 import type { Recipient } from '@/api/recipients'
+import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
+import { Button } from '@/components/ui/button'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
-import { useRecipients } from '@/hooks/useRecipients'
+import { useRecipients, useRemoveMyDoctor } from '@/hooks/useRecipients'
 import { formatDateOnly } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { DoctorsImportDialog } from './DoctorsImportDialog'
 import { RecipientFormDialog } from './RecipientFormDialog'
 import { UpcomingBirthdaysWidget } from './UpcomingBirthdaysWidget'
 import { useHasAccess } from '@/hooks/use-permission'
@@ -25,14 +31,37 @@ const LIST_FIELDS: ListFieldMap = {
   createdByName: 'text',
 }
 
-/** The company's shared recipient directory -- fed by Quick Gift and campaigns, plus anyone added here. */
+/**
+ * The one Doctors screen. A field user (AM, MR) sees the doctors they added or are mapped to; a manager sees the
+ * doctors of their org units -- their region, their zone -- as well (which doctors is decided by the API, see
+ * Visibility). What each person can do with them is decided by the doctor.* keys: add, edit, remove from their
+ * own list, bulk upload.
+ */
 export function RecipientsPage() {
   const { t } = useTranslation('recipients')
   const pageTitle = useMenuLabel('recipients', t('directory.title'))
+  const showError = useApiErrorToast()
   const { data: recipients, isLoading, error, refetch } = useRecipients()
+  const removeDoctor = useRemoveMyDoctor()
   const canEdit = useHasAccess(P.DOCTOR_EDIT)
+  const canRemove = useHasAccess(P.DOCTOR_REMOVE)
+  const canImport = useHasAccess(P.DOCTOR_IMPORT)
   // `undefined` = closed, `null` = adding, a recipient = editing it.
   const [editing, setEditing] = useState<Recipient | null | undefined>(undefined)
+  const [removing, setRemoving] = useState<Recipient | null>(null)
+  const [importing, setImporting] = useState(false)
+
+  async function confirmRemove() {
+    if (!removing) return
+    try {
+      await removeDoctor.mutateAsync(removing.id)
+      toast.success(t('doctors.removed'))
+    } catch (err) {
+      showError(err)
+    } finally {
+      setRemoving(null)
+    }
+  }
 
   const columns = useMemo<ColumnDef<Recipient, unknown>[]>(
     () => [
@@ -66,12 +95,23 @@ export function RecipientsPage() {
         header: '',
         enableColumnFilter: false,
         enableSorting: false,
-        meta: { className: 'w-[56px]', pin: 'right' },
-        cell: ({ row }) =>
-          canEdit && <IconButton icon={Pencil} label={t('directory.edit', { name: row.original.name })} onClick={() => setEditing(row.original)} />,
+        meta: { className: 'w-[96px]', pin: 'right' },
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-0.5">
+            {canEdit && <IconButton icon={Pencil} label={t('directory.edit', { name: row.original.name })} onClick={() => setEditing(row.original)} />}
+            {canRemove && row.original.inMyList && (
+              <IconButton
+                icon={Trash2}
+                tone="destructive"
+                label={t('doctors.remove', { name: row.original.name })}
+                onClick={() => setRemoving(row.original)}
+              />
+            )}
+          </div>
+        ),
       },
     ],
-    [t, canEdit],
+    [t, canEdit, canRemove],
   )
 
   return (
@@ -82,6 +122,14 @@ export function RecipientsPage() {
         createLabel={t('directory.add')}
         createPermission={P.DOCTOR_CREATE}
         onCreate={() => setEditing(null)}
+        extra={
+          canImport && (
+            <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
+              <Upload className="mr-1.5 h-4 w-4" />
+              {t('import.button')}
+            </Button>
+          )
+        }
       />
       <UpcomingBirthdaysWidget />
       <DataTable<Recipient>
@@ -105,6 +153,19 @@ export function RecipientsPage() {
       {editing !== undefined && (
         <RecipientFormDialog key={editing?.id ?? 'new'} visible recipient={editing} onHide={() => setEditing(undefined)} />
       )}
+      <DoctorsImportDialog open={importing} onOpenChange={setImporting} />
+      <AppDialog
+        open={removing !== null}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        size="sm"
+        title={removing ? t('doctors.removeTitle', { name: removing.name }) : ''}
+        description={t('doctors.removeBody')}
+        confirmLabel={t('doctors.removeConfirm')}
+        confirmVariant="destructive"
+        cancelLabel={t('action.cancel', { ns: 'common' })}
+        loading={removeDoctor.isPending}
+        onConfirm={() => void confirmRemove()}
+      />
     </div>
   )
 }

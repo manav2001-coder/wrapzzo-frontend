@@ -18,6 +18,8 @@ export interface Recipient {
   doctor: DoctorDetails
   createdByName: string | null
   createdAt: string
+  /** On the caller's own list (added by them or mapped to them) -- the only doctors they can remove. */
+  inMyList: boolean
 }
 
 export interface UpcomingBirthday {
@@ -44,20 +46,15 @@ export async function listRecipients(): Promise<Recipient[]> {
   return data
 }
 
-/** "Pick an existing doctor" search -- unlike listRecipients(), this works for anyone who can send a gift (request.create), not just recipient.view holders. */
+/** "Pick an existing doctor" search -- unlike listRecipients(), this works for anyone who can send a gift (quick_gift.create), not just doctor.view holders. */
 export async function searchRecipients(query: string): Promise<Recipient[]> {
   const { data } = await apiClient.get<Recipient[]>('/api/recipients/search', { params: { q: query } })
   return data
 }
 
-/** An MR's own working list (recipient_assignments) -- not the full shared directory. */
+/** The doctors on the caller's own list -- who the Quick Gift form offers first. */
 export async function listMyRecipients(): Promise<Recipient[]> {
   const { data } = await apiClient.get<Recipient[]>('/api/recipients/mine')
-  return data
-}
-
-export async function createRecipient(input: CreateRecipientInput): Promise<Recipient> {
-  const { data } = await apiClient.post<Recipient>('/api/recipients', input)
   return data
 }
 
@@ -71,18 +68,13 @@ export async function listUpcomingBirthdays(days = 30): Promise<UpcomingBirthday
   return data
 }
 
-/** An MR's own list: adding, editing and removing take effect at once -- no approval step. */
+/** Adds a doctor and puts them on the caller's list -- takes effect at once, no approval step. */
 export async function createMyDoctor(input: CreateRecipientInput): Promise<Recipient> {
   const { data } = await apiClient.post<Recipient>('/api/recipients/mine', input)
   return data
 }
 
-export async function updateMyDoctor(id: string, input: CreateRecipientInput): Promise<Recipient> {
-  const { data } = await apiClient.put<Recipient>(`/api/recipients/mine/${id}`, input)
-  return data
-}
-
-/** Takes the doctor off the caller's list; they stay in the directory. */
+/** Takes the doctor off the caller's list; they stay a company doctor. */
 export async function removeMyDoctor(id: string): Promise<void> {
   await apiClient.delete(`/api/recipients/mine/${id}`)
 }

@@ -32,7 +32,7 @@ const ALIASES: Partial<Record<DoctorField, string[]>> = {
 
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-/** Builds the doctors template and saves it -- My Doctors offers it beside the upload. */
+/** Builds the doctors template and saves it -- the Doctors screen offers it beside the upload. */
 export async function downloadDoctorTemplate(): Promise<void> {
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('Doctors')

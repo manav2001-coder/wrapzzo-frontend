@@ -30,9 +30,9 @@ export const P = {
   DOCTOR_VIEW: 'doctor.view',
   DOCTOR_CREATE: 'doctor.create',
   DOCTOR_EDIT: 'doctor.edit',
-
-  MY_DOCTORS_MANAGE: 'my_doctors.manage',
-  MY_DOCTORS_APPROVE: 'my_doctors.approve',
+  DOCTOR_REMOVE: 'doctor.remove',
+  DOCTOR_IMPORT: 'doctor.import',
+  DOCTOR_APPROVE: 'doctor.approve',
 
   USER_VIEW: 'user.view',
   USER_CREATE: 'user.create',

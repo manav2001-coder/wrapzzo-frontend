@@ -81,7 +81,7 @@ describe('QuickGiftLandingPage', () => {
     listActiveGifts.mockReset().mockResolvedValue([PAD])
     listMyQuickGiftRequests.mockReset().mockResolvedValue([REQUEST])
     requestQuickGiftPhotoLink.mockReset()
-    signedInWith(['quick_gift.create', 'gift_store.view', 'my_doctors.manage'])
+    signedInWith(['quick_gift.create', 'gift_store.view', 'doctor.view'])
   })
 
   function renderLanding() {
@@ -130,7 +130,7 @@ describe('GiftStorePage', () => {
   beforeEach(() => listActiveGifts.mockReset().mockResolvedValue([PAD]))
 
   it('offers Quick Gift and Launch campaign to someone who may do both', async () => {
-    signedInWith(['quick_gift.create', 'gift_store.view', 'my_doctors.manage', 'campaign.view', 'campaign.create', 'campaign.edit', 'campaign.publish', 'campaign_entry.view', 'quick_gift.approve', 'order.view'])
+    signedInWith(['quick_gift.create', 'gift_store.view', 'doctor.view', 'campaign.view', 'campaign.create', 'campaign.edit', 'campaign.publish', 'campaign_entry.view', 'quick_gift.approve', 'order.view'])
     renderWithProviders(<GiftStorePage />)
     expect(await screen.findByRole('button', { name: 'Quick Gift' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Launch campaign' })).toBeInTheDocument()

@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { FirstMenuRedirect } from '@/components/FirstMenuRedirect'
 import { AppLayout } from '@/components/layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -42,7 +42,6 @@ import { DashboardPage } from '@/modules/dashboard/DashboardPage'
 import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
 import { QuickGiftFormPage } from '@/modules/quickgift/QuickGiftFormPage'
 import { QuickGiftLandingPage } from '@/modules/quickgift/QuickGiftLandingPage'
-import { MyDoctorsPage } from '@/modules/recipients/MyDoctorsPage'
 import { RecipientsPage } from '@/modules/recipients/RecipientsPage'
 import { VendorGiftFormPage } from '@/modules/vendor/gifts/VendorGiftFormPage'
 import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
@@ -122,7 +121,8 @@ export function AppRoutes() {
           <Route path="/campaigns/:id/submit" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><SubmissionFormPage /></Guard>} />
           <Route path="/my-campaigns" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><MyCampaignsPage /></Guard>} />
           <Route path="/recipients" element={<Guard permission={P.DOCTOR_VIEW}><RecipientsPage /></Guard>} />
-          <Route path="/my-doctors" element={<Guard permissions={[P.MY_DOCTORS_MANAGE, P.QUICK_GIFT_CREATE]}><MyDoctorsPage /></Guard>} />
+          {/* My Doctors was folded into Doctors; keep old links working. */}
+          <Route path="/my-doctors" element={<Navigate to="/recipients" replace />} />
           <Route path="/approvals" element={<Guard permissions={[P.QUICK_GIFT_APPROVE, P.ARTWORK_FINAL_APPROVE]} forManagers><ApprovalQueuePage /></Guard>} />
           <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CampaignOrdersPage /></Guard>} />
           <Route path="/company/vendors" element={<Guard permission={P.COMPANY_VENDOR_VIEW}><CompanyVendorsPage /></Guard>} />

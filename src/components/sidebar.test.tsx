@@ -13,7 +13,7 @@ function companyUser(permissions: string[], managesTeam = false, menuLabels: Rec
 
 describe('Sidebar', () => {
   beforeEach(() => {
-    companyUser(['dashboard.view', 'campaign_entry.submit', 'order.view', 'quick_gift.create', 'gift_store.view', 'my_doctors.manage'])
+    companyUser(['dashboard.view', 'campaign_entry.submit', 'order.view', 'quick_gift.create', 'gift_store.view', 'doctor.view'])
   })
 
   it('shows a company user only the entries their keys open', () => {
@@ -26,13 +26,20 @@ describe('Sidebar', () => {
   })
 
   it('offers Approvals to a manager with direct reports even without an approval key', () => {
-    companyUser(['dashboard.view', 'quick_gift.create', 'gift_store.view', 'my_doctors.manage', 'order.view'], true)
+    companyUser(['dashboard.view', 'quick_gift.create', 'gift_store.view', 'doctor.view', 'order.view'], true)
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /approvals/i })).toHaveAttribute('href', '/approvals')
   })
 
+  it('has one Doctors entry, and no separate My Doctors', () => {
+    companyUser(['dashboard.view', 'quick_gift.create', 'doctor.view'])
+    renderWithProviders(<Sidebar />, { route: '/dashboard' })
+    expect(screen.getByRole('link', { name: 'Doctors' })).toHaveAttribute('href', '/recipients')
+    expect(screen.queryByRole('link', { name: /my doctors/i })).not.toBeInTheDocument()
+  })
+
   it("uses the company's own menu names where it has renamed them", () => {
-    companyUser(['dashboard.view', 'quick_gift.create', 'gift_store.view', 'my_doctors.manage'], false, { 'quick-gift': 'Request Prescription Pads', 'gift-store': 'Prescription Pads' })
+    companyUser(['dashboard.view', 'quick_gift.create', 'gift_store.view', 'doctor.view'], false, { 'quick-gift': 'Request Prescription Pads', 'gift-store': 'Prescription Pads' })
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: 'Request Prescription Pads' })).toHaveAttribute('href', '/quick-gift')
     expect(screen.getByRole('link', { name: 'Prescription Pads' })).toHaveAttribute('href', '/gift-store')

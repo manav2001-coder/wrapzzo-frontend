@@ -22,7 +22,6 @@ export interface QuickGiftRequest {
   recipientDob: string | null
   doctor: DoctorDetails
   quantity: number
-  vendorName: string | null
   orgUnitName: string | null
   giftMessage: string | null
   internalNotes: string | null

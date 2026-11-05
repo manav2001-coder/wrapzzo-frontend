@@ -10,7 +10,6 @@ export interface OrderDesign {
   fileUrl: string
   fileName: string | null
   status: OrderDesignStatus
-  uploadedByVendorName: string
   reviewedByUserName: string | null
   /** The MR's approval, when the proof then went to their manager for the final one. */
   firstApprovedByUserName: string | null
@@ -64,7 +63,6 @@ export interface PendingArtworkApproval {
   versionNo: number
   fileUrl: string
   fileName: string | null
-  vendorName: string
   mrApprovedByName: string | null
   mrApprovedAt: string | null
   approvalLevel: number

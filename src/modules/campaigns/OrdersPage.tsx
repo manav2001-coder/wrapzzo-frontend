@@ -59,6 +59,8 @@ export function OrdersPage() {
   const showError = useApiErrorToast()
   const canReview = useHasAccess(P.ARTWORK_REVIEW)
   const canRequestPhoto = useHasAccess(P.ORDER_REQUEST_PHOTO)
+  // Vendor names are the company admin's alone; the server leaves them out for everyone else.
+  const canSeeVendor = useHasAccess(P.COMPANY_VENDOR_VIEW)
   const { data: orders, isLoading, error, refetch } = useOrders()
   const requestPhotoLink = useRequestOrderPhotoLink()
 
@@ -119,13 +121,15 @@ export function OrdersPage() {
         enableColumnFilter: false,
         meta: { className: 'min-w-[70px]' },
       },
+      ...(canSeeVendor ? ([
       {
         id: 'assignedVendorName',
         accessorFn: (order) => order.assignedVendorName ?? '',
         header: t('column.vendor'),
         meta: { className: 'min-w-[150px]' },
         cell: ({ row }) => row.original.assignedVendorName ?? <span className="text-muted-foreground">{t('unassigned')}</span>,
-      },
+      }
+      ] satisfies ColumnDef<Order, unknown>[]) : []),
       {
         id: 'status',
         accessorKey: 'status',
@@ -181,7 +185,7 @@ export function OrdersPage() {
         ),
       },
     ],
-    [t],
+    [t, canSeeVendor],
   )
 
   return (

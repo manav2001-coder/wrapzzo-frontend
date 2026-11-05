@@ -33,7 +33,6 @@ const ORDER_LIST_FIELDS: ListFieldMap = {
   warehouseName: 'text',
   giftName: 'text',
   recipientName: 'text',
-  vendorName: 'text',
   quantity: 'number',
   status: 'enum',
 }
@@ -175,7 +174,6 @@ function WarehouseOrdersTab() {
         ),
       },
       { id: 'warehouseName', accessorKey: 'warehouseName', header: 'Warehouse', meta: { className: 'min-w-[150px]' } },
-      { id: 'vendorName', accessorFn: (o) => o.vendorName ?? '', header: 'From vendor', meta: { className: 'min-w-[140px]' } },
       {
         id: 'status',
         accessorKey: 'status',

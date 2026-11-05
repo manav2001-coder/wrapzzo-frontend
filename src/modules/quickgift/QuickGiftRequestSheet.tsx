@@ -84,7 +84,6 @@ export function QuickGiftRequestSheet({
                 {request.recipientEmail && <Detail label={t('detail.email')}>{request.recipientEmail}</Detail>}
                 {request.recipientDob && <Detail label={t('detail.dob')}>{formatDateOnly(request.recipientDob)}</Detail>}
                 <Detail label={t('detail.quantity')}>{request.quantity}</Detail>
-                {request.vendorName && <Detail label={t('detail.vendor')}>{request.vendorName}</Detail>}
                 {request.orderDisplayId && <Detail label={t('detail.order')}>{request.orderDisplayId}</Detail>}
                 {request.orgUnitName && <Detail label={t('detail.orgUnit')}>{request.orgUnitName}</Detail>}
                 <Detail label={t('landing.column.sent')}>{formatDateTime(request.createdAt)}</Detail>

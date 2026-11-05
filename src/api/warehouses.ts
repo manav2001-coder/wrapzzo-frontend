@@ -33,7 +33,6 @@ export interface WarehouseOrder {
   recipientPhone: string | null
   /** The final drop; null for a campaign order. */
   deliveryAddress: string | null
-  vendorName: string | null
   orgUnitName: string | null
   requestedByName: string | null
   status: OrderStatus

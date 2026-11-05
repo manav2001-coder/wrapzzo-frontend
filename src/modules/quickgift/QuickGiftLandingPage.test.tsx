@@ -59,7 +59,6 @@ const REQUEST: QuickGiftRequest = {
   recipientDob: null,
   doctor: { qualification: 'MBBS, MD', speciality: null, clinicName: 'Shah Heart Clinic' },
   quantity: 5,
-  vendorName: 'Pad Printers',
   orgUnitName: 'N1',
   giftMessage: null,
   internalNotes: null,

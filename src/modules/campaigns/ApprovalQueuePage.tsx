@@ -28,7 +28,6 @@ const LIST_FIELDS: ListFieldMap = {
   orderDisplayId: 'text',
   giftName: 'text',
   recipientName: 'text',
-  vendorName: 'text',
   quantity: 'number',
 }
 
@@ -114,7 +113,6 @@ export function ApprovalQueuePage() {
       },
       { id: 'recipientName', accessorFn: (item) => item.recipientName ?? '', header: 'Doctor', meta: { className: 'min-w-[160px]' } },
       { id: 'quantity', accessorKey: 'quantity', header: 'Quantity', enableColumnFilter: false, meta: { className: 'min-w-[80px]' } },
-      { id: 'vendorName', accessorKey: 'vendorName', header: 'Vendor', meta: { className: 'min-w-[160px]' } },
       {
         id: 'versionNo',
         accessorKey: 'versionNo',
@@ -202,7 +200,6 @@ export function ApprovalQueuePage() {
                 <dl className="grid grid-cols-2 gap-4">
                   <Detail label="Doctor">{open.recipientName}</Detail>
                   <Detail label="Quantity">{open.quantity}</Detail>
-                  <Detail label="Vendor">{open.vendorName}</Detail>
                   <Detail label="Requested by">{open.requestedByName}</Detail>
                   <Detail label="MR approved by">{open.mrApprovedByName}</Detail>
                   <Detail label="MR approved on">{open.mrApprovedAt ? formatDateTime(open.mrApprovedAt) : '—'}</Detail>

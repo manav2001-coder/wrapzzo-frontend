@@ -28,7 +28,6 @@ function order(overrides: Partial<WarehouseOrder> = {}): WarehouseOrder {
     recipientName: 'Dr. Asha Shah',
     recipientPhone: '9800000001',
     deliveryAddress: '12 MG Road, Pune',
-    vendorName: 'Pad Printers',
     orgUnitName: 'North',
     requestedByName: 'Rahul',
     status: 'DISPATCHED',

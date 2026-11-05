@@ -111,7 +111,7 @@ export function ArtworkReview({ orderId, artworkRequired, readOnly = false }: { 
               <span className="text-sm font-medium">{t('artwork.version', { n: latest.versionNo })}</span>
               <Badge variant={VARIANT[latest.status]}>{t(`artwork.status.${latest.status}`)}</Badge>
               <span className="text-xs text-muted-foreground">
-                {latest.uploadedByVendorName} · {formatDateTime(latest.createdAt)}
+                {formatDateTime(latest.createdAt)}
               </span>
             </div>
             <Proof design={latest} />

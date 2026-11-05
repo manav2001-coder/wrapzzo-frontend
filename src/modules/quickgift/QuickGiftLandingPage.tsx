@@ -27,7 +27,6 @@ const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
   giftName: 'text',
   recipientName: 'text',
-  vendorName: 'text',
   quantity: 'number',
   status: 'enum',
 }
@@ -88,12 +87,6 @@ export function QuickGiftLandingPage() {
         header: t('landing.column.quantity'),
         enableColumnFilter: false,
         meta: { className: 'min-w-[70px]' },
-      },
-      {
-        id: 'vendorName',
-        accessorFn: (request) => request.vendorName ?? '',
-        header: t('landing.column.vendor'),
-        meta: { className: 'min-w-[150px]' },
       },
       {
         id: 'status',

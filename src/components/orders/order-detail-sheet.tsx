@@ -2,6 +2,9 @@ import { Gift, Link2, Loader2 } from 'lucide-react'
 import type * as React from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useHasAccess } from '@/hooks/use-permission'
+import { P } from '@/lib/permissions'
+
 import type { Order } from '@/api/orders'
 import { OrderHistoryList, OrderStatusBadge, OrderStepper } from '@/components/orders/order-status'
 import { Button } from '@/components/ui/button'
@@ -37,6 +40,8 @@ export function OrderDetailSheet({
   actions?: React.ReactNode
 }) {
   const { t } = useTranslation('orders')
+  // Vendor names are the company admin's alone; the server leaves them out for everyone else.
+  const canSeeVendor = useHasAccess(P.COMPANY_VENDOR_VIEW)
   return (
     <Sheet open={order !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
@@ -67,7 +72,7 @@ export function OrderDetailSheet({
                 <Detail label={t('detail.phone')}>{order.recipientPhone}</Detail>
                 <Detail label={t('detail.company')}>{order.companyName}</Detail>
                 <Detail label={t('detail.source')}>{order.campaignName ?? t(`source.${order.source}`)}</Detail>
-                <Detail label={t('detail.vendor')}>{order.assignedVendorName ?? t('unassigned')}</Detail>
+                {(order.assignedVendorName || canSeeVendor) && <Detail label={t('detail.vendor')}>{order.assignedVendorName ?? t('unassigned')}</Detail>}
                 <Detail label={t('detail.quantity')}>{order.quantity}</Detail>
                 <Detail label={t('detail.total')}>{formatCurrency(order.totalPrice)}</Detail>
                 {order.orgUnitName && <Detail label={t('detail.orgUnit')}>{order.orgUnitName}</Detail>}

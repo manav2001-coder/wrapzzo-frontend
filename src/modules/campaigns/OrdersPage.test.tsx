@@ -56,7 +56,6 @@ function design(overrides: Partial<OrderDesign> = {}): OrderDesign {
     fileUrl: 'https://files.test/proof-v1.png',
     fileName: 'proof-v1.png',
     status: 'PENDING_REVIEW',
-    uploadedByVendorName: 'Pad Printers',
     reviewedByUserName: null,
     firstApprovedByUserName: null,
     firstApprovedAt: null,
@@ -177,5 +176,27 @@ describe('OrdersPage (company)', () => {
     expect(within(sheet).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument()
     expect(within(sheet).queryByRole('button', { name: 'Request changes' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Needs your review/ })).not.toBeInTheDocument()
+  })
+
+  it('never shows a vendor, nor "Unassigned", to someone who raises or approves orders', async () => {
+    // The server leaves the vendor out for them; the screen must not fill the gap with "Unassigned".
+    listOrders.mockResolvedValue([order({ assignedVendorId: null, assignedVendorName: null })])
+    renderWithProviders(<OrdersPage />)
+    const sheet = await openOrder()
+    expect(within(sheet).queryByText('Vendor')).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: /Vendor/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('Unassigned')).not.toBeInTheDocument()
+  })
+
+  it('shows the vendor to the company admin, who holds company_vendor.view', async () => {
+    useCurrentUser.mockReturnValue({
+      data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['order.view', 'company_vendor.view'] },
+      isLoading: false,
+    })
+    listOrders.mockResolvedValue([order({ assignedVendorName: 'Pad Printers' })])
+    renderWithProviders(<OrdersPage />)
+    expect(await screen.findByRole('columnheader', { name: /Vendor/ })).toBeInTheDocument()
+    const sheet = await openOrder()
+    expect(within(sheet).getByText('Pad Printers')).toBeInTheDocument()
   })
 })

@@ -62,7 +62,7 @@ describe('DashboardPage', () => {
     renderWithProviders(<DashboardPage />)
     expect(await screen.findByRole('heading', { level: 1, name: /Good (morning|afternoon|evening)/ })).toBeInTheDocument()
     expect(screen.getByText('Alembic')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Quick Gift requests pending.*3/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Quick Gift requests pending/ })).not.toBeInTheDocument()
     expect(screen.getByText('Prescription Pad')).toBeInTheDocument()
   })
 

@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { BarChart3, Clock, Palette, Zap } from 'lucide-react'
+import { BarChart3, Palette } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -112,22 +112,6 @@ export function DashboardPage() {
           },
         ]
       : []),
-    {
-      key: 'quickGift',
-      icon: Zap,
-      label: 'Quick Gift requests pending',
-      hint: data.companyWide ? 'Waiting for approval' : 'Waiting on your approver',
-      count: data.quickGiftsPending,
-      onClick: () => navigate(data.companyWide ? '/approvals' : '/quick-gift'),
-    },
-    {
-      key: 'submissions',
-      icon: Clock,
-      label: 'Campaign submissions pending',
-      hint: 'Waiting for review',
-      count: data.submissionsPending,
-      onClick: () => navigate(data.companyWide ? '/approvals' : '/my-campaigns'),
-    },
   ]
 
   const now = new Date()

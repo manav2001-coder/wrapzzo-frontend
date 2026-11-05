@@ -157,10 +157,10 @@
   },
   "vendors": {
     "title": "Vendors",
-    "subtitle": "The fulfilment partners who produce and deliver gifts.",
+    "subtitle": "Every vendor across all franchises. Each company adds and maps its own.",
     "add": "Add vendor",
     "emptyTitle": "No vendors yet",
-    "emptyBody": "Onboard your first fulfilment partner to get started.",
+    "emptyBody": "Companies add their own vendors; they appear here.",
     "column": {
       "vendor": "Vendor",
       "id": "ID",
@@ -168,7 +168,9 @@
       "phone": "Phone",
       "markup": "Markup",
       "commission": "Commission",
-      "onboarded": "Onboarded"
+      "onboarded": "Onboarded",
+      "company": "Company",
+      "serves": "Serves"
     },
     "status": {
       "ACTIVE": "Active",

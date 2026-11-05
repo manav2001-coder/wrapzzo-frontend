@@ -6,12 +6,14 @@ import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { VendorsPage } from './VendorsPage'
 
 const listMyVendors = vi.hoisted(() => vi.fn())
-const listAvailableVendors = vi.hoisted(() => vi.fn())
+const addMyVendor = vi.hoisted(() => vi.fn())
 const setMyVendorCoverage = vi.hoisted(() => vi.fn())
-const removeMyVendor = vi.hoisted(() => vi.fn())
+const editMyVendor = vi.hoisted(() => vi.fn())
+const setMyVendorActive = vi.hoisted(() => vi.fn())
+const resendMyVendorInvite = vi.hoisted(() => vi.fn())
 const listMyOrgUnits = vi.hoisted(() => vi.fn())
 const useCurrentUser = vi.hoisted(() => vi.fn())
-vi.mock('@/api/myVendors', async (o) => ({ ...(await o<object>()), listMyVendors, listAvailableVendors, setMyVendorCoverage, removeMyVendor }))
+vi.mock('@/api/myVendors', () => ({ listMyVendors, addMyVendor, setMyVendorCoverage, editMyVendor, setMyVendorActive, resendMyVendorInvite }))
 vi.mock('@/api/myOrgUnits', () => ({ listMyOrgUnits }))
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
@@ -30,7 +32,7 @@ const UNITS = [
   { id: 'z-lucknow', name: 'Lucknow', levelName: 'Zone', parentId: 'd-summit' },
   { id: 'd-mega', name: 'Megacare', levelName: 'Division', parentId: null },
 ]
-const ALL = ['company_vendor.view', 'company_vendor.add', 'company_vendor.assign', 'company_vendor.remove']
+const ALL = ['company_vendor.view', 'company_vendor.add', 'company_vendor.assign', 'company_vendor.edit', 'company_vendor.status']
 
 describe('VendorsPage', () => {
   beforeEach(() => {
@@ -39,9 +41,8 @@ describe('VendorsPage', () => {
       mapping({ mappingId: 'm-2', orgUnitId: 'd-mega', orgUnitName: 'Megacare' }),
       mapping({ mappingId: 'm-3', vendorId: 'v-2', vendorName: 'Everywhere Print' }),
     ])
-    listAvailableVendors.mockReset().mockResolvedValue([{ id: 'v-9', name: 'New Printer' }])
-    setMyVendorCoverage.mockReset().mockResolvedValue([])
-    removeMyVendor.mockReset().mockResolvedValue([])
+    for (const fn of [addMyVendor, setMyVendorCoverage, editMyVendor, setMyVendorActive]) fn.mockReset().mockResolvedValue([])
+    resendMyVendorInvite.mockReset().mockResolvedValue(undefined)
     listMyOrgUnits.mockReset().mockResolvedValue(UNITS)
     useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', permissions: ALL }, isLoading: false })
   })
@@ -54,16 +55,31 @@ describe('VendorsPage', () => {
     expect(within(screen.getByText('Everywhere Print').closest('tr')!).getByText('Whole company')).toBeInTheDocument()
   })
 
-  it('changes where a vendor serves: a ticked division covers its units, and only it is sent', async () => {
+  it('adds a vendor and says where it serves: a ticked division covers its units and only it is sent', async () => {
+    renderWithProviders(<VendorsPage />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Add vendor' }))
+    const dialog = await screen.findByRole('dialog')
+    const save = within(dialog).getByRole('button', { name: 'Add vendor' })
+    expect(save).toBeDisabled()
+    await userEvent.type(within(dialog).getByLabelText('Vendor name'), 'New Printer')
+    await userEvent.type(within(dialog).getByLabelText('Contact email'), 'new@printer.com')
+    expect(save).toBeDisabled()
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: /Summit/ }))
+    expect(within(dialog).getByRole('checkbox', { name: /Lucknow/ })).toBeDisabled()
+    await userEvent.click(save)
+    await waitFor(() =>
+      expect(addMyVendor).toHaveBeenCalledWith({ name: 'New Printer', contactEmail: 'new@printer.com', contactPhone: undefined, wholeCompany: false, orgUnitIds: ['d-summit'] }),
+    )
+  })
+
+  it('changes where a vendor serves', async () => {
     renderWithProviders(<VendorsPage />)
     await userEvent.click(await screen.findByRole('button', { name: 'Change where Everywhere Print serves' }))
     const dialog = await screen.findByRole('dialog')
     await userEvent.click(within(dialog).getByLabelText('Specific divisions and units'))
-    await userEvent.click(within(dialog).getByRole('checkbox', { name: /Summit/ }))
-    expect(within(dialog).getByRole('checkbox', { name: /Lucknow/ })).toBeChecked()
-    expect(within(dialog).getByRole('checkbox', { name: /Lucknow/ })).toBeDisabled()
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: /Megacare/ }))
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save mapping' }))
-    await waitFor(() => expect(setMyVendorCoverage).toHaveBeenCalledWith('v-2', { wholeCompany: false, orgUnitIds: ['d-summit'] }))
+    await waitFor(() => expect(setMyVendorCoverage).toHaveBeenCalledWith('v-2', { wholeCompany: false, orgUnitIds: ['d-mega'] }))
   })
 
   it('will not save a mapping that serves nowhere', async () => {
@@ -75,32 +91,39 @@ describe('VendorsPage', () => {
     expect(within(dialog).getByText(/Tick at least one division or unit/)).toBeInTheDocument()
   })
 
-  it('maps an existing vendor to the whole company', async () => {
+  it('edits a vendor’s name', async () => {
     renderWithProviders(<VendorsPage />)
-    await userEvent.click(await screen.findByRole('button', { name: 'Map existing vendor' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit Everywhere Print' }))
     const dialog = await screen.findByRole('dialog')
-    await userEvent.click(within(dialog).getByRole('combobox', { name: 'Vendor' }))
-    await userEvent.click(await screen.findByRole('option', { name: 'New Printer' }))
-    await userEvent.click(within(dialog).getByLabelText('Whole company'))
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Save mapping' }))
-    await waitFor(() => expect(setMyVendorCoverage).toHaveBeenCalledWith('v-9', { wholeCompany: true, orgUnitIds: [] }))
+    const name = within(dialog).getByLabelText('Vendor name')
+    await userEvent.clear(name)
+    await userEvent.type(name, 'Everywhere Printers')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(editMyVendor).toHaveBeenCalledWith('v-2', { name: 'Everywhere Printers', contactPhone: undefined }))
   })
 
-  it('removes a vendor after confirming', async () => {
+  it('suspends a vendor after confirming', async () => {
     renderWithProviders(<VendorsPage />)
-    await userEvent.click(await screen.findByRole('button', { name: 'Remove Everywhere Print' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Suspend Everywhere Print' }))
     const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).getByText('Orders it already holds stay with it.', { exact: false })).toBeInTheDocument()
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove vendor' }))
-    await waitFor(() => expect(removeMyVendor).toHaveBeenCalledWith('v-2'))
+    expect(within(dialog).getByText(/Orders it already holds stay with it/)).toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Suspend' }))
+    await waitFor(() => expect(setMyVendorActive).toHaveBeenCalledWith('v-2', false))
   })
 
-  it('offers no mapping controls to someone without the keys', async () => {
+  it('resends an invite', async () => {
+    renderWithProviders(<VendorsPage />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Resend invite to Everywhere Print' }))
+    await waitFor(() => expect(resendMyVendorInvite).toHaveBeenCalledWith('v-2'))
+  })
+
+  it('offers no controls to someone without the keys', async () => {
     useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', permissions: ['company_vendor.view'] }, isLoading: false })
     renderWithProviders(<VendorsPage />)
     await screen.findByText('Pad Printers')
-    expect(screen.queryByRole('button', { name: 'Map existing vendor' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add vendor' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Change where/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^Remove / })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Suspend|Reactivate/ })).not.toBeInTheDocument()
   })
 })

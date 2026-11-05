@@ -1,5 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { addMyVendor, listAvailableVendors, listMyVendors, removeMyVendor, setMyVendorCoverage, type AddMyVendorInput, type VendorCoverageInput } from '@/api/myVendors'
+import {
+  addMyVendor,
+  editMyVendor,
+  listMyVendors,
+  resendMyVendorInvite,
+  setMyVendorActive,
+  setMyVendorCoverage,
+  type AddMyVendorInput,
+  type VendorCoverageInput,
+} from '@/api/myVendors'
 
 const myVendorsKey = ['my-vendors'] as const
 
@@ -7,30 +16,23 @@ export function useMyVendors() {
   return useQuery({ queryKey: myVendorsKey, queryFn: listMyVendors })
 }
 
-export function useAddMyVendor() {
+/** Every mutation returns the company's refreshed roster, which replaces the cached one. */
+function useRosterMutation<TVariables>(mutationFn: (variables: TVariables) => ReturnType<typeof listMyVendors>) {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: AddMyVendorInput) => addMyVendor(input),
-    onSuccess: (data) => queryClient.setQueryData(myVendorsKey, data),
-  })
+  return useMutation({ mutationFn, onSuccess: (data) => queryClient.setQueryData(myVendorsKey, data) })
 }
 
-export function useAvailableVendors(enabled = true) {
-  return useQuery({ queryKey: ['my-vendors', 'available'], queryFn: listAvailableVendors, enabled })
-}
+export const useAddMyVendor = () => useRosterMutation((input: AddMyVendorInput) => addMyVendor(input))
 
-export function useSetMyVendorCoverage() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ vendorId, ...input }: { vendorId: string } & VendorCoverageInput) => setMyVendorCoverage(vendorId, input),
-    onSuccess: (data) => queryClient.setQueryData(myVendorsKey, data),
-  })
-}
+export const useSetMyVendorCoverage = () =>
+  useRosterMutation(({ vendorId, ...input }: { vendorId: string } & VendorCoverageInput) => setMyVendorCoverage(vendorId, input))
 
-export function useRemoveMyVendor() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (vendorId: string) => removeMyVendor(vendorId),
-    onSuccess: (data) => queryClient.setQueryData(myVendorsKey, data),
-  })
+export const useEditMyVendor = () =>
+  useRosterMutation(({ vendorId, ...input }: { vendorId: string; name: string; contactPhone?: string }) => editMyVendor(vendorId, input))
+
+export const useSetMyVendorActive = () =>
+  useRosterMutation(({ vendorId, active }: { vendorId: string; active: boolean }) => setMyVendorActive(vendorId, active))
+
+export function useResendMyVendorInvite() {
+  return useMutation({ mutationFn: (vendorId: string) => resendMyVendorInvite(vendorId) })
 }

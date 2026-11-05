@@ -1,67 +1,50 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Link2, Pencil, Trash2, Truck } from 'lucide-react'
+import { MapPin, Mail, Pencil, Power, Truck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
-import { FormGenerator } from '@/components/fields/form-generator'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { IconButton } from '@/components/icon-button'
-import { emailField, phoneField, selectField, textField } from '@/components/masters/master-fields'
 import { MasterPageHeader, StatusCell } from '@/components/masters/master-page'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
-import { useMyOrgUnits } from '@/hooks/useMyOrgUnits'
 import { useHasAccess } from '@/hooks/use-permission'
-import { useAddMyVendor, useMyVendors, useRemoveMyVendor } from '@/hooks/useMyVendors'
+import { useAddMyVendor, useEditMyVendor, useMyVendors, useResendMyVendorInvite, useSetMyVendorActive } from '@/hooks/useMyVendors'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
+import { CoveragePicker, coverageInput, isCoverageComplete, type Coverage } from './CoveragePicker'
 import { VendorCoverageDialog } from './VendorCoverageDialog'
 import { rowsOf, type VendorRow } from './vendor-coverage'
 
-const COMPANY_WIDE = '__company_wide__'
+const LIST_FIELDS: ListFieldMap = { vendorName: 'text', serves: 'text' }
 
-const LIST_FIELDS: ListFieldMap = { vendorName: 'text', orgUnitName: 'text' }
-
-/** A Company Admin onboards their own vendor; an invite email lets the vendor set a password. */
+/** A company adds its own vendor and says where it serves; an invite email lets the vendor set a password. */
 function AddVendorDialog({ onClose }: { onClose: () => void }) {
   const showError = useApiErrorToast()
   const addVendor = useAddMyVendor()
-  const { data: orgUnits } = useMyOrgUnits()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [coverage, setCoverage] = useState<Coverage>({ mode: 'units', selected: new Set() })
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const canSave = name.trim() !== '' && validEmail && isCoverageComplete(coverage)
 
-  const fields = useMemo(
-    () => [
-      textField({ id: 'name', label: 'Vendor name', required: true, max: 200, spanToFullRow: true }),
-      emailField({ id: 'contactEmail', label: 'Contact email', required: true }),
-      phoneField({ id: 'contactPhone', label: 'Contact phone' }),
-      selectField({
-        id: 'orgUnitId',
-        label: 'Serves',
-        required: true,
-        spanToFullRow: true,
-        options: [
-          { value: COMPANY_WIDE, label: 'Whole company' },
-          ...(orgUnits ?? []).map((u) => ({ value: u.id, label: `${u.levelName}: ${u.name}` })),
-        ],
-      }),
-    ],
-    [orgUnits],
-  )
-
-  async function onSubmit(values: Record<string, unknown>) {
+  async function onSave() {
     try {
       await addVendor.mutateAsync({
-        name: String(values.name).trim(),
-        contactEmail: String(values.contactEmail).trim(),
-        contactPhone: String(values.contactPhone ?? '').trim() || undefined,
-        orgUnitId: values.orgUnitId === COMPANY_WIDE ? null : String(values.orgUnitId),
+        name: name.trim(),
+        contactEmail: email.trim(),
+        contactPhone: phone.trim() || undefined,
+        ...coverageInput(coverage),
       })
-      toast.success('Vendor added', { description: 'An invite email was sent so they can set up their password.' })
+      toast.success('Vendor added', { description: `An invite email was sent to ${email.trim()} so they can set up their password.` })
       onClose()
     } catch (err) {
-      showError(err)
+      showError(err, 'The vendor was not added.')
     }
   }
 
@@ -71,18 +54,76 @@ function AddVendorDialog({ onClose }: { onClose: () => void }) {
       onOpenChange={(open) => !open && onClose()}
       size="md"
       title="Add vendor"
-      description="Scope a vendor to one org unit if they only fulfil orders there: their gifts then show only for that unit and the units under it."
-      footer={<></>}
+      description="Orders raised in a division or unit go only to vendors that serve it."
+      confirmLabel="Add vendor"
+      cancelLabel="Cancel"
+      confirmDisabled={!canSave}
+      loading={addVendor.isPending}
+      onConfirm={() => void onSave()}
     >
-      <FormGenerator
-        fields={fields}
-        values={{ orgUnitId: COMPANY_WIDE }}
-        mode="create"
-        maxWidgetsPerRow={2}
-        submitLabel="Add vendor"
-        hideCardWrapper
-        onSubmit={onSubmit}
-      />
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="vendor-name">Vendor name</Label>
+          <Input id="vendor-name" value={name} maxLength={200} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="vendor-email">Contact email</Label>
+            <Input id="vendor-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="vendor-phone">Contact phone</Label>
+            <Input id="vendor-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Serves</Label>
+          <CoveragePicker value={coverage} onChange={setCoverage} />
+        </div>
+      </div>
+    </AppDialog>
+  )
+}
+
+/** A vendor's own name and phone -- its sign-in email and commercial terms are not changed here. */
+function EditVendorDialog({ vendor, onClose }: { vendor: VendorRow; onClose: () => void }) {
+  const showError = useApiErrorToast()
+  const editVendor = useEditMyVendor()
+  const [name, setName] = useState(vendor.vendorName)
+  const [phone, setPhone] = useState('')
+
+  async function onSave() {
+    try {
+      await editVendor.mutateAsync({ vendorId: vendor.vendorId, name: name.trim(), contactPhone: phone.trim() || undefined })
+      toast.success('Vendor updated')
+      onClose()
+    } catch (err) {
+      showError(err, `${vendor.vendorName} was not updated.`)
+    }
+  }
+
+  return (
+    <AppDialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      size="sm"
+      title={`Edit ${vendor.vendorName}`}
+      confirmLabel="Save"
+      cancelLabel="Cancel"
+      confirmDisabled={name.trim() === ''}
+      loading={editVendor.isPending}
+      onConfirm={() => void onSave()}
+    >
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-vendor-name">Vendor name</Label>
+          <Input id="edit-vendor-name" value={name} maxLength={200} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-vendor-phone">Contact phone</Label>
+          <Input id="edit-vendor-phone" value={phone} placeholder="Leave blank to clear" onChange={(e) => setPhone(e.target.value)} />
+        </div>
+      </div>
     </AppDialog>
   )
 }
@@ -106,18 +147,42 @@ function ServesCell({ row }: { row: VendorRow }) {
   )
 }
 
-/** The vendors this company works with, and -- the company admin's job -- which divisions and units each one serves. */
+/** The vendors this company runs -- the company admin adds them, says which divisions and units each one serves, and can suspend them. */
 export function VendorsPage() {
   const { data: mappings, isLoading, error, refetch } = useMyVendors()
   const showError = useApiErrorToast()
-  const removeVendor = useRemoveMyVendor()
+  const setActive = useSetMyVendorActive()
+  const resendInvite = useResendMyVendorInvite()
   const canAssign = useHasAccess(P.COMPANY_VENDOR_ASSIGN)
-  const canRemove = useHasAccess(P.COMPANY_VENDOR_REMOVE)
+  const canEdit = useHasAccess(P.COMPANY_VENDOR_EDIT)
+  const canChangeStatus = useHasAccess(P.COMPANY_VENDOR_STATUS)
   const [adding, setAdding] = useState(false)
-  const [mapping, setMapping] = useState<VendorRow | 'new' | null>(null)
-  const [removing, setRemoving] = useState<VendorRow | null>(null)
+  const [mapping, setMapping] = useState<VendorRow | null>(null)
+  const [editing, setEditing] = useState<VendorRow | null>(null)
+  const [toggling, setToggling] = useState<VendorRow | null>(null)
 
   const rows = useMemo(() => rowsOf(mappings ?? []), [mappings])
+
+  async function onResend(vendor: VendorRow) {
+    try {
+      await resendInvite.mutateAsync(vendor.vendorId)
+      toast.success(`Invite resent to ${vendor.vendorName}`)
+    } catch (err) {
+      showError(err, `The invite to ${vendor.vendorName} was not sent.`)
+    }
+  }
+
+  async function onToggle() {
+    if (!toggling) return
+    const activate = toggling.vendorStatus !== 'ACTIVE'
+    try {
+      await setActive.mutateAsync({ vendorId: toggling.vendorId, active: activate })
+      toast.success(activate ? `${toggling.vendorName} reactivated` : `${toggling.vendorName} suspended`)
+      setToggling(null)
+    } catch (err) {
+      showError(err, `${toggling.vendorName} was not ${activate ? 'reactivated' : 'suspended'}.`)
+    }
+  }
 
   const columns = useMemo<ColumnDef<VendorRow, unknown>[]>(
     () => [
@@ -142,28 +207,31 @@ export function VendorsPage() {
         header: '',
         enableSorting: false,
         enableColumnFilter: false,
-        meta: { className: 'w-[96px]' },
-        cell: ({ row }) => (
-          <div className="flex justify-end gap-1">
-            {canAssign && <IconButton icon={Pencil} label={`Change where ${row.original.vendorName} serves`} onClick={() => setMapping(row.original)} />}
-            {canRemove && <IconButton icon={Trash2} tone="destructive" label={`Remove ${row.original.vendorName}`} onClick={() => setRemoving(row.original)} />}
-          </div>
-        ),
+        meta: { className: 'w-[160px]' },
+        cell: ({ row }) => {
+          const vendor = row.original
+          const active = vendor.vendorStatus === 'ACTIVE'
+          return (
+            <div className="flex justify-end gap-1">
+              {canEdit && <IconButton icon={Pencil} label={`Edit ${vendor.vendorName}`} onClick={() => setEditing(vendor)} />}
+              {canAssign && active && <IconButton icon={MapPin} label={`Change where ${vendor.vendorName} serves`} onClick={() => setMapping(vendor)} />}
+              {canEdit && <IconButton icon={Mail} label={`Resend invite to ${vendor.vendorName}`} onClick={() => void onResend(vendor)} />}
+              {canChangeStatus && (
+                <IconButton
+                  icon={Power}
+                  tone={active ? 'destructive' : 'success'}
+                  label={active ? `Suspend ${vendor.vendorName}` : `Reactivate ${vendor.vendorName}`}
+                  onClick={() => setToggling(vendor)}
+                />
+              )}
+            </div>
+          )
+        },
       },
     ],
-    [canAssign, canRemove],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [canAssign, canEdit, canChangeStatus],
   )
-
-  async function onRemove() {
-    if (!removing) return
-    try {
-      await removeVendor.mutateAsync(removing.vendorId)
-      toast.success(`${removing.vendorName} removed`)
-      setRemoving(null)
-    } catch (err) {
-      showError(err, `${removing.vendorName} was not removed.`)
-    }
-  }
 
   return (
     <div>
@@ -173,14 +241,6 @@ export function VendorsPage() {
         createLabel="Add vendor"
         createPermission={P.COMPANY_VENDOR_ADD}
         onCreate={() => setAdding(true)}
-        extra={
-          canAssign && (
-            <Button variant="outline" size="sm" className="h-9" onClick={() => setMapping('new')}>
-              <Link2 />
-              Map existing vendor
-            </Button>
-          )
-        }
       />
       <DataTable<VendorRow>
         columns={columns}
@@ -197,21 +257,26 @@ export function VendorsPage() {
           onRetry: () => void refetch(),
           icon: <Truck className="h-8 w-8 opacity-50" />,
           message: 'No vendors yet',
-          description: 'Add a vendor, or map an existing one, to start routing orders.',
+          description: 'Add your first vendor and choose the divisions and units it serves.',
         })}
       />
       {adding && <AddVendorDialog onClose={() => setAdding(false)} />}
-      {mapping && <VendorCoverageDialog vendor={mapping === 'new' ? undefined : mapping} onClose={() => setMapping(null)} />}
+      {mapping && <VendorCoverageDialog vendor={mapping} onClose={() => setMapping(null)} />}
+      {editing && <EditVendorDialog vendor={editing} onClose={() => setEditing(null)} />}
       <AppDialog
-        open={removing !== null}
-        onOpenChange={(open) => !open && setRemoving(null)}
+        open={toggling !== null}
+        onOpenChange={(open) => !open && setToggling(null)}
         size="sm"
-        title={removing ? `Remove ${removing.vendorName}?` : ''}
-        description="It stops receiving new orders from this company. Orders it already holds stay with it."
-        confirmLabel="Remove vendor"
+        title={toggling ? (toggling.vendorStatus === 'ACTIVE' ? `Suspend ${toggling.vendorName}?` : `Reactivate ${toggling.vendorName}?`) : ''}
+        description={
+          toggling?.vendorStatus === 'ACTIVE'
+            ? 'It can no longer sign in, and no new orders are routed to it, until you reactivate it. Orders it already holds stay with it.'
+            : 'It can sign in again and receive new orders for the divisions and units it serves.'
+        }
+        confirmLabel={toggling?.vendorStatus === 'ACTIVE' ? 'Suspend' : 'Reactivate'}
         cancelLabel="Cancel"
-        loading={removeVendor.isPending}
-        onConfirm={() => void onRemove()}
+        loading={setActive.isPending}
+        onConfirm={() => void onToggle()}
       />
     </div>
   )

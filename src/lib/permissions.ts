@@ -65,7 +65,8 @@ export const P = {
   COMPANY_VENDOR_VIEW: 'company_vendor.view',
   COMPANY_VENDOR_ADD: 'company_vendor.add',
   COMPANY_VENDOR_ASSIGN: 'company_vendor.assign',
-  COMPANY_VENDOR_REMOVE: 'company_vendor.remove',
+  COMPANY_VENDOR_EDIT: 'company_vendor.edit',
+  COMPANY_VENDOR_STATUS: 'company_vendor.status',
 
   WAREHOUSE_VIEW: 'warehouse.view',
   WAREHOUSE_SETUP: 'warehouse.setup',
@@ -78,9 +79,6 @@ export const P = {
   PLATFORM_COMPANY_CONFIGURE: 'platform_company.configure',
 
   PLATFORM_VENDOR_VIEW: 'platform_vendor.view',
-  PLATFORM_VENDOR_CREATE: 'platform_vendor.create',
-  PLATFORM_VENDOR_EDIT: 'platform_vendor.edit',
-  PLATFORM_VENDOR_STATUS: 'platform_vendor.status',
 
   PLATFORM_GIFT_VIEW: 'platform_gift.view',
   PLATFORM_GIFT_CREATE: 'platform_gift.create',

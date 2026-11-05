@@ -59,7 +59,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { data: me } = useCurrentUser()
   const { hasAnyPermission } = usePermissions()
-  const canReviewArtwork = hasAnyPermission([P.ARTWORK_REVIEW, P.ARTWORK_FINAL_APPROVE])
+  const canReviewArtwork = hasAnyPermission([P.APPROVAL_VIEW])
   const { data: pendingArtwork } = usePendingArtworkApprovals(canReviewArtwork)
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
   const [selectedQuickGiftId, setSelectedQuickGiftId] = useState<string | null>(null)

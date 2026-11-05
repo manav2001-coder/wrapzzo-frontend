@@ -25,8 +25,14 @@ describe('Sidebar', () => {
     expect(screen.queryByRole('link', { name: 'Create' })).not.toBeInTheDocument()
   })
 
-  it('offers Approvals to whoever may review artwork, and to no one else', () => {
+  it('offers Approvals only to whoever holds approval.view', () => {
     companyUser(['dashboard.view', 'order.view', 'artwork.review'], true)
+    const { unmount } = renderWithProviders(<Sidebar />, { route: '/dashboard' })
+    // Reviewing a proof from the Orders page is not the same as the manager queue.
+    expect(screen.queryByRole('link', { name: /approvals/i })).not.toBeInTheDocument()
+    unmount()
+
+    companyUser(['dashboard.view', 'order.view', 'approval.view'])
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /approvals/i })).toHaveAttribute('href', '/approvals')
   })

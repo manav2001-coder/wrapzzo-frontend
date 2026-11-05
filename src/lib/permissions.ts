@@ -26,6 +26,8 @@ export const P = {
   ORDER_REQUEST_PHOTO: 'order.request_photo',
   ARTWORK_REVIEW: 'artwork.review',
   ARTWORK_FINAL_APPROVE: 'artwork.final_approve',
+  /** The Approvals page (manager queue). Not the approval-steps setup, which is ARTWORK_APPROVAL_*. */
+  APPROVAL_VIEW: 'approval.view',
   ARTWORK_APPROVAL_VIEW: 'artwork_approval.view',
   ARTWORK_APPROVAL_CONFIGURE: 'artwork_approval.configure',
 

@@ -37,7 +37,6 @@ export const P = {
   DOCTOR_EDIT: 'doctor.edit',
   DOCTOR_REMOVE: 'doctor.remove',
   DOCTOR_IMPORT: 'doctor.import',
-  DOCTOR_APPROVE: 'doctor.approve',
 
   USER_VIEW: 'user.view',
   USER_CREATE: 'user.create',

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppDialog } from '@/components/app-dialog'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const IMAGE_FILE = /\.(png|jpe?g|webp|gif|svg)$/i
@@ -47,12 +48,27 @@ export function ArtworkProofPreview({
             type="button"
             onClick={() => setOpen(true)}
             aria-label={t('artwork.viewProof')}
-            className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted transition-opacity hover:opacity-90"
+            className={cn(
+              'relative flex shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted transition-opacity hover:opacity-90',
+              image ? 'h-20 w-28' : 'h-48 w-36',
+            )}
           >
             {image ? (
               <img src={fileUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <FileText className="h-8 w-8 text-muted-foreground" />
+              <>
+                {/* The icon stays underneath: it is what shows while the page loads, or if the browser cannot draw a PDF here. */}
+                <FileText className="h-8 w-8 text-muted-foreground" />
+                {/* The proof's first page, drawn in the box itself; clicks fall through to the button, which opens it large. */}
+                <iframe
+                  src={`${fileUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+                  title=""
+                  aria-hidden
+                  tabIndex={-1}
+                  loading="lazy"
+                  className="pointer-events-none absolute inset-0 h-full w-full border-0 bg-white"
+                />
+              </>
             )}
           </button>
           <Button size="sm" variant="outline" onClick={() => setOpen(true)}>

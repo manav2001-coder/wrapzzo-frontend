@@ -1,17 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Truck } from 'lucide-react'
-import { useMemo } from 'react'
+import { Eye, Truck } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { Vendor } from '@/api/vendors'
 import { DataTable } from '@/components/data-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
+import { IconButton } from '@/components/icon-button'
 import { useCompanyScope } from '@/components/masters/company-scope-select'
 import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
 import { Badge } from '@/components/ui/badge'
 import { useVendors } from '@/hooks/useVendors'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { rowsFetcher } from '@/lib/masters-api'
+import { VendorMappingDialog } from './VendorMappingDialog'
 
 const LIST_FIELDS: ListFieldMap = {
   name: 'text',
@@ -42,13 +44,14 @@ function ServesCell({ serves }: { serves: string[] }) {
 
 /**
  * Every vendor across all franchises, to look at. Platform staff do not add, edit, suspend or map them: each company's
- * admin runs its own vendors, so this page has no actions at all.
+ * admin runs its own vendors, so the only thing a row offers is to see where that vendor serves.
  */
 export function VendorListPage() {
   const { t } = useTranslation('admin')
   // A vendor serves companies, so the list follows the company in scope: the vendors serving it.
   const scope = useCompanyScope()
   const { data: vendors, dataUpdatedAt, error, refetch } = useVendors(scope.companyId)
+  const [viewing, setViewing] = useState<Vendor | null>(null)
   const fetchVendors = useMemo(() => rowsFetcher(vendors ?? [], (vendor: Vendor) => vendor.status === 'ACTIVE'), [vendors])
 
   const { statusColumn, auditColumns } = useMasterColumns<Vendor>({
@@ -73,6 +76,14 @@ export function VendorListPage() {
       { id: 'contactPhone', accessorFn: (v) => v.contactPhone ?? '', header: t('vendors.column.phone'), meta: { className: 'min-w-[130px]' } },
       statusColumn,
       ...auditColumns,
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        enableColumnFilter: false,
+        meta: { className: 'w-[64px]' },
+        cell: ({ row }) => <IconButton icon={Eye} label={`View where ${row.original.name} serves`} onClick={() => setViewing(row.original)} />,
+      },
     ],
     [t, statusColumn, auditColumns],
   )
@@ -98,6 +109,7 @@ export function VendorListPage() {
           description: t('vendors.emptyBody'),
         })}
       />
+      {viewing && <VendorMappingDialog vendor={viewing} onClose={() => setViewing(null)} />}
     </div>
   )
 }

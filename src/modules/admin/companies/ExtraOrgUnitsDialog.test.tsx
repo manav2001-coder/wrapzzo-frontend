@@ -45,10 +45,10 @@ describe('ExtraOrgUnitsDialog', () => {
     const onClose = vi.fn()
     renderWithProviders(<ExtraOrgUnitsDialog companyId="c-1" user={MANAGER} onClose={onClose} />)
 
-    expect(await screen.findByLabelText('South')).not.toBeChecked()
-    expect(screen.getByLabelText('East')).toBeChecked()
+    expect(await screen.findByLabelText(/^South/)).not.toBeChecked()
+    expect(screen.getByLabelText(/^East/)).toBeChecked()
 
-    await userEvent.click(screen.getByLabelText('South'))
+    await userEvent.click(screen.getByLabelText(/^South/))
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(setExtraOrgUnits).toHaveBeenCalledWith('c-1', 'u-1', expect.arrayContaining(['east', 'south'])))
     expect(setExtraOrgUnits.mock.calls[0][2]).toHaveLength(2)
@@ -59,15 +59,15 @@ describe('ExtraOrgUnitsDialog', () => {
     renderWithProviders(<ExtraOrgUnitsDialog companyId="c-1" user={MANAGER} onClose={vi.fn()} />)
 
     for (const covered of ['North', 'Punjab', 'West Bengal']) {
-      expect(await screen.findByLabelText(covered)).toBeChecked()
-      expect(screen.getByLabelText(covered)).toBeDisabled()
+      expect(await screen.findByLabelText(new RegExp(`^${covered}`))).toBeChecked()
+      expect(screen.getByLabelText(new RegExp(`^${covered}`))).toBeDisabled()
     }
-    expect(screen.getByLabelText('South')).not.toBeChecked()
-    expect(screen.getByLabelText('South')).toBeEnabled()
-    expect(screen.getByLabelText('Karnataka')).not.toBeChecked()
+    expect(screen.getByLabelText(/^South/)).not.toBeChecked()
+    expect(screen.getByLabelText(/^South/)).toBeEnabled()
+    expect(screen.getByLabelText(/^Karnataka/)).not.toBeChecked()
 
-    await userEvent.click(screen.getByLabelText('South'))
-    expect(screen.getByLabelText('Karnataka')).toBeChecked()
-    expect(screen.getByLabelText('Karnataka')).toBeDisabled()
+    await userEvent.click(screen.getByLabelText(/^South/))
+    expect(screen.getByLabelText(/^Karnataka/)).toBeChecked()
+    expect(screen.getByLabelText(/^Karnataka/)).toBeDisabled()
   })
 })

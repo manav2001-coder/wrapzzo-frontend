@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 
-import { Checkbox } from '@/components/ui/checkbox'
+import { OrgUnitTree } from '@/components/org-unit-tree'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useMyOrgUnits } from '@/hooks/useMyOrgUnits'
-import { descendantIds, unitTree, type UnitNode } from './vendor-coverage'
+import { descendantIds, type UnitNode } from '@/lib/org-unit-tree'
 
 export interface Coverage {
   mode: 'whole' | 'units'
@@ -20,49 +20,25 @@ export const coverageInput = (coverage: Coverage) => ({
   orgUnitIds: coverage.mode === 'whole' ? [] : [...coverage.selected],
 })
 
-/** One unit and everything under it. A ticked unit covers its whole subtree, so what sits beneath it shows as included, not separately tickable. */
-function UnitBranch({
-  node,
-  depth,
-  selected,
-  coveredByAncestor,
-  readOnly,
-  onToggle,
-}: {
-  node: UnitNode
-  depth: number
-  selected: Set<string>
-  coveredByAncestor: boolean
-  readOnly: boolean
-  onToggle: (node: UnitNode, checked: boolean) => void
-}) {
-  const checked = selected.has(node.id) || coveredByAncestor
-  const id = `unit-${node.id}`
-  return (
-    <li>
-      <div className="flex items-center gap-2 py-1" style={{ paddingLeft: depth * 20 }}>
-        <Checkbox id={id} checked={checked} disabled={readOnly || coveredByAncestor} onCheckedChange={(value) => onToggle(node, value === true)} />
-        <Label htmlFor={id} className="flex cursor-pointer items-baseline gap-2 font-normal">
-          <span className={depth === 0 ? 'font-medium' : ''}>{node.name}</span>
-          <span className="text-xs text-muted-foreground">{node.levelName}</span>
-          {coveredByAncestor && <span className="text-xs text-muted-foreground">· included</span>}
-        </Label>
-      </div>
-      {node.children.length > 0 && (
-        <ul>
-          {node.children.map((child) => (
-            <UnitBranch key={child.id} node={child} depth={depth + 1} selected={selected} coveredByAncestor={checked} readOnly={readOnly} onToggle={onToggle} />
-          ))}
-        </ul>
-      )}
-    </li>
-  )
-}
-
 /** Where a vendor serves: the whole company, or divisions and units ticked from the company's own tree. */
 export function CoveragePicker({ value, onChange, readOnly = false }: { value: Coverage; onChange: (value: Coverage) => void; readOnly?: boolean }) {
   const { data: orgUnits } = useMyOrgUnits()
-  const tree = useMemo(() => unitTree(orgUnits ?? []), [orgUnits])
+  const units = orgUnits ?? []
+
+  // A ticked unit covers its whole subtree: what sits beneath it shows ticked, locked and "included".
+  const covered = useMemo(() => {
+    const parentOf = new Map(units.map((u) => [u.id, u.parentId]))
+    const result = new Set<string>()
+    for (const unit of units) {
+      for (let ancestor = parentOf.get(unit.id); ancestor; ancestor = parentOf.get(ancestor)) {
+        if (value.selected.has(ancestor)) {
+          result.add(unit.id)
+          break
+        }
+      }
+    }
+    return result
+  }, [units, value.selected])
 
   function toggle(node: UnitNode, checked: boolean) {
     const next = new Set(value.selected)
@@ -94,17 +70,14 @@ export function CoveragePicker({ value, onChange, readOnly = false }: { value: C
       </RadioGroup>
 
       {value.mode === 'units' && (
-        <div className="max-h-64 overflow-y-auto rounded-md border p-2">
-          {tree.length === 0 ? (
-            <p className="p-2 text-sm text-muted-foreground">No divisions or units yet.</p>
-          ) : (
-            <ul>
-              {tree.map((node) => (
-                <UnitBranch key={node.id} node={node} depth={0} selected={value.selected} coveredByAncestor={false} readOnly={readOnly} onToggle={toggle} />
-              ))}
-            </ul>
-          )}
-        </div>
+        <OrgUnitTree
+          units={units}
+          isChecked={(id) => value.selected.has(id) || covered.has(id)}
+          isLocked={(id) => covered.has(id)}
+          lockedHint={(id) => (covered.has(id) ? 'included' : null)}
+          onToggle={toggle}
+          readOnly={readOnly}
+        />
       )}
       {!readOnly && value.mode === 'units' && value.selected.size === 0 && <p className="text-xs text-muted-foreground">Tick at least one division or unit, or choose the whole company.</p>}
     </div>

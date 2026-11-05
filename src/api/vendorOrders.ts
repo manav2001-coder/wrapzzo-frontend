@@ -24,6 +24,9 @@ export interface VendorOrder {
   amCode: string | null
   amMobile: string | null
   amArea: string | null
+  /** The division (top-level org unit) the order was raised in -- what the portal's division filter narrows by. */
+  divisionId: string | null
+  divisionName: string | null
   /** Shown so the vendor can produce a personalized gift correctly -- null until the recipient uploads one. */
   recipientPhotoUrl: string | null
   price: number | null

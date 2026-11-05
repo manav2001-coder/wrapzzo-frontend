@@ -208,5 +208,9 @@
     "dispatchTo": "AM को भेजें",
     "forDoctor": "डॉक्टर के लिए",
     "order": "ऑर्डर"
+  },
+  "division": {
+    "label": "डिवीज़न",
+    "all": "सभी डिवीज़न"
   }
 }

@@ -16,6 +16,8 @@ export function vendorOrder(overrides: Partial<VendorOrder> = {}): VendorOrder {
     amCode: 'AM07',
     amMobile: '9811111111',
     amArea: 'Pune',
+    divisionId: null,
+    divisionName: null,
     recipientPhotoUrl: null,
     price: 40,
     quantity: 5,

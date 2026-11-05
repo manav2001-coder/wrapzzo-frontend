@@ -208,5 +208,9 @@
     "dispatchTo": "Dispatch to AM",
     "forDoctor": "For doctor",
     "order": "Order"
+  },
+  "division": {
+    "label": "Division",
+    "all": "All divisions"
   }
 }

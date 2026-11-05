@@ -12,6 +12,7 @@ import { useMyVendorProfile, useVendorOrders } from '@/hooks/useVendorOrders'
 import { formatDate } from '@/lib/datetime'
 import { cn } from '@/lib/utils'
 import { ACTION_STAGES, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
+import { VendorDivisionFilter } from '../division/VendorDivisionFilter'
 import { VendorStageBadge } from '../orders/VendorStageBadge'
 
 interface QueueStage {
@@ -151,6 +152,7 @@ export function VendorHomePage() {
               )}
             </p>
           </div>
+          <VendorDivisionFilter />
         </div>
       </header>
 

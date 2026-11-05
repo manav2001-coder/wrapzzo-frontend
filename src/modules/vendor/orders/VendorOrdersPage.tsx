@@ -14,6 +14,7 @@ import { useVendorOrders } from '@/hooks/useVendorOrders'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { VENDOR_STAGES, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
+import { VendorDivisionFilter } from '../division/VendorDivisionFilter'
 import { VendorStageBadge } from './VendorStageBadge'
 
 const LIST_FIELDS: ListFieldMap = {
@@ -140,7 +141,7 @@ export function VendorOrdersPage() {
 
   return (
     <div>
-      <MasterPageHeader title={t('orders.title')} description={t('orders.subtitle')} />
+      <MasterPageHeader title={t('orders.title')} description={t('orders.subtitle')} extra={<VendorDivisionFilter />} />
       <AppTabs
         value={tab}
         onValueChange={(value) => setParams(value === ALL ? {} : { stage: value }, { replace: true })}

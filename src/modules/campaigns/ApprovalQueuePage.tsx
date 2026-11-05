@@ -53,7 +53,7 @@ function levelLabel(item: PendingArtworkApproval) {
 export function ApprovalQueuePage() {
   const showError = useApiErrorToast()
   const pageTitle = useMenuLabel('approvals', 'Approvals')
-  const canReview = useHasAccess([P.ARTWORK_REVIEW, P.ARTWORK_FINAL_APPROVE])
+  const canReview = useHasAccess([P.APPROVAL_DECIDE, P.ARTWORK_FINAL_APPROVE])
   const { data: artwork, isLoading, error, refetch } = usePendingArtworkApprovals(canReview)
   const reviewArtwork = useReviewArtwork()
 

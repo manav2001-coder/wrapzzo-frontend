@@ -28,6 +28,8 @@ export const P = {
   ARTWORK_FINAL_APPROVE: 'artwork.final_approve',
   /** The Approvals page (manager queue). Not the approval-steps setup, which is ARTWORK_APPROVAL_*. */
   APPROVAL_VIEW: 'approval.view',
+  /** Approve or send back a proof at a manager level. The MR's own first review is ARTWORK_REVIEW. */
+  APPROVAL_DECIDE: 'approval.decide',
   ARTWORK_APPROVAL_VIEW: 'artwork_approval.view',
   ARTWORK_APPROVAL_CONFIGURE: 'artwork_approval.configure',
 

@@ -40,21 +40,37 @@ describe('VendorHomePage', () => {
 
   it('greets the vendor and counts the queue by stage', async () => {
     renderHome()
-    expect(await screen.findByRole('heading', { name: 'Welcome, Pad Printers' })).toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: /Changes requested\s*1/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Needs artwork\s*1/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Ready to dispatch\s*1/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /Good (morning|afternoon|evening), Pad Printers/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /1\s*Changes requested/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /1\s*Needs artwork/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /1\s*Ready to dispatch/ })).toBeInTheDocument()
   })
 
-  it('lists the proofs customers sent back, with their comment', async () => {
+  it('says how many orders wait on the vendor and opens the most urgent one first', async () => {
     renderHome()
-    expect(await screen.findByText('Changes requested by customers')).toBeInTheDocument()
-    expect(screen.getByText('“Name misspelt”')).toBeInTheDocument()
+    expect(await screen.findByText('3 orders are waiting on you')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Open the most urgent order' }))
+    // A proof sent back comes before a missing one or a ready one.
+    expect(screen.getByTestId('where')).toHaveTextContent('/vendor/orders/b')
+  })
+
+  it('lists the orders that need the vendor, with what to do and any customer comment', async () => {
+    renderHome()
+    expect(await screen.findByText('“Name misspelt”')).toBeInTheDocument()
+    expect(screen.getByText('Upload an artwork proof')).toBeInTheDocument()
+    expect(screen.getByText('Pack it and mark it dispatched')).toBeInTheDocument()
+  })
+
+  it('says so when nothing is waiting', async () => {
+    listVendorOrders.mockResolvedValue([vendorOrder({ id: 'd', status: 'DELIVERED', artworkApproved: true })])
+    renderHome()
+    expect(await screen.findAllByText("You're all caught up")).not.toHaveLength(0)
+    expect(screen.queryByRole('button', { name: 'Open the most urgent order' })).not.toBeInTheDocument()
   })
 
   it('opens the orders list on the stage a tile stands for', async () => {
     renderHome()
-    await userEvent.click(await screen.findByRole('button', { name: /Ready to dispatch\s*1/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /1\s*Ready to dispatch/ }))
     expect(screen.getByTestId('where')).toHaveTextContent('/vendor/orders?stage=ready')
   })
 

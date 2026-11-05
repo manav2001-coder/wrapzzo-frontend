@@ -38,7 +38,33 @@
     "hidden_other": "{{count}} hidden by Wrappzo",
     "manageGifts": "Manage products",
     "addGift": "Add a product",
-    "noGifts": "You haven't listed any products yet. Add one so companies can order it."
+    "noGifts": "You haven't listed any products yet. Add one so companies can order it.",
+    "good": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "heroWaiting_one": "{{count}} order is waiting on you",
+    "heroWaiting_other": "{{count}} orders are waiting on you",
+    "openNext": "Open the most urgent order",
+    "waitingOnOthers": "With customer",
+    "actionTitle": "Needs your attention",
+    "actionBody": "The orders waiting on you, most urgent first.",
+    "glanceTitle": "At a glance",
+    "totalOrders": "Total orders",
+    "hint": {
+      "rework": "Fix and re-upload",
+      "artwork": "Upload a proof",
+      "review": "Customer is deciding",
+      "ready": "Pack and dispatch",
+      "dispatched": "Mark delivered on arrival"
+    },
+    "action": {
+      "rework": "Upload a corrected proof",
+      "artwork": "Upload an artwork proof",
+      "ready": "Pack it and mark it dispatched",
+      "dispatched": "Mark it delivered once it arrives"
+    }
   },
   "orders": {
     "title": "Orders",

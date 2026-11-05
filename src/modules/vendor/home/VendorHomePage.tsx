@@ -93,7 +93,7 @@ function ActionRow({ order, stage }: { order: VendorOrder; stage: VendorStage })
 }
 
 /**
- * The vendor's landing page: a greeting that says how much is waiting and opens the most urgent order, the work queue by
+ * The vendor's landing page: a greeting that says how much is waiting, the work queue by
  * stage (each card opens that slice of the orders list), the orders that need the vendor's hand next, and the catalogue.
  */
 export function VendorHomePage() {
@@ -126,7 +126,6 @@ export function VendorHomePage() {
   const live = (gifts ?? []).filter((gift) => gift.active).length
   const hidden = (gifts ?? []).length - live
   const now = new Date()
-  const next = toAct[0]
 
   return (
     <div className="space-y-7 pb-8">
@@ -152,12 +151,6 @@ export function VendorHomePage() {
               )}
             </p>
           </div>
-          {next && (
-            <Button size="lg" onClick={() => navigate(`/vendor/orders/${next.order.id}`)}>
-              {t('home.openNext')}
-              <ArrowRight />
-            </Button>
-          )}
         </div>
       </header>
 

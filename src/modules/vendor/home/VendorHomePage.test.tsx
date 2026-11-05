@@ -46,12 +46,17 @@ describe('VendorHomePage', () => {
     expect(screen.getByRole('button', { name: /1\s*Ready to dispatch/ })).toBeInTheDocument()
   })
 
-  it('says how many orders wait on the vendor and opens the most urgent one first', async () => {
+  it('says how many orders wait on the vendor, with no button in the banner', async () => {
     renderHome()
     expect(await screen.findByText('3 orders are waiting on you')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Open the most urgent order' }))
-    // A proof sent back comes before a missing one or a ready one.
-    expect(screen.getByTestId('where')).toHaveTextContent('/vendor/orders/b')
+    expect(screen.queryByRole('button', { name: 'Open the most urgent order' })).not.toBeInTheDocument()
+  })
+
+  it('lists the most urgent order first: a proof sent back before a missing one or a ready one', async () => {
+    renderHome()
+    await screen.findByText('“Name misspelt”')
+    const rows = screen.getAllByRole('link', { name: /ORD-/ })
+    expect(rows[0]).toHaveTextContent('ORD-2')
   })
 
   it('lists the orders that need the vendor, with what to do and any customer comment', async () => {

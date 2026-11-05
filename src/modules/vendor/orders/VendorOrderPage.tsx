@@ -435,7 +435,8 @@ export function VendorOrderPage() {
       />
 
       <section className="rounded-lg border bg-card p-4 shadow-sm">
-        <div className="overflow-x-auto pb-1">
+        {/* Room around the steps: the current one has a ring outside its circle, which a scroll container would otherwise clip. */}
+        <div className="overflow-x-auto px-1 pt-1.5 pb-1">
           <Progress order={order} stage={stage} />
         </div>
         <div

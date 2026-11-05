@@ -6,7 +6,7 @@ import type { PermissionKey, PermissionRequirement } from '@/lib/permissions'
 
 /**
  * What the signed-in user is allowed to do: the effective access-control keys `GET /api/auth/me`
- * already resolved server-side (role ∪ designation ± per-user overrides), so there is no second
+ * already resolved server-side (the templates of their role plus any given to them directly), so there is no second
  * request and no way for two sources to disagree. React Query does the caching;
  * `refetchPermissions()` is a one-line invalidation for screens that change someone's access.
  *

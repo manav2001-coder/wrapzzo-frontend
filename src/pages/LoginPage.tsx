@@ -89,6 +89,11 @@ export function LoginPage() {
         setSubmitError(lockedMessage(userError))
         return
       }
+      // The password was right but the company is switched off: say so, rather than a vague "failed".
+      if (userError instanceof ApiError && userError.status === 403 && userError.message) {
+        setSubmitError(userError.message)
+        return
+      }
     }
     // Not a platform/company user: this same form is also the vendor portal's way in, so try that
     // identity before giving up.

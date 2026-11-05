@@ -95,4 +95,12 @@ describe('LoginPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/locked until/i)
     expect(vendorLogin).not.toHaveBeenCalled()
   })
+
+  it("tells someone from a deactivated company why they can't sign in, without trying the vendor login", async () => {
+    login.mockRejectedValue(new ApiError("Alembic's account is deactivated, so nobody in it can sign in. Contact Wrappzo support to switch it back on.", 403))
+    renderLogin()
+    await signIn()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/account is deactivated/i)
+    expect(vendorLogin).not.toHaveBeenCalled()
+  })
 })

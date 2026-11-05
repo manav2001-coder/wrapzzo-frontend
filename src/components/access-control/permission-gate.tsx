@@ -21,11 +21,6 @@ export interface PermissionGateProps {
  *  - **`permissions={[]}` ⇒ deny.** An explicitly empty array is a COMPUTED value that came
  *    back empty, not an author saying "ungated". Treating it as "allow" is how a gate
  *    silently stops gating, so it fails closed. Same rule as v4's `areAllTBACFeatures([])`.
- *
- * The admin pass-through mirrors the API's (`resolvePermissions`): an admin always passes a
- * check made up ENTIRELY of `tbac.*` keys, so the Access Control screens stay reachable
- * before any template exists. A mixed check gets no pass-through at all — that is what
- * keeps this from widening into a general bypass.
  */
 export function PermissionGate({
   children,

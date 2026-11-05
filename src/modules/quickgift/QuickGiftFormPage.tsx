@@ -13,13 +13,11 @@ import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { LabelledField } from '@/components/fields/labelled-field'
 import { Textarea } from '@/components/ui/textarea'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useCreateQuickGiftRequest } from '@/hooks/useQuickGifts'
-import { useCreateRecurringOrderPlan } from '@/hooks/useRecurringOrders'
 import { fromDateOnly, toDateOnly } from '@/lib/datetime'
 import { cn } from '@/lib/utils'
 import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
@@ -37,7 +35,7 @@ interface DoctorFields {
 interface DraftRecipient {
   key: number
   /**
-   * The directory doctor this row was filled from. Sent so the order (and a monthly plan's later
+   * The directory doctor this row was filled from. Sent so the order (and later
    * runs) stays tied to that doctor's record; dropped as soon as a field the server would take
    * from the record is edited, since the server would otherwise overwrite the edit.
    */
@@ -345,10 +343,7 @@ export function QuickGiftFormPage() {
   const { data: gifts, isLoading } = useActiveGifts()
   const gift = gifts?.find((g) => g.id === giftId)
   const createRequest = useCreateQuickGiftRequest()
-  const createPlan = useCreateRecurringOrderPlan()
 
-  // Each recipient becomes a monthly plan: this order now, then the same one every month.
-  const [repeatMonthly, setRepeatMonthly] = useState(false)
   const [rows, setRows] = useState<DraftRecipient[]>([emptyRow(true, prefillRecipient ? prefillFrom(prefillRecipient) : undefined)])
   const [submitting, setSubmitting] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -425,13 +420,9 @@ export function QuickGiftFormPage() {
           doctor: gift.artworkRequired ? doctorInput(row.doctor) : undefined,
           quantity: parseQuantity(row.quantity, minQuantity) ?? minQuantity,
         }
-        if (repeatMonthly) {
-          await createPlan.mutateAsync(input)
-        } else {
-          const created = await createRequest.mutateAsync(input)
-          // Direct vendor ordering approves on creation -- the order already went to the vendor.
-          if (created.orderId) placedAsOrders++
-        }
+        const created = await createRequest.mutateAsync(input)
+        // Direct vendor ordering approves on creation -- the order already went to the vendor.
+        if (created.orderId) placedAsOrders++
         succeeded.push(row.key)
       } catch (err) {
         failures.set(row.key, err instanceof Error ? err.message : t('form.error.nothingSent'))
@@ -441,16 +432,14 @@ export function QuickGiftFormPage() {
 
     if (failures.size === 0) {
       const count = succeeded.length
-      if (repeatMonthly) {
-        toast.success(t('form.success.monthlySetUp', { count }), { description: t('form.success.monthlySetUpDetail') })
-      } else if (placedAsOrders === count) {
+      if (placedAsOrders === count) {
         toast.success(t('form.success.orderPlaced', { count }), {
           description: t('form.success.orderPlacedDetail', { vendor: gift.vendorName ?? t('form.success.theVendor') }),
         })
       } else {
         toast.success(t('form.success.requestSent', { count }), { description: t('form.success.requestSentDetail') })
       }
-      navigate('/quick-gift', repeatMonthly ? { state: { tab: 'monthly' } } : undefined)
+      navigate('/quick-gift')
       return
     }
 
@@ -532,11 +521,7 @@ export function QuickGiftFormPage() {
           <Contact />
           {t('form.browse')}
         </Button>
-        <label htmlFor="repeat-monthly" className="ml-auto flex cursor-pointer items-center gap-2 text-sm">
-          <Checkbox id="repeat-monthly" checked={repeatMonthly} onCheckedChange={(checked) => setRepeatMonthly(checked === true)} />
-          {t('form.repeatMonthly')}
-        </label>
-        <Button loading={submitting} onClick={() => void onSubmitAll()}>
+        <Button className="ml-auto" loading={submitting} onClick={() => void onSubmitAll()}>
           <Send />
           {rows.length > 1 ? t('form.sendAll', { count: rows.length }) : t('form.send')}
         </Button>

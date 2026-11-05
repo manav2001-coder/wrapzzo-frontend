@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Eye, Repeat, Send, Zap } from 'lucide-react'
+import { Eye, Send, Zap } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -22,7 +22,6 @@ import { useMyQuickGiftRequests, useRequestQuickGiftPhotoLink } from '@/hooks/us
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { QuickGiftRequestSheet, QuickGiftStatusBadge } from './QuickGiftRequestSheet'
-import { RecurringPlansTable } from './RecurringPlansTable'
 
 const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
@@ -35,7 +34,7 @@ const LIST_FIELDS: ListFieldMap = {
 
 const STATUSES = ['SUBMITTED', 'APPROVED', 'REJECTED'] as const
 
-type Tab = 'send' | 'requests' | 'monthly'
+type Tab = 'send' | 'requests'
 
 /**
  * Quick Gift's home: pick a gift to send (optionally for a recipient carried in from the
@@ -187,12 +186,6 @@ export function QuickGiftLandingPage() {
                 })}
               />
             ),
-          },
-          {
-            value: 'monthly',
-            label: t('landing.tabMonthly'),
-            icon: Repeat,
-            content: <RecurringPlansTable />,
           },
         ]}
       />

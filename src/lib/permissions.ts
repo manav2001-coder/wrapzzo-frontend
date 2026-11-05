@@ -64,6 +64,8 @@ export const P = {
 
   COMPANY_VENDOR_VIEW: 'company_vendor.view',
   COMPANY_VENDOR_ADD: 'company_vendor.add',
+  COMPANY_VENDOR_ASSIGN: 'company_vendor.assign',
+  COMPANY_VENDOR_REMOVE: 'company_vendor.remove',
 
   WAREHOUSE_VIEW: 'warehouse.view',
   WAREHOUSE_SETUP: 'warehouse.setup',

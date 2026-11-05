@@ -6,7 +6,7 @@ describe('permission catalogue', () => {
   const keys = Object.values(P)
 
   it('mirrors the backend enum: 48 company actions and 20 platform ones', () => {
-    expect(keys).toHaveLength(68)
+    expect(keys).toHaveLength(70)
     expect(keys.filter((key) => key.startsWith('platform_'))).toHaveLength(20)
   })
 

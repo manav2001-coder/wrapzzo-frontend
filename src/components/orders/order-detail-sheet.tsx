@@ -41,7 +41,7 @@ export function OrderDetailSheet({
 }) {
   const { t } = useTranslation('orders')
   // Vendor names are the company admin's alone; the server leaves them out for everyone else.
-  const canSeeVendor = useHasAccess(P.COMPANY_VENDOR_VIEW)
+  const canSeeVendor = useHasAccess(P.VENDOR_IDENTITY_VIEW)
   return (
     <Sheet open={order !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">

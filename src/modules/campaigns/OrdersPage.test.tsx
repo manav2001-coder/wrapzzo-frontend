@@ -188,9 +188,9 @@ describe('OrdersPage (company)', () => {
     expect(screen.queryByText('Unassigned')).not.toBeInTheDocument()
   })
 
-  it('shows the vendor to the company admin, who holds company_vendor.view', async () => {
+  it('shows the vendor to the company admin, who holds vendor_identity.view', async () => {
     useCurrentUser.mockReturnValue({
-      data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['order.view', 'company_vendor.view'] },
+      data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['order.view', 'vendor_identity.view'] },
       isLoading: false,
     })
     listOrders.mockResolvedValue([order({ assignedVendorName: 'Pad Printers' })])

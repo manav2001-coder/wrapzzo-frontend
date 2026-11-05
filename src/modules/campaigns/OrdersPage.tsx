@@ -60,7 +60,7 @@ export function OrdersPage() {
   const canReview = useHasAccess(P.ARTWORK_REVIEW)
   const canRequestPhoto = useHasAccess(P.ORDER_REQUEST_PHOTO)
   // Vendor names are the company admin's alone; the server leaves them out for everyone else.
-  const canSeeVendor = useHasAccess(P.COMPANY_VENDOR_VIEW)
+  const canSeeVendor = useHasAccess(P.VENDOR_IDENTITY_VIEW)
   const { data: orders, isLoading, error, refetch } = useOrders()
   const requestPhotoLink = useRequestOrderPhotoLink()
 

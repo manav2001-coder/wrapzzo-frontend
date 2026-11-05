@@ -78,8 +78,11 @@ export function useGiftFormModel({ gift, knownCategories, withFees }: { gift?: G
             decimalField({ id: 'commissionFeePercentage', label: t('gifts.detail.commission'), max: 100, scale: 2 }),
           ]
         : []),
-      switchField({ id: 'photoRequired', label: t('gifts.detail.photoRequired'), description: t('gifts.detail.photoRequiredHelp') }),
-      switchField({ id: 'artworkRequired', label: t('gifts.detail.artworkRequired'), description: t('gifts.detail.artworkRequiredHelp') }),
+      // Whether an order needs the recipient's photo is Wrappzo's call, not the vendor's; and artwork approval is always
+      // part of the flow, so it is no longer a choice for anyone.
+      ...(withFees
+        ? [switchField({ id: 'photoRequired', label: t('gifts.detail.photoRequired'), description: t('gifts.detail.photoRequiredHelp') })]
+        : []),
     ],
     [t, categories, withFees],
   )
@@ -97,7 +100,6 @@ export function useGiftFormModel({ gift, knownCategories, withFees }: { gift?: G
             markupFeePercentage: asString(gift.markupFeePercentage),
             commissionFeePercentage: asString(gift.commissionFeePercentage),
             photoRequired: gift.photoRequired,
-            artworkRequired: gift.artworkRequired,
           }
         : undefined,
     [gift],
@@ -122,8 +124,8 @@ export function useGiftFormModel({ gift, knownCategories, withFees }: { gift?: G
       price: Number(submitted.price),
       markupFeePercentage: withFees ? num(submitted.markupFeePercentage) : (gift?.markupFeePercentage ?? undefined),
       commissionFeePercentage: withFees ? num(submitted.commissionFeePercentage) : (gift?.commissionFeePercentage ?? undefined),
-      photoRequired: Boolean(submitted.photoRequired),
-      artworkRequired: Boolean(submitted.artworkRequired),
+      // A vendor's form has no switch: an existing gift keeps its setting, a new one starts without.
+      photoRequired: withFees ? Boolean(submitted.photoRequired) : (gift?.photoRequired ?? false),
     }
   }
 

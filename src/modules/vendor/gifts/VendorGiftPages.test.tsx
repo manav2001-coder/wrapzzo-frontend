@@ -14,7 +14,7 @@ describe('VendorGiftListPage', () => {
   beforeEach(() => {
     listVendorGifts.mockReset().mockResolvedValue([
       vendorGift({ id: 'g-1', name: 'Prescription Pad' }),
-      vendorGift({ id: 'g-2', name: 'Desk Calendar', active: false, artworkRequired: false }),
+      vendorGift({ id: 'g-2', name: 'Desk Calendar', active: false }),
     ])
   })
 
@@ -22,7 +22,8 @@ describe('VendorGiftListPage', () => {
     renderWithProviders(<VendorGiftListPage />, { route: '/vendor/gifts' })
     const pad = (await screen.findByRole('link', { name: 'Prescription Pad' })).closest('tr')!
     expect(within(pad).getByText('Live')).toBeInTheDocument()
-    expect(within(pad).getByText('Needs artwork')).toBeInTheDocument()
+    // Artwork approval is always part of the flow, so it is not listed as a per-product need.
+    expect(within(pad).queryByText('Needs artwork')).not.toBeInTheDocument()
 
     const calendar = screen.getByRole('link', { name: 'Desk Calendar' }).closest('tr')!
     expect(within(calendar).getByText('Hidden')).toBeInTheDocument()
@@ -48,6 +49,20 @@ describe('VendorGiftFormPage', () => {
     expect(screen.getByLabelText(/Base price/)).toBeInTheDocument()
     expect(screen.queryByLabelText(/Markup fee/)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/Commission fee/)).not.toBeInTheDocument()
+  })
+
+  it('offers the vendor no flags: artwork approval is always on, and the recipient photo is Wrappzo’s call', async () => {
+    getVendorGift.mockResolvedValue(vendorGift())
+    renderWithProviders(
+      <Routes>
+        <Route path="/vendor/gifts/:id" element={<VendorGiftFormPage />} />
+      </Routes>,
+      { route: '/vendor/gifts/g-1' },
+    )
+    expect(await screen.findByRole('heading', { name: 'Prescription Pad' })).toBeInTheDocument()
+    expect(screen.queryByText(/Needs artwork approval/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Needs a recipient photo/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
   })
 
   it('tells the vendor when Wrappzo has hidden a product', async () => {

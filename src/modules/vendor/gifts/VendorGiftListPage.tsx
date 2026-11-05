@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Camera, Gift as GiftIcon, Palette, Pencil } from 'lucide-react'
+import { Camera, Gift as GiftIcon, Pencil } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -80,19 +80,13 @@ export function VendorGiftListPage() {
         meta: { className: 'min-w-[170px]' },
         cell: ({ row }) => (
           <div className="flex flex-wrap gap-1">
-            {row.original.artworkRequired && (
-              <Badge variant="primary-soft" className="gap-1">
-                <Palette className="h-3 w-3" />
-                {t('stage.artwork')}
-              </Badge>
-            )}
             {row.original.photoRequired && (
               <Badge variant="warning-soft" className="gap-1">
                 <Camera className="h-3 w-3" />
                 {t('order.shipping.photo')}
               </Badge>
             )}
-            {!row.original.artworkRequired && !row.original.photoRequired && <span className="text-muted-foreground">—</span>}
+            {!row.original.photoRequired && <span className="text-muted-foreground">—</span>}
           </div>
         ),
       },

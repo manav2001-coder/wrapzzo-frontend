@@ -49,7 +49,6 @@ export interface GiftInput {
   markupFeePercentage?: number
   commissionFeePercentage?: number
   photoRequired: boolean
-  artworkRequired: boolean
 }
 
 interface PresignImageUploadResponse {

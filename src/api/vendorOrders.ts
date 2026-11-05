@@ -69,6 +69,17 @@ export async function updateVendorOrderStatus(id: string, status: OrderStatus): 
   return data
 }
 
+export interface VendorDivision {
+  id: string
+  name: string
+}
+
+/** The divisions the company mapped this vendor to serve -- what the portal's division filter offers. */
+export async function listMyVendorDivisions(): Promise<VendorDivision[]> {
+  const { data } = await vendorApiClient.get<VendorDivision[]>('/api/vendor/divisions')
+  return data
+}
+
 /** The signed-in vendor's own record -- name for the portal's greeting. */
 export async function getMyVendorProfile(): Promise<Vendor> {
   const { data } = await vendorApiClient.get<Vendor>('/api/vendor/view')

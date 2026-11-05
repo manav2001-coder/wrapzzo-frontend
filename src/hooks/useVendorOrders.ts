@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { OrderStatus } from '@/api/orders'
-import { getMyVendorProfile, getVendorOrder, listVendorOrders, updateVendorOrderStatus } from '@/api/vendorOrders'
+import { getMyVendorProfile, getVendorOrder, listMyVendorDivisions, listVendorOrders, updateVendorOrderStatus } from '@/api/vendorOrders'
 import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 import { inDivision, useVendorDivision } from '@/lib/vendor-division'
 
@@ -32,6 +32,11 @@ export function useVendorOrder(id: string | undefined) {
     enabled: Boolean(id),
     refetchInterval: LIVE_REFRESH_MS,
   })
+}
+
+/** The divisions the vendor is mapped to serve -- offered by the portal's division filter even before an order comes from one. */
+export function useMyVendorDivisions() {
+  return useQuery({ queryKey: ['vendorDivisions'], queryFn: listMyVendorDivisions, staleTime: 5 * 60_000 })
 }
 
 export function useMyVendorProfile() {

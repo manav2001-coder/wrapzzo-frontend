@@ -1,21 +1,30 @@
 import { Layers } from 'lucide-react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useAllVendorOrders } from '@/hooks/useVendorOrders'
-import { ALL_DIVISIONS, divisionsOf, setVendorDivision, useVendorDivision } from '@/lib/vendor-division'
+import { useAllVendorOrders, useMyVendorDivisions } from '@/hooks/useVendorOrders'
+import { ALL_DIVISIONS, divisionsOf, mergeDivisions, setVendorDivision, useVendorDivision } from '@/lib/vendor-division'
 
 /**
- * Narrows the whole vendor portal -- home, orders -- to one of the customer's divisions. It only appears for a vendor
- * whose orders come from two or more divisions; a vendor serving a single division has nothing to choose.
+ * Narrows the whole vendor portal -- home, orders -- to one of the customer's divisions. It offers every division the vendor is
+ * mapped to serve, not only those an order has come from, and appears once there are two or more to choose between.
  */
 export function VendorDivisionFilter({ className }: { className?: string }) {
   const { t } = useTranslation('vendor')
-  const { data: orders } = useAllVendorOrders()
+  const { data: orders, isSuccess: ordersLoaded } = useAllVendorOrders()
+  const { data: served, isSuccess: servedLoaded } = useMyVendorDivisions()
   const division = useVendorDivision()
-  const options = divisionsOf(orders ?? [])
+  const options = mergeDivisions(served ?? [], divisionsOf(orders ?? []))
+  const known = options.some((option) => option.id === division)
+
+  // A saved choice the vendor no longer serves would show an empty portal with no way back: clear it.
+  useEffect(() => {
+    if (ordersLoaded && servedLoaded && division !== ALL_DIVISIONS && !known) setVendorDivision(ALL_DIVISIONS)
+  }, [ordersLoaded, servedLoaded, division, known])
+
   if (options.length < 2) return null
-  const value = options.some((option) => option.id === division) ? division : ALL_DIVISIONS
+  const value = known ? division : ALL_DIVISIONS
 
   return (
     <div className={className}>

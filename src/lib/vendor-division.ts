@@ -56,8 +56,18 @@ export function divisionsOf(orders: readonly VendorOrder[]): DivisionOption[] {
   return [...byId.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
 }
 
-/** Narrows to one division; a stale choice (no orders there any more) shows everything rather than an empty portal. */
+/**
+ * Every division the vendor can pick: the ones the company mapped it to (even with no order yet, shown with a zero) and any an
+ * order came from. Busiest first, then by name.
+ */
+export function mergeDivisions(served: readonly { id: string; name: string }[], fromOrders: readonly DivisionOption[]): DivisionOption[] {
+  const byId = new Map<string, DivisionOption>(served.map((division) => [division.id, { id: division.id, name: division.name, count: 0 }]))
+  for (const option of fromOrders) byId.set(option.id, option)
+  return [...byId.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+}
+
+/** Narrows to one division; "all" shows everything. A choice with no orders shows none -- that is the answer. */
 export function inDivision<T extends VendorOrder>(orders: readonly T[], division: string): T[] {
-  if (division === ALL_DIVISIONS || !orders.some((order) => order.divisionId === division)) return [...orders]
+  if (division === ALL_DIVISIONS) return [...orders]
   return orders.filter((order) => order.divisionId === division)
 }

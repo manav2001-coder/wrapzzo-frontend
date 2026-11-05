@@ -65,11 +65,14 @@ export interface CreateQuickGiftInput {
 interface PresignPhotoResponse {
   uploadUrl: string
   key: string
+  /** What the server stores the file as -- PCODE_AMCODE_photo.ext. */
+  fileName: string
 }
 
 /** Presigns an upload URL and PUTs the file straight to object storage -- returns the value to submit with the request. */
-export async function uploadQuickGiftPhoto(file: File): Promise<QuickGiftPhotoValue> {
-  const { data: presign } = await apiClient.post<PresignPhotoResponse>('/api/quick-gifts/presignPhoto', { contentType: file.type })
+export async function uploadQuickGiftPhoto(file: File, pcode?: string): Promise<QuickGiftPhotoValue> {
+  // The doctor's pcode lets the server name the stored file after them (and the AM), like a proof.
+  const { data: presign } = await apiClient.post<PresignPhotoResponse>('/api/quick-gifts/presignPhoto', { contentType: file.type, pcode })
 
   const uploadResponse = await fetch(presign.uploadUrl, {
     method: 'PUT',
@@ -80,7 +83,7 @@ export async function uploadQuickGiftPhoto(file: File): Promise<QuickGiftPhotoVa
     throw new Error(`Upload to storage failed with status ${uploadResponse.status}`)
   }
 
-  return { key: presign.key, fileName: file.name, contentType: file.type }
+  return { key: presign.key, fileName: presign.fileName, contentType: file.type }
 }
 
 export async function createQuickGiftRequest(input: CreateQuickGiftInput): Promise<QuickGiftRequest> {

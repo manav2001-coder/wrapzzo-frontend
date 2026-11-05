@@ -404,7 +404,7 @@ export function QuickGiftFormPage() {
     for (const row of rows) {
       try {
         let photo: QuickGiftPhotoValue | undefined
-        if (row.photo) photo = await uploadQuickGiftPhoto(row.photo)
+        if (row.photo) photo = await uploadQuickGiftPhoto(row.photo, row.recipientPcode.trim() || undefined)
         const input = {
           giftId: gift.id,
           recipientId: row.recipientId,

@@ -54,7 +54,6 @@ import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RecipientUploadPage } from '@/pages/RecipientUploadPage'
 import ComponentsPage from '@/pages/Components'
-import SettingsPage from '@/pages/Settings'
 import { SetupPasswordPage } from '@/pages/SetupPasswordPage'
 import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
 
@@ -71,7 +70,6 @@ export function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           {/* Shared by every signed-in user. */}
-          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/components" element={<ComponentsPage />} />
 
           {/*
@@ -147,7 +145,6 @@ export function AppRoutes() {
           <Route path="/vendor/gifts/:id" element={<VendorGiftFormPage />} />
           <Route path="/vendor/orders" element={<VendorOrdersPage />} />
           <Route path="/vendor/orders/:id" element={<VendorOrderPage />} />
-          <Route path="/vendor/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 

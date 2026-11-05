@@ -14,8 +14,6 @@ export interface ShellSession {
   /** Where the logo and "back to dashboard" go. */
   homePath: string
   email: string | null
-  /** Settings route for this portal. */
-  settingsPath: string
   signOut: () => void
 }
 

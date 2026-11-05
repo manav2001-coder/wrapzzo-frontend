@@ -24,14 +24,12 @@ function useShellSession(portal: Portal): ShellSession {
         ? {
             portal,
             homePath: "/vendor",
-            settingsPath: "/vendor/settings",
             email: vendorEmail,
             signOut: vendorLogout,
           }
         : {
             portal,
             homePath: "/home",
-            settingsPath: "/settings",
             email: appEmail,
             signOut: appLogout,
           },

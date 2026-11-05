@@ -18,7 +18,6 @@ import {
   PencilLine,
   PlusCircle,
   Palette,
-  Settings,
   ShieldCheck,
   ShoppingBag,
   Store,
@@ -70,7 +69,6 @@ const GENERAL: NavSource = {
   titleKey: 'nav.general',
   type: 'group',
   children: [
-    { id: 'settings', titleKey: 'nav.settings', type: 'item', url: '/settings', end: true, icon: Settings },
     ...COMPONENTS_ENTRY,
   ],
 }
@@ -239,7 +237,6 @@ export const VENDOR_NAV: NavSource[] = [
       { id: 'vendor-home', titleKey: 'nav.vendorHome', type: 'item', url: '/vendor', end: true, icon: LayoutDashboard },
       { id: 'vendor-orders', titleKey: 'nav.vendorOrders', type: 'item', url: '/vendor/orders', icon: ShoppingBag },
       { id: 'vendor-gifts', titleKey: 'nav.vendorGifts', type: 'item', url: '/vendor/gifts', icon: Gift },
-      { id: 'vendor-settings', titleKey: 'nav.settings', type: 'item', url: '/vendor/settings', end: true, icon: Settings },
     ],
   },
 ]

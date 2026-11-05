@@ -48,7 +48,7 @@ export function initialsFromEmail(email: string | null | undefined): string {
  */
 export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMenuProps) {
   const { t } = useTranslation();
-  const { portal, email, settingsPath, signOut } = useShell();
+  const { portal, email, signOut } = useShell();
   const { data: user } = useCurrentUser();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
@@ -110,12 +110,6 @@ export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMe
               content: (
                 <MenuItemList
                   items={[
-                    {
-                      id: "settings",
-                      label: t("account.accountSettings"),
-                      icon: Settings,
-                      to: settingsPath,
-                    },
                     ...profileItems,
                   ]}
                   onNavigate={close}

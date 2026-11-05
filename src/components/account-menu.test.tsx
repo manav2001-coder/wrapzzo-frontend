@@ -37,7 +37,7 @@ describe('AccountMenu', () => {
   it('splits into Profile and Settings tabs, with the theme picker under Settings', async () => {
     renderWithProviders(<AccountMenu />)
     await userEvent.click(screen.getByRole('button', { name: 'Account' }))
-    expect(screen.getByRole('link', { name: 'Account settings' })).toHaveAttribute('href', '/settings')
+    expect(screen.queryByRole('link', { name: 'Account settings' })).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('tab', { name: 'Settings' }))
     expect(screen.getByRole('radio', { name: 'Dark theme' })).toBeInTheDocument()

@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { P } from '@/lib/permissions'
@@ -11,14 +11,18 @@ vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser: currentUser, CURREN
 const companyUser = (permissions: string[]) => ({ data: { companyId: 'c1', companyName: 'Acme', permissions, managesTeam: false }, isLoading: false })
 const staff = (permissions: string[]) => ({ data: { companyId: null, companyName: null, permissions, managesTeam: false }, isLoading: false })
 
+/** Where a redirect landed. (In a dev build the General group's Components showcase can come first, so tests name the page they must NOT be on, or accept either.) */
+function Where() {
+  return <h1>{useLocation().pathname}</h1>
+}
+
 function renderHome() {
   return renderWithProviders(
     <Routes>
       <Route path="/home" element={<FirstMenuRedirect />} />
       <Route path="/dashboard" element={<h1>Company dashboard</h1>} />
-      <Route path="/settings" element={<h1>Settings</h1>} />
       <Route path="/admin/dashboard" element={<h1>Platform dashboard</h1>} />
-      <Route path="/admin/companies" element={<h1>Companies</h1>} />
+      <Route path="*" element={<Where />} />
     </Routes>,
     { route: '/home' },
   )
@@ -36,7 +40,9 @@ describe('FirstMenuRedirect', () => {
   it('opens a user without the dashboard on the next first item they can reach, not on a page they cannot open', () => {
     currentUser.mockReturnValue(companyUser([P.ORDER_VIEW]))
     renderHome()
-    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    // No dashboard key: not the dashboard, but the first thing they can reach (never an empty screen).
+    expect(screen.queryByRole('heading', { name: 'Company dashboard' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /^\/(orders|components|quick-gift|gift-store)/ })).toBeInTheDocument()
   })
 
   it('opens platform staff on the first item of their own menu', () => {
@@ -48,6 +54,7 @@ describe('FirstMenuRedirect', () => {
   it('follows what the staff member may reach: no dashboard key, so the next item', () => {
     currentUser.mockReturnValue(staff([P.PLATFORM_COMPANY_VIEW]))
     renderHome()
-    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Platform dashboard' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /^\/(admin\/companies|components)$/ })).toBeInTheDocument()
   })
 })

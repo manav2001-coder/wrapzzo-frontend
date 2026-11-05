@@ -33,7 +33,6 @@
     "vendorGifts": "My Products",
     "vendorOrders": "Orders",
     "components": "Components",
-    "settings": "Settings",
     "roles": "Roles",
     "featureMaster": "Feature Master",
     "templateMaster": "Template Master",
@@ -178,9 +177,7 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Appearance and language in this browser.",
     "appearance": "Appearance",
-    "appearanceHelp": "Light, dark, or follow your operating system.",
     "theme": {
       "light": "Light",
       "dark": "Dark",
@@ -188,7 +185,6 @@
     },
     "localisation": "Language & timezone",
     "localisationHelp": "Dates and times are stored in UTC and shown in the timezone you pick here.",
-    "languageHelp": "Applies across the app immediately.",
     "timezoneHelp": "Used to display every date and time. Dates of birth and effective dates are not converted.",
     "saved": "Preferences saved",
     "saveFailed": "Could not save your preferences",
@@ -211,7 +207,6 @@
     "vendorPortal": "Vendor portal",
     "platformStaff": "Wrappzo platform",
     "profile": "Profile",
-    "accountSettings": "Account settings",
     "support": "Support",
     "themeOption": "{{name}} theme"
   },

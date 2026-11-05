@@ -26,7 +26,6 @@ interface Options extends Omit<RenderOptions, 'wrapper'> {
 export const DEFAULT_SHELL: ShellSession = {
   portal: 'app',
   homePath: '/',
-  settingsPath: '/settings',
   email: 'priya.sharma@acme.com',
   signOut: () => {},
 }

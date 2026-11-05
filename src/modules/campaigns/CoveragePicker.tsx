@@ -26,12 +26,14 @@ function UnitBranch({
   depth,
   selected,
   coveredByAncestor,
+  readOnly,
   onToggle,
 }: {
   node: UnitNode
   depth: number
   selected: Set<string>
   coveredByAncestor: boolean
+  readOnly: boolean
   onToggle: (node: UnitNode, checked: boolean) => void
 }) {
   const checked = selected.has(node.id) || coveredByAncestor
@@ -39,7 +41,7 @@ function UnitBranch({
   return (
     <li>
       <div className="flex items-center gap-2 py-1" style={{ paddingLeft: depth * 20 }}>
-        <Checkbox id={id} checked={checked} disabled={coveredByAncestor} onCheckedChange={(value) => onToggle(node, value === true)} />
+        <Checkbox id={id} checked={checked} disabled={readOnly || coveredByAncestor} onCheckedChange={(value) => onToggle(node, value === true)} />
         <Label htmlFor={id} className="flex cursor-pointer items-baseline gap-2 font-normal">
           <span className={depth === 0 ? 'font-medium' : ''}>{node.name}</span>
           <span className="text-xs text-muted-foreground">{node.levelName}</span>
@@ -49,7 +51,7 @@ function UnitBranch({
       {node.children.length > 0 && (
         <ul>
           {node.children.map((child) => (
-            <UnitBranch key={child.id} node={child} depth={depth + 1} selected={selected} coveredByAncestor={checked} onToggle={onToggle} />
+            <UnitBranch key={child.id} node={child} depth={depth + 1} selected={selected} coveredByAncestor={checked} readOnly={readOnly} onToggle={onToggle} />
           ))}
         </ul>
       )}
@@ -58,7 +60,7 @@ function UnitBranch({
 }
 
 /** Where a vendor serves: the whole company, or divisions and units ticked from the company's own tree. */
-export function CoveragePicker({ value, onChange }: { value: Coverage; onChange: (value: Coverage) => void }) {
+export function CoveragePicker({ value, onChange, readOnly = false }: { value: Coverage; onChange: (value: Coverage) => void; readOnly?: boolean }) {
   const { data: orgUnits } = useMyOrgUnits()
   const tree = useMemo(() => unitTree(orgUnits ?? []), [orgUnits])
 
@@ -76,7 +78,7 @@ export function CoveragePicker({ value, onChange }: { value: Coverage; onChange:
 
   return (
     <div className="space-y-3">
-      <RadioGroup value={value.mode} onValueChange={(mode) => onChange({ ...value, mode: mode as Coverage['mode'] })} className="gap-3">
+      <RadioGroup value={value.mode} onValueChange={(mode) => onChange({ ...value, mode: mode as Coverage['mode'] })} disabled={readOnly} className="gap-3">
         <div className="flex items-center gap-2">
           <RadioGroupItem value="units" id="coverage-units" />
           <Label htmlFor="coverage-units" className="font-normal">
@@ -98,13 +100,13 @@ export function CoveragePicker({ value, onChange }: { value: Coverage; onChange:
           ) : (
             <ul>
               {tree.map((node) => (
-                <UnitBranch key={node.id} node={node} depth={0} selected={value.selected} coveredByAncestor={false} onToggle={toggle} />
+                <UnitBranch key={node.id} node={node} depth={0} selected={value.selected} coveredByAncestor={false} readOnly={readOnly} onToggle={toggle} />
               ))}
             </ul>
           )}
         </div>
       )}
-      {value.mode === 'units' && value.selected.size === 0 && <p className="text-xs text-muted-foreground">Tick at least one division or unit, or choose the whole company.</p>}
+      {!readOnly && value.mode === 'units' && value.selected.size === 0 && <p className="text-xs text-muted-foreground">Tick at least one division or unit, or choose the whole company.</p>}
     </div>
   )
 }

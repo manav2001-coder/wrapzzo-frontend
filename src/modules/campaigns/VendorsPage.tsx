@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { MapPin, Mail, Pencil, Power, Truck } from 'lucide-react'
+import { Eye, MapPin, Mail, Pencil, Power, Truck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -18,6 +18,7 @@ import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
 import { CoveragePicker, coverageInput, isCoverageComplete, type Coverage } from './CoveragePicker'
 import { VendorCoverageDialog } from './VendorCoverageDialog'
+import { VendorMappingViewDialog } from './VendorMappingViewDialog'
 import { rowsOf, type VendorRow } from './vendor-coverage'
 
 const LIST_FIELDS: ListFieldMap = { vendorName: 'text', serves: 'text' }
@@ -158,6 +159,7 @@ export function VendorsPage() {
   const canChangeStatus = useHasAccess(P.COMPANY_VENDOR_STATUS)
   const [adding, setAdding] = useState(false)
   const [mapping, setMapping] = useState<VendorRow | null>(null)
+  const [viewing, setViewing] = useState<VendorRow | null>(null)
   const [editing, setEditing] = useState<VendorRow | null>(null)
   const [toggling, setToggling] = useState<VendorRow | null>(null)
 
@@ -207,12 +209,13 @@ export function VendorsPage() {
         header: '',
         enableSorting: false,
         enableColumnFilter: false,
-        meta: { className: 'w-[160px]' },
+        meta: { className: 'w-[200px]' },
         cell: ({ row }) => {
           const vendor = row.original
           const active = vendor.vendorStatus === 'ACTIVE'
           return (
             <div className="flex justify-end gap-1">
+              <IconButton icon={Eye} label={`View where ${vendor.vendorName} serves`} onClick={() => setViewing(vendor)} />
               {canEdit && <IconButton icon={Pencil} label={`Edit ${vendor.vendorName}`} onClick={() => setEditing(vendor)} />}
               {canAssign && active && <IconButton icon={MapPin} label={`Change where ${vendor.vendorName} serves`} onClick={() => setMapping(vendor)} />}
               {canEdit && <IconButton icon={Mail} label={`Resend invite to ${vendor.vendorName}`} onClick={() => void onResend(vendor)} />}
@@ -261,6 +264,7 @@ export function VendorsPage() {
         })}
       />
       {adding && <AddVendorDialog onClose={() => setAdding(false)} />}
+      {viewing && <VendorMappingViewDialog vendor={viewing} onClose={() => setViewing(null)} />}
       {mapping && <VendorCoverageDialog vendor={mapping} onClose={() => setMapping(null)} />}
       {editing && <EditVendorDialog vendor={editing} onClose={() => setEditing(null)} />}
       <AppDialog

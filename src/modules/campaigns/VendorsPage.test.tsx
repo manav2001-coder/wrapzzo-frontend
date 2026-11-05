@@ -72,6 +72,18 @@ describe('VendorsPage', () => {
     )
   })
 
+  it('shows where a vendor serves to anyone who can see the list, without letting them change it', async () => {
+    useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', permissions: ['company_vendor.view'] }, isLoading: false })
+    renderWithProviders(<VendorsPage />)
+    await userEvent.click(await screen.findByRole('button', { name: 'View where Pad Printers serves' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('checkbox', { name: /Summit/ })).toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: /Lucknow/ })).toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: /Megacare/ })).toBeChecked()
+    for (const box of within(dialog).getAllByRole('checkbox')) expect(box).toBeDisabled()
+    expect(within(dialog).queryByRole('button', { name: 'Save mapping' })).not.toBeInTheDocument()
+  })
+
   it('changes where a vendor serves', async () => {
     renderWithProviders(<VendorsPage />)
     await userEvent.click(await screen.findByRole('button', { name: 'Change where Everywhere Print serves' }))

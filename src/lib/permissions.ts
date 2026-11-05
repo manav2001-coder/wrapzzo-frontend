@@ -18,7 +18,6 @@ export const P = {
   CAMPAIGN_ENTRY_VIEW: 'campaign_entry.view',
 
   QUICK_GIFT_CREATE: 'quick_gift.create',
-  QUICK_GIFT_APPROVE: 'quick_gift.approve',
 
   GIFT_STORE_VIEW: 'gift_store.view',
 

@@ -103,20 +103,3 @@ export async function requestQuickGiftPhotoLink(id: string): Promise<{ recipient
   const { data } = await apiClient.post<{ recipientUploadUrl: string }>(`/api/quick-gifts/${id}/requestPhotoLink`)
   return data
 }
-
-// --- Approval (Company Admin) ---
-
-export async function listPendingQuickGiftApprovals(): Promise<QuickGiftRequest[]> {
-  const { data } = await apiClient.get<QuickGiftRequest[]>('/api/quick-gifts/pending-approval')
-  return data
-}
-
-export async function approveQuickGiftRequest(id: string): Promise<QuickGiftRequest> {
-  const { data } = await apiClient.post<QuickGiftRequest>(`/api/quick-gifts/${id}/approve`)
-  return data
-}
-
-export async function rejectQuickGiftRequest(id: string, reason: string): Promise<QuickGiftRequest> {
-  const { data } = await apiClient.post<QuickGiftRequest>(`/api/quick-gifts/${id}/reject`, { reason })
-  return data
-}

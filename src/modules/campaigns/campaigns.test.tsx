@@ -18,9 +18,6 @@ const api = vi.hoisted(() => ({
   listCampaignSubmissions: vi.fn(),
   listMySubmissions: vi.fn(),
   createSubmission: vi.fn(),
-  listPendingQuickGiftApprovals: vi.fn(),
-  approveQuickGiftRequest: vi.fn(),
-  rejectQuickGiftRequest: vi.fn(),
   listPendingDoctorChangeRequests: vi.fn(),
   listPendingArtworkApprovals: vi.fn(),
   listActiveGifts: vi.fn(),
@@ -70,7 +67,7 @@ beforeEach(() => {
   api.listActiveGifts.mockResolvedValue([])
   api.listPendingDoctorChangeRequests.mockResolvedValue([])
   api.listPendingArtworkApprovals.mockResolvedValue([])
-  signedInWith(['campaign.view', 'campaign.create', 'campaign.edit', 'campaign.publish', 'campaign_entry.view', 'quick_gift.approve', 'order.view', 'gift_store.view', 'campaign_entry.submit'])
+  signedInWith(['campaign.view', 'campaign.create', 'campaign.edit', 'campaign.publish', 'campaign_entry.view', 'order.view', 'gift_store.view', 'campaign_entry.submit'])
 })
 
 describe('CampaignListPage', () => {

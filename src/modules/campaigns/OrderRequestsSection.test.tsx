@@ -48,11 +48,10 @@ describe('OrderRequestsSection', () => {
     expect(screen.getByText(/For Dr\. Asha Shah \(PC-ASHA\) · by Mira MR/)).toBeInTheDocument()
   })
 
-  it('shows nothing at all when nothing waits', async () => {
+  it('says so when nothing waits', async () => {
     listPendingOrderApprovals.mockResolvedValue([])
-    const { container } = renderWithProviders(<OrderRequestsSection />)
-    await waitFor(() => expect(listPendingOrderApprovals).toHaveBeenCalled())
-    expect(container).toBeEmptyDOMElement()
+    renderWithProviders(<OrderRequestsSection />)
+    expect(await screen.findByText('No orders waiting for your approval')).toBeInTheDocument()
   })
 
   it('approves an order', async () => {

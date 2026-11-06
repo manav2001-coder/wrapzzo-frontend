@@ -1,154 +1,214 @@
-import { Check, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import type { ColumnDef } from '@tanstack/react-table'
+import { Check, Eye, ShoppingBag, X } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { toast } from 'sonner'
 
-import type { PendingOrderApproval } from "@/api/orderApprovals";
-import { AppDialog } from "@/components/app-dialog";
-import { LabelledField } from "@/components/fields/labelled-field";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { useApiErrorToast } from "@/hooks/use-api-error-toast";
-import { useHasAccess } from "@/hooks/use-permission";
-import {
-  useDecideOrder,
-  usePendingOrderApprovals,
-} from "@/hooks/useOrderApprovals";
-import { formatCurrency } from "@/lib/format";
-import { formatDateTime } from "@/lib/datetime";
-import { P } from "@/lib/permissions";
+import type { PendingOrderApproval } from '@/api/orderApprovals'
+import { AppDialog } from '@/components/app-dialog'
+import { DataTable } from '@/components/data-table'
+import { listEmptyBody } from '@/components/data-table/list-body'
+import { LabelledField } from '@/components/fields/labelled-field'
+import { IconButton } from '@/components/icon-button'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Textarea } from '@/components/ui/textarea'
+import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { useHasAccess } from '@/hooks/use-permission'
+import { useDecideOrder, usePendingOrderApprovals } from '@/hooks/useOrderApprovals'
+import { formatDate, formatDateTime } from '@/lib/datetime'
+import { formatCurrency } from '@/lib/format'
+import type { ListFieldMap } from '@/lib/list-fields'
+import { P } from '@/lib/permissions'
+
+const LIST_FIELDS: ListFieldMap = {
+  displayId: 'text',
+  giftName: 'text',
+  recipientName: 'text',
+  quantity: 'number',
+  requestedByName: 'text',
+}
+
+function Detail({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="truncate text-sm font-medium">{children || '-'}</dd>
+    </div>
+  )
+}
 
 /**
- * Orders from the user's team that wait for their yes before they go to production. Shown only while there are any:
- * an approver with nothing waiting sees just the artwork queue below it. The vendor is never named here.
+ * Orders from the user's team that wait for their yes before they go to production: a table like the artwork one, and
+ * a row opens a drawer with the details and the decision. The vendor is never named here.
  */
 export function OrderRequestsSection() {
-  const showError = useApiErrorToast();
-  const canDecide = useHasAccess([P.APPROVAL_DECIDE, P.ARTWORK_FINAL_APPROVE]);
-  const { data, isLoading } = usePendingOrderApprovals();
-  const orders = data ?? [];
-  const decide = useDecideOrder();
-  const [declining, setDeclining] = useState<PendingOrderApproval | null>(null);
-  const [reason, setReason] = useState("");
+  const showError = useApiErrorToast()
+  const canDecide = useHasAccess([P.APPROVAL_DECIDE, P.ARTWORK_FINAL_APPROVE])
+  const { data: orders, isLoading, error, refetch } = usePendingOrderApprovals()
+  const decide = useDecideOrder()
+
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [declining, setDeclining] = useState<PendingOrderApproval | null>(null)
+  const [reason, setReason] = useState('')
+  // Kept by id so the drawer follows the list as it refreshes (and closes once the order is decided).
+  const open = orders?.find((order) => order.orderId === openId) ?? null
 
   async function approve(order: PendingOrderApproval) {
     try {
-      await decide.mutateAsync({ orderId: order.orderId, approve: true });
-      toast.success(`${order.displayId} approved`, {
-        description: "It now goes to production.",
-      });
+      await decide.mutateAsync({ orderId: order.orderId, approve: true })
+      toast.success(`${order.displayId} approved`, { description: 'It now goes to production.' })
+      setOpenId(null)
     } catch (err) {
-      showError(err);
+      showError(err)
     }
   }
 
   async function decline() {
-    if (!declining || !reason.trim()) return;
+    if (!declining || !reason.trim()) return
     try {
-      await decide.mutateAsync({
-        orderId: declining.orderId,
-        comment: reason.trim(),
-        approve: false,
-      });
-      toast.success(`${declining.displayId} declined`, {
-        description: `${declining.requestedByName} will see your note.`,
-      });
-      setDeclining(null);
-      setReason("");
+      await decide.mutateAsync({ orderId: declining.orderId, comment: reason.trim(), approve: false })
+      toast.success(`${declining.displayId} declined`, { description: `${declining.requestedByName} will see your note.` })
+      setDeclining(null)
+      setReason('')
+      setOpenId(null)
     } catch (err) {
-      showError(err);
+      showError(err)
     }
   }
 
+  const columns = useMemo<ColumnDef<PendingOrderApproval, unknown>[]>(
+    () => [
+      {
+        id: 'giftName',
+        accessorFn: (order) => order.giftName ?? '',
+        header: 'Gift',
+        meta: { className: 'min-w-[220px]' },
+        cell: ({ row }) => (
+          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpenId(row.original.orderId)}>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+              <ShoppingBag className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate font-medium hover:underline">{row.original.giftName ?? 'Gift'}</span>
+              <span className="block text-xs text-muted-foreground">{row.original.displayId}</span>
+            </span>
+          </button>
+        ),
+      },
+      { id: 'recipientName', accessorFn: (order) => order.recipientName ?? '', header: 'Doctor', meta: { className: 'min-w-[160px]' } },
+      { id: 'quantity', accessorKey: 'quantity', header: 'Quantity', enableColumnFilter: false, meta: { className: 'min-w-[80px]' } },
+      { id: 'requestedByName', accessorKey: 'requestedByName', header: 'Requested by', meta: { className: 'min-w-[160px]' } },
+      {
+        id: 'requestedAt',
+        accessorKey: 'requestedAt',
+        header: 'Requested',
+        enableColumnFilter: false,
+        meta: { className: 'min-w-[120px]' },
+        cell: ({ row }) => formatDate(row.original.requestedAt),
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableColumnFilter: false,
+        enableSorting: false,
+        meta: { className: 'w-[56px]', pin: 'right' },
+        cell: ({ row }) => <IconButton icon={Eye} label={`Review ${row.original.displayId}`} onClick={() => setOpenId(row.original.orderId)} />,
+      },
+    ],
+    [],
+  )
+
   return (
-    <section
-      aria-label="Orders waiting for your approval"
-      className="space-y-3"
-    >
-      <p className="text-xs text-muted-foreground">
-        Orders from your team. They go to production only once you approve them.
-      </p>
-      {isLoading ? (
-        <Skeleton className="h-24 w-full rounded-xl" />
-      ) : orders.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border bg-card px-6 py-12 text-center shadow-sm">
-          <ShoppingBag className="h-8 w-8 opacity-50" />
-          <p className="text-sm font-semibold">
-            No orders waiting for your approval
-          </p>
-          <p className="text-xs text-muted-foreground">
-            You&apos;re all caught up. New order requests appear here.
-          </p>
-        </div>
-      ) : (
-        <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-sm">
-          {orders.map((order) => (
-            <li
-              key={order.orderId}
-              className="flex flex-wrap items-center gap-4 p-4"
-            >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
-                <ShoppingBag className="h-5 w-5" />
-              </span>
-              <div className="min-w-0 flex-1 basis-64">
-                <p className="truncate text-sm font-semibold">
-                  {order.displayId} · {order.giftName ?? "Gift"} ×{" "}
-                  {order.quantity}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  For {order.recipientName}
-                  {order.recipientPcode ? ` (${order.recipientPcode})` : ""} ·
-                  by {order.requestedByName}
-                  {order.orgUnitName ? ` · ${order.orgUnitName}` : ""} ·{" "}
-                  {formatDateTime(order.requestedAt)}
-                  {order.totalPrice != null
-                    ? ` · ${formatCurrency(order.totalPrice)}`
-                    : ""}
-                </p>
-                {(order.giftMessage || order.internalNotes) && (
-                  <p className="mt-1 truncate text-xs text-muted-foreground">
-                    “{order.giftMessage ?? order.internalNotes}”
-                  </p>
+    <div>
+      <DataTable<PendingOrderApproval>
+        columns={columns}
+        data={orders ?? []}
+        isLoading={isLoading}
+        listFields={LIST_FIELDS}
+        searchable
+        showRowSelectionColumn={false}
+        defaultSort={{ id: 'requestedAt', desc: false }}
+        getRowId={(order) => order.orderId}
+        tableId="order-approvals"
+        configNamespace="order-approvals"
+        emptyState={listEmptyBody({
+          error,
+          onRetry: () => void refetch(),
+          icon: <ShoppingBag className="h-8 w-8 opacity-50" />,
+          message: 'No orders waiting for your approval',
+          description: "You're all caught up. New order requests appear here.",
+        })}
+      />
+
+      <Sheet open={open !== null} onOpenChange={(next) => !next && setOpenId(null)}>
+        <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
+          {open && (
+            <>
+              <SheetHeader className="border-b px-6 py-4 pr-10 text-left">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-11 w-11 place-items-center rounded-md bg-primary/10 text-primary">
+                    <ShoppingBag className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <SheetTitle className="truncate">{open.giftName ?? 'Gift'}</SheetTitle>
+                    <SheetDescription>{open.displayId} · waiting for your approval</SheetDescription>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+                <dl className="grid grid-cols-2 gap-4">
+                  <Detail label="Doctor">{open.recipientName}</Detail>
+                  <Detail label="Doctor code">{open.recipientPcode}</Detail>
+                  <Detail label="Quantity">{open.quantity}</Detail>
+                  <Detail label="Total">{open.totalPrice != null ? formatCurrency(open.totalPrice) : null}</Detail>
+                  <Detail label="Requested by">{open.requestedByName}</Detail>
+                  <Detail label="Org unit">{open.orgUnitName}</Detail>
+                  <Detail label="Requested on">{formatDateTime(open.requestedAt)}</Detail>
+                </dl>
+
+                {open.giftMessage && (
+                  <section className="space-y-1">
+                    <h3 className="text-sm font-semibold">Gift message</h3>
+                    <p className="text-sm text-muted-foreground">“{open.giftMessage}”</p>
+                  </section>
                 )}
+                {open.internalNotes && (
+                  <section className="space-y-1">
+                    <h3 className="text-sm font-semibold">Internal notes</h3>
+                    <p className="text-sm text-muted-foreground">{open.internalNotes}</p>
+                  </section>
+                )}
+                <p className="text-xs text-muted-foreground">The order goes to production only once you approve it. If you decline, it is cancelled and {open.requestedByName} sees your note.</p>
               </div>
+
               {canDecide && (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    loading={
-                      decide.isPending &&
-                      decide.variables?.orderId === order.orderId
-                    }
-                    onClick={() => void approve(order)}
-                  >
+                <div className="flex gap-2 border-t px-6 py-4">
+                  <Button loading={decide.isPending} onClick={() => void approve(open)}>
                     <Check />
                     Approve
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setDeclining(order)}
-                  >
+                  <Button variant="outline" onClick={() => setDeclining(open)}>
                     <X />
                     Decline
                   </Button>
                 </div>
               )}
-            </li>
-          ))}
-        </ul>
-      )}
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <AppDialog
         open={declining !== null}
         onOpenChange={(next) => {
           if (!next) {
-            setDeclining(null);
-            setReason("");
+            setDeclining(null)
+            setReason('')
           }
         }}
         size="sm"
-        title={`Decline ${declining?.displayId ?? "order"}`}
+        title={`Decline ${declining?.displayId ?? 'order'}`}
         confirmLabel="Decline order"
         confirmVariant="destructive"
         cancelLabel="Cancel"
@@ -156,18 +216,10 @@ export function OrderRequestsSection() {
         loading={decide.isPending}
         onConfirm={() => void decline()}
       >
-        <LabelledField
-          id="decline-reason"
-          label="Why? (shown to the person who placed it; the order is cancelled)"
-        >
-          <Textarea
-            id="decline-reason"
-            rows={3}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
+        <LabelledField id="decline-reason" label="Why? (shown to the person who placed it; the order is cancelled)">
+          <Textarea id="decline-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} />
         </LabelledField>
       </AppDialog>
-    </section>
-  );
+    </div>
+  )
 }

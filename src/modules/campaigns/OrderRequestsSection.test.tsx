@@ -42,10 +42,17 @@ describe('OrderRequestsSection', () => {
     signedInWith(['approval.view', 'approval.decide'])
   })
 
-  it('lists what waits on the approver, who placed it and for whom', async () => {
+  async function openDrawer() {
+    await userEvent.click(await screen.findByRole('button', { name: /Prescription Pad/ }))
+    return screen.findByRole('dialog')
+  }
+
+  it('lists what waits on the approver as a table: the gift, the doctor and who placed it', async () => {
     renderWithProviders(<OrderRequestsSection />)
-    expect(await screen.findByText(/ORD-101 · Prescription Pad × 5/)).toBeInTheDocument()
-    expect(screen.getByText(/For Dr\. Asha Shah \(PC-ASHA\) · by Mira MR/)).toBeInTheDocument()
+    expect(await screen.findByText('Prescription Pad')).toBeInTheDocument()
+    expect(screen.getByText('ORD-101')).toBeInTheDocument()
+    expect(screen.getByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(screen.getByText('Mira MR')).toBeInTheDocument()
   })
 
   it('says so when nothing waits', async () => {
@@ -54,16 +61,25 @@ describe('OrderRequestsSection', () => {
     expect(await screen.findByText('No orders waiting for your approval')).toBeInTheDocument()
   })
 
-  it('approves an order', async () => {
+  it('opens a drawer with the order’s details', async () => {
     renderWithProviders(<OrderRequestsSection />)
-    await userEvent.click(await screen.findByRole('button', { name: 'Approve' }))
+    const drawer = await openDrawer()
+    expect(within(drawer).getByText('Doctor code').nextElementSibling).toHaveTextContent('PC-ASHA')
+    expect(within(drawer).getByText('Org unit').nextElementSibling).toHaveTextContent('N1')
+  })
+
+  it('approves an order from the drawer', async () => {
+    renderWithProviders(<OrderRequestsSection />)
+    const drawer = await openDrawer()
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Approve' }))
     await waitFor(() => expect(approveOrder).toHaveBeenCalledWith('o-1', undefined))
   })
 
   it('declines only with a note for the person who placed it', async () => {
     renderWithProviders(<OrderRequestsSection />)
-    await userEvent.click(await screen.findByRole('button', { name: 'Decline' }))
-    const dialog = await screen.findByRole('dialog')
+    const drawer = await openDrawer()
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Decline' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Decline ORD-101' })
     const confirm = within(dialog).getByRole('button', { name: 'Decline order' })
     expect(confirm).toBeDisabled()
 
@@ -75,7 +91,7 @@ describe('OrderRequestsSection', () => {
   it('lets someone without the decide key look but not act', async () => {
     signedInWith(['approval.view'])
     renderWithProviders(<OrderRequestsSection />)
-    expect(await screen.findByText(/ORD-101/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument()
+    const drawer = await openDrawer()
+    expect(within(drawer).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument()
   })
 })

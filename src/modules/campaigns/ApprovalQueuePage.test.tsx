@@ -72,12 +72,12 @@ describe('ApprovalQueuePage', () => {
         requestedByName: 'Mira MR', orgUnitName: null, giftMessage: null, internalNotes: null, requestedAt: '2026-11-06T10:00:00Z' },
     ])
     renderWithProviders(<ApprovalQueuePage />)
-    expect(await screen.findByText(/ORD-9 · Desk Calendar/)).toBeInTheDocument()
+    expect(await screen.findByText('Desk Calendar')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /Order requests/ })).toHaveAttribute('aria-selected', 'true')
 
     await userEvent.click(screen.getByRole('tab', { name: /Artwork approvals/ }))
     expect(await screen.findByText('No artwork waiting for your approval')).toBeInTheDocument()
-    expect(screen.queryByText(/ORD-9 · Desk Calendar/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Desk Calendar')).not.toBeInTheDocument()
   })
 
   it("opens a drawer with the proof and trail, and gives the manager's approval", async () => {

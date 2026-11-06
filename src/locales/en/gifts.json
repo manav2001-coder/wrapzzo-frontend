@@ -131,6 +131,8 @@
       "awaitingApprovalDetail": "It goes to production once your approver approves it. You'll get an email either way."
     },
     "notAvailableTitle": "Gift not available",
-    "notAvailableBody": "This gift isn't available to you for Quick Gift right now."
+    "notAvailableBody": "This gift isn't available to you for Quick Gift right now.",
+    "addMorePhotos": "Add more photos",
+    "removePhoto": "Remove {{name}}"
   }
 }

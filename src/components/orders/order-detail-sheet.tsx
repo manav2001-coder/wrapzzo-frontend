@@ -6,6 +6,7 @@ import { useHasAccess } from '@/hooks/use-permission'
 import { P } from '@/lib/permissions'
 
 import type { Order } from '@/api/orders'
+import { RecipientPhotos } from '@/components/orders/recipient-photos'
 import { OrderHistoryList, OrderStatusBadge, OrderStepper } from '@/components/orders/order-status'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -101,8 +102,8 @@ export function OrderDetailSheet({
 
               <section className="space-y-3">
                 <h3 className="text-sm font-semibold">{t('detail.photo')}</h3>
-                {order.recipientPhotoUrl ? (
-                  <img src={order.recipientPhotoUrl} alt="" className="max-h-64 rounded-md border object-contain" />
+                {order.recipientPhotos.length > 0 ? (
+                  <RecipientPhotos photos={order.recipientPhotos} />
                 ) : (
                   <p className="text-sm text-muted-foreground">{t('detail.noPhoto')}</p>
                 )}

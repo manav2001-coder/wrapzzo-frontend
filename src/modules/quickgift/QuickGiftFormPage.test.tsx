@@ -8,9 +8,10 @@ import { QuickGiftFormPage } from './QuickGiftFormPage'
 
 const listActiveGifts = vi.hoisted(() => vi.fn())
 const createQuickGiftRequest = vi.hoisted(() => vi.fn())
+const uploadQuickGiftPhoto = vi.hoisted(() => vi.fn())
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }))
 vi.mock('@/api/gifts', async (importOriginal) => ({ ...(await importOriginal<object>()), listActiveGifts }))
-vi.mock('@/api/quickGifts', async (importOriginal) => ({ ...(await importOriginal<object>()), createQuickGiftRequest }))
+vi.mock('@/api/quickGifts', async (importOriginal) => ({ ...(await importOriginal<object>()), createQuickGiftRequest, uploadQuickGiftPhoto }))
 vi.mock('sonner', async (importOriginal) => ({ ...(await importOriginal<object>()), toast }))
 
 const PAD: Gift = {
@@ -62,6 +63,7 @@ async function setQuantity(value: string) {
 describe('QuickGiftFormPage', () => {
   beforeEach(() => {
     listActiveGifts.mockReset()
+    uploadQuickGiftPhoto.mockReset()
     createQuickGiftRequest.mockReset()
     toast.success.mockReset()
     toast.error.mockReset()
@@ -128,6 +130,36 @@ describe('QuickGiftFormPage', () => {
     expect(await screen.findByRole('heading', { name: 'My quick gifts' })).toBeInTheDocument()
     expect(toast.success).toHaveBeenCalledWith('Order sent for approval', { description: expect.stringContaining('once your approver approves') })
     expect(toast.success).not.toHaveBeenCalledWith('Order placed', expect.anything())
+  })
+
+  it('uploads every photo picked, numbered in the order picked, and sends them all with the order', async () => {
+    uploadQuickGiftPhoto.mockImplementation(async (file: File, _pcode: string, number: number) => ({ key: `k/${number}`, fileName: file.name, contentType: file.type }))
+    createQuickGiftRequest.mockResolvedValue({ id: 'q-1', orderId: 'o-1', status: 'APPROVED' })
+    renderForm()
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    await fillRecipient()
+    const input = document.querySelector<HTMLInputElement>('input[type=file]')!
+    const cover = new File(['a'], 'cover.png', { type: 'image/png' })
+    const inside = new File(['b'], 'inside.png', { type: 'image/png' })
+    await userEvent.upload(input, [cover, inside])
+    expect(screen.getByText('cover.png')).toBeInTheDocument()
+    expect(screen.getByText('inside.png')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
+    expect(uploadQuickGiftPhoto).toHaveBeenNthCalledWith(1, cover, 'P-1001', 1)
+    expect(uploadQuickGiftPhoto).toHaveBeenNthCalledWith(2, inside, 'P-1001', 2)
+    expect(createQuickGiftRequest.mock.calls[0][0].photos).toHaveLength(2)
+  })
+
+  it('lets a picked photo be taken out again', async () => {
+    renderForm()
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    await userEvent.upload(document.querySelector<HTMLInputElement>('input[type=file]')!, [new File(['a'], 'cover.png', { type: 'image/png' }), new File(['b'], 'inside.png', { type: 'image/png' })])
+    await userEvent.click(screen.getByRole('button', { name: 'Remove cover.png' }))
+    expect(screen.queryByText('cover.png')).not.toBeInTheDocument()
+    expect(screen.getByText('inside.png')).toBeInTheDocument()
   })
 
   it("holds the quantity to the vendor's minimum order", async () => {

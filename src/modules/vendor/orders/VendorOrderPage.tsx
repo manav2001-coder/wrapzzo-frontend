@@ -1,3 +1,4 @@
+import { RecipientPhotos } from '@/components/orders/recipient-photos'
 import {
   ArrowLeft,
   Check,
@@ -206,10 +207,8 @@ function ShippingCard({ order }: { order: VendorOrder }) {
         )}
         <div className="col-span-2">
           <Row label={t('order.shipping.photo')}>
-            {order.recipientPhotoUrl ? (
-              <a href={order.recipientPhotoUrl} target="_blank" rel="noreferrer" className="inline-block">
-                <img src={order.recipientPhotoUrl} alt="" className="h-24 w-24 rounded-md border object-cover" />
-              </a>
+            {order.recipientPhotos.length > 0 ? (
+              <RecipientPhotos photos={order.recipientPhotos} size="h-24 w-24" />
             ) : (
               <span className="inline-flex items-center gap-1.5 font-normal text-muted-foreground">
                 <ImageOff className="h-4 w-4" />

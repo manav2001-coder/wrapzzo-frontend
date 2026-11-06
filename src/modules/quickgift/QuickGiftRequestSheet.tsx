@@ -1,3 +1,4 @@
+import { RecipientPhotos } from '@/components/orders/recipient-photos'
 import { Gift as GiftIcon, ImageOff, Send } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -113,10 +114,8 @@ export function QuickGiftRequestSheet({
 
               <section className="space-y-3">
                 <h3 className="text-sm font-semibold">{t('detail.photo')}</h3>
-                {request.photoUrl ? (
-                  <a href={request.photoUrl} target="_blank" rel="noreferrer" className="inline-block">
-                    <img src={request.photoUrl} alt={request.photoFileName ?? ''} className="h-36 w-36 rounded-md border object-cover" />
-                  </a>
+                {request.photos.length > 0 ? (
+                  <RecipientPhotos photos={request.photos} size="h-36 w-36" />
                 ) : (
                   <p className="flex items-center gap-2 text-sm text-muted-foreground">
                     <ImageOff className="h-4 w-4" />

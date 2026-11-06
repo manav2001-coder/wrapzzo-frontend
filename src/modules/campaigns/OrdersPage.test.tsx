@@ -30,6 +30,7 @@ function order(overrides: Partial<Order> = {}): Order {
     recipientName: 'Dr. Asha Shah',
     recipientPhone: '9800000001',
     recipientPhotoUrl: null,
+    recipientPhotos: [],
     totalPrice: 200,
     quantity: 5,
     orgUnitName: 'N1',

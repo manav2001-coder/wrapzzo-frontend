@@ -179,4 +179,19 @@ describe('VendorOrderPage', () => {
     )
     expect(await screen.findByText("This order isn't in your queue.")).toBeInTheDocument()
   })
+
+  it('shows every recipient photo with the name it downloads as', async () => {
+    renderWorkspace(
+      vendorOrder({
+        recipientPhotoUrl: 'https://files.test/a.png',
+        recipientPhotos: [
+          { url: 'https://files.test/a.png', fileName: 'P-1001_AM07_photo.png' },
+          { url: 'https://files.test/b.png', fileName: 'P-1001_AM07_photo_2.png' },
+        ],
+      }),
+    )
+    expect(await screen.findByText('P-1001_AM07_photo.png')).toBeInTheDocument()
+    expect(screen.getByText('P-1001_AM07_photo_2.png')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'P-1001_AM07_photo_2.png' })).toHaveAttribute('src', 'https://files.test/b.png')
+  })
 })

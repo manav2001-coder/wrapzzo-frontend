@@ -19,7 +19,13 @@ describe('uploadQuickGiftPhoto', () => {
 
     const value = await uploadQuickGiftPhoto(file, 'MH-1')
 
-    expect(post).toHaveBeenCalledWith('/api/quick-gifts/presignPhoto', { contentType: 'image/png', pcode: 'MH-1' })
+    expect(post).toHaveBeenCalledWith('/api/quick-gifts/presignPhoto', { contentType: 'image/png', pcode: 'MH-1', number: 1 })
     expect(value).toEqual({ key: 'quick-gifts/c/u/x/MH-1_AM1_photo.png', fileName: 'MH-1_AM1_photo.png', contentType: 'image/png' })
+  })
+
+  it('numbers each photo of an order so they do not share a name', async () => {
+    await uploadQuickGiftPhoto(new File(['x'], 'b.png', { type: 'image/png' }), 'MH-1', 3)
+
+    expect(post).toHaveBeenCalledWith('/api/quick-gifts/presignPhoto', { contentType: 'image/png', pcode: 'MH-1', number: 3 })
   })
 })

@@ -2,6 +2,12 @@ import { apiClient } from '@/lib/axiosClient'
 
 export type OrderSource = 'CAMPAIGN' | 'QUICK_GIFT' | 'BULK_GIFT'
 /** RECEIVED_AT_WAREHOUSE and OUT_FOR_DELIVERY: only an order routed through the company's warehouse (warehouseName set). */
+/** A stored photo: where to see it, and the name it downloads as. */
+export interface RecipientPhoto {
+  url: string
+  fileName: string
+}
+
 export type OrderApprovalStatus = 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED'
 
 export type OrderStatus =
@@ -38,6 +44,8 @@ export interface Order {
   recipientPhone: string | null
   /** Null until the recipient (or someone on their behalf) uploads one. */
   recipientPhotoUrl: string | null
+  /** All of the recipient's photos, first one first (recipientPhotoUrl is the first). */
+  recipientPhotos: RecipientPhoto[]
   /** Snapshotted off the gift's total price at approval time -- null if the gift had no price set then. */
   totalPrice: number | null
   quantity: number

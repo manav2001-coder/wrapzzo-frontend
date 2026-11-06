@@ -64,6 +64,7 @@ const REQUEST: QuickGiftRequest = {
   internalNotes: null,
   photoUrl: null,
   photoFileName: null,
+  photos: [],
   status: 'APPROVED',
   rejectionReason: null,
   reviewedByName: 'MR North',

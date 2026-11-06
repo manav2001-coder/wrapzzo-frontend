@@ -1,3 +1,4 @@
+import { RecipientPhotos } from '@/components/orders/recipient-photos'
 import { format } from 'date-fns'
 import { AppDialog } from '@/components/app-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -74,12 +75,10 @@ export function QuickGiftActivityDialog({ quickGiftId, onHide }: { quickGiftId: 
 
           {request.rejectionReason && <p className="text-sm text-destructive">Rejected: {request.rejectionReason}</p>}
 
-          {request.photoUrl && (
+          {request.photos.length > 0 && (
             <div>
-              <p className="mb-2 text-xs text-muted-foreground">Recipient's photo</p>
-              <a href={request.photoUrl} target="_blank" rel="noreferrer" className="inline-block">
-                <img src={request.photoUrl} alt={request.photoFileName ?? ''} className="h-32 w-32 rounded-lg border object-cover" />
-              </a>
+              <p className="mb-2 text-xs text-muted-foreground">{request.photos.length > 1 ? "Recipient's photos" : "Recipient's photo"}</p>
+              <RecipientPhotos photos={request.photos} size="h-32 w-32" />
             </div>
           )}
         </div>

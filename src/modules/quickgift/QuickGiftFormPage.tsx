@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, Camera, ChevronDown, ChevronUp, Contact, Gift as GiftIcon, Palette, Plus, Send, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Camera, ChevronDown, ChevronUp, Contact, Gift as GiftIcon, Palette, Plus, Send, Trash2, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -24,6 +24,8 @@ import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
 import { RecipientPickerDialog } from '@/modules/recipients/RecipientPickerDialog'
 
 const MAX_QUANTITY = 100_000
+/** Photos one order can carry. */
+const MAX_PHOTOS = 10
 
 /** The prescription-pad print details, as typed (empty string = not given). */
 interface DoctorFields {
@@ -49,7 +51,8 @@ interface DraftRecipient {
   dateOfBirth: Date | null
   giftMessage: string
   internalNotes: string
-  photo?: File
+  /** The recipient's photos (up to MAX_PHOTOS), uploaded when the row is sent. */
+  photos?: File[]
   /** Units to order, as typed -- validated to a whole number from 1 on submit. */
   quantity: string
   doctor: DoctorFields
@@ -153,7 +156,7 @@ function RecipientCard({
   const fileInput = useRef<HTMLInputElement>(null)
   const id = (field: string) => `r${row.key}-${field}`
   const setDoctor = (patch: Partial<DoctorFields>) => onUpdate({ doctor: { ...row.doctor, ...patch } })
-  const needsPhotoOrEmail = photoRequired && !row.photo && !row.recipientEmail.trim()
+  const needsPhotoOrEmail = photoRequired && !row.photos?.length && !row.recipientEmail.trim()
   const hasErrors = Object.keys(row.errors).length > 0
 
   return (
@@ -286,18 +289,36 @@ function RecipientCard({
               <div className="flex min-w-0 items-center gap-2">
                 <Button id={id('photo')} type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
                   <Camera />
-                  {row.photo ? t('form.changePhoto') : t('form.choosePhoto')}
+                  {row.photos?.length ? t('form.addMorePhotos') : t('form.choosePhoto')}
                 </Button>
-                {row.photo && <span className="truncate text-xs text-muted-foreground">{row.photo.name}</span>}
                 <input
                   ref={fileInput}
                   type="file"
                   accept="image/*"
+                  multiple
                   className="hidden"
                   data-testid={id('photo-input')}
-                  onChange={(e) => e.target.files?.[0] && onUpdate({ photo: e.target.files[0] })}
+                  onChange={(e) => {
+                    const picked = Array.from(e.target.files ?? [])
+                    e.target.value = ''
+                    if (picked.length > 0) onUpdate({ photos: [...(row.photos ?? []), ...picked].slice(0, MAX_PHOTOS) })
+                  }}
                 />
               </div>
+              {row.photos && row.photos.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {row.photos.map((file, index) => (
+                    <li key={`${file.name}-${index}`} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                      <IconButton
+                        icon={X}
+                        label={t('form.removePhoto', { name: file.name })}
+                        onClick={() => onUpdate({ photos: row.photos?.filter((_, i) => i !== index) })}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </LabelledField>
             <LabelledField id={id('message')} label={t('form.message')} className="sm:col-span-1 lg:col-span-2">
               <Textarea
@@ -380,7 +401,7 @@ export function QuickGiftFormPage() {
     // A doctor picked from the directory is identified already; a new one needs a pcode.
     if (!row.recipientId && !row.recipientPcode.trim()) errors.recipientPcode = required
     if (!row.deliveryAddress.trim()) errors.deliveryAddress = required
-    if (gift.photoRequired && !row.photo && !row.recipientEmail.trim()) errors.photoOrEmail = t('form.error.photoOrEmail')
+    if (gift.photoRequired && !row.photos?.length && !row.recipientEmail.trim()) errors.photoOrEmail = t('form.error.photoOrEmail')
     if (parseQuantity(row.quantity, minQuantity) === null) {
       errors.quantity = t('form.error.quantity', { min: minQuantity.toLocaleString(), max: MAX_QUANTITY.toLocaleString() })
     }
@@ -404,8 +425,11 @@ export function QuickGiftFormPage() {
 
     for (const row of rows) {
       try {
-        let photo: QuickGiftPhotoValue | undefined
-        if (row.photo) photo = await uploadQuickGiftPhoto(row.photo, row.recipientPcode.trim() || undefined)
+        const photos: QuickGiftPhotoValue[] = []
+        // One after another, numbered, so the stored names run PCODE_AMCODE_photo, _photo_2, _photo_3 in the order they were picked.
+        for (const [index, file] of (row.photos ?? []).entries()) {
+          photos.push(await uploadQuickGiftPhoto(file, row.recipientPcode.trim() || undefined, index + 1))
+        }
         const input = {
           giftId: gift.id,
           recipientId: row.recipientId,
@@ -417,7 +441,7 @@ export function QuickGiftFormPage() {
           recipientDob: toDateOnly(row.dateOfBirth) ?? undefined,
           giftMessage: row.giftMessage.trim() || undefined,
           internalNotes: row.internalNotes.trim() || undefined,
-          photo,
+          photos: photos.length > 0 ? photos : undefined,
           doctor: gift.artworkRequired ? doctorInput(row.doctor) : undefined,
           quantity: parseQuantity(row.quantity, minQuantity) ?? minQuantity,
         }

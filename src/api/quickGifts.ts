@@ -1,5 +1,5 @@
 import type { DoctorDetails } from '@/api/recipients'
-import type { OrderApprovalStatus } from '@/api/orders'
+import type { OrderApprovalStatus, RecipientPhoto } from '@/api/orders'
 import { apiClient } from '@/lib/axiosClient'
 
 export type QuickGiftStatus = 'SUBMITTED' | 'APPROVED' | 'REJECTED'
@@ -26,8 +26,10 @@ export interface QuickGiftRequest {
   orgUnitName: string | null
   giftMessage: string | null
   internalNotes: string | null
+  /** The first photo, for screens that show one; `photos` has them all. */
   photoUrl: string | null
   photoFileName: string | null
+  photos: RecipientPhoto[]
   status: QuickGiftStatus
   rejectionReason: string | null
   reviewedByName: string | null
@@ -58,7 +60,8 @@ export interface CreateQuickGiftInput {
   recipientDob?: string
   giftMessage?: string
   internalNotes?: string
-  photo?: QuickGiftPhotoValue
+  /** Up to 10, each already uploaded with uploadQuickGiftPhoto. */
+  photos?: QuickGiftPhotoValue[]
   /** Print details for a new doctor -- ignored server-side when an existing one (recipientId) was picked. */
   doctor?: Partial<DoctorDetails>
   /** Units to order; omitted means 1. */
@@ -73,9 +76,9 @@ interface PresignPhotoResponse {
 }
 
 /** Presigns an upload URL and PUTs the file straight to object storage -- returns the value to submit with the request. */
-export async function uploadQuickGiftPhoto(file: File, pcode?: string): Promise<QuickGiftPhotoValue> {
-  // The doctor's pcode lets the server name the stored file after them (and the AM), like a proof.
-  const { data: presign } = await apiClient.post<PresignPhotoResponse>('/api/quick-gifts/presignPhoto', { contentType: file.type, pcode })
+export async function uploadQuickGiftPhoto(file: File, pcode?: string, number = 1): Promise<QuickGiftPhotoValue> {
+  // The doctor's pcode lets the server name the stored file after them (and the AM), like a proof; `number` keeps several photos of one order apart.
+  const { data: presign } = await apiClient.post<PresignPhotoResponse>('/api/quick-gifts/presignPhoto', { contentType: file.type, pcode, number })
 
   const uploadResponse = await fetch(presign.uploadUrl, {
     method: 'PUT',

@@ -1,5 +1,5 @@
 import type { OrderDesignStatus } from '@/api/orderDesigns'
-import type { OrderSource, OrderStatus } from '@/api/orders'
+import type { OrderSource, OrderStatus, RecipientPhoto } from '@/api/orders'
 import type { Vendor } from '@/api/vendors'
 import type { DoctorDetails } from '@/api/recipients'
 import { vendorApiClient } from '@/lib/vendorApiClient'
@@ -29,6 +29,8 @@ export interface VendorOrder {
   divisionName: string | null
   /** Shown so the vendor can produce a personalized gift correctly -- null until the recipient uploads one. */
   recipientPhotoUrl: string | null
+  /** All of the recipient's photos, first one first (recipientPhotoUrl is the first). */
+  recipientPhotos: RecipientPhoto[]
   price: number | null
   quantity: number
   /** The final recipient's address -- from the Quick Gift request; null for a campaign order. */

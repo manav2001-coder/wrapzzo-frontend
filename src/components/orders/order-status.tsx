@@ -1,7 +1,7 @@
 import { Check, XCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import type { OrderStatus, StageEvent } from '@/api/orders'
+import type { OrderApprovalStatus, OrderStatus, StageEvent } from '@/api/orders'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { formatDate, formatDateTime } from '@/lib/datetime'
 import { cn } from '@/lib/utils'
@@ -40,8 +40,16 @@ const VARIANT: Record<OrderStatus, BadgeProps['variant']> = {
   CANCELLED: 'destructive',
 }
 
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
+/** Where the order is -- except that one still waiting for its approver, or turned down by them, says so instead. */
+export function OrderStatusBadge({ status, approvalStatus }: { status: OrderStatus; approvalStatus?: OrderApprovalStatus }) {
   const { t } = useTranslation('orders')
+  if (approvalStatus === 'PENDING' || approvalStatus === 'REJECTED') {
+    return (
+      <Badge variant={approvalStatus === 'PENDING' ? 'warning-soft' : 'destructive'} className="whitespace-nowrap">
+        {t(`approval.${approvalStatus}`)}
+      </Badge>
+    )
+  }
   return (
     <Badge variant={VARIANT[status]} className="whitespace-nowrap">
       {t(`status.${status}`)}

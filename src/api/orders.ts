@@ -2,6 +2,8 @@ import { apiClient } from '@/lib/axiosClient'
 
 export type OrderSource = 'CAMPAIGN' | 'QUICK_GIFT' | 'BULK_GIFT'
 /** RECEIVED_AT_WAREHOUSE and OUT_FOR_DELIVERY: only an order routed through the company's warehouse (warehouseName set). */
+export type OrderApprovalStatus = 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED'
+
 export type OrderStatus =
   | 'PROCESSING'
   | 'PRODUCTION_QUEUE'
@@ -56,6 +58,11 @@ export interface Order {
   history: StageEvent[]
   /** True if an artwork version is sitting in PENDING_REVIEW right now -- drives the "needs design review" indicator. */
   hasPendingDesignReview: boolean
+  /** Order approval: PENDING = not with a vendor yet, waiting on the approver; REJECTED = turned down (and cancelled). */
+  approvalStatus: OrderApprovalStatus
+  /** The approver's note -- always there on a REJECTED order. */
+  approvalComment: string | null
+  approvalDecidedByName: string | null
 }
 
 export async function listOrders(): Promise<Order[]> {

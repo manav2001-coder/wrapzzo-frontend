@@ -143,5 +143,12 @@
     "autoAssigned_one": "{{count}} order auto-assigned",
     "autoAssigned_other": "{{count}} orders auto-assigned",
     "skipped": "{{count}} could not be assigned"
+  },
+  "approval": {
+    "PENDING": "Awaiting approval",
+    "REJECTED": "Not approved",
+    "pendingNote": "This order is waiting for your approver's yes. It goes to production only once they approve it.",
+    "rejectedNote": "{{name}} did not approve this order, so it was cancelled.",
+    "theApprover": "The approver"
   }
 }

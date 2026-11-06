@@ -23,6 +23,7 @@ import { usePendingArtworkApprovals, useReviewArtwork } from '@/hooks/useOrderDe
 import { formatDate, formatDateTime } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
+import { OrderRequestsSection } from './OrderRequestsSection'
 
 const LIST_FIELDS: ListFieldMap = {
   orderDisplayId: 'text',
@@ -156,7 +157,9 @@ export function ApprovalQueuePage() {
 
   return (
     <div>
-      <MasterPageHeader title={pageTitle} description="Artwork proofs from your team, waiting on your approval." />
+      <MasterPageHeader title={pageTitle} description="Orders and artwork proofs from your team, waiting on your approval." />
+
+      <OrderRequestsSection />
 
       <DataTable<PendingArtworkApproval>
         columns={columns}

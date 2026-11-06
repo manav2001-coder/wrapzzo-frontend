@@ -142,7 +142,7 @@ export function OrdersPage() {
         },
         cell: ({ row }) => (
           <span className="flex flex-wrap items-center justify-center gap-1.5">
-            <OrderStatusBadge status={row.original.status} />
+            <OrderStatusBadge status={row.original.status} approvalStatus={row.original.approvalStatus} />
             {row.original.hasPendingDesignReview && (
               <Badge variant="primary-soft" className="gap-1 whitespace-nowrap">
                 <Eye className="h-3 w-3" />

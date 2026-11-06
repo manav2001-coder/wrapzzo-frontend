@@ -548,5 +548,24 @@
       "REPORTING_LINE": "The first one above the AM in their reporting line",
       "DIVISION": "Anyone in the AM's division (the first to act decides)"
     }
+  },
+  "orderApproval": {
+    "title": "Order approval",
+    "subtitle": "Whether an order needs an approver's yes before it goes to production, and who approves it.",
+    "card": "Approval before production",
+    "cardHelp": "With this on, a Quick Gift or PEL order waits for the approver below. It goes to the vendor only once they approve it; if they decline, it is cancelled and the person who placed it sees their note.",
+    "require": "Orders need approval before they go to the vendor",
+    "role": "Approver role",
+    "pickRole": "Choose a role",
+    "findThem": "Find them",
+    "scope": {
+      "REPORTING_LINE": "The first one above the person who placed the order, in their reporting line",
+      "DIVISION": "Anyone holding it in the orderer's division (the first to act decides)"
+    },
+    "note": "A person who holds the approver role themselves does not need approval for their own orders. If nobody holds the role above an orderer, the order waits for someone with Final Artwork Approval to cover.",
+    "save": "Save",
+    "discard": "Discard changes",
+    "savedOn": "Orders now need approval from {{role}} before they go to the vendor",
+    "savedOff": "Orders go straight to the vendor again"
   }
 }

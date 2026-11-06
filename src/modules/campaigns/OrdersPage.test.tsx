@@ -44,6 +44,9 @@ function order(overrides: Partial<Order> = {}): Order {
     createdAt: '2026-10-20T10:00:00Z',
     history: [{ status: 'PROCESSING', at: '2026-10-20T10:00:00Z', changedByName: 'Rahul' }],
     hasPendingDesignReview: false,
+    approvalStatus: 'NOT_REQUIRED',
+    approvalComment: null,
+    approvalDecidedByName: null,
     ...overrides,
   }
 }
@@ -176,6 +179,28 @@ describe('OrdersPage (company)', () => {
     expect(within(sheet).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument()
     expect(within(sheet).queryByRole('button', { name: 'Request changes' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Needs your review/ })).not.toBeInTheDocument()
+  })
+
+  it('says an order is awaiting approval, and shows the approver\'s note on one that was turned down', async () => {
+    listOrders.mockResolvedValue([
+      order({ id: 'o-1', displayId: 'ORD-101', assignedVendorId: null, assignedVendorName: null, approvalStatus: 'PENDING' }),
+      order({
+        id: 'o-2',
+        displayId: 'ORD-102',
+        giftName: 'Desk Calendar',
+        status: 'CANCELLED',
+        approvalStatus: 'REJECTED',
+        approvalComment: 'Wrong doctor',
+        approvalDecidedByName: 'Ravi RM',
+      }),
+    ])
+    renderWithProviders(<OrdersPage />)
+    expect(await screen.findByText('Awaiting approval')).toBeInTheDocument()
+    expect(screen.getByText('Not approved')).toBeInTheDocument()
+
+    const sheet = await openOrder('Desk Calendar')
+    expect(within(sheet).getByText(/Ravi RM did not approve this order/)).toBeInTheDocument()
+    expect(within(sheet).getByText('“Wrong doctor”')).toBeInTheDocument()
   })
 
   it('never shows a vendor, nor "Unassigned", to someone who raises or approves orders', async () => {

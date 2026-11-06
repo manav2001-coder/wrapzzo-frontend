@@ -30,6 +30,7 @@ import { PlatformDashboardPage } from '@/modules/admin/dashboard/PlatformDashboa
 import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
 import { ApprovalQueuePage } from '@/modules/campaigns/ApprovalQueuePage'
 import { ArtworkApprovalSettingsPage } from '@/modules/artwork-approval/ArtworkApprovalSettingsPage'
+import { OrderApprovalSettingsPage } from '@/modules/order-approval/OrderApprovalSettingsPage'
 import { CampaignDetailPage } from '@/modules/campaigns/CampaignDetailPage'
 import { CampaignListPage } from '@/modules/campaigns/CampaignListPage'
 import { CampaignWizardPage } from '@/modules/campaigns/CampaignWizardPage'
@@ -130,6 +131,7 @@ export function AppRoutes() {
           {/* Company Admin's own roster -- same Users pages as the platform-admin route above, just resolving "my company" instead of an :id param. */}
           {/* Masters: roles and users, shared by platform staff (who pick a company) and company admins. */}
           <Route path="/masters/artwork-approval" element={<Guard permission={P.ARTWORK_APPROVAL_VIEW}><ArtworkApprovalSettingsPage /></Guard>} />
+          <Route path="/masters/order-approval" element={<Guard permission={P.ORDER_APPROVAL_VIEW}><OrderApprovalSettingsPage /></Guard>} />
           <Route path="/masters/roles" element={<Guard permission={P.ROLE_VIEW}><RolesPage /></Guard>} />
           <Route path="/masters/users" element={<Guard permission={P.USER_VIEW}><CompanyUsersPage /></Guard>} />
           <Route path="/masters/users/add" element={<Guard permission={P.USER_CREATE}><CompanyUsersAddPage /></Guard>} />

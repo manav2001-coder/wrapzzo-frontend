@@ -47,7 +47,8 @@
     "operations": "Operations",
     "platformConfig": "Platform Configuration",
     "jobs": "Background jobs",
-    "menuConfig": "Menu config"
+    "menuConfig": "Menu config",
+    "orderApproval": "Order approval"
   },
   "action": {
     "activate": "Activate",

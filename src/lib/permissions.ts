@@ -31,6 +31,9 @@ export const P = {
   APPROVAL_DECIDE: 'approval.decide',
   ARTWORK_APPROVAL_VIEW: 'artwork_approval.view',
   ARTWORK_APPROVAL_CONFIGURE: 'artwork_approval.configure',
+  /** Whether orders need an approver's yes before they go to the vendor, and who approves. Deciding on one is APPROVAL_DECIDE. */
+  ORDER_APPROVAL_VIEW: 'order_approval.view',
+  ORDER_APPROVAL_CONFIGURE: 'order_approval.configure',
 
   DOCTOR_VIEW: 'doctor.view',
   DOCTOR_CREATE: 'doctor.create',

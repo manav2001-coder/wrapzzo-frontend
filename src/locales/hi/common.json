@@ -47,7 +47,8 @@
     "operations": "संचालन",
     "platformConfig": "प्लेटफ़ॉर्म कॉन्फ़िगरेशन",
     "jobs": "बैकग्राउंड जॉब",
-    "menuConfig": "मेन्यू कॉन्फ़िग"
+    "menuConfig": "मेन्यू कॉन्फ़िग",
+    "orderApproval": "ऑर्डर अनुमोदन"
   },
   "action": {
     "activate": "सक्रिय करें",

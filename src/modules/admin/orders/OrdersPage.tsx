@@ -185,7 +185,7 @@ export function OrdersPage() {
             label: t(`status.${value}`),
           })),
         },
-        cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
+        cell: ({ row }) => <OrderStatusBadge status={row.original.status} approvalStatus={row.original.approvalStatus} />,
       },
       {
         id: 'createdAt',

@@ -60,7 +60,7 @@ export function OrderDetailSheet({
                   <SheetTitle className="truncate">{order.giftName ?? t('detail.title', { id: order.displayId })}</SheetTitle>
                   <SheetDescription className="flex items-center gap-2">
                     {order.displayId}
-                    <OrderStatusBadge status={order.status} />
+                    <OrderStatusBadge status={order.status} approvalStatus={order.approvalStatus} />
                   </SheetDescription>
                 </div>
               </div>
@@ -79,6 +79,18 @@ export function OrderDetailSheet({
                 {order.warehouseName && <Detail label={t('detail.warehouse')}>{order.warehouseName}</Detail>}
                 <Detail label={t('detail.placed')}>{formatDateTime(order.createdAt)}</Detail>
               </dl>
+
+              {order.approvalStatus === 'PENDING' && (
+                <p role="status" className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                  {t('approval.pendingNote')}
+                </p>
+              )}
+              {order.approvalStatus === 'REJECTED' && (
+                <div role="status" className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm">
+                  <p className="font-medium">{t('approval.rejectedNote', { name: order.approvalDecidedByName ?? t('approval.theApprover') })}</p>
+                  {order.approvalComment && <p className="mt-1 text-muted-foreground">“{order.approvalComment}”</p>}
+                </div>
+              )}
 
               {actions}
 

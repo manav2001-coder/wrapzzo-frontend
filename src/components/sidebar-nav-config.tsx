@@ -85,6 +85,7 @@ const MASTERS_NAV: NavSource = {
     { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: P.COMPANY_VENDOR_VIEW },
     { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: P.WAREHOUSE_VIEW },
     { id: 'artwork-approval', titleKey: 'nav.artworkApproval', type: 'item', url: '/masters/artwork-approval', icon: Palette, permission: P.ARTWORK_APPROVAL_VIEW },
+    { id: 'order-approval', titleKey: 'nav.orderApproval', type: 'item', url: '/masters/order-approval', icon: BadgeCheck, permission: P.ORDER_APPROVAL_VIEW },
   ],
 }
 

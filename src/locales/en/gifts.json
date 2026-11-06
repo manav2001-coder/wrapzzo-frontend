@@ -125,7 +125,10 @@
       "theVendor": "the vendor",
       "requestSent_one": "Quick Gift request sent",
       "requestSent_other": "{{count}} Quick Gift requests sent",
-      "requestSentDetail": "Sent for approval."
+      "requestSentDetail": "Sent for approval.",
+      "awaitingApproval_one": "Order sent for approval",
+      "awaitingApproval_other": "{{count}} orders sent for approval",
+      "awaitingApprovalDetail": "It goes to production once your approver approves it. You'll get an email either way."
     },
     "notAvailableTitle": "Gift not available",
     "notAvailableBody": "This gift isn't available to you for Quick Gift right now."

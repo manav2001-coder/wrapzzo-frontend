@@ -1,4 +1,5 @@
 import type { DoctorDetails } from '@/api/recipients'
+import type { OrderApprovalStatus } from '@/api/orders'
 import { apiClient } from '@/lib/axiosClient'
 
 export type QuickGiftStatus = 'SUBMITTED' | 'APPROVED' | 'REJECTED'
@@ -34,6 +35,8 @@ export interface QuickGiftRequest {
   createdAt: string
   /** Only set right after an approve() call that just issued a fresh recipient photo-upload link. */
   recipientUploadUrl: string | null
+  /** PENDING = the order is held for its approver and has not gone to production; null before an order exists. */
+  orderApprovalStatus: OrderApprovalStatus | null
 }
 
 export interface QuickGiftPhotoValue {

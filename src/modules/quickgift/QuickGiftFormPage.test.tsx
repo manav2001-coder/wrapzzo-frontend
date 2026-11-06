@@ -118,6 +118,18 @@ describe('QuickGiftFormPage', () => {
     expect(toast.success).toHaveBeenCalledWith('Order placed', { description: expect.stringContaining('Pad Printers') })
   })
 
+  it('says the order was sent for approval, not to the vendor, when it is held for the approver', async () => {
+    createQuickGiftRequest.mockResolvedValue({ id: 'q-1', orderId: 'o-1', status: 'APPROVED', orderApprovalStatus: 'PENDING' })
+    renderForm()
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    await fillRecipient()
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    expect(await screen.findByRole('heading', { name: 'My quick gifts' })).toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledWith('Order sent for approval', { description: expect.stringContaining('once your approver approves') })
+    expect(toast.success).not.toHaveBeenCalledWith('Order placed', expect.anything())
+  })
+
   it("holds the quantity to the vendor's minimum order", async () => {
     renderForm({ ...PAD, moq: 50 })
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })

@@ -399,6 +399,7 @@ export function QuickGiftFormPage() {
     setSubmitting(true)
     const succeeded: number[] = []
     let placedAsOrders = 0
+    let heldForApproval = 0
     const failures = new Map<number, string>()
 
     for (const row of rows) {
@@ -423,6 +424,7 @@ export function QuickGiftFormPage() {
         const created = await createRequest.mutateAsync(input)
         // Direct vendor ordering approves on creation -- the order already went to the vendor.
         if (created.orderId) placedAsOrders++
+        if (created.orderApprovalStatus === 'PENDING') heldForApproval++
         succeeded.push(row.key)
       } catch (err) {
         failures.set(row.key, err instanceof Error ? err.message : t('form.error.nothingSent'))
@@ -432,7 +434,10 @@ export function QuickGiftFormPage() {
 
     if (failures.size === 0) {
       const count = succeeded.length
-      if (placedAsOrders === count) {
+      if (heldForApproval === count) {
+        // Order approval is on: nothing has gone to a vendor yet -- the approver's yes sends it.
+        toast.success(t('form.success.awaitingApproval', { count }), { description: t('form.success.awaitingApprovalDetail') })
+      } else if (placedAsOrders === count) {
         toast.success(t('form.success.orderPlaced', { count }), {
           description: t('form.success.orderPlacedDetail', { vendor: gift.vendorName ?? t('form.success.theVendor') }),
         })

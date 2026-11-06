@@ -70,6 +70,7 @@ const REQUEST: QuickGiftRequest = {
   reviewedAt: '2026-10-20T10:00:00Z',
   createdAt: '2026-10-20T10:00:00Z',
   recipientUploadUrl: null,
+  orderApprovalStatus: 'NOT_REQUIRED',
 }
 
 function signedInWith(permissions: string[]) {

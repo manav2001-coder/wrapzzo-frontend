@@ -6,8 +6,10 @@ import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { RecipientPickerDialog } from './RecipientPickerDialog'
 import { RecipientsPage } from './RecipientsPage'
 
+// What the server holds: the Doctors screen's rows, and the caller's own list. The API answers pages of them (/page, /mine/page).
 const listRecipients = vi.hoisted(() => vi.fn())
 const listMyRecipients = vi.hoisted(() => vi.fn())
+const get = vi.hoisted(() => vi.fn())
 const searchRecipients = vi.hoisted(() => vi.fn())
 const updateRecipient = vi.hoisted(() => vi.fn())
 const listUpcomingBirthdays = vi.hoisted(() => vi.fn())
@@ -15,14 +17,13 @@ const createMyDoctor = vi.hoisted(() => vi.fn())
 const removeMyDoctor = vi.hoisted(() => vi.fn())
 vi.mock('@/api/recipients', async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  listRecipients,
-  listMyRecipients,
   searchRecipients,
   updateRecipient,
   listUpcomingBirthdays,
   createMyDoctor,
   removeMyDoctor,
 }))
+vi.mock('@/lib/axiosClient', async (importOriginal) => ({ ...(await importOriginal<object>()), apiClient: { get } }))
 const useCurrentUser = vi.hoisted(() => vi.fn())
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
@@ -50,7 +51,20 @@ function recipient(overrides: Partial<Recipient> = {}): Recipient {
   }
 }
 
+function pageOf(rows: Recipient[]) {
+  return { data: { data: rows, total: rows.length, page: 0, pageSize: 20, hasMore: false } }
+}
+
 beforeEach(() => {
+  get.mockReset().mockImplementation(async (url: string, config?: { params?: { search?: string } }) => {
+    if (url === '/api/recipients/page') return pageOf(await listRecipients())
+    if (url === '/api/recipients/mine/page') {
+      const needle = config?.params?.search?.toLowerCase()
+      const mine = (await listMyRecipients()) as Recipient[]
+      return pageOf(needle ? mine.filter((r) => [r.name, r.pcode].some((v) => v?.toLowerCase().includes(needle))) : mine)
+    }
+    return { data: [] }
+  })
   for (const fn of [listRecipients, listMyRecipients, searchRecipients, updateRecipient, listUpcomingBirthdays, createMyDoctor, removeMyDoctor]) {
     fn.mockReset()
   }
@@ -153,5 +167,6 @@ describe('RecipientPickerDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add 1 selected' }))
     expect(onConfirm).toHaveBeenCalledWith([expect.objectContaining({ id: 'r-2' })])
     expect(searchRecipients).not.toHaveBeenCalled()
+    expect(get).toHaveBeenCalledWith('/api/recipients/mine/page', { params: expect.objectContaining({ search: 'p-2002', size: 20 }) })
   })
 })

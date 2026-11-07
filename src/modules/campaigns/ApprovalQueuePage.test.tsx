@@ -5,9 +5,11 @@ import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { ApprovalQueuePage } from './ApprovalQueuePage'
 
 const listPendingOrderApprovals = vi.hoisted(() => vi.fn())
+const get = vi.hoisted(() => vi.fn())
 const listPendingArtworkApprovals = vi.hoisted(() => vi.fn())
 const approveOrderDesign = vi.hoisted(() => vi.fn())
 const rejectOrderDesign = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/axiosClient', async (importOriginal) => ({ ...(await importOriginal<object>()), apiClient: { get } }))
 vi.mock('@/api/orderApprovals', async (importOriginal) => ({ ...(await importOriginal<object>()), listPendingOrderApprovals }))
 vi.mock('@/api/orderDesigns', async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -44,8 +46,18 @@ const PROOF = {
   ],
 }
 
+// The server answers pages of what waits on the caller; these stubs hold those rows.
+function pageOf(rows: unknown[]) {
+  return { data: { data: rows, total: rows.length, page: 0, pageSize: 10, hasMore: false } }
+}
+
 describe('ApprovalQueuePage', () => {
   beforeEach(() => {
+    get.mockReset().mockImplementation(async (url: string) => {
+      if (url === '/api/artwork-approvals/pending/page') return pageOf(await listPendingArtworkApprovals())
+      if (url === '/api/order-approvals/pending/page') return pageOf(await listPendingOrderApprovals())
+      return { data: [] }
+    })
     listPendingOrderApprovals.mockReset().mockResolvedValue([])
     listPendingArtworkApprovals.mockReset().mockResolvedValue([PROOF])
     approveOrderDesign.mockReset().mockResolvedValue({ ...PROOF, id: 'd-2', status: 'APPROVED' })

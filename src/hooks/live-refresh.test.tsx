@@ -5,13 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 import { useApproveOrderDesign } from './useOrderDesigns'
-import { useOrders } from './useOrders'
+import { useOrderSummary } from './useOrders'
 import { useVendorOrders } from './useVendorOrders'
 
-const listOrders = vi.hoisted(() => vi.fn())
+const getOrderSummary = vi.hoisted(() => vi.fn())
 const listVendorOrders = vi.hoisted(() => vi.fn())
 const approveOrderDesign = vi.hoisted(() => vi.fn())
-vi.mock('@/api/orders', async (importOriginal) => ({ ...(await importOriginal<object>()), listOrders }))
+vi.mock('@/api/orders', async (importOriginal) => ({ ...(await importOriginal<object>()), getOrderSummary }))
 vi.mock('@/api/vendorOrders', async (importOriginal) => ({ ...(await importOriginal<object>()), listVendorOrders }))
 vi.mock('@/api/orderDesigns', async (importOriginal) => ({ ...(await importOriginal<object>()), approveOrderDesign }))
 
@@ -22,14 +22,14 @@ function wrapperWith(client: QueryClient) {
 describe('the artwork loop refreshes on its own', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
-    listOrders.mockReset().mockResolvedValue([])
+    getOrderSummary.mockReset().mockResolvedValue({ total: 0, byStatus: {}, awaitingReview: 0, unassigned: 0 })
     listVendorOrders.mockReset().mockResolvedValue([])
     approveOrderDesign.mockReset().mockResolvedValue({})
   })
   afterEach(() => vi.useRealTimers())
 
   it.each([
-    ['the company orders', () => void useOrders(), listOrders],
+    ['the company order figures', () => void useOrderSummary(), getOrderSummary],
     ['the vendor queue', () => void useVendorOrders(), listVendorOrders],
   ])('re-fetches %s every interval', async (_name, hook, api) => {
     renderHook(hook, { wrapper: wrapperWith(new QueryClient()) })

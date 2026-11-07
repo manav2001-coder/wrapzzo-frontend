@@ -24,9 +24,10 @@ const user = (id: string, name: string, extra: Partial<CompanyUser> = {}): Compa
   ...extra,
 })
 
-const listCompanyUsers = vi.hoisted(() => vi.fn())
+const get = vi.hoisted(() => vi.fn())
 const setCompanyWide = vi.hoisted(() => vi.fn())
-vi.mock('@/api/users', async (o) => ({ ...(await o<object>()), listCompanyUsers, setCompanyWide }))
+vi.mock('@/api/users', async (o) => ({ ...(await o<object>()), setCompanyWide }))
+vi.mock('@/lib/axiosClient', async (o) => ({ ...(await o<object>()), apiClient: { get } }))
 const currentUser = vi.hoisted(() => vi.fn())
 vi.mock('@/hooks/use-current-user', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/hooks/use-current-user')>()),
@@ -41,7 +42,14 @@ const rowOf = async (name: string) => (await screen.findByText(name)).closest('t
 
 describe('CompanyUsersPage -- who sees what', () => {
   beforeEach(() => {
-    listCompanyUsers.mockResolvedValue([user('u-1', 'Priya'), user('u-2', 'Neha', { companyWide: true, orgUnitId: null, orgUnitName: null })])
+    // The server answers a page of the company's users (here, all two of them).
+    get.mockReset().mockImplementation(async (url: string) => {
+      if (url === '/api/platform/companies/c1/users/page') {
+        const rows = [user('u-1', 'Priya'), user('u-2', 'Neha', { companyWide: true, orgUnitId: null, orgUnitName: null })]
+        return { data: { data: rows, total: rows.length, page: 0, pageSize: 25, hasMore: false } }
+      }
+      return { data: [] }
+    })
     setCompanyWide.mockReset()
   })
 

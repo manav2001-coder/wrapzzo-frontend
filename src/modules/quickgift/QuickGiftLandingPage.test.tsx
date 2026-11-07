@@ -10,14 +10,15 @@ import { QuickGiftLandingPage } from './QuickGiftLandingPage'
 
 const listActiveGifts = vi.hoisted(() => vi.fn())
 const listMyQuickGiftRequests = vi.hoisted(() => vi.fn())
+const get = vi.hoisted(() => vi.fn())
 const requestQuickGiftPhotoLink = vi.hoisted(() => vi.fn())
 const useCurrentUser = vi.hoisted(() => vi.fn())
 vi.mock('@/api/gifts', async (importOriginal) => ({ ...(await importOriginal<object>()), listActiveGifts }))
 vi.mock('@/api/quickGifts', async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  listMyQuickGiftRequests,
   requestQuickGiftPhotoLink,
 }))
+vi.mock('@/lib/axiosClient', async (importOriginal) => ({ ...(await importOriginal<object>()), apiClient: { get } }))
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
 const PAD = {
@@ -81,7 +82,17 @@ function signedInWith(permissions: string[]) {
 describe('QuickGiftLandingPage', () => {
   beforeEach(() => {
     listActiveGifts.mockReset().mockResolvedValue([PAD])
+    // The server pages the user's own requests (here, the one).
     listMyQuickGiftRequests.mockReset().mockResolvedValue([REQUEST])
+    get.mockReset().mockImplementation(async (url: string) => {
+      if (url === '/api/quick-gifts/mine/page') {
+        const rows = await listMyQuickGiftRequests()
+        return { data: { data: rows, total: rows.length, page: 0, pageSize: 10, hasMore: false } }
+      }
+      const detail = /^\/api\/quick-gifts\/(.+)$/.exec(url)
+      if (detail) return { data: (await listMyQuickGiftRequests()).find((r: QuickGiftRequest) => r.id === detail[1]) }
+      return { data: [] }
+    })
     requestQuickGiftPhotoLink.mockReset()
     signedInWith(['quick_gift.create', 'gift_store.view', 'doctor.view'])
   })

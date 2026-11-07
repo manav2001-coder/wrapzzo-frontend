@@ -6,12 +6,12 @@ import type { Order } from '@/api/orders'
 import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { OrdersPage } from './OrdersPage'
 
-const listOrders = vi.hoisted(() => vi.fn())
+const get = vi.hoisted(() => vi.fn())
 const listOrderDesigns = vi.hoisted(() => vi.fn())
 const approveOrderDesign = vi.hoisted(() => vi.fn())
 const rejectOrderDesign = vi.hoisted(() => vi.fn())
 const useCurrentUser = vi.hoisted(() => vi.fn())
-vi.mock('@/api/orders', async (importOriginal) => ({ ...(await importOriginal<object>()), listOrders }))
+vi.mock('@/lib/axiosClient', async (importOriginal) => ({ ...(await importOriginal<object>()), apiClient: { get } }))
 vi.mock('@/api/orderDesigns', () => ({ listOrderDesigns, approveOrderDesign, rejectOrderDesign }))
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
@@ -81,6 +81,28 @@ function signedInAsMr() {
   })
 }
 
+/**
+ * The API as the server answers it: a page of the orders (narrowed by the filters the table sends), the figures counted over all
+ * of them, and one order by id.
+ */
+function serve(orders: Order[]) {
+  get.mockImplementation(async (url: string, config?: { params?: Record<string, unknown> }) => {
+    if (url === '/api/orders/page') {
+      const filters = JSON.parse(String(config?.params?.filters ?? '[]')) as { field: string }[]
+      const rows = filters.some((filter) => filter.field === 'hasPendingDesignReview') ? orders.filter((o) => o.hasPendingDesignReview) : orders
+      return { data: { data: rows, total: rows.length, page: 0, pageSize: 10, hasMore: false } }
+    }
+    if (url === '/api/orders/summary') {
+      const byStatus: Record<string, number> = {}
+      for (const o of orders) byStatus[o.status] = (byStatus[o.status] ?? 0) + 1
+      return { data: { total: orders.length, byStatus, awaitingReview: orders.filter((o) => o.hasPendingDesignReview).length, unassigned: 0 } }
+    }
+    const detail = /^\/api\/orders\/(.+)$/.exec(url)
+    if (detail) return { data: orders.find((o) => o.id === detail[1]) }
+    return { data: [] }
+  })
+}
+
 async function openOrder(name = 'Prescription Pad') {
   await userEvent.click(await screen.findByRole('button', { name: new RegExp(name) }))
   return screen.findByRole('dialog')
@@ -89,14 +111,14 @@ async function openOrder(name = 'Prescription Pad') {
 describe('OrdersPage (company)', () => {
   beforeEach(() => {
     signedInAsMr()
-    listOrders.mockReset()
+    get.mockReset()
     listOrderDesigns.mockReset().mockResolvedValue([])
     approveOrderDesign.mockReset()
     rejectOrderDesign.mockReset()
   })
 
   it('counts and tabs the orders whose artwork waits on the reviewer', async () => {
-    listOrders.mockResolvedValue([
+    serve([
       order({ id: 'o-1', displayId: 'ORD-101', hasPendingDesignReview: true }),
       order({ id: 'o-2', displayId: 'ORD-102', giftName: 'Desk Calendar', status: 'DELIVERED' }),
     ])
@@ -110,7 +132,7 @@ describe('OrdersPage (company)', () => {
   })
 
   it('shows quantity and org unit in the order sheet, and waits for the vendor before a proof exists', async () => {
-    listOrders.mockResolvedValue([order()])
+    serve([order()])
     renderWithProviders(<OrdersPage />)
     const sheet = await openOrder()
     expect(within(sheet).getByText('Quantity').nextElementSibling).toHaveTextContent('5')
@@ -119,7 +141,7 @@ describe('OrdersPage (company)', () => {
   })
 
   it('approves the newest proof', async () => {
-    listOrders.mockResolvedValue([order({ hasPendingDesignReview: true })])
+    serve([order({ hasPendingDesignReview: true })])
     listOrderDesigns.mockResolvedValue([design()])
     approveOrderDesign.mockResolvedValue(design({ status: 'APPROVED' }))
     renderWithProviders(<OrdersPage />)
@@ -134,7 +156,7 @@ describe('OrdersPage (company)', () => {
   })
 
   it('sends a proof back only with a note for the vendor', async () => {
-    listOrders.mockResolvedValue([order({ hasPendingDesignReview: true })])
+    serve([order({ hasPendingDesignReview: true })])
     listOrderDesigns.mockResolvedValue([design()])
     rejectOrderDesign.mockResolvedValue(design({ status: 'REJECTED' }))
     renderWithProviders(<OrdersPage />)
@@ -151,7 +173,7 @@ describe('OrdersPage (company)', () => {
   })
 
   it('lists earlier versions with the feedback they got, and shows a PDF proof in the viewer', async () => {
-    listOrders.mockResolvedValue([order({ hasPendingDesignReview: true })])
+    serve([order({ hasPendingDesignReview: true })])
     listOrderDesigns.mockResolvedValue([
       design({ id: 'd-2', versionNo: 2, fileUrl: 'https://files.test/v2.pdf', fileName: 'v2.pdf' }),
       design({ id: 'd-1', versionNo: 1, status: 'REJECTED', reviewComment: 'Name is misspelt' }),
@@ -169,7 +191,7 @@ describe('OrdersPage (company)', () => {
 
   it('lets someone who may not review artwork watch the proofs without deciding on them', async () => {
     useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['order.view'] }, isLoading: false })
-    listOrders.mockResolvedValue([order({ hasPendingDesignReview: true })])
+    serve([order({ hasPendingDesignReview: true })])
     listOrderDesigns.mockResolvedValue([design()])
     renderWithProviders(<OrdersPage />)
     const sheet = await openOrder()
@@ -183,7 +205,7 @@ describe('OrdersPage (company)', () => {
   })
 
   it('says an order is awaiting approval, and shows the approver\'s note on one that was turned down', async () => {
-    listOrders.mockResolvedValue([
+    serve([
       order({ id: 'o-1', displayId: 'ORD-101', assignedVendorId: null, assignedVendorName: null, approvalStatus: 'PENDING' }),
       order({
         id: 'o-2',
@@ -206,7 +228,7 @@ describe('OrdersPage (company)', () => {
 
   it('never shows a vendor, nor "Unassigned", to someone who raises or approves orders', async () => {
     // The server leaves the vendor out for them; the screen must not fill the gap with "Unassigned".
-    listOrders.mockResolvedValue([order({ assignedVendorId: null, assignedVendorName: null })])
+    serve([order({ assignedVendorId: null, assignedVendorName: null })])
     renderWithProviders(<OrdersPage />)
     const sheet = await openOrder()
     expect(within(sheet).queryByText('Vendor')).not.toBeInTheDocument()
@@ -219,7 +241,7 @@ describe('OrdersPage (company)', () => {
       data: { companyId: 'c-1', companyName: 'Alembic', permissions: ['order.view', 'vendor_identity.view'] },
       isLoading: false,
     })
-    listOrders.mockResolvedValue([order({ assignedVendorName: 'Pad Printers' })])
+    serve([order({ assignedVendorName: 'Pad Printers' })])
     renderWithProviders(<OrdersPage />)
     expect(await screen.findByRole('columnheader', { name: /Vendor/ })).toBeInTheDocument()
     const sheet = await openOrder()

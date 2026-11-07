@@ -8,12 +8,12 @@ import { EmptyState } from '@/components/empty-state'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useMyRecipients } from '@/hooks/useRecipients'
+import { useMyRecipientsList } from '@/hooks/useRecipients'
 
 /**
  * Pick several doctors at once from the caller's own list (the doctors they added or are mapped to) -- e.g. straight into a
- * Quick Gift form instead of retyping them. The list is small, so it is loaded whole and the box
- * only narrows it.
+ * Quick Gift form instead of retyping them. The list can run to hundreds, so the server searches it and hands over a page at a
+ * time as the list is scrolled; what is ticked is remembered across searches.
  */
 export function RecipientPickerDialog({
   visible,
@@ -27,13 +27,7 @@ export function RecipientPickerDialog({
   const { t } = useTranslation('recipients')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Map<string, Recipient>>(new Map())
-  const { data: mine, isLoading } = useMyRecipients()
-  const needle = search.trim().toLowerCase()
-  const results = (mine ?? []).filter(
-    (r) =>
-      needle === '' ||
-      [r.name, r.pcode, r.phone, r.email, r.doctor?.clinicName].some((v) => v?.toLowerCase().includes(needle)),
-  )
+  const { items: results, isLoading, isLoadingMore, onScroll } = useMyRecipientsList(search.trim())
 
   function reset() {
     setSelected(new Map())
@@ -86,7 +80,7 @@ export function RecipientPickerDialog({
         ) : results.length === 0 ? (
           <EmptyState variant="plain" size="sm" icon={Contact} title={t('picker.noMatchTitle')} description={t('picker.noMatchBody')} />
         ) : (
-          <ul className="max-h-80 divide-y overflow-y-auto rounded-md border">
+          <ul className="max-h-80 divide-y overflow-y-auto rounded-md border" onScroll={onScroll}>
             {results.map((recipient) => {
               const id = `pick-${recipient.id}`
               return (
@@ -105,6 +99,11 @@ export function RecipientPickerDialog({
                 </li>
               )
             })}
+            {isLoadingMore && (
+              <li className="px-3 py-2.5">
+                <Skeleton className="h-8 w-full" />
+              </li>
+            )}
           </ul>
         )}
       </div>

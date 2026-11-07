@@ -97,11 +97,6 @@ export async function createQuickGiftRequest(input: CreateQuickGiftInput): Promi
   return data
 }
 
-export async function listMyQuickGiftRequests(): Promise<QuickGiftRequest[]> {
-  const { data } = await apiClient.get<QuickGiftRequest[]>('/api/quick-gifts/mine')
-  return data
-}
-
 export async function getQuickGiftRequest(id: string): Promise<QuickGiftRequest> {
   const { data } = await apiClient.get<QuickGiftRequest>(`/api/quick-gifts/${id}`)
   return data

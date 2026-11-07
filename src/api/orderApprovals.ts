@@ -17,11 +17,6 @@ export interface PendingOrderApproval {
   requestedAt: string
 }
 
-export async function listPendingOrderApprovals(): Promise<PendingOrderApproval[]> {
-  const { data } = await apiClient.get<PendingOrderApproval[]>('/api/order-approvals/pending')
-  return data
-}
-
 export async function approveOrder(orderId: string, comment?: string): Promise<PendingOrderApproval> {
   const { data } = await apiClient.post<PendingOrderApproval>(`/api/order-approvals/${orderId}/approve`, { comment: comment || null })
   return data

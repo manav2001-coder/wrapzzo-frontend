@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import type { PendingArtworkApproval } from '@/api/orderDesigns'
 import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
-import { listEmptyBody } from '@/components/data-table/list-body'
+import { EmptyTable } from '@/components/data-table/empty-table'
 import { LabelledField } from '@/components/fields/labelled-field'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
@@ -18,14 +18,17 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Textarea } from '@/components/ui/textarea'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
-import { useHasAccess } from '@/hooks/use-permission'
-import { usePendingArtworkApprovals, useReviewArtwork } from '@/hooks/useOrderDesigns'
+import { useReviewArtwork } from '@/hooks/useOrderDesigns'
 import { formatDate, formatDateTime } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
-import { P } from '@/lib/permissions'
 import { AppTabs } from '@/components/app-tabs'
-import { usePendingOrderApprovals } from '@/hooks/useOrderApprovals'
+import { useApprovalCounts } from '@/hooks/useApprovalCounts'
+import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { serverFetcher } from '@/lib/server-list'
 import { OrderRequestsSection } from './OrderRequestsSection'
+
+/** The artwork queue: a page at a time from the server, which works out which proofs are the caller's to sign. */
+const fetchArtwork = serverFetcher<PendingArtworkApproval>('/api/artwork-approvals/pending/page')
 
 const LIST_FIELDS: ListFieldMap = {
   orderDisplayId: 'text',
@@ -56,19 +59,17 @@ function levelLabel(item: PendingArtworkApproval) {
 export function ApprovalQueuePage() {
   const showError = useApiErrorToast()
   const pageTitle = useMenuLabel('approvals', 'Approvals')
-  const canReview = useHasAccess([P.APPROVAL_DECIDE, P.ARTWORK_FINAL_APPROVE])
-  const { data: artwork, isLoading, error, refetch } = usePendingArtworkApprovals(canReview)
   const reviewArtwork = useReviewArtwork()
-  const { data: orderRequests } = usePendingOrderApprovals()
+  // The queue is a page of the server's list; how many wait of each kind is counted by the server too.
+  const counts = useApprovalCounts()
   // Starts on whichever kind has something waiting (artwork when both do); the user's own pick wins after that.
   const [pickedTab, setPickedTab] = useState<'artwork' | 'orders' | null>(null)
-  const tab = pickedTab ?? ((orderRequests?.length ?? 0) > 0 && (artwork?.length ?? 0) === 0 ? 'orders' : 'artwork')
+  const tab = pickedTab ?? ((counts.orders ?? 0) > 0 && (counts.artwork ?? 0) === 0 ? 'orders' : 'artwork')
 
-  const [openId, setOpenId] = useState<string | null>(null)
+  // The row that was clicked; the drawer shows it and closes once the proof is decided.
+  const [open, setOpen] = useState<PendingArtworkApproval | null>(null)
   const [rejecting, setRejecting] = useState<PendingArtworkApproval | null>(null)
   const [reason, setReason] = useState('')
-  // Kept by id so the drawer follows the list as it refreshes (and closes once the proof is decided).
-  const open = artwork?.find((item) => item.designId === openId) ?? null
 
   async function approve(item: PendingArtworkApproval) {
     try {
@@ -80,7 +81,7 @@ export function ApprovalQueuePage() {
       } else {
         toast.success('Artwork approved', { description: 'The vendor can now print and dispatch.' })
       }
-      setOpenId(null)
+      setOpen(null)
     } catch (err) {
       showError(err)
     }
@@ -93,7 +94,7 @@ export function ApprovalQueuePage() {
       toast.success('Sent back to the vendor')
       setRejecting(null)
       setReason('')
-      setOpenId(null)
+      setOpen(null)
     } catch (err) {
       showError(err)
     }
@@ -107,7 +108,7 @@ export function ApprovalQueuePage() {
         header: 'Gift',
         meta: { className: 'min-w-[220px]' },
         cell: ({ row }) => (
-          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpenId(row.original.designId)}>
+          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpen(row.original)}>
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
               <Palette className="h-4 w-4" />
             </span>
@@ -155,7 +156,7 @@ export function ApprovalQueuePage() {
         enableColumnFilter: false,
         enableSorting: false,
         meta: { className: 'w-[56px]', pin: 'right' },
-        cell: ({ row }) => <IconButton icon={Eye} label={`Review ${row.original.orderDisplayId}`} onClick={() => setOpenId(row.original.designId)} />,
+        cell: ({ row }) => <IconButton icon={Eye} label={`Review ${row.original.orderDisplayId}`} onClick={() => setOpen(row.original)} />,
       },
     ],
     [],
@@ -170,8 +171,8 @@ export function ApprovalQueuePage() {
         onValueChange={(value) => setPickedTab(value as 'artwork' | 'orders')}
         className="mb-3"
         tabs={[
-          { value: 'artwork', label: 'Artwork approvals', badge: artwork?.length || undefined },
-          { value: 'orders', label: 'Order requests', badge: orderRequests?.length || undefined },
+          { value: 'artwork', label: 'Artwork approvals', badge: counts.artwork || undefined },
+          { value: 'orders', label: 'Order requests', badge: counts.orders || undefined },
         ]}
       />
 
@@ -181,8 +182,8 @@ export function ApprovalQueuePage() {
 
       <DataTable<PendingArtworkApproval>
         columns={columns}
-        data={artwork ?? []}
-        isLoading={isLoading}
+        fetchData={fetchArtwork}
+        refetchInterval={LIVE_REFRESH_MS}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
@@ -190,16 +191,10 @@ export function ApprovalQueuePage() {
         getRowId={(item) => item.designId}
         tableId="artwork-approvals"
         configNamespace="artwork-approvals"
-        emptyState={listEmptyBody({
-          error,
-          onRetry: () => void refetch(),
-          icon: <Palette className="h-8 w-8 opacity-50" />,
-          message: 'No artwork waiting for your approval',
-          description: "You're all caught up. New proofs appear here.",
-        })}
+        emptyState={<EmptyTable icon={<Palette className="h-8 w-8 opacity-50" />} message="No artwork waiting for your approval" description="You're all caught up. New proofs appear here." />}
       />
 
-      <Sheet open={open !== null} onOpenChange={(next) => !next && setOpenId(null)}>
+      <Sheet open={open !== null} onOpenChange={(next) => !next && setOpen(null)}>
         <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
           {open && (
             <>

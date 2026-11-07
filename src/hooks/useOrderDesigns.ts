@@ -1,5 +1,6 @@
+import { invalidateOrderLists } from '@/lib/invalidate-lists'
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { approveOrderDesign, listOrderDesigns, listPendingArtworkApprovals, rejectOrderDesign } from '@/api/orderDesigns'
+import { approveOrderDesign, listOrderDesigns, rejectOrderDesign } from '@/api/orderDesigns'
 import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 
 export function useOrderDesigns(orderId: string | undefined) {
@@ -16,8 +17,7 @@ export function useOrderDesigns(orderId: string | undefined) {
 function afterReview(queryClient: QueryClient, orderId: string) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: ['order-designs', orderId] }),
-    queryClient.invalidateQueries({ queryKey: ['orders'] }),
-    queryClient.invalidateQueries({ queryKey: ['artwork-approvals'] }),
+    invalidateOrderLists(queryClient),
   ])
 }
 
@@ -38,9 +38,6 @@ export function useRejectOrderDesign(orderId: string) {
 }
 
 /** A manager's queue of MR-approved artwork waiting on their level of approval (empty for anyone else). */
-export function usePendingArtworkApprovals(enabled = true) {
-  return useQuery({ queryKey: ['artwork-approvals'], queryFn: listPendingArtworkApprovals, refetchInterval: LIVE_REFRESH_MS, enabled })
-}
 
 /** Approval at the caller's level, or send-back, from the Approvals queue, where each row names its own order. */
 export function useReviewArtwork() {

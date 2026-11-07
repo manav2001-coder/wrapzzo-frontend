@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import type { PendingOrderApproval } from '@/api/orderApprovals'
 import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
-import { listEmptyBody } from '@/components/data-table/list-body'
+import { EmptyTable } from '@/components/data-table/empty-table'
 import { LabelledField } from '@/components/fields/labelled-field'
 import { IconButton } from '@/components/icon-button'
 import { Button } from '@/components/ui/button'
@@ -14,11 +14,16 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Textarea } from '@/components/ui/textarea'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
-import { useDecideOrder, usePendingOrderApprovals } from '@/hooks/useOrderApprovals'
+import { useDecideOrder } from '@/hooks/useOrderApprovals'
+import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { serverFetcher } from '@/lib/server-list'
 import { formatDate, formatDateTime } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
+
+/** The order queue: a page at a time from the server, which works out which orders are the caller's to decide. */
+const fetchOrderRequests = serverFetcher<PendingOrderApproval>('/api/order-approvals/pending/page')
 
 const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
@@ -44,20 +49,18 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 export function OrderRequestsSection() {
   const showError = useApiErrorToast()
   const canDecide = useHasAccess([P.APPROVAL_DECIDE, P.ARTWORK_FINAL_APPROVE])
-  const { data: orders, isLoading, error, refetch } = usePendingOrderApprovals()
   const decide = useDecideOrder()
 
-  const [openId, setOpenId] = useState<string | null>(null)
+  // The row that was clicked; the drawer shows it and closes once the order is decided.
+  const [open, setOpen] = useState<PendingOrderApproval | null>(null)
   const [declining, setDeclining] = useState<PendingOrderApproval | null>(null)
   const [reason, setReason] = useState('')
-  // Kept by id so the drawer follows the list as it refreshes (and closes once the order is decided).
-  const open = orders?.find((order) => order.orderId === openId) ?? null
 
   async function approve(order: PendingOrderApproval) {
     try {
       await decide.mutateAsync({ orderId: order.orderId, approve: true })
       toast.success(`${order.displayId} approved`, { description: 'It now goes to production.' })
-      setOpenId(null)
+      setOpen(null)
     } catch (err) {
       showError(err)
     }
@@ -70,7 +73,7 @@ export function OrderRequestsSection() {
       toast.success(`${declining.displayId} declined`, { description: `${declining.requestedByName} will see your note.` })
       setDeclining(null)
       setReason('')
-      setOpenId(null)
+      setOpen(null)
     } catch (err) {
       showError(err)
     }
@@ -84,7 +87,7 @@ export function OrderRequestsSection() {
         header: 'Gift',
         meta: { className: 'min-w-[220px]' },
         cell: ({ row }) => (
-          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpenId(row.original.orderId)}>
+          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpen(row.original)}>
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
               <ShoppingBag className="h-4 w-4" />
             </span>
@@ -112,7 +115,7 @@ export function OrderRequestsSection() {
         enableColumnFilter: false,
         enableSorting: false,
         meta: { className: 'w-[56px]', pin: 'right' },
-        cell: ({ row }) => <IconButton icon={Eye} label={`Review ${row.original.displayId}`} onClick={() => setOpenId(row.original.orderId)} />,
+        cell: ({ row }) => <IconButton icon={Eye} label={`Review ${row.original.displayId}`} onClick={() => setOpen(row.original)} />,
       },
     ],
     [],
@@ -122,8 +125,8 @@ export function OrderRequestsSection() {
     <div>
       <DataTable<PendingOrderApproval>
         columns={columns}
-        data={orders ?? []}
-        isLoading={isLoading}
+        fetchData={fetchOrderRequests}
+        refetchInterval={LIVE_REFRESH_MS}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
@@ -131,16 +134,10 @@ export function OrderRequestsSection() {
         getRowId={(order) => order.orderId}
         tableId="order-approvals"
         configNamespace="order-approvals"
-        emptyState={listEmptyBody({
-          error,
-          onRetry: () => void refetch(),
-          icon: <ShoppingBag className="h-8 w-8 opacity-50" />,
-          message: 'No orders waiting for your approval',
-          description: "You're all caught up. New order requests appear here.",
-        })}
+        emptyState={<EmptyTable icon={<ShoppingBag className="h-8 w-8 opacity-50" />} message="No orders waiting for your approval" description="You're all caught up. New order requests appear here." />}
       />
 
-      <Sheet open={open !== null} onOpenChange={(next) => !next && setOpenId(null)}>
+      <Sheet open={open !== null} onOpenChange={(next) => !next && setOpen(null)}>
         <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
           {open && (
             <>

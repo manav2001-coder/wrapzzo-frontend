@@ -8,13 +8,14 @@ import { toast } from 'sonner'
 import type { Recipient } from '@/api/recipients'
 import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
-import { listEmptyBody } from '@/components/data-table/list-body'
+import { EmptyTable } from '@/components/data-table/empty-table'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { Button } from '@/components/ui/button'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
-import { useRecipients, useRemoveMyDoctor } from '@/hooks/useRecipients'
+import { useRemoveMyDoctor } from '@/hooks/useRecipients'
+import { serverFetcher } from '@/lib/server-list'
 import { formatDateOnly } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { DoctorsImportDialog } from './DoctorsImportDialog'
@@ -31,6 +32,9 @@ const LIST_FIELDS: ListFieldMap = {
   createdByName: 'text',
 }
 
+/** The Doctors list is paged, searched and sorted by the server: only the page on screen is ever loaded. */
+const fetchRecipients = serverFetcher<Recipient>('/api/recipients/page')
+
 /**
  * The one Doctors screen. A field user (AM, MR) sees the doctors they added or are mapped to; a manager sees the
  * doctors of their org units -- their region, their zone -- as well (which doctors is decided by the API, see
@@ -41,7 +45,6 @@ export function RecipientsPage() {
   const { t } = useTranslation('recipients')
   const pageTitle = useMenuLabel('recipients', t('directory.title'))
   const showError = useApiErrorToast()
-  const { data: recipients, isLoading, error, refetch } = useRecipients()
   const removeDoctor = useRemoveMyDoctor()
   const canEdit = useHasAccess(P.DOCTOR_EDIT)
   const canRemove = useHasAccess(P.DOCTOR_REMOVE)
@@ -129,21 +132,15 @@ export function RecipientsPage() {
       <UpcomingBirthdaysWidget />
       <DataTable<Recipient>
         columns={columns}
-        data={recipients ?? []}
-        isLoading={isLoading}
+        fetchData={fetchRecipients}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
         getRowId={(r) => r.id}
         tableId="recipients"
         configNamespace="recipients"
-        emptyState={listEmptyBody({
-          error,
-          onRetry: () => void refetch(),
-          icon: <Contact className="h-8 w-8 opacity-50" />,
-          message: t('directory.emptyTitle'),
-          description: t('directory.emptyBody'),
-        })}
+        defaultSort={{ id: 'name' }}
+        emptyState={<EmptyTable icon={<Contact className="h-8 w-8 opacity-50" />} message={t('directory.emptyTitle')} description={t('directory.emptyBody')} />}
       />
       {editing !== undefined && (
         <RecipientFormDialog key={editing?.id ?? 'new'} visible recipient={editing} onHide={() => setEditing(undefined)} />

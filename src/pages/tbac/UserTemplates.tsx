@@ -13,9 +13,10 @@ import { IconButton } from "@/components/icon-button";
 import { PermissionGate } from "@/components/access-control/permission-gate";
 import { useCompanyScope } from "@/components/masters/company-scope-select";
 import { MasterPageHeader, useAuditColumns } from "@/components/masters/master-page";
-import { tableFetcher } from "@/lib/masters-api";
+import { serverFetcher } from "@/lib/server-list";
 
-const PATH = "/api/tbac/users";
+/** Every company's people can run to thousands, so the server pages, searches and sorts them. */
+const PATH = "/api/tbac/users/page";
 
 /**
  * Templates to User — v4's `/tbac/assignments/users`.
@@ -35,7 +36,7 @@ export default function UserTemplatesPage() {
 
   const fetchUsers = React.useMemo(
     () =>
-      tableFetcher<PublicUser>(PATH, scope.companyId ? { companyId: scope.companyId } : {}),
+      serverFetcher<PublicUser>(PATH, [], scope.companyId ? { companyId: scope.companyId } : {}),
     [scope.companyId],
   );
 

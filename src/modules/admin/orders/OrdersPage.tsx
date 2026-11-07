@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { assignOrderVendor, autoAssignOrderVendor, type Order } from '@/api/orders'
 import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
-import { listEmptyBody } from '@/components/data-table/list-body'
+import { EmptyTable } from '@/components/data-table/empty-table'
 import { Combobox } from '@/components/fields/combobox'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
@@ -22,7 +22,9 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
-import { usePlatformOrders, useRequestPlatformOrderPhotoLink } from '@/hooks/useOrders'
+import { usePlatformOrder, usePlatformOrderSummary, useRequestPlatformOrderPhotoLink } from '@/hooks/useOrders'
+import { invalidateOrderLists } from '@/lib/invalidate-lists'
+import { serverFetcher } from '@/lib/server-list'
 import { useVendors } from '@/hooks/useVendors'
 import { formatDate } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
@@ -42,7 +44,7 @@ const LIST_FIELDS: ListFieldMap = {
 }
 
 /** A vendor can only be (re)assigned while the order is still in the vendor's hands. */
-const assignable = (order: Order) => order.status === 'PROCESSING' || order.status === 'PRODUCTION_QUEUE'
+const assignable = (order: Order) => (order.status === 'PROCESSING' || order.status === 'PRODUCTION_QUEUE') && order.approvalStatus !== 'PENDING'
 
 /**
  * Every company's orders, and the one fulfilment action Wrappzo staff take on them: routing each
@@ -53,44 +55,47 @@ export function OrdersPage() {
   const { t } = useTranslation('orders')
   const queryClient = useQueryClient()
   const showError = useApiErrorToast()
-  const { data: allOrders, isLoading, error, refetch } = usePlatformOrders()
   // The company scope (first company by default), as everywhere else platform staff work per company.
   const scope = useCompanyScope()
   const companyId = scope.companyId
-  const orders = useMemo(() => (companyId ? (allOrders ?? []).filter((order) => order.companyId === companyId) : []), [allOrders, companyId])
+  // The figures are counted by the server over the company's orders; the table is one page of them at a time.
+  const { data: summary, isLoading: summaryLoading } = usePlatformOrderSummary(companyId ?? undefined)
+  const fetchOrders = useMemo(
+    () => serverFetcher<Order>('/api/platform/orders/page', companyId ? [{ field: 'companyId', operator: 'equals', value: companyId }] : []),
+    [companyId],
+  )
   const { data: vendors } = useVendors()
   const requestPhotoLink = useRequestPlatformOrderPhotoLink()
   const canManage = useHasAccess(P.PLATFORM_ORDER_MANAGE)
 
-  const [openOrderId, setOpenOrderId] = useState<string | null>(null)
+  const [openRow, setOpenRow] = useState<Order | null>(null)
   const [assigning, setAssigning] = useState<Order[] | null>(null)
   const [vendorId, setVendorId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [photoPrompt, setPhotoPrompt] = useState<PhotoLinkPrompt | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  const openOrder = orders?.find((order) => order.id === openOrderId) ?? null
+  // The row that was clicked, replaced by the current copy of the order once it is read.
+  const { data: liveOrder } = usePlatformOrder(openRow?.id)
+  const openOrder = liveOrder ?? openRow
   const vendorOptions = useMemo(
     () => (vendors ?? []).filter((vendor) => vendor.status === 'ACTIVE').map((vendor) => ({ value: vendor.id, label: vendor.name })),
     [vendors],
   )
 
-  const counts = useMemo(() => {
-    const list = orders ?? []
-    return {
-      total: list.length,
-      unassigned: list.filter((order) => !order.assignedVendorId && order.status !== 'CANCELLED').length,
-      production: list.filter((order) => order.status === 'PRODUCTION_QUEUE').length,
-      delivered: list.filter((order) => order.status === 'DELIVERED').length,
-    }
-  }, [orders])
+  const counts = {
+    total: summary?.total ?? 0,
+    unassigned: summary?.unassigned ?? 0,
+    production: summary?.byStatus.PRODUCTION_QUEUE ?? 0,
+    delivered: summary?.byStatus.DELIVERED ?? 0,
+  }
 
   /** Runs one call per order, best-effort like the backend's own bulk assign, then refreshes once. */
   async function runForEach(targets: Order[], call: (order: Order) => Promise<unknown>, key: 'assigned' | 'autoAssigned') {
     setBusy(true)
     const results = await Promise.allSettled(targets.map(call))
     setBusy(false)
-    await queryClient.invalidateQueries({ queryKey: ['platform-orders'] })
+    await invalidateOrderLists(queryClient)
     setRefreshTrigger((n) => n + 1)
     const done = results.filter((result) => result.status === 'fulfilled').length
     const failed = results.length - done
@@ -122,7 +127,7 @@ export function OrdersPage() {
         header: t('column.order'),
         meta: { className: 'min-w-[120px]' },
         cell: ({ row }) => (
-          <button type="button" className="font-medium hover:underline" onClick={() => setOpenOrderId(row.original.id)}>
+          <button type="button" className="font-medium hover:underline" onClick={() => setOpenRow(row.original)}>
             {row.original.displayId}
           </button>
         ),
@@ -205,7 +210,7 @@ export function OrdersPage() {
           const order = row.original
           return (
             <div className="flex items-center justify-end gap-0.5">
-              <IconButton icon={Eye} label={t('detail.title', { id: order.displayId })} onClick={() => setOpenOrderId(order.id)} />
+              <IconButton icon={Eye} label={t('detail.title', { id: order.displayId })} onClick={() => setOpenRow(order)} />
               {canManage && assignable(order) && (
                 <>
                   <IconButton
@@ -237,29 +242,28 @@ export function OrdersPage() {
       <MasterPageHeader title={t('platform.title')} description={t('platform.subtitle')} extra={scope.control} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard title={t('platform.stats.total')} value={counts.total} icon={ShoppingBag} loading={isLoading} />
+        <StatCard title={t('platform.stats.total')} value={counts.total} icon={ShoppingBag} loading={summaryLoading} />
         <StatCard
           title={t('platform.stats.unassigned')}
           value={counts.unassigned}
           icon={TriangleAlert}
           color={counts.unassigned > 0 ? 'destructive' : undefined}
-          loading={isLoading}
+          loading={summaryLoading}
         />
-        <StatCard title={t('platform.stats.production')} value={counts.production} icon={Cog} loading={isLoading} />
-        <StatCard title={t('platform.stats.delivered')} value={counts.delivered} icon={CheckCircle2} loading={isLoading} />
+        <StatCard title={t('platform.stats.production')} value={counts.production} icon={Cog} loading={summaryLoading} />
+        <StatCard title={t('platform.stats.delivered')} value={counts.delivered} icon={CheckCircle2} loading={summaryLoading} />
       </div>
 
       <DataTable<Order>
         columns={columns}
-        data={orders ?? []}
-        isLoading={isLoading}
+        fetchData={fetchOrders}
         listFields={LIST_FIELDS}
         searchable
         refreshTrigger={refreshTrigger}
         defaultSort={{ id: 'createdAt', desc: true }}
         getRowId={(order) => order.id}
         getRowCanSelect={(order) => canManage && assignable(order)}
-        tableId="platform-orders"
+        tableId={`platform-orders-${companyId ?? 'none'}`}
         configNamespace="platform-orders"
         renderBulkActions={(_options, selected) =>
           canManage && selected.length > 0 && (
@@ -287,13 +291,7 @@ export function OrdersPage() {
             </div>
           )
         }
-        emptyState={listEmptyBody({
-          error,
-          onRetry: () => void refetch(),
-          icon: <ShoppingBag className="h-8 w-8 opacity-50" />,
-          message: t('platform.emptyTitle'),
-          description: t('platform.emptyBody'),
-        })}
+        emptyState={<EmptyTable icon={<ShoppingBag className="h-8 w-8 opacity-50" />} message={t('platform.emptyTitle')} description={t('platform.emptyBody')} />}
       />
 
       <AppDialog
@@ -324,7 +322,7 @@ export function OrdersPage() {
 
       <OrderDetailSheet
         order={openOrder}
-        onClose={() => setOpenOrderId(null)}
+        onClose={() => setOpenRow(null)}
         onRequestPhotoLink={canManage ? (order) => void sendPhotoLink(order) : undefined}
         requestingPhotoLink={requestPhotoLink.isPending}
       />

@@ -199,6 +199,8 @@ interface DataTableProps<TData> {
    */
   renderBulkActions?: (options: FetchOptions, selectedRows: TData[]) => React.ReactNode;
   refreshTrigger?: number;
+  /** Server mode: re-read the page on this interval (ms), so a list that others change stays current. */
+  refetchInterval?: number;
   getRowCanExpand?: (row: TData) => boolean;
   renderSubRow?: (row: TData, isExpanded: boolean) => React.ReactNode;
   rowGroupConfig?: RowGroupConfig<TData>;
@@ -238,6 +240,7 @@ export function DataTable<TData>({
   renderBulkActions,
   bulkUploadConfig,
   refreshTrigger,
+  refetchInterval,
   getRowCanExpand,
   renderSubRow,
   rowGroupConfig,
@@ -449,6 +452,7 @@ export function DataTable<TData>({
     queryFn: () => fetchData!(fetchOptions),
     enabled: isServerMode,
     placeholderData: keepPreviousData,
+    refetchInterval: isServerMode ? refetchInterval : undefined,
     /*
      * Always re-read when a list mounts. The app's 10s default let a screen show rows another
      * screen had just changed (a vehicle resolved out of Breakdown still read "Breakdown" on

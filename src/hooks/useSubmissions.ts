@@ -1,3 +1,4 @@
+import { invalidateOrderLists } from '@/lib/invalidate-lists'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createSubmission, listCampaignSubmissions, listMySubmissions, requestPhotoLink, type SubmissionValues } from '@/api/submissions'
 
@@ -20,7 +21,7 @@ export function useCreateSubmission(campaignId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['submissions'] })
       queryClient.invalidateQueries({ queryKey: ['campaigns'] })
-      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      invalidateOrderLists(queryClient)
     },
   })
 }

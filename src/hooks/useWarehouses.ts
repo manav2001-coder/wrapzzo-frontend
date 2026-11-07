@@ -1,3 +1,4 @@
+import { invalidateOrderLists } from '@/lib/invalidate-lists'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { OrderStatus } from '@/api/orders'
 import {
@@ -33,7 +34,7 @@ export function useAdvanceWarehouseOrder() {
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => advanceWarehouseOrder(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouse-orders'] })
-      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      invalidateOrderLists(queryClient)
     },
   })
 }

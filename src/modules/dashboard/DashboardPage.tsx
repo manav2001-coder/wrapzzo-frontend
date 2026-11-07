@@ -12,7 +12,7 @@ import { usePermissions } from '@/components/permission-provider'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { useDashboard } from '@/hooks/useDashboard'
-import { usePendingArtworkApprovals } from '@/hooks/useOrderDesigns'
+import { usePendingArtworkPreview } from '@/hooks/useApprovalCounts'
 import { humanize } from '@/lib/format'
 import { P } from '@/lib/permissions'
 import { statusColor } from '@/lib/statusColors'
@@ -60,7 +60,7 @@ export function DashboardPage() {
   const { data: me } = useCurrentUser()
   const { hasAnyPermission } = usePermissions()
   const canReviewArtwork = hasAnyPermission([P.APPROVAL_VIEW])
-  const { data: pendingArtwork } = usePendingArtworkApprovals(canReviewArtwork)
+  const { data: pendingArtwork } = usePendingArtworkPreview(canReviewArtwork)
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
   const [selectedQuickGiftId, setSelectedQuickGiftId] = useState<string | null>(null)
 
@@ -106,8 +106,8 @@ export function DashboardPage() {
             key: 'artwork',
             icon: Palette,
             label: 'Artwork proofs to review',
-            hint: pendingArtwork?.[0] ? `Next: ${pendingArtwork[0].orderDisplayId} · ${pendingArtwork[0].recipientName ?? pendingArtwork[0].giftName ?? ''}` : 'Open your approvals',
-            count: pendingArtwork?.length ?? 0,
+            hint: pendingArtwork?.next ? `Next: ${pendingArtwork.next.orderDisplayId} · ${pendingArtwork.next.recipientName ?? pendingArtwork.next.giftName ?? ''}` : 'Open your approvals',
+            count: pendingArtwork?.count ?? 0,
             onClick: () => navigate('/approvals'),
           },
         ]

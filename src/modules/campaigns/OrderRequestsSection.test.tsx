@@ -6,9 +6,11 @@ import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { OrderRequestsSection } from './OrderRequestsSection'
 
 const listPendingOrderApprovals = vi.hoisted(() => vi.fn())
+const get = vi.hoisted(() => vi.fn())
 const approveOrder = vi.hoisted(() => vi.fn())
 const rejectOrder = vi.hoisted(() => vi.fn())
 const useCurrentUser = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/axiosClient', async (importOriginal) => ({ ...(await importOriginal<object>()), apiClient: { get } }))
 vi.mock('@/api/orderApprovals', async (importOriginal) => ({ ...(await importOriginal<object>()), listPendingOrderApprovals, approveOrder, rejectOrder }))
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
@@ -36,6 +38,13 @@ function signedInWith(permissions: string[]) {
 
 describe('OrderRequestsSection', () => {
   beforeEach(() => {
+    get.mockReset().mockImplementation(async (url: string) => {
+      if (url === '/api/order-approvals/pending/page') {
+        const rows = await listPendingOrderApprovals()
+        return { data: { data: rows, total: rows.length, page: 0, pageSize: 10, hasMore: false } }
+      }
+      return { data: [] }
+    })
     listPendingOrderApprovals.mockReset().mockResolvedValue([pending()])
     approveOrder.mockReset().mockResolvedValue(pending())
     rejectOrder.mockReset().mockResolvedValue(pending())

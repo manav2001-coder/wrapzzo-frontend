@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/axiosClient'
+import type { Paginated } from '@/lib/list-filter'
 
 /** What a personalised prescription pad is printed with, beyond the doctor's name and pcode. */
 export interface DoctorDetails {
@@ -44,20 +45,17 @@ export interface CreateRecipientInput {
   doctor?: Partial<DoctorDetails>
 }
 
-export async function listRecipients(): Promise<Recipient[]> {
-  const { data } = await apiClient.get<Recipient[]>('/api/recipients')
-  return data
-}
-
-/** "Pick an existing doctor" search -- unlike listRecipients(), this works for anyone who can send a gift (quick_gift.create), not just doctor.view holders. */
+/** "Pick an existing doctor" search -- unlike the Doctors list, this works for anyone who can send a gift (quick_gift.create), not just doctor.view holders. */
 export async function searchRecipients(query: string): Promise<Recipient[]> {
   const { data } = await apiClient.get<Recipient[]>('/api/recipients/search', { params: { q: query } })
   return data
 }
 
-/** The doctors on the caller's own list -- who the Quick Gift form offers first. */
-export async function listMyRecipients(): Promise<Recipient[]> {
-  const { data } = await apiClient.get<Recipient[]>('/api/recipients/mine')
+/** One page of the doctors on the caller's own list -- who the Quick Gift form offers first -- narrowed by what was typed. */
+export async function listMyRecipientsPage(page: number, pageSize: number, search: string): Promise<Paginated<Recipient>> {
+  const { data } = await apiClient.get<Paginated<Recipient>>('/api/recipients/mine/page', {
+    params: { page, size: pageSize, ...(search ? { search } : {}), sort: 'name', dir: 'asc' },
+  })
   return data
 }
 

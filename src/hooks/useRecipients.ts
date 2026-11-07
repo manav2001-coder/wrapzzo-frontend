@@ -2,25 +2,30 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   bulkCreateMyDoctors,
   createMyDoctor,
-  listMyRecipients,
-  listRecipients,
+  listMyRecipientsPage,
   listUpcomingBirthdays,
   removeMyDoctor,
   searchRecipients,
   updateRecipient,
   type CreateRecipientInput,
+  type Recipient,
 } from '@/api/recipients'
 import { useHasAccess } from '@/hooks/use-permission'
+import { usePaginatedList } from '@/hooks/use-paginated-list'
 import { P } from '@/lib/permissions'
 
-export function useRecipients() {
-  const canView = useHasAccess(P.DOCTOR_VIEW)
-  return useQuery({ queryKey: ['recipients'], queryFn: listRecipients, enabled: canView })
-}
-
-/** The doctors on the caller's own list. */
-export function useMyRecipients() {
-  return useQuery({ queryKey: ['recipients', 'mine'], queryFn: listMyRecipients })
+/**
+ * The doctors on the caller's own list, a page at a time as the picker scrolls, narrowed by what is typed (the server searches).
+ * The Doctors screen itself is a DataTable over /api/recipients/page.
+ */
+export function useMyRecipientsList(search: string) {
+  return usePaginatedList({
+    queryKey: ['recipients', 'mine', 'picker'],
+    search,
+    pageSize: 20,
+    getItemKey: (recipient: Recipient) => recipient.id,
+    fetchPage: ({ page, pageSize, search: term }) => listMyRecipientsPage(page, pageSize, term),
+  })
 }
 
 /** "Pick an existing doctor" -- works for anyone who can send a gift, not just doctor.view holders. Empty query returns nothing (no full-directory dump). */
@@ -39,7 +44,7 @@ export function useUpdateRecipient() {
     mutationFn: ({ id, input }: { id: string; input: CreateRecipientInput }) => updateRecipient(id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipients'] })
-      queryClient.invalidateQueries({ queryKey: ['recipients', 'upcoming-birthdays'] })
+      queryClient.invalidateQueries({ queryKey: ['table-data'] })
     },
   })
 }
@@ -48,7 +53,7 @@ function useInvalidateRecipients() {
   const queryClient = useQueryClient()
   return () => {
     queryClient.invalidateQueries({ queryKey: ['recipients'] })
-    queryClient.invalidateQueries({ queryKey: ['recipients', 'upcoming-birthdays'] })
+    queryClient.invalidateQueries({ queryKey: ['table-data'] })
   }
 }
 

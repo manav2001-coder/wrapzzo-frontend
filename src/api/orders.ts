@@ -73,8 +73,18 @@ export interface Order {
   approvalDecidedByName: string | null
 }
 
-export async function listOrders(): Promise<Order[]> {
-  const { data } = await apiClient.get<Order[]>('/api/orders')
+/** The figures above an Orders list, counted by the server over the same orders -- not from the page on screen. */
+export interface OrderSummary {
+  total: number
+  byStatus: Partial<Record<OrderStatus, number>>
+  /** Orders with a proof waiting on a reviewer (company side). */
+  awaitingReview: number
+  /** Live orders not with a vendor yet and not held for approval (platform side). */
+  unassigned: number
+}
+
+export async function getOrderSummary(): Promise<OrderSummary> {
+  const { data } = await apiClient.get<OrderSummary>('/api/orders/summary')
   return data
 }
 
@@ -91,8 +101,13 @@ export async function requestOrderPhotoLink(id: string): Promise<{ recipientUplo
 
 // --- Admin/platform side: every company's orders, for fulfillment assignment. ---
 
-export async function listAllOrdersForPlatform(): Promise<Order[]> {
-  const { data } = await apiClient.get<Order[]>('/api/platform/orders')
+export async function getPlatformOrder(id: string): Promise<Order> {
+  const { data } = await apiClient.get<Order>(`/api/platform/orders/${id}`)
+  return data
+}
+
+export async function getPlatformOrderSummary(companyId: string): Promise<OrderSummary> {
+  const { data } = await apiClient.get<OrderSummary>('/api/platform/orders/summary', { params: { companyId } })
   return data
 }
 

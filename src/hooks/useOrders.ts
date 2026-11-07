@@ -7,41 +7,48 @@ import {
   autoAssignOrderVendor,
   autoAssignQuickGiftVendor,
   getOrder,
-  listAllOrdersForPlatform,
-  listOrders,
+  getOrderSummary,
+  getPlatformOrder,
+  getPlatformOrderSummary,
   requestOrderPhotoLink,
   requestPlatformOrderPhotoLink,
 } from '@/api/orders'
+import { invalidateOrderLists } from '@/lib/invalidate-lists'
 import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 
-// Both poll: a vendor's new proof or status change shows on the company side without a reload.
-export function useOrders() {
-  return useQuery({ queryKey: ['orders'], queryFn: listOrders, refetchInterval: LIVE_REFRESH_MS })
+// These poll: a vendor's new proof or status change shows on the company side without a reload. The list itself is a paged
+// DataTable (serverFetcher); what lives here is the one open order and the figures above the list.
+export function useOrderSummary() {
+  return useQuery({ queryKey: ['orders', 'summary'], queryFn: getOrderSummary, refetchInterval: LIVE_REFRESH_MS })
 }
 
 export function useOrder(id: string | undefined) {
-  return useQuery({ queryKey: ['orders', id], queryFn: () => getOrder(id!), enabled: Boolean(id), refetchInterval: LIVE_REFRESH_MS })
+  return useQuery({ queryKey: ['orders', 'detail', id], queryFn: () => getOrder(id!), enabled: Boolean(id), refetchInterval: LIVE_REFRESH_MS })
 }
 
 export function useRequestOrderPhotoLink() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => requestOrderPhotoLink(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
 // --- Admin/platform side ---
 
-export function usePlatformOrders() {
-  return useQuery({ queryKey: ['platform-orders'], queryFn: listAllOrdersForPlatform })
+export function usePlatformOrder(id: string | undefined) {
+  return useQuery({ queryKey: ['platform-orders', 'detail', id], queryFn: () => getPlatformOrder(id!), enabled: Boolean(id) })
+}
+
+export function usePlatformOrderSummary(companyId: string | undefined) {
+  return useQuery({ queryKey: ['platform-orders', 'summary', companyId], queryFn: () => getPlatformOrderSummary(companyId!), enabled: Boolean(companyId) })
 }
 
 export function useRequestPlatformOrderPhotoLink() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => requestPlatformOrderPhotoLink(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -49,7 +56,7 @@ export function useAssignOrderVendor() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ orderId, vendorId }: { orderId: string; vendorId: string }) => assignOrderVendor(orderId, vendorId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -57,7 +64,7 @@ export function useAutoAssignOrderVendor() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (orderId: string) => autoAssignOrderVendor(orderId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -65,7 +72,7 @@ export function useAssignCampaignVendor() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ campaignId, vendorId }: { campaignId: string; vendorId: string }) => assignCampaignVendor(campaignId, vendorId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -73,7 +80,7 @@ export function useAutoAssignCampaignVendor() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (campaignId: string) => autoAssignCampaignVendor(campaignId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -81,7 +88,7 @@ export function useAssignQuickGiftVendor() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ companyId, vendorId }: { companyId: string; vendorId: string }) => assignQuickGiftVendor(companyId, vendorId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -89,6 +96,6 @@ export function useAutoAssignQuickGiftVendor() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (companyId: string) => autoAssignQuickGiftVendor(companyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platform-orders'] }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }

@@ -9,7 +9,8 @@ import type { CompanyUser } from '@/api/users'
 import { useAppSelector } from '@/app/hooks'
 import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
-import { listEmptyBody } from '@/components/data-table/list-body'
+import { EmptyTable } from '@/components/data-table/empty-table'
+import { serverFetcher } from '@/lib/server-list'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader, StatusCell, useAuditColumns } from '@/components/masters/master-page'
 import { Badge } from '@/components/ui/badge'
@@ -17,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess, usePermissions } from '@/hooks/use-permission'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
-import { useCompanyUsers, useDeleteUser, useMakeCompanyAdmin, useSetCompanyWide } from '@/hooks/useUsers'
+import { useDeleteUser, useMakeCompanyAdmin, useSetCompanyWide } from '@/hooks/useUsers'
 import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
@@ -51,7 +52,8 @@ export function CompanyUsersPage() {
   const currentUserId = useAppSelector((state) => state.auth.user?.sub)
   const showError = useApiErrorToast()
 
-  const { data: users, isLoading, error, refetch } = useCompanyUsers(companyId)
+  // Paged, searched, filtered and sorted by the server: only the page on screen is loaded, however many people the company has.
+  const fetchUsers = useMemo(() => serverFetcher<CompanyUser>(`/api/platform/companies/${companyId}/users/page`), [companyId])
   const makeCompanyAdmin = useMakeCompanyAdmin(companyId)
   const deleteUser = useDeleteUser(companyId)
   const setCompanyWide = useSetCompanyWide(companyId)
@@ -232,22 +234,15 @@ export function CompanyUsersPage() {
       />
       <DataTable<CompanyUser>
         columns={columns}
-        data={users ?? []}
-        isLoading={isLoading}
+        fetchData={fetchUsers}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
         pageSize={25}
-        tableId="company-users"
+        tableId={`company-users-${companyId}`}
         configNamespace="company-users"
         getRowId={(user) => user.id}
-        emptyState={listEmptyBody({
-          error,
-          onRetry: () => void refetch(),
-          icon: <Users className="h-8 w-8 opacity-50" />,
-          message: t('users.emptyTitle'),
-          description: t('users.emptyBody'),
-        })}
+        emptyState={<EmptyTable icon={<Users className="h-8 w-8 opacity-50" />} message={t('users.emptyTitle')} description={t('users.emptyBody')} />}
       />
       {dialog && (
         <AppDialog

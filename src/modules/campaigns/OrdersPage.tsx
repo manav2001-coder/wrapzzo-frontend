@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import type { Order, OrderStatus } from '@/api/orders'
 import { AppTabs } from '@/components/app-tabs'
 import { DataTable } from '@/components/data-table'
-import { listEmptyBody } from '@/components/data-table/list-body'
+import { EmptyTable } from '@/components/data-table/empty-table'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { ArtworkReview } from '@/components/orders/artwork-review'
@@ -20,7 +20,10 @@ import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
 import { P } from '@/lib/permissions'
-import { useOrders, useRequestOrderPhotoLink } from '@/hooks/useOrders'
+import { useOrder, useOrderSummary, useRequestOrderPhotoLink } from '@/hooks/useOrders'
+import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import type { ListFilter } from '@/lib/list-filter'
+import { serverFetcher } from '@/lib/server-list'
 import { formatDate } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
@@ -48,6 +51,9 @@ const STATUSES: OrderStatus[] = [
 
 type Tab = 'all' | 'review'
 
+/** The review tab is the orders with a proof waiting on the reviewer -- asked of the server, not cut from a page. */
+const REVIEW_FILTER: ListFilter[] = [{ field: 'hasPendingDesignReview', operator: 'equals', value: true }]
+
 /**
  * The company's orders -- within the user's org scope -- and the reviewer's side of the artwork
  * loop: orders whose newest proof waits on them get their own tab, and an order's sheet carries
@@ -61,19 +67,20 @@ export function OrdersPage() {
   const canRequestPhoto = useHasAccess(P.ORDER_REQUEST_PHOTO)
   // Vendor names are the company admin's alone; the server leaves them out for everyone else.
   const canSeeVendor = useHasAccess(P.VENDOR_IDENTITY_VIEW)
-  const { data: orders, isLoading, error, refetch } = useOrders()
+  // The figures are counted by the server over all the orders; the table below is one page of them at a time.
+  const { data: summary, isLoading: summaryLoading } = useOrderSummary()
   const requestPhotoLink = useRequestOrderPhotoLink()
 
   const [tab, setTab] = useState<Tab>('all')
-  const [openId, setOpenId] = useState<string | null>(null)
+  const [openRow, setOpenRow] = useState<Order | null>(null)
   const [photoPrompt, setPhotoPrompt] = useState<PhotoLinkPrompt | null>(null)
-  // Kept by id so the sheet follows the list as it refreshes.
-  const open = orders?.find((order) => order.id === openId) ?? null
+  // The row that was clicked, replaced by the live copy of the order while the sheet is open (it polls).
+  const { data: liveOrder } = useOrder(openRow?.id)
+  const open = liveOrder ?? openRow
 
-  const list = orders ?? []
-  const needsReview = list.filter((order) => order.hasPendingDesignReview)
-  const count = (status: OrderStatus) => list.filter((order) => order.status === status).length
-  const visible = tab === 'review' ? needsReview : list
+  const awaitingReview = summary?.awaitingReview ?? 0
+  const count = (status: OrderStatus) => summary?.byStatus[status] ?? 0
+  const fetchOrders = useMemo(() => serverFetcher<Order>('/api/orders/page', tab === 'review' ? REVIEW_FILTER : []), [tab])
 
   async function sendPhotoLink(order: Order) {
     try {
@@ -93,7 +100,7 @@ export function OrdersPage() {
         header: t('column.gift'),
         meta: { className: 'min-w-[220px]' },
         cell: ({ row }) => (
-          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpenId(row.original.id)}>
+          <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpenRow(row.original)}>
             {row.original.giftImageUrl ? (
               <img src={row.original.giftImageUrl} alt="" className="h-9 w-9 shrink-0 rounded-md border object-cover" />
             ) : (
@@ -181,7 +188,7 @@ export function OrdersPage() {
         enableSorting: false,
         meta: { className: 'w-[56px]', pin: 'right' },
         cell: ({ row }) => (
-          <IconButton icon={Eye} label={t('detail.title', { id: row.original.displayId })} onClick={() => setOpenId(row.original.id)} />
+          <IconButton icon={Eye} label={t('detail.title', { id: row.original.displayId })} onClick={() => setOpenRow(row.original)} />
         ),
       },
     ],
@@ -196,17 +203,17 @@ export function OrdersPage() {
         {canReview && (
           <StatCard
             title={t('company.stats.review')}
-            value={needsReview.length}
+            value={awaitingReview}
             icon={Palette}
-            color={needsReview.length > 0 ? 'primary' : 'default'}
-            loading={isLoading}
+            color={awaitingReview > 0 ? 'primary' : 'default'}
+            loading={summaryLoading}
             active={tab === 'review'}
             onClick={() => setTab(tab === 'review' ? 'all' : 'review')}
           />
         )}
-        <StatCard title={t('company.stats.production')} value={count('PRODUCTION_QUEUE')} icon={Cog} color="warning" loading={isLoading} />
-        <StatCard title={t('company.stats.dispatched')} value={count('DISPATCHED')} icon={Truck} color="primary" loading={isLoading} />
-        <StatCard title={t('company.stats.delivered')} value={count('DELIVERED')} icon={CheckCircle2} color="success" loading={isLoading} />
+        <StatCard title={t('company.stats.production')} value={count('PRODUCTION_QUEUE')} icon={Cog} color="warning" loading={summaryLoading} />
+        <StatCard title={t('company.stats.dispatched')} value={count('DISPATCHED')} icon={Truck} color="primary" loading={summaryLoading} />
+        <StatCard title={t('company.stats.delivered')} value={count('DELIVERED')} icon={CheckCircle2} color="success" loading={summaryLoading} />
       </div>
 
       {canReview && (
@@ -215,35 +222,35 @@ export function OrdersPage() {
           onValueChange={(value) => setTab(value as Tab)}
           className="mb-3"
           tabs={[
-            { value: 'all', label: t('company.tabAll'), badge: list.length || undefined },
-            { value: 'review', label: t('company.tabReview'), badge: needsReview.length || undefined },
+            { value: 'all', label: t('company.tabAll'), badge: summary?.total || undefined },
+            { value: 'review', label: t('company.tabReview'), badge: awaitingReview || undefined },
           ]}
         />
       )}
 
       <DataTable<Order>
         columns={columns}
-        data={visible}
-        isLoading={isLoading}
+        fetchData={fetchOrders}
+        refetchInterval={LIVE_REFRESH_MS}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
         defaultSort={{ id: 'createdAt', desc: true }}
         getRowId={(order) => order.id}
-        tableId="company-orders"
+        tableId={`company-orders-${tab}`}
         configNamespace="company-orders"
-        emptyState={listEmptyBody({
-          error,
-          onRetry: () => void refetch(),
-          icon: <ShoppingBag className="h-8 w-8 opacity-50" />,
-          message: tab === 'review' ? t('company.reviewEmptyTitle') : t('company.emptyTitle'),
-          description: tab === 'review' ? t('company.reviewEmptyBody') : t('company.emptyBody'),
-        })}
+        emptyState={
+          <EmptyTable
+            icon={<ShoppingBag className="h-8 w-8 opacity-50" />}
+            message={tab === 'review' ? t('company.reviewEmptyTitle') : t('company.emptyTitle')}
+            description={tab === 'review' ? t('company.reviewEmptyBody') : t('company.emptyBody')}
+          />
+        }
       />
 
       <OrderDetailSheet
         order={open}
-        onClose={() => setOpenId(null)}
+        onClose={() => setOpenRow(null)}
         onRequestPhotoLink={canRequestPhoto ? (order) => void sendPhotoLink(order) : undefined}
         requestingPhotoLink={requestPhotoLink.isPending}
         actions={open ? <ArtworkReview orderId={open.id} artworkRequired={open.artworkRequired} readOnly={!canReview} /> : undefined}

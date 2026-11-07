@@ -9,7 +9,7 @@ import type { QuickGiftRequest } from '@/api/quickGifts'
 import type { Recipient, UpcomingBirthday } from '@/api/recipients'
 import { AppTabs } from '@/components/app-tabs'
 import { DataTable } from '@/components/data-table'
-import { listEmptyBody } from '@/components/data-table/list-body'
+import { EmptyTable } from '@/components/data-table/empty-table'
 import { GiftCatalogue } from '@/components/gifts/gift-catalogue'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
@@ -18,10 +18,14 @@ import { Button } from '@/components/ui/button'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useActiveGifts } from '@/hooks/useGifts'
-import { useMyQuickGiftRequests, useRequestQuickGiftPhotoLink } from '@/hooks/useQuickGifts'
+import { useMyQuickGiftCount, useQuickGiftRequest, useRequestQuickGiftPhotoLink } from '@/hooks/useQuickGifts'
+import { serverFetcher } from '@/lib/server-list'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { QuickGiftRequestSheet, QuickGiftStatusBadge } from './QuickGiftRequestSheet'
+
+/** The user's own requests, a page at a time from the server. */
+const fetchMyRequests = serverFetcher<QuickGiftRequest>('/api/quick-gifts/mine/page')
 
 const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
@@ -48,13 +52,15 @@ export function QuickGiftLandingPage() {
   const { prefillRecipient, tab: initialTab } =
     (location.state as { prefillRecipient?: Recipient | UpcomingBirthday; tab?: Tab } | null) ?? {}
   const { data: gifts, isLoading: giftsLoading } = useActiveGifts()
-  const { data: requests, isLoading, error, refetch } = useMyQuickGiftRequests()
+  const { data: requestCount } = useMyQuickGiftCount()
   const requestPhotoLink = useRequestQuickGiftPhotoLink()
 
   const [tab, setTab] = useState<Tab>(initialTab ?? 'send')
-  const [viewingId, setViewingId] = useState<string | null>(null)
+  const [viewingRow, setViewingRow] = useState<QuickGiftRequest | null>(null)
   const [photoPrompt, setPhotoPrompt] = useState<PhotoLinkPrompt | null>(null)
-  const viewing = requests?.find((request) => request.id === viewingId) ?? null
+  // The row that was clicked, replaced by the current copy of the request once it is read.
+  const { data: liveRequest } = useQuickGiftRequest(viewingRow?.id)
+  const viewing = liveRequest ?? viewingRow
 
   async function handleRequestPhotoLink(request: QuickGiftRequest) {
     try {
@@ -74,7 +80,7 @@ export function QuickGiftLandingPage() {
         header: t('landing.column.gift'),
         meta: { className: 'min-w-[200px]' },
         cell: ({ row }) => (
-          <button type="button" className="truncate font-medium hover:underline" onClick={() => setViewingId(row.original.id)}>
+          <button type="button" className="truncate font-medium hover:underline" onClick={() => setViewingRow(row.original)}>
             {row.original.giftName}
           </button>
         ),
@@ -115,7 +121,7 @@ export function QuickGiftLandingPage() {
         enableSorting: false,
         meta: { className: 'w-[56px]', pin: 'right' },
         cell: ({ row }) => (
-          <IconButton icon={Eye} label={row.original.displayId} onClick={() => setViewingId(row.original.id)} />
+          <IconButton icon={Eye} label={row.original.displayId} onClick={() => setViewingRow(row.original)} />
         ),
       },
     ],
@@ -157,12 +163,11 @@ export function QuickGiftLandingPage() {
           {
             value: 'requests',
             label: t('landing.tabRequests'),
-            badge: requests?.length || undefined,
+            badge: requestCount || undefined,
             content: (
               <DataTable<QuickGiftRequest>
                 columns={columns}
-                data={requests ?? []}
-                isLoading={isLoading}
+                fetchData={fetchMyRequests}
                 listFields={LIST_FIELDS}
                 searchable
                 showRowSelectionColumn={false}
@@ -170,13 +175,7 @@ export function QuickGiftLandingPage() {
                 getRowId={(request) => request.id}
                 tableId="my-quick-gifts"
                 configNamespace="my-quick-gifts"
-                emptyState={listEmptyBody({
-                  error,
-                  onRetry: () => void refetch(),
-                  icon: <Zap className="h-8 w-8 opacity-50" />,
-                  message: t('landing.emptyTitle'),
-                  description: t('landing.emptyBody'),
-                })}
+                emptyState={<EmptyTable icon={<Zap className="h-8 w-8 opacity-50" />} message={t('landing.emptyTitle')} description={t('landing.emptyBody')} />}
               />
             ),
           },
@@ -185,7 +184,7 @@ export function QuickGiftLandingPage() {
 
       <QuickGiftRequestSheet
         request={viewing}
-        onClose={() => setViewingId(null)}
+        onClose={() => setViewingRow(null)}
         onRequestPhotoLink={handleRequestPhotoLink}
         requestingPhotoLink={requestPhotoLink.isPending}
       />

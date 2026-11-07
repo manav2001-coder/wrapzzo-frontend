@@ -74,7 +74,3 @@ export interface PendingArtworkApproval {
   approvals: ArtworkApprovalStep[]
 }
 
-export async function listPendingArtworkApprovals(): Promise<PendingArtworkApproval[]> {
-  const { data } = await apiClient.get<PendingArtworkApproval[]>('/api/artwork-approvals/pending')
-  return data
-}

@@ -9,7 +9,10 @@ import type { Warehouse, WarehouseOrder } from '@/api/warehouses'
 import { AppDialog } from '@/components/app-dialog'
 import { AppTabs } from '@/components/app-tabs'
 import { DataTable } from '@/components/data-table'
+import { EmptyTable } from '@/components/data-table/empty-table'
 import { listEmptyBody } from '@/components/data-table/list-body'
+import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { serverFetcher } from '@/lib/server-list'
 import { FormGenerator } from '@/components/fields/form-generator'
 import { IconButton } from '@/components/icon-button'
 import { phoneField, selectField, switchField, textField } from '@/components/masters/master-fields'
@@ -21,7 +24,7 @@ import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
 import { useMyOrgUnits } from '@/hooks/useMyOrgUnits'
-import { useAdvanceWarehouseOrder, useSaveWarehouse, useWarehouseOrders, useWarehouses } from '@/hooks/useWarehouses'
+import { useAdvanceWarehouseOrder, useSaveWarehouse, useWarehouseOrderCounts, useWarehouses } from '@/hooks/useWarehouses'
 import { formatDateTime } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
@@ -130,13 +133,17 @@ function WarehouseDialog({ warehouse, onClose }: { warehouse: Warehouse | null; 
 function WarehouseOrdersTab() {
   const { t } = useTranslation('orders')
   const showError = useApiErrorToast()
-  const { data: orders, isLoading, error, refetch } = useWarehouseOrders()
+  // The stage counts come from the server over the whole queue; the table is one page of it at a time.
+  const { data: counts, isLoading } = useWarehouseOrderCounts()
   const advance = useAdvanceWarehouseOrder()
   const canOperate = useHasAccess(P.WAREHOUSE_OPERATE)
   const [statusFilter, setStatusFilter] = useState<OrderStatus | null>(null)
 
-  const count = (status: OrderStatus) => (orders ?? []).filter((o) => o.status === status).length
-  const visible = statusFilter ? (orders ?? []).filter((o) => o.status === statusFilter) : (orders ?? [])
+  const count = (status: OrderStatus) => counts?.[status] ?? 0
+  const fetchOrders = useMemo(
+    () => serverFetcher<WarehouseOrder>('/api/warehouses/orders/page', statusFilter ? [{ field: 'status', operator: 'equals', value: statusFilter }] : []),
+    [statusFilter],
+  )
   const toggle = (status: OrderStatus) => setStatusFilter((current) => (current === status ? null : status))
 
   const columns = useMemo<ColumnDef<WarehouseOrder, unknown>[]>(() => {
@@ -260,22 +267,22 @@ function WarehouseOrdersTab() {
       </div>
       <DataTable<WarehouseOrder>
         columns={columns}
-        data={visible}
-        isLoading={isLoading}
+        fetchData={fetchOrders}
+        refetchInterval={LIVE_REFRESH_MS}
         listFields={ORDER_LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
         defaultSort={{ id: 'updatedAt', desc: true }}
         getRowId={(o) => o.id}
-        tableId="warehouse-orders"
+        tableId={`warehouse-orders-${statusFilter ?? 'all'}`}
         configNamespace="warehouse-orders"
-        emptyState={listEmptyBody({
-          error,
-          onRetry: () => void refetch(),
-          icon: <WarehouseIcon className="h-8 w-8 opacity-50" />,
-          message: 'No orders through your warehouses yet',
-          description: 'Orders are routed here when Warehouse Logistics is on and a warehouse serves the org unit they came from.',
-        })}
+        emptyState={
+          <EmptyTable
+            icon={<WarehouseIcon className="h-8 w-8 opacity-50" />}
+            message="No orders through your warehouses yet"
+            description="Orders are routed here when Warehouse Logistics is on and a warehouse serves the org unit they came from."
+          />
+        }
       />
     </div>
   )

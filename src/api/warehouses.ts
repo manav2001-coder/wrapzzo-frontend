@@ -54,8 +54,9 @@ export async function updateWarehouse(id: string, input: WarehouseInput): Promis
   return data
 }
 
-export async function listWarehouseOrders(): Promise<WarehouseOrder[]> {
-  const { data } = await apiClient.get<WarehouseOrder[]>('/api/warehouses/orders')
+/** How many orders are in each stage of the warehouse queue, counted by the server. */
+export async function getWarehouseOrderCounts(): Promise<Partial<Record<OrderStatus, number>>> {
+  const { data } = await apiClient.get<Partial<Record<OrderStatus, number>>>('/api/warehouses/orders/summary')
   return data
 }
 

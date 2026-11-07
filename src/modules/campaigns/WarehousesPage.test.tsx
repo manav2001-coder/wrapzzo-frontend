@@ -5,16 +5,18 @@ import type { WarehouseOrder } from '@/api/warehouses'
 import { renderWithProviders, screen, waitFor } from '@/test/test-utils'
 import { WarehousesPage } from './WarehousesPage'
 
+// What the server holds for the queue; the API answers a page of it and the counts by stage.
 const listWarehouseOrders = vi.hoisted(() => vi.fn())
+const get = vi.hoisted(() => vi.fn())
 const listWarehouses = vi.hoisted(() => vi.fn())
 const advanceWarehouseOrder = vi.hoisted(() => vi.fn())
 const useCurrentUser = vi.hoisted(() => vi.fn())
 vi.mock('@/api/warehouses', async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  listWarehouseOrders,
   listWarehouses,
   advanceWarehouseOrder,
 }))
+vi.mock('@/lib/axiosClient', async (importOriginal) => ({ ...(await importOriginal<object>()), apiClient: { get } }))
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
 function order(overrides: Partial<WarehouseOrder> = {}): WarehouseOrder {
@@ -39,6 +41,20 @@ function order(overrides: Partial<WarehouseOrder> = {}): WarehouseOrder {
 describe('WarehousesPage', () => {
   beforeEach(() => {
     listWarehouseOrders.mockReset()
+    get.mockReset().mockImplementation(async (url: string, config?: { params?: { filters?: string } }) => {
+      const rows = ((await listWarehouseOrders()) ?? []) as WarehouseOrder[]
+      if (url === '/api/warehouses/orders/page') {
+        const status = (JSON.parse(config?.params?.filters ?? '[]') as { field: string; value: string }[]).find((f) => f.field === 'status')?.value
+        const shown = status ? rows.filter((r) => r.status === status) : rows
+        return { data: { data: shown, total: shown.length, page: 0, pageSize: 10, hasMore: false } }
+      }
+      if (url === '/api/warehouses/orders/summary') {
+        const counts: Record<string, number> = {}
+        for (const row of rows) counts[row.status] = (counts[row.status] ?? 0) + 1
+        return { data: counts }
+      }
+      return { data: [] }
+    })
     listWarehouses.mockReset().mockResolvedValue([])
     advanceWarehouseOrder.mockReset()
     useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', permissions: ['warehouse.view', 'warehouse.setup', 'warehouse.operate'] }, isLoading: false })

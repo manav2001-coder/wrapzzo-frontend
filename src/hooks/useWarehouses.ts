@@ -4,7 +4,7 @@ import type { OrderStatus } from '@/api/orders'
 import {
   advanceWarehouseOrder,
   createWarehouse,
-  listWarehouseOrders,
+  getWarehouseOrderCounts,
   listWarehouses,
   updateWarehouse,
   type WarehouseInput,
@@ -23,9 +23,9 @@ export function useSaveWarehouse() {
   })
 }
 
-/** Polled -- the vendor dispatching an order is what puts it in the warehouse's inbound list. */
-export function useWarehouseOrders() {
-  return useQuery({ queryKey: ['warehouse-orders'], queryFn: listWarehouseOrders, refetchInterval: LIVE_REFRESH_MS })
+/** Polled -- the vendor dispatching an order is what puts it in the warehouse's inbound list. The queue itself is a paged DataTable (serverFetcher). */
+export function useWarehouseOrderCounts() {
+  return useQuery({ queryKey: ['warehouse-orders', 'counts'], queryFn: getWarehouseOrderCounts, refetchInterval: LIVE_REFRESH_MS })
 }
 
 export function useAdvanceWarehouseOrder() {

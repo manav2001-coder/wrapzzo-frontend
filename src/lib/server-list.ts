@@ -24,22 +24,31 @@ export function listQueryParams(options: FetchOptions, fixedFilters: ListFilter[
   return params
 }
 
+/** The HTTP client a list is read with: the signed-in user's, or the vendor portal's own. */
+export type ListClient = Pick<typeof apiClient, 'get'>
+
 /** One page of a server list, in the shape the screens read. */
-export async function fetchPage<T>(path: string, options: FetchOptions, fixedFilters: ListFilter[] = [], extra: Record<string, string> = {}): Promise<Paginated<T>> {
-  const { data } = await apiClient.get<Paginated<T>>(path, { params: { ...extra, ...listQueryParams(options, fixedFilters) } })
+export async function fetchPage<T>(
+  path: string,
+  options: FetchOptions,
+  fixedFilters: ListFilter[] = [],
+  extra: Record<string, string> = {},
+  client: ListClient = apiClient,
+): Promise<Paginated<T>> {
+  const { data } = await client.get<Paginated<T>>(path, { params: { ...extra, ...listQueryParams(options, fixedFilters) } })
   return data
 }
 
 /** `DataTable`'s `fetchData` for a server list. `fixedFilters` are the screen's own (a tab, a chosen company) on top of the table's. */
-export function serverFetcher<T>(path: string, fixedFilters: ListFilter[] = [], extra: Record<string, string> = {}) {
+export function serverFetcher<T>(path: string, fixedFilters: ListFilter[] = [], extra: Record<string, string> = {}, client: ListClient = apiClient) {
   return async (options: FetchOptions): Promise<FetchResult<T>> => {
-    const page = await fetchPage<T>(path, options, fixedFilters, extra)
+    const page = await fetchPage<T>(path, options, fixedFilters, extra, client)
     return { rows: page.data, pageCount: Math.max(1, Math.ceil(page.total / (page.pageSize || options.pageSize))), totalCount: page.total }
   }
 }
 
 /** How many rows a list holds, for a badge or a count: asks for a page of one and reads the total. */
-export async function countOf(path: string, fixedFilters: ListFilter[] = [], extra: Record<string, string> = {}): Promise<number> {
-  const page = await fetchPage<unknown>(path, { pageIndex: 0, pageSize: 1, filters: [] }, fixedFilters, extra)
+export async function countOf(path: string, fixedFilters: ListFilter[] = [], extra: Record<string, string> = {}, client: ListClient = apiClient): Promise<number> {
+  const page = await fetchPage<unknown>(path, { pageIndex: 0, pageSize: 1, filters: [] }, fixedFilters, extra, client)
   return page.total
 }

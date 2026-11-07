@@ -2,12 +2,13 @@ import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { fakeVendorApi } from '@/test/fake-vendor-api'
 import { renderWithProviders, screen, within } from '@/test/test-utils'
 import { vendorOrder } from '../vendor-fixtures'
 import { VendorOrdersPage } from './VendorOrdersPage'
 
-const listVendorOrders = vi.hoisted(() => vi.fn())
-vi.mock('@/api/vendorOrders', async (importOriginal) => ({ ...(await importOriginal<object>()), listVendorOrders }))
+const get = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/vendorApiClient', async (importOriginal) => ({ ...(await importOriginal<object>()), vendorApiClient: { get } }))
 
 const ORDERS = [
   vendorOrder({ id: 'a', displayId: 'ORD-1' }),
@@ -30,7 +31,7 @@ function renderQueue(route = '/vendor/orders') {
 const orderIds = () => screen.getAllByRole('link', { name: /^ORD-\d$/ }).map((link) => link.textContent)
 
 describe('VendorOrdersPage', () => {
-  beforeEach(() => listVendorOrders.mockReset().mockResolvedValue(ORDERS))
+  beforeEach(() => get.mockReset().mockImplementation(fakeVendorApi(ORDERS)))
 
   it('lists every order with what it needs next', async () => {
     renderQueue()

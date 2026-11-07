@@ -7,10 +7,16 @@ import { Link, useSearchParams } from 'react-router-dom'
 import type { VendorOrder } from '@/api/vendorOrders'
 import { AppTabs } from '@/components/app-tabs'
 import { DataTable } from '@/components/data-table'
-import { listEmptyBody } from '@/components/data-table/list-body'
+import { EmptyTable } from '@/components/data-table/empty-table'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { Button } from '@/components/ui/button'
-import { useVendorOrders } from '@/hooks/useVendorOrders'
+import type { FetchOptions, FetchResult } from '@/components/data-table/types'
+import { divisionFilter, useVendorOrderSummary, VENDOR_ORDERS_PATH } from '@/hooks/useVendorOrders'
+import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import type { ListFilter } from '@/lib/list-filter'
+import { serverFetcher } from '@/lib/server-list'
+import { useVendorDivision } from '@/lib/vendor-division'
+import { vendorApiClient } from '@/lib/vendorApiClient'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { VENDOR_STAGES, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
@@ -23,6 +29,7 @@ const LIST_FIELDS: ListFieldMap = {
   giftName: 'text',
   recipientName: 'text',
   quantity: 'number',
+  assignedAt: 'date',
 }
 
 const ALL = 'all'
@@ -37,20 +44,24 @@ type Row = VendorOrder & { stage: VendorStage }
 export function VendorOrdersPage() {
   const { t } = useTranslation('vendor')
   const [params, setParams] = useSearchParams()
-  const { data: orders, isLoading, error, refetch } = useVendorOrders()
-
-  const rows = useMemo<Row[]>(() => (orders ?? []).map((order) => ({ ...order, stage: vendorStageOf(order) })), [orders])
-  const counts = useMemo(() => {
-    const byStage = new Map<VendorStage, number>()
-    for (const row of rows) byStage.set(row.stage, (byStage.get(row.stage) ?? 0) + 1)
-    return byStage
-  }, [rows])
+  // The figures are counted by the server over all of the vendor's orders (in the picked division); the table is one page at a time.
+  const { data: summary } = useVendorOrderSummary()
+  const division = useVendorDivision()
+  const counts = summary?.byStage ?? {}
 
   const requested = params.get('stage')
   const tab = requested && (VENDOR_STAGES as string[]).includes(requested) ? requested : ALL
-  const visible = tab === ALL ? rows : rows.filter((row) => row.stage === tab)
   // Rework and cancelled only earn a tab when something is in them -- an empty "Cancelled" is noise.
-  const stages = VENDOR_STAGES.filter((stage) => (stage !== 'rework' && stage !== 'cancelled') || (counts.get(stage) ?? 0) > 0 || stage === tab)
+  const stages = VENDOR_STAGES.filter((stage) => (stage !== 'rework' && stage !== 'cancelled') || (counts[stage] ?? 0) > 0 || stage === tab)
+
+  const fetchOrders = useMemo(() => {
+    const fixed: ListFilter[] = [...(tab === ALL ? [] : [{ field: 'stage', operator: 'equals' as const, value: tab }]), ...divisionFilter(division)]
+    const page = serverFetcher<VendorOrder>(VENDOR_ORDERS_PATH, fixed, {}, vendorApiClient)
+    return async (options: FetchOptions): Promise<FetchResult<Row>> => {
+      const result = await page(options)
+      return { ...result, rows: result.rows.map((order) => ({ ...order, stage: vendorStageOf(order) })) }
+    }
+  }, [tab, division])
 
   const columns = useMemo<ColumnDef<Row, unknown>[]>(
     () => [
@@ -147,28 +158,22 @@ export function VendorOrdersPage() {
         onValueChange={(value) => setParams(value === ALL ? {} : { stage: value }, { replace: true })}
         className="mb-3"
         tabs={[
-          { value: ALL, label: t('orders.all'), badge: rows.length || undefined },
-          ...stages.map((stage) => ({ value: stage, label: t(`stage.${stage}`), badge: counts.get(stage) || undefined })),
+          { value: ALL, label: t('orders.all'), badge: summary?.total || undefined },
+          ...stages.map((stage) => ({ value: stage, label: t(`stage.${stage}`), badge: counts[stage] || undefined })),
         ]}
       />
       <DataTable<Row>
         columns={columns}
-        data={visible}
-        isLoading={isLoading}
+        fetchData={fetchOrders}
+        refetchInterval={LIVE_REFRESH_MS}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
         defaultSort={{ id: 'assignedAt', desc: true }}
         getRowId={(row) => row.id}
-        tableId="vendor-orders"
+        tableId={`vendor-orders-${tab}-${division}`}
         configNamespace="vendor-orders"
-        emptyState={listEmptyBody({
-          error,
-          onRetry: () => void refetch(),
-          icon: <ShoppingBag className="h-8 w-8 opacity-50" />,
-          message: t('orders.emptyTitle'),
-          description: t('orders.emptyBody'),
-        })}
+        emptyState={<EmptyTable icon={<ShoppingBag className="h-8 w-8 opacity-50" />} message={t('orders.emptyTitle')} description={t('orders.emptyBody')} />}
       />
     </div>
   )

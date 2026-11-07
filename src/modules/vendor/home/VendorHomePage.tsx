@@ -1,6 +1,5 @@
 import { format } from 'date-fns'
 import { ArrowRight, CheckCircle2, ChevronRight, Eye, Gift as GiftIcon, MessageSquareWarning, PackageCheck, Palette, Plus, Truck, type LucideIcon } from 'lucide-react'
-import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -8,10 +7,10 @@ import type { VendorOrder } from '@/api/vendorOrders'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useVendorGifts } from '@/hooks/useVendorGifts'
-import { useMyVendorProfile, useVendorOrders } from '@/hooks/useVendorOrders'
+import { useMyVendorProfile, useVendorActionOrders, useVendorOrderSummary } from '@/hooks/useVendorOrders'
 import { formatDate } from '@/lib/datetime'
 import { cn } from '@/lib/utils'
-import { ACTION_STAGES, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
+import { ACTION_STAGES, type VendorStage } from '@/lib/vendor-order-stage'
 import { VendorDivisionFilter } from '../division/VendorDivisionFilter'
 import { VendorStageBadge } from '../orders/VendorStageBadge'
 
@@ -33,6 +32,9 @@ const QUEUE: QueueStage[] = [
   { stage: 'ready', icon: PackageCheck, chip: 'bg-success/15 text-success', accent: 'bg-success', mine: true },
   { stage: 'dispatched', icon: Truck, chip: 'bg-sky-500/15 text-sky-600 dark:text-sky-400', accent: 'bg-sky-500', mine: true },
 ]
+
+/** How many orders the "needs you" list shows. */
+const ACTION_LIST_LIMIT = 6
 
 function greetingKey(date: Date) {
   const hour = date.getHours()
@@ -101,29 +103,15 @@ export function VendorHomePage() {
   const { t } = useTranslation('vendor')
   const navigate = useNavigate()
   const { data: profile } = useMyVendorProfile()
-  const { data: orders, isLoading } = useVendorOrders()
+  // The counts come from the server over all of the vendor's orders; the list below is only the first few that need their hand.
+  const { data: summary, isLoading } = useVendorOrderSummary()
+  const { data: toAct = [] } = useVendorActionOrders(ACTION_LIST_LIMIT)
   const { data: gifts, isLoading: giftsLoading } = useVendorGifts()
 
-  const byStage = useMemo(() => {
-    const map = new Map<VendorStage, VendorOrder[]>()
-    for (const order of orders ?? []) {
-      const stage = vendorStageOf(order)
-      map.set(stage, [...(map.get(stage) ?? []), order])
-    }
-    return map
-  }, [orders])
-
-  // Orders that need the vendor's hand, the most urgent stage first and the oldest first within it.
-  const toAct = useMemo(
-    () =>
-      ACTION_STAGES.flatMap((stage) =>
-        [...(byStage.get(stage) ?? [])]
-          .sort((a, b) => (a.assignedAt ?? a.createdAt).localeCompare(b.assignedAt ?? b.createdAt))
-          .map((order) => ({ order, stage })),
-      ),
-    [byStage],
-  )
-  const delivered = byStage.get('delivered')?.length ?? 0
+  const countOf = (stage: VendorStage) => summary?.byStage[stage] ?? 0
+  // How many orders are waiting on the vendor, in all (the list shows only the first few).
+  const waiting = ACTION_STAGES.reduce((sum, stage) => sum + countOf(stage), 0)
+  const delivered = countOf('delivered')
   const live = (gifts ?? []).filter((gift) => gift.active).length
   const hidden = (gifts ?? []).length - live
   const now = new Date()
@@ -142,8 +130,8 @@ export function VendorHomePage() {
             <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
               {isLoading ? (
                 <Skeleton className="h-4 w-48" />
-              ) : toAct.length > 0 ? (
-                t('home.heroWaiting', { count: toAct.length })
+              ) : waiting > 0 ? (
+                t('home.heroWaiting', { count: waiting })
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4 text-success" />
@@ -160,7 +148,7 @@ export function VendorHomePage() {
         <h2 className="mb-3 text-base font-semibold tracking-tight">{t('home.todo')}</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
           {QUEUE.map((item) => (
-            <QueueCard key={item.stage} item={item} count={byStage.get(item.stage)?.length ?? 0} loading={isLoading} onOpen={() => navigate(`/vendor/orders?stage=${item.stage}`)} />
+            <QueueCard key={item.stage} item={item} count={countOf(item.stage)} loading={isLoading} onOpen={() => navigate(`/vendor/orders?stage=${item.stage}`)} />
           ))}
         </div>
       </section>
@@ -181,7 +169,7 @@ export function VendorHomePage() {
           </div>
           {isLoading ? (
             <Skeleton className="h-56 w-full rounded-2xl" />
-          ) : toAct.length === 0 ? (
+          ) : waiting === 0 ? (
             <div className="flex flex-col items-center gap-2 rounded-2xl border bg-card px-6 py-12 text-center shadow-sm">
               <span className="grid h-12 w-12 place-items-center rounded-full bg-success/15 text-success">
                 <CheckCircle2 className="h-6 w-6" />
@@ -191,7 +179,7 @@ export function VendorHomePage() {
             </div>
           ) : (
             <ul className="divide-y overflow-hidden rounded-2xl border bg-card shadow-sm">
-              {toAct.slice(0, 6).map(({ order, stage }) => (
+              {toAct.map(({ order, stage }) => (
                 <ActionRow key={order.id} order={order} stage={stage} />
               ))}
             </ul>
@@ -204,7 +192,7 @@ export function VendorHomePage() {
             <dl className="mt-3 grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-muted/50 p-3">
                 <dt className="text-xs text-muted-foreground">{t('home.totalOrders')}</dt>
-                <dd className="mt-1 text-2xl font-bold tabular-nums">{isLoading ? '–' : (orders ?? []).length}</dd>
+                <dd className="mt-1 text-2xl font-bold tabular-nums">{isLoading ? '–' : (summary?.total ?? 0)}</dd>
               </div>
               <div className="rounded-xl bg-success/10 p-3">
                 <dt className="text-xs text-muted-foreground">{t('stage.delivered')}</dt>

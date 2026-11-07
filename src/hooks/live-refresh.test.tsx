@@ -6,13 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 import { useApproveOrderDesign } from './useOrderDesigns'
 import { useOrderSummary } from './useOrders'
-import { useVendorOrders } from './useVendorOrders'
+import { useVendorOrderSummary } from './useVendorOrders'
 
 const getOrderSummary = vi.hoisted(() => vi.fn())
-const listVendorOrders = vi.hoisted(() => vi.fn())
+const getVendorOrderSummary = vi.hoisted(() => vi.fn())
 const approveOrderDesign = vi.hoisted(() => vi.fn())
 vi.mock('@/api/orders', async (importOriginal) => ({ ...(await importOriginal<object>()), getOrderSummary }))
-vi.mock('@/api/vendorOrders', async (importOriginal) => ({ ...(await importOriginal<object>()), listVendorOrders }))
+vi.mock('@/api/vendorOrders', async (importOriginal) => ({ ...(await importOriginal<object>()), getVendorOrderSummary }))
 vi.mock('@/api/orderDesigns', async (importOriginal) => ({ ...(await importOriginal<object>()), approveOrderDesign }))
 
 function wrapperWith(client: QueryClient) {
@@ -23,14 +23,14 @@ describe('the artwork loop refreshes on its own', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     getOrderSummary.mockReset().mockResolvedValue({ total: 0, byStatus: {}, awaitingReview: 0, unassigned: 0 })
-    listVendorOrders.mockReset().mockResolvedValue([])
+    getVendorOrderSummary.mockReset().mockResolvedValue({ total: 0, byStage: {} })
     approveOrderDesign.mockReset().mockResolvedValue({})
   })
   afterEach(() => vi.useRealTimers())
 
   it.each([
     ['the company order figures', () => void useOrderSummary(), getOrderSummary],
-    ['the vendor queue', () => void useVendorOrders(), listVendorOrders],
+    ['the vendor queue figures', () => void useVendorOrderSummary(), getVendorOrderSummary],
   ])('re-fetches %s every interval', async (_name, hook, api) => {
     renderHook(hook, { wrapper: wrapperWith(new QueryClient()) })
     await waitFor(() => expect(api).toHaveBeenCalledTimes(1))

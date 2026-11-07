@@ -22,6 +22,7 @@ export function useUploadVendorOrderDesign(orderId: string) {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ['vendor-order-designs', orderId] }),
         queryClient.invalidateQueries({ queryKey: vendorOrdersKey }),
+        queryClient.invalidateQueries({ queryKey: ['table-data'] }),
       ]),
   })
 }

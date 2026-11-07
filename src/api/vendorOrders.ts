@@ -56,8 +56,26 @@ export interface VendorOrder {
   createdAt: string
 }
 
-export async function listVendorOrders(): Promise<VendorOrder[]> {
-  const { data } = await vendorApiClient.get<VendorOrder[]>('/api/vendor/orders/list')
+/** How many of the vendor's orders are at each stage, counted by the server (narrowed to one division when given). */
+export interface VendorOrderSummary {
+  total: number
+  byStage: Record<string, number>
+}
+
+export async function getVendorOrderSummary(divisionId?: string): Promise<VendorOrderSummary> {
+  const { data } = await vendorApiClient.get<VendorOrderSummary>('/api/vendor/orders/summary', { params: divisionId ? { divisionId } : {} })
+  return data
+}
+
+/** A division the vendor has orders from, with how many. */
+export interface VendorOrderDivision {
+  id: string
+  name: string
+  count: number
+}
+
+export async function listVendorOrderDivisions(): Promise<VendorOrderDivision[]> {
+  const { data } = await vendorApiClient.get<VendorOrderDivision[]>('/api/vendor/orders/divisions')
   return data
 }
 

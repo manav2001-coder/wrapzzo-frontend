@@ -2,14 +2,16 @@ import userEvent from '@testing-library/user-event'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { fakeVendorApi } from '@/test/fake-vendor-api'
 import { renderWithProviders, screen } from '@/test/test-utils'
 import { vendorGift, vendorOrder } from '../vendor-fixtures'
 import { VendorHomePage } from './VendorHomePage'
 
-const listVendorOrders = vi.hoisted(() => vi.fn())
+const get = vi.hoisted(() => vi.fn())
 const getMyVendorProfile = vi.hoisted(() => vi.fn())
 const listVendorGifts = vi.hoisted(() => vi.fn())
-vi.mock('@/api/vendorOrders', async (importOriginal) => ({ ...(await importOriginal<object>()), listVendorOrders, getMyVendorProfile }))
+vi.mock('@/api/vendorOrders', async (importOriginal) => ({ ...(await importOriginal<object>()), getMyVendorProfile }))
+vi.mock('@/lib/vendorApiClient', async (importOriginal) => ({ ...(await importOriginal<object>()), vendorApiClient: { get } }))
 vi.mock('@/api/vendorGifts', async (importOriginal) => ({ ...(await importOriginal<object>()), listVendorGifts }))
 
 function Where() {
@@ -31,11 +33,11 @@ describe('VendorHomePage', () => {
   beforeEach(() => {
     getMyVendorProfile.mockReset().mockResolvedValue({ id: 'v-1', name: 'Pad Printers' })
     listVendorGifts.mockReset().mockResolvedValue([vendorGift(), vendorGift({ id: 'g-2', active: false })])
-    listVendorOrders.mockReset().mockResolvedValue([
+    get.mockReset().mockImplementation(fakeVendorApi([
       vendorOrder({ id: 'a', displayId: 'ORD-1' }),
       vendorOrder({ id: 'b', displayId: 'ORD-2', latestDesignStatus: 'REJECTED', latestDesignComment: 'Name misspelt' }),
       vendorOrder({ id: 'c', displayId: 'ORD-3', artworkApproved: true }),
-    ])
+    ]))
   })
 
   it('greets the vendor and counts the queue by stage', async () => {
@@ -67,7 +69,7 @@ describe('VendorHomePage', () => {
   })
 
   it('says so when nothing is waiting', async () => {
-    listVendorOrders.mockResolvedValue([vendorOrder({ id: 'd', status: 'DELIVERED', artworkApproved: true })])
+    get.mockImplementation(fakeVendorApi([vendorOrder({ id: 'd', status: 'DELIVERED', artworkApproved: true })]))
     renderHome()
     expect(await screen.findAllByText("You're all caught up")).not.toHaveLength(0)
     expect(screen.queryByRole('button', { name: 'Open the most urgent order' })).not.toBeInTheDocument()

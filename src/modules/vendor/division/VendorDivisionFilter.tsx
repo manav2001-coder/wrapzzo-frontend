@@ -3,8 +3,8 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useAllVendorOrders, useMyVendorDivisions } from '@/hooks/useVendorOrders'
-import { ALL_DIVISIONS, divisionsOf, mergeDivisions, setVendorDivision, useVendorDivision } from '@/lib/vendor-division'
+import { useMyVendorDivisions, useVendorOrderDivisions } from '@/hooks/useVendorOrders'
+import { ALL_DIVISIONS, mergeDivisions, setVendorDivision, useVendorDivision } from '@/lib/vendor-division'
 
 /**
  * Narrows the whole vendor portal -- home, orders -- to one of the customer's divisions. It offers every division the vendor is
@@ -12,10 +12,10 @@ import { ALL_DIVISIONS, divisionsOf, mergeDivisions, setVendorDivision, useVendo
  */
 export function VendorDivisionFilter({ className }: { className?: string }) {
   const { t } = useTranslation('vendor')
-  const { data: orders, isSuccess: ordersLoaded } = useAllVendorOrders()
+  const { data: fromOrders, isSuccess: ordersLoaded } = useVendorOrderDivisions()
   const { data: served, isSuccess: servedLoaded } = useMyVendorDivisions()
   const division = useVendorDivision()
-  const options = mergeDivisions(served ?? [], divisionsOf(orders ?? []))
+  const options = mergeDivisions(served ?? [], fromOrders ?? [])
   const known = options.some((option) => option.id === division)
 
   // A saved choice the vendor no longer serves would show an empty portal with no way back: clear it.

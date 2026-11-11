@@ -67,7 +67,7 @@ describe('LandingPage', () => {
 
   it('shows the hero and every solution to a signed-out visitor', () => {
     renderLanding()
-    expect(screen.getByRole('heading', { level: 1, name: /gifting platform for every relationship/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /every request raised, approved, printed and delivered/i })).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(8)
   })
 

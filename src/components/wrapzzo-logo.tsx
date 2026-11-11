@@ -1,4 +1,3 @@
-import { Gift } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
@@ -14,20 +13,23 @@ interface WrapzzoLogoProps {
 }
 
 /**
- * The Wrappzo lockup, drawn in the MobixFL shell's style: a primary-blue tile carrying the mark
- * (with the same soft blue glow MobixFL's logo has on the navy rail) and a bold wordmark beside it.
+ * The Wrappzo lockup: the W mark on a light tile and a bold wordmark beside it.
  */
 export function WrapzzoLogo({ variant = 'full', height = 28, tone = 'white', className }: WrapzzoLogoProps) {
   const { t } = useTranslation()
   return (
     <span className={cn('inline-flex items-center gap-2', className)} role="img" aria-label={t('a11y.logoAlt')}>
-      <span
-        className="flex shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-sidebar-accent text-white shadow-[0_0_14px_rgba(52,211,153,0.45)]"
-        style={{ width: height, height }}
+      <svg
+        viewBox="0 0 1600 1600"
+        width={height}
+        height={height}
+        className="shrink-0 rounded-md shadow-[0_0_14px_rgba(80,72,255,0.35)]"
         aria-hidden="true"
       >
-        <Gift style={{ width: height * 0.58, height: height * 0.58 }} strokeWidth={2.25} />
-      </span>
+        <rect width="1600" height="1600" fill="#f7f7f7" />
+        <path d="M275 500 550 1100 800 500 1050 1100 1290 570" fill="none" stroke="#5048ff" strokeWidth="120" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="1325" cy="500" r="100" fill="#5048ff" />
+      </svg>
       {variant === 'full' && (
         <span
           aria-hidden="true"

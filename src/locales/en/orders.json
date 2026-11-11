@@ -101,6 +101,7 @@
       "level": "Level {{n}}",
       "approved": "approved by {{name}}",
       "rejected": "sent back by {{name}}",
+      "bypassed": "skipped by {{name}}",
       "onBehalf": "(for {{name}})",
       "waiting": "waiting on {{name}}",
       "waitingAnyone": "waiting on a Final Artwork Approval holder"

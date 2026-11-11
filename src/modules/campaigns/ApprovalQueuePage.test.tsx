@@ -101,6 +101,12 @@ describe('ApprovalQueuePage', () => {
     await waitFor(() => expect(approveOrderDesign).toHaveBeenCalledWith('o-1', 'd-2'))
   })
 
+  it('has no Waiting below you tab without the Override permission', async () => {
+    renderWithProviders(<ApprovalQueuePage />)
+    await screen.findByText('Rx Pad A5')
+    expect(screen.queryByRole('tab', { name: /Waiting below you/ })).not.toBeInTheDocument()
+  })
+
   it('opens the proof in a dialog from the drawer', async () => {
     renderWithProviders(<ApprovalQueuePage />)
     const drawer = await openDrawer()

@@ -1,4 +1,4 @@
-import { Check, Hourglass, Undo2 } from 'lucide-react'
+import { Check, Hourglass, SkipForward, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import type { ArtworkApprovalStep } from '@/api/orderDesigns'
@@ -26,16 +26,22 @@ export function ArtworkApprovalTrail({
     <ol className="space-y-1 text-sm" aria-label={t('artwork.trail.title')}>
       {steps.map((step, i) => {
         const approved = step.decision === 'APPROVED'
-        const Icon = approved ? Check : Undo2
+        const bypassed = step.decision === 'BYPASSED'
+        const Icon = approved ? Check : bypassed ? SkipForward : Undo2
         return (
           <li key={i} className="flex items-start gap-2">
-            <Icon className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', approved ? 'text-success' : 'text-destructive')} />
+            <Icon className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', approved ? 'text-success' : bypassed ? 'text-warning' : 'text-destructive')} />
             <span className="min-w-0">
               <span className="font-medium">{levelName(step.level)}</span>
               {' · '}
-              {approved ? t('artwork.trail.approved', { name: step.decidedByName }) : t('artwork.trail.rejected', { name: step.decidedByName })}
+              {approved
+                ? t('artwork.trail.approved', { name: step.decidedByName })
+                : bypassed
+                  ? t('artwork.trail.bypassed', { name: step.decidedByName })
+                  : t('artwork.trail.rejected', { name: step.decidedByName })}
               {step.onBehalfOfName && ` ${t('artwork.trail.onBehalf', { name: step.onBehalfOfName })}`}
               <span className="text-xs text-muted-foreground"> · {formatDateTime(step.decidedAt)}</span>
+              {bypassed && step.comment && <span className="block text-xs text-muted-foreground italic">“{step.comment}”</span>}
             </span>
           </li>
         )

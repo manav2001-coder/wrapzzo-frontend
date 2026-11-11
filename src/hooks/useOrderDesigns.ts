@@ -1,6 +1,6 @@
 import { invalidateOrderLists } from '@/lib/invalidate-lists'
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { approveOrderDesign, listOrderDesigns, rejectOrderDesign } from '@/api/orderDesigns'
+import { approveOrderDesign, listOrderDesigns, overrideOrderDesign, rejectOrderDesign } from '@/api/orderDesigns'
 import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 
 export function useOrderDesigns(orderId: string | undefined) {
@@ -45,6 +45,15 @@ export function useReviewArtwork() {
   return useMutation({
     mutationFn: ({ orderId, designId, comment }: { orderId: string; designId: string; comment?: string }) =>
       comment === undefined ? approveOrderDesign(orderId, designId) : rejectOrderDesign(orderId, designId, comment),
+    onSuccess: (_design, { orderId }) => afterReview(queryClient, orderId),
+  })
+}
+
+/** Approving in place of the MR or the levels below, from "Waiting below you". */
+export function useOverrideArtwork() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ orderId, designId, comment }: { orderId: string; designId: string; comment?: string }) => overrideOrderDesign(orderId, designId, comment),
     onSuccess: (_design, { orderId }) => afterReview(queryClient, orderId),
   })
 }

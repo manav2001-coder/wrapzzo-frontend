@@ -22,10 +22,13 @@ import { useReviewArtwork } from '@/hooks/useOrderDesigns'
 import { formatDate, formatDateTime } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { AppTabs } from '@/components/app-tabs'
+import { usePermissions } from '@/components/permission-provider'
 import { useApprovalCounts } from '@/hooks/useApprovalCounts'
+import { P } from '@/lib/permissions'
 import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 import { serverFetcher } from '@/lib/server-list'
 import { OrderRequestsSection } from './OrderRequestsSection'
+import { OverridableArtworkSection } from './OverridableArtworkSection'
 
 /** The artwork queue: a page at a time from the server, which works out which proofs are the caller's to sign. */
 const fetchArtwork = serverFetcher<PendingArtworkApproval>('/api/artwork-approvals/pending/page')
@@ -63,7 +66,10 @@ export function ApprovalQueuePage() {
   // The queue is a page of the server's list; how many wait of each kind is counted by the server too.
   const counts = useApprovalCounts()
   // Starts on whichever kind has something waiting (artwork when both do); the user's own pick wins after that.
-  const [pickedTab, setPickedTab] = useState<'artwork' | 'orders' | null>(null)
+  const { hasPermission } = usePermissions()
+  // "Waiting below you": proofs the caller may approve in place of the levels beneath them (the Override permission).
+  const canOverride = hasPermission(P.ARTWORK_OVERRIDE)
+  const [pickedTab, setPickedTab] = useState<'artwork' | 'orders' | 'below' | null>(null)
   const tab = pickedTab ?? ((counts.orders ?? 0) > 0 && (counts.artwork ?? 0) === 0 ? 'orders' : 'artwork')
 
   // The row that was clicked; the drawer shows it and closes once the proof is decided.
@@ -168,15 +174,17 @@ export function ApprovalQueuePage() {
 
       <AppTabs
         value={tab}
-        onValueChange={(value) => setPickedTab(value as 'artwork' | 'orders')}
+        onValueChange={(value) => setPickedTab(value as 'artwork' | 'orders' | 'below')}
         className="mb-3"
         tabs={[
           { value: 'artwork', label: 'Artwork approvals', badge: counts.artwork || undefined },
           { value: 'orders', label: 'Order requests', badge: counts.orders || undefined },
+          ...(canOverride ? [{ value: 'below', label: 'Waiting below you' }] : []),
         ]}
       />
 
       {tab === 'orders' && <OrderRequestsSection />}
+      {tab === 'below' && canOverride && <OverridableArtworkSection />}
       {tab === 'artwork' && (
         <>
 

@@ -25,6 +25,8 @@ export const P = {
   ORDER_REQUEST_PHOTO: 'order.request_photo',
   ARTWORK_REVIEW: 'artwork.review',
   ARTWORK_FINAL_APPROVE: 'artwork.final_approve',
+  /** Approve a proof still waiting on the MR or a lower level, in place of the people there; it moves on to the level above the approver. */
+  ARTWORK_OVERRIDE: 'artwork.override',
   /** The Approvals page (manager queue). Not the approval-steps setup, which is ARTWORK_APPROVAL_*. */
   APPROVAL_VIEW: 'approval.view',
   /** Approve or send back a proof at a manager level. The MR's own first review is ARTWORK_REVIEW. */

@@ -101,6 +101,7 @@
       "level": "स्तर {{n}}",
       "approved": "{{name}} ने मंज़ूर किया",
       "rejected": "{{name}} ने वापस भेजा",
+      "bypassed": "{{name}} ने छोड़ा",
       "onBehalf": "({{name}} की जगह)",
       "waiting": "{{name}} की मंज़ूरी बाकी",
       "waitingAnyone": "अंतिम आर्टवर्क मंज़ूरी वाले व्यक्ति की मंज़ूरी बाकी"

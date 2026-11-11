@@ -28,7 +28,8 @@ export interface OrderDesign {
 
 export interface ArtworkApprovalStep {
   level: number
-  decision: 'APPROVED' | 'REJECTED'
+  /** BYPASSED: this level was skipped -- someone higher up approved the proof in place of the people it waited on. */
+  decision: 'APPROVED' | 'REJECTED' | 'BYPASSED'
   decidedByName: string
   /** Set when someone with Final Artwork Approval signed this level for the manager it was waiting on. */
   onBehalfOfName: string | null
@@ -43,6 +44,12 @@ export async function listOrderDesigns(orderId: string): Promise<OrderDesign[]> 
 
 export async function approveOrderDesign(orderId: string, designId: string): Promise<OrderDesign> {
   const { data } = await apiClient.post<OrderDesign>(`/api/orders/${orderId}/designs/${designId}/approve`)
+  return data
+}
+
+/** Approve in place of the MR or the levels below the caller; the proof moves on to the level above the caller's own. The reason is optional. */
+export async function overrideOrderDesign(orderId: string, designId: string, comment?: string): Promise<OrderDesign> {
+  const { data } = await apiClient.post<OrderDesign>(`/api/orders/${orderId}/designs/${designId}/override`, { comment: comment?.trim() || null })
   return data
 }
 
@@ -74,3 +81,27 @@ export interface PendingArtworkApproval {
   approvals: ArtworkApprovalStep[]
 }
 
+/** A proof still waiting on the MR or a level below the caller, which the caller may approve in place of the people there -- a row of "Waiting below you". */
+export interface OverridableArtwork {
+  designId: string
+  orderId: string
+  orderDisplayId: string
+  giftName: string | null
+  recipientName: string | null
+  quantity: number
+  requestedByName: string | null
+  versionNo: number
+  fileUrl: string
+  fileName: string | null
+  /** What it waits on now: "the MR's review (Name)", or "level 1 (Name)". */
+  waitingOn: string
+  /** The level it waits on: 0 for the MR's review, then 1..n. */
+  waitingLevel: number
+  /** The level the caller would approve at. */
+  yourLevel: number
+  approvalLevels: number
+  /** Each step the caller's approval would skip, nearest first. */
+  skipping: string[]
+  waitingSince: string | null
+  approvals: ArtworkApprovalStep[]
+}

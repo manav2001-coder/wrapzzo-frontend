@@ -1,33 +1,73 @@
 {
   "landing": {
-    "nav": { "solutions": "Solutions", "login": "Log in" },
+    "nav": {
+      "solutions": "How it works",
+      "login": "Log in"
+    },
     "hero": {
-      "badge": "Corporate gifting platform",
-      "title": "A gifting platform for every relationship you manage.",
-      "body": "Campaigns, vendors, orders and every recipient roster: Wrappzo runs the whole corporate gifting workflow in one place.",
+      "badge": "Request-to-delivery platform",
+      "title": "Every request raised, approved, printed and delivered in one place.",
+      "body": "Your field team raises a request for a doctor, managers approve it, the vendor prints and ships it, and everyone follows it to delivery. Wrappzo runs that whole workflow.",
       "cta": "Log in"
     },
     "solutions": {
-      "title": "Built for every kind of corporate gifting",
-      "body": "Whoever you're gifting (employees, clients, distributors, healthcare professionals or partners), it runs through the same platform.",
-      "employee": { "title": "Employee Gifting", "description": "Onboarding kits, milestones and everyday recognition for your team.", "caption": "New-hire welcome kits, delivered the day an offer is accepted." },
-      "client": { "title": "Client Gifting", "description": "Thoughtful gifting that scales with your client base.", "caption": "Renewal and anniversary gifts, sent on schedule." },
-      "dealer": { "title": "Distributor / Dealer Gifting", "description": "Recognition programs for your distribution and dealer network.", "caption": "Nationwide dealer incentive gifting, tracked by territory." },
-      "pharma": { "title": "Pharma / HCP Gifting", "description": "Compliant gifting and engagement for healthcare professionals.", "caption": "Doctor engagement gifting, handled with the care the sector needs." },
-      "events": { "title": "Events & Conferences", "description": "Welcome gifts and merchandise for conferences and field events.", "caption": "Conference welcome kits, ready for attendees on day one." },
-      "welcome": { "title": "Welcome Kits", "description": "Onboarding and induction kits for new employees or partners.", "caption": "Branded welcome kits, shipped nationwide on your timeline." },
-      "rewards": { "title": "Rewards & Recognition", "description": "Performance-tied gifting for milestones and achievements.", "caption": "Quarterly recognition gifting, delivered on time, every time." },
-      "partner": { "title": "Partner Gifting", "description": "Gifting for the partners and vendors who help your business run.", "caption": "Year-end appreciation gifting for your partner network." }
+      "title": "One workflow, from the field to the doorstep",
+      "body": "Each person sees and does only their part: the rep raising the request, the managers approving it, the vendor printing and dispatching it.",
+      "request": {
+        "title": "Raise a request",
+        "description": "Reps pick a product from the Gift Store, or send a Quick Gift, for one of their doctors.",
+        "caption": "Choose the doctor, the product and the quantity, and leave one note for the vendor."
+      },
+      "doctors": {
+        "title": "Doctor directory",
+        "description": "Each rep's doctors in one list, with bulk upload for whole sheets at a time.",
+        "caption": "Upload a sheet of doctors once, then reuse them on every request."
+      },
+      "approval": {
+        "title": "Manager approval",
+        "description": "Companies can require a manager to approve a request before it reaches the vendor.",
+        "caption": "Requests wait in the manager's queue until they decide."
+      },
+      "artwork": {
+        "title": "Artwork review",
+        "description": "The vendor's proof is reviewed by the MR, then up the reporting line, before anything is printed.",
+        "caption": "A manager can approve in place of those below them when someone is unavailable."
+      },
+      "vendors": {
+        "title": "Vendor fulfilment",
+        "description": "Printers get their own portal for their orders, proof uploads and dispatch.",
+        "caption": "Proofs are named PCode_Doctor_AM, so every file matches its order."
+      },
+      "dispatch": {
+        "title": "Labels & dispatch",
+        "description": "Vendors download a dispatch label with the doctor's and the rep's details.",
+        "caption": "Pack it, mark it dispatched, and the team sees it straight away."
+      },
+      "tracking": {
+        "title": "Order tracking",
+        "description": "Every order's status and history, from raised to delivered.",
+        "caption": "Follow an order without calling anyone."
+      },
+      "dashboards": {
+        "title": "Team dashboards",
+        "description": "Managers see what is pending, approved and delivered across their team.",
+        "caption": "Each person sees their own team's orders and nobody else's."
+      }
     },
     "cta": {
-      "title": "Ready to manage your next gifting program?",
-      "body": "Log in to see campaigns, orders and rosters for every company on Wrappzo."
+      "title": "Ready to see your requests through to delivery?",
+      "body": "Log in to raise requests, approve artwork and track every order."
     },
     "footer": {
-      "blurb": "Corporate gifting and custom merchandise, sourced and delivered by Wrappzo.",
+      "blurb": "Requests, approvals, printing and delivery for field teams, run by Wrappzo.",
       "platform": "Platform",
       "account": "Account",
-      "links": { "giftStore": "Gift Store", "quickGifts": "Quick Gifts", "bulkGifting": "Bulk Gifting", "campaigns": "Campaigns" },
+      "links": {
+        "giftStore": "Gift Store",
+        "quickGifts": "Quick Gifts",
+        "approvals": "Approvals",
+        "tracking": "Order tracking"
+      },
       "rights": "© {{year}} Wrappzo. Operated by Orange Dot Solutions. All rights reserved."
     }
   },

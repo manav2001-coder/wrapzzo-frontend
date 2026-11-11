@@ -119,7 +119,7 @@ export function LoginPage() {
         </header>
 
         <div className="flex flex-1 items-center justify-center py-10">
-          <div className="w-full max-w-[25rem]">
+          <div className="w-full max-w-[26rem] rounded-2xl border border-[#BFD3C7] bg-white p-6 shadow-[0_1px_2px_rgb(11_47_35/0.04)] sm:p-8">
             <h1 className="text-[2rem] font-extrabold leading-[1.15] tracking-[-0.03em]">{t('login.title')}</h1>
             <p className="mt-3 text-base leading-relaxed text-[#3E5A4D]">{t('login.subtitle')}</p>
 
@@ -200,7 +200,7 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-7 flex items-start gap-3 rounded-xl bg-[#E1F0E7] px-4 py-3.5 text-sm leading-relaxed">
+            <div className="mt-7 flex items-start gap-3 rounded-xl border border-[#17794D]/15 bg-[#E1F0E7] px-4 py-3.5 text-sm leading-relaxed">
               <Info aria-hidden className="mt-0.5 size-[18px] shrink-0 text-[#17794D]" />
               <span>
                 <strong>{t('login.noAccountTitle')}</strong> {t('login.noAccount')}

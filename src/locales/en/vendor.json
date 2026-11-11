@@ -124,6 +124,8 @@
       "subtitleRequired": "The customer must approve a proof before you can dispatch.",
       "subtitleOptional": "Optional for this product. Upload a proof if you'd like the customer to check it.",
       "drop": "Drop a proof here or click to choose (PDF only)",
+      "nameRule": "Name the file PCode_DoctorName_AMName.pdf. The AM's SAP code can be used in place of the AM's name.",
+      "notUploaded": "This file was not uploaded",
       "uploaded": "Proof uploaded. The customer has been asked to review it.",
       "history": "Versions",
       "version": "Version {{n}}",

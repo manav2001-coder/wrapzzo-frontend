@@ -5,7 +5,7 @@ import { vendorApiClient } from '@/lib/vendorApiClient'
 interface PresignDesignResponse {
   uploadUrl: string
   key: string
-  /** What the proof will be called: PCODE_AMCODE_vN.pdf. */
+  /** What the proof will be called: PCODE_Doctor_AM_vN.pdf. */
   fileName: string
 }
 
@@ -18,7 +18,9 @@ export async function listVendorOrderDesigns(orderId: string): Promise<OrderDesi
 
 /**
  * Presigns an upload URL and PUTs the file straight to object storage, then registers the new version. Proofs are
- * PDFs, and the server names them (PCODE_AMCODE_vN.pdf): the file's own name is not used.
+ * PDFs, and the file must already be named PCode_DoctorName_AMName.pdf (the AM's SAP code can replace their name): the server checks the
+ * name against the order and refuses a file named otherwise, saying what it should have been called -- before anything is uploaded.
+ * A good one is stored under the server's tidy name (PCODE_Doctor_AM_vN.pdf).
  */
 export async function uploadVendorOrderDesign(orderId: string, file: File): Promise<OrderDesign> {
   // Some systems report no type for a .pdf, so the extension counts too.
@@ -26,6 +28,7 @@ export async function uploadVendorOrderDesign(orderId: string, file: File): Prom
   if (!isPdf) throw new UserFacingError(`"${file.name}" is not a PDF. Proofs must be PDF files.`)
   const { data: presign } = await vendorApiClient.post<PresignDesignResponse>(`/api/vendor/orders/${orderId}/designs/presign`, {
     contentType: PDF,
+    fileName: file.name,
   })
 
   let uploadResponse: Response

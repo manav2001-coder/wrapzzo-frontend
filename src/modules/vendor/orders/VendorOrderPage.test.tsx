@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { VendorOrder } from '@/api/vendorOrders'
+import { ApiError } from '@/lib/axiosClient'
 import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { vendorOrder } from '../vendor-fixtures'
 import { VendorOrderPage } from './VendorOrderPage'
@@ -88,6 +89,32 @@ describe('VendorOrderPage', () => {
     expect(uploadVendorOrderDesign).not.toHaveBeenCalled()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Upload proof' }))
     await waitFor(() => expect(uploadVendorOrderDesign).toHaveBeenCalledWith('o-1', proof))
+  })
+
+  it('tells the vendor how to name the proof, before they pick one', async () => {
+    renderWorkspace(vendorOrder())
+    expect(await screen.findByText(/Name the file PCode_DoctorName_AMName\.pdf/)).toBeInTheDocument()
+    expect(screen.getByText(/SAP code can be used in place of the AM's name/)).toBeInTheDocument()
+  })
+
+  it('nudges the vendor to upload the correct file when the name is refused, and clears the nudge on the next pick', async () => {
+    uploadVendorOrderDesign.mockRejectedValue(
+      new ApiError('"final.pdf" is not named the way this order needs. Name the proof PCode_DoctorName_AMName.pdf -- for this order: P-1001_Asha-Shah_MR-North.pdf -- then upload it again.', 400),
+    )
+    const { container } = renderWorkspace(vendorOrder())
+    await screen.findByText('Upload an artwork proof for the customer to approve.')
+
+    const wrong = new File(['%PDF'], 'final.pdf', { type: 'application/pdf' })
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [wrong] } })
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Upload proof' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('This file was not uploaded')
+    expect(alert).toHaveTextContent('for this order: P-1001_Asha-Shah_MR-North.pdf')
+    // It stays on the page (not a toast that vanishes) until another file is picked.
+    const better = new File(['%PDF'], 'P-1001_Asha-Shah_MR-North.pdf', { type: 'application/pdf' })
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [better] } })
+    await waitFor(() => expect(screen.queryByText('This file was not uploaded')).not.toBeInTheDocument())
   })
 
   it('shows a picked PDF for confirmation and sends nothing when the vendor chooses another', async () => {

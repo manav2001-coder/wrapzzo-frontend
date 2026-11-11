@@ -1,9 +1,11 @@
 import { RecipientPhotos } from '@/components/orders/recipient-photos'
+import { ApiError } from '@/lib/axiosClient'
 import {
   ArrowLeft,
   Check,
   Copy,
   ExternalLink,
+  FileWarning,
   ImageOff,
   Lock,
   MessageSquareWarning,
@@ -231,14 +233,18 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
 
   // A picked file waits for a look at it: a wrong pick would send the customer the wrong proof.
   const [picked, setPicked] = useState<File | null>(null)
+  // The server refuses a proof that is not named PCode_DoctorName_AMName.pdf; its message says what the name should have been, and stays until another file is picked.
+  const [refusal, setRefusal] = useState<string | null>(null)
 
   async function confirmUpload() {
     if (!picked) return
+    setRefusal(null)
     try {
       await upload.mutateAsync(picked)
       toast.success(t('order.artwork.uploaded'))
     } catch (err) {
-      showError(err)
+      if (err instanceof ApiError && err.status === 400) setRefusal(err.message)
+      else showError(err)
     } finally {
       setPicked(null)
     }
@@ -275,11 +281,24 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
             )}
             <FileDropzone
               file={null}
-              onChange={setPicked}
+              onChange={(next) => {
+                setRefusal(null)
+                setPicked(next)
+              }}
               accept={PROOF_ACCEPT}
               disabled={upload.isPending}
               prompt={t('order.artwork.drop')}
             />
+            <p className="text-xs text-muted-foreground">{t('order.artwork.nameRule')}</p>
+            {refusal && (
+              <div role="alert" className="flex gap-2.5 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                <FileWarning className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-destructive">{t('order.artwork.notUploaded')}</p>
+                  <p className="text-sm">{refusal}</p>
+                </div>
+              </div>
+            )}
           </>
         )}
 

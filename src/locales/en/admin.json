@@ -88,7 +88,7 @@
       "SUSPENDED": "Suspended"
     },
     "makeAdmin": "Make Company Admin",
-    "makeAdminBody": "{{name}} will be able to manage users, roles and campaigns for {{company}}.",
+    "makeAdminBody": "{{name}} will be able to manage users and roles for {{company}}.",
     "madeAdmin": "{{name}} is now a Company Admin.",
     "removeAdmin": "Remove Company Admin",
     "removeAdminBody": "{{name}} will lose Company Admin access and move to the role you pick.",
@@ -216,7 +216,7 @@
   },
   "gifts": {
     "title": "Gift Store",
-    "subtitle": "The catalogue every company's Gift Store and campaigns draw from.",
+    "subtitle": "The catalogue every company's Gift Store draws from.",
     "add": "Add gift",
     "emptyTitle": "No gifts yet",
     "emptyBody": "Add the first gift to the catalogue.",
@@ -236,7 +236,7 @@
     "markOut": "Mark out of stock",
     "markIn": "Mark in stock",
     "outTitle": "Mark this gift out of stock?",
-    "outBody": "It disappears from every Gift Store and can't be added to new campaigns until it is back in stock.",
+    "outBody": "It disappears from every Gift Store and can't be ordered until it is back in stock.",
     "markedIn": "Gift marked in stock",
     "markedOut": "Gift marked out of stock",
     "wrapzzo": "Wrappzo",

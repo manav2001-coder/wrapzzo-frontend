@@ -18,14 +18,13 @@
   },
   "store": {
     "title": "Gift Store",
-    "subtitle": "Everything the vendors serving your team offer. Send one now with Quick Gift, or run a campaign.",
+    "subtitle": "Everything the vendors serving your team offer. Send one now with Quick Gift.",
     "quickGift": "Quick Gift",
-    "launchCampaign": "Launch campaign",
     "notAvailable": "Not available to you"
   },
   "landing": {
     "title": "Quick Gift",
-    "subtitle": "Send a gift to one or more people, no campaign needed.",
+    "subtitle": "Send a gift to one or more people.",
     "subtitleFor": "Pick a gift for {{name}}. Their details are already filled in.",
     "tabSend": "Send a gift",
     "tabRequests": "My requests",

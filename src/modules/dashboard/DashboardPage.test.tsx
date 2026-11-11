@@ -14,26 +14,20 @@ vi.mock('@/api/recipients', async (o) => ({ ...(await o<object>()), listUpcoming
 const SUMMARY: DashboardSummary = {
   companyName: 'Alembic',
   companyWide: true,
-  campaignsRunning: 2,
   giftsInProgress: 4,
   dispatched: 1,
   delivered: 7,
-  submissionsPending: 0,
   quickGiftsThisMonth: 5,
   quickGiftsPending: 3,
   pelsRequested: 1500,
   doctorsRequested: 6,
   pelsServed: 900,
   doctorsServed: 4,
-  orderSourceBreakdown: { CAMPAIGN: 6, QUICK_GIFT: 5 },
+  orderSourceBreakdown: { QUICK_GIFT: 5 },
   quickGiftStatusBreakdown: { APPROVED: 4, SUBMITTED: 1 },
-  submissionStatusBreakdown: {},
   activityTrend: [],
   topGifts: [],
-  topCampaigns: [],
   topDepartments: [],
-  upcomingDeadlines: [],
-  recentCampaigns: [],
   recentActivity: [],
   recentOrders: [
     {
@@ -94,7 +88,7 @@ describe('DashboardPage', () => {
   it('breaks the PELs down per doctor', async () => {
     getDashboardDrilldown.mockResolvedValue({
       title: 'PELs created per doctor',
-      rows: [{ displayId: null, title: 'Dr. Asha Shah', subtitle: '2 orders', status: null, at: '2026-10-20T10:00:00Z', campaignId: null, quantity: 300 }],
+      rows: [{ displayId: null, title: 'Dr. Asha Shah', subtitle: '2 orders', status: null, at: '2026-10-20T10:00:00Z', quantity: 300 }],
     })
     renderWithProviders(<DashboardPage />)
     await userEvent.click(await screen.findByRole('button', { name: /PELs created/ }))
@@ -124,7 +118,6 @@ describe('DashboardPage', () => {
   it('says when there is nothing to show yet', async () => {
     getDashboard.mockResolvedValue({
       ...SUMMARY,
-      campaignsRunning: 0,
       giftsInProgress: 0,
       dispatched: 0,
       delivered: 0,

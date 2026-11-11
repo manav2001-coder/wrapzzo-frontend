@@ -13,16 +13,16 @@ function companyUser(permissions: string[], managesTeam = false, menuLabels: Rec
 
 describe('Sidebar', () => {
   beforeEach(() => {
-    companyUser(['dashboard.view', 'campaign_entry.submit', 'order.view', 'quick_gift.create', 'gift_store.view', 'doctor.view'])
+    companyUser(['dashboard.view', 'order.view', 'quick_gift.create', 'gift_store.view', 'doctor.view'])
   })
 
   it('shows a company user only the entries their keys open', () => {
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/dashboard')
     expect(screen.getByRole('link', { name: /quick gift/i })).toHaveAttribute('href', '/quick-gift')
-    // No campaign.view and no artwork key, so the Campaigns > Create link and the Approvals entry are not offered.
+    // No artwork key, so the Approvals entry is not offered.
     expect(screen.queryByRole('link', { name: /approvals/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Create' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /campaign/i })).not.toBeInTheDocument()
   })
 
   it('offers Approvals only to whoever holds approval.view', () => {

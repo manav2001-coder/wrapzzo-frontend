@@ -13,10 +13,7 @@ import {
   Contact,
   Gift,
   LayoutDashboard,
-  ListChecks,
-  Megaphone,
   PencilLine,
-  PlusCircle,
   Palette,
   ShieldCheck,
   ShoppingBag,
@@ -196,8 +193,7 @@ export const ADMIN_NAV: NavSource[] = [
 ]
 
 /**
- * A company's own users. Approvals, Orders and Users are siblings of the Campaigns branch rather
- * than inside it: they are independent workflows, not part of building or running a campaign.
+ * A company's own users: Quick Gifts, the Gift Store, Doctors, Approvals and Orders.
  */
 export const COMPANY_NAV: NavSource[] = [
   COMPANY_GENERAL,
@@ -208,16 +204,6 @@ export const COMPANY_NAV: NavSource[] = [
     type: 'collapse',
     icon: Briefcase,
     children: [
-      {
-        id: 'campaigns',
-        titleKey: 'nav.campaigns',
-        type: 'collapse',
-        icon: Megaphone,
-        children: [
-          { id: 'campaigns-create', titleKey: 'nav.campaignsCreate', type: 'item', url: '/campaigns', icon: PlusCircle, permission: P.CAMPAIGN_VIEW },
-          { id: 'campaigns-manage', titleKey: 'nav.campaignsManage', type: 'item', url: '/my-campaigns', icon: ListChecks, permission: P.CAMPAIGN_ENTRY_SUBMIT },
-        ],
-      },
       { id: 'quick-gift', titleKey: 'nav.quickGift', type: 'item', url: '/quick-gift', icon: Zap, permission: P.QUICK_GIFT_CREATE },
       { id: 'gift-store', titleKey: 'nav.giftStore', type: 'item', url: '/gift-store', icon: Store, permission: P.GIFT_STORE_VIEW },
       { id: 'recipients', titleKey: 'nav.recipients', type: 'item', url: '/recipients', icon: Contact, permission: P.DOCTOR_VIEW },

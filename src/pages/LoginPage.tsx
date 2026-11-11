@@ -4,7 +4,7 @@ import {
   BadgeCheck,
   Contact,
   Loader2,
-  Megaphone,
+  Package,
   Palette,
   ShoppingBag,
   Store,
@@ -34,11 +34,11 @@ import { ApiError } from '@/lib/axiosClient'
 const FEATURES = [
   { icon: Store, key: 'giftStore', tone: 'text-emerald-300 bg-emerald-400/10' },
   { icon: Zap, key: 'quickGift', tone: 'text-emerald-300 bg-emerald-400/10' },
-  { icon: Megaphone, key: 'campaigns', tone: 'text-violet-300 bg-violet-400/10' },
   { icon: Contact, key: 'recipients', tone: 'text-amber-300 bg-amber-400/10' },
   { icon: BadgeCheck, key: 'approvals', tone: 'text-teal-300 bg-teal-400/10' },
   { icon: Palette, key: 'artwork', tone: 'text-rose-300 bg-rose-400/10' },
   { icon: Truck, key: 'vendors', tone: 'text-lime-300 bg-lime-400/10' },
+  { icon: Package, key: 'dispatch', tone: 'text-violet-300 bg-violet-400/10' },
   { icon: ShoppingBag, key: 'tracking', tone: 'text-green-300 bg-green-400/10' },
 ] as const
 
@@ -108,7 +108,7 @@ export function LoginPage() {
     }
   }
 
-  const words = [t('hero.words.choose'), t('hero.words.send'), t('hero.words.track')]
+  const words = [t('hero.words.request'), t('hero.words.approve'), t('hero.words.track')]
 
   return (
     <div className="hero-gradient relative isolate min-h-svh overflow-hidden text-white">

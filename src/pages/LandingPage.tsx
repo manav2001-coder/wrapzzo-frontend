@@ -1,14 +1,14 @@
 import {
   ArrowRight,
-  Award,
-  Briefcase,
-  CalendarDays,
-  Handshake,
+  BadgeCheck,
+  LayoutDashboard,
   Mail,
+  MapPin,
   Package,
+  Palette,
+  Send,
   Stethoscope,
   Truck,
-  Users,
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -22,17 +22,17 @@ const CONTACT_EMAIL = 'hello@wrappzo.com'
 
 /** Icon + translation key + tint, the same tinted-tile language the sign-in hero uses. */
 const SOLUTIONS: { key: string; icon: LucideIcon; tone: string }[] = [
-  { key: 'employee', icon: Users, tone: 'text-emerald-600 bg-emerald-500/10 dark:text-emerald-300' },
-  { key: 'client', icon: Briefcase, tone: 'text-violet-600 bg-violet-500/10 dark:text-violet-300' },
-  { key: 'dealer', icon: Truck, tone: 'text-amber-600 bg-amber-500/10 dark:text-amber-300' },
-  { key: 'pharma', icon: Stethoscope, tone: 'text-emerald-600 bg-emerald-500/10 dark:text-emerald-300' },
-  { key: 'events', icon: CalendarDays, tone: 'text-rose-600 bg-rose-500/10 dark:text-rose-300' },
-  { key: 'welcome', icon: Package, tone: 'text-teal-600 bg-teal-500/10 dark:text-teal-300' },
-  { key: 'rewards', icon: Award, tone: 'text-orange-600 bg-orange-500/10 dark:text-orange-300' },
-  { key: 'partner', icon: Handshake, tone: 'text-green-600 bg-green-500/10 dark:text-green-300' },
+  { key: 'request', icon: Send, tone: 'text-emerald-600 bg-emerald-500/10 dark:text-emerald-300' },
+  { key: 'doctors', icon: Stethoscope, tone: 'text-violet-600 bg-violet-500/10 dark:text-violet-300' },
+  { key: 'approval', icon: BadgeCheck, tone: 'text-teal-600 bg-teal-500/10 dark:text-teal-300' },
+  { key: 'artwork', icon: Palette, tone: 'text-rose-600 bg-rose-500/10 dark:text-rose-300' },
+  { key: 'vendors', icon: Truck, tone: 'text-amber-600 bg-amber-500/10 dark:text-amber-300' },
+  { key: 'dispatch', icon: Package, tone: 'text-orange-600 bg-orange-500/10 dark:text-orange-300' },
+  { key: 'tracking', icon: MapPin, tone: 'text-green-600 bg-green-500/10 dark:text-green-300' },
+  { key: 'dashboards', icon: LayoutDashboard, tone: 'text-sky-600 bg-sky-500/10 dark:text-sky-300' },
 ]
 
-const FOOTER_LINKS = ['giftStore', 'quickGifts', 'bulkGifting', 'campaigns'] as const
+const FOOTER_LINKS = ['giftStore', 'quickGifts', 'approvals', 'tracking'] as const
 
 const GRID =
   '[background-image:linear-gradient(rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.05)_1px,transparent_1px)] [background-size:44px_44px]'

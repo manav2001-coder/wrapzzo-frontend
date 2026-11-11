@@ -1,13 +1,6 @@
 import { Bolt, CheckCircle2, Circle, PlusCircle, Send, XCircle, type LucideIcon } from 'lucide-react'
 import { format } from 'date-fns'
-import { Link } from 'react-router-dom'
 import type { ActivityItem } from '@/api/dashboard'
-
-/** "submitted/resubmitted a recipient for" and "approved/rejected a submission for" -- as opposed to
- * "created campaign", which should land on the campaign's default (Audience) tab, not Submissions. */
-function isSubmissionActivity(verb: string): boolean {
-  return verb.includes('submission') || verb.includes('recipient for')
-}
 
 /** Maps an activity's verb to an icon + color so the feed reads at a glance -- an approval looks different
  * from a rejection, which looks different from something just being created or sent for review. */
@@ -61,18 +54,6 @@ export function RecentActivityFeed({
                   </div>
                 </>
               )
-              if (item.campaignId) {
-                return (
-                  <Link
-                    key={i}
-                    to={`/campaigns/${item.campaignId}`}
-                    state={isSubmissionActivity(item.verb) ? { tab: 'submissions' } : undefined}
-                    className="-mx-1 flex gap-3 rounded-lg px-1 hover:bg-muted"
-                  >
-                    {content}
-                  </Link>
-                )
-              }
               if (item.quickGiftId) {
                 return (
                   <button

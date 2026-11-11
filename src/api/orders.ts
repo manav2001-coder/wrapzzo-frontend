@@ -132,17 +132,7 @@ export interface BulkAssignResult {
   orders: Order[]
 }
 
-export async function assignCampaignVendor(campaignId: string, vendorId: string): Promise<BulkAssignResult> {
-  const { data } = await apiClient.post<BulkAssignResult>(`/api/platform/orders/campaign/${campaignId}/assign`, { vendorId })
-  return data
-}
-
-export async function autoAssignCampaignVendor(campaignId: string): Promise<BulkAssignResult> {
-  const { data } = await apiClient.post<BulkAssignResult>(`/api/platform/orders/campaign/${campaignId}/autoAssign`)
-  return data
-}
-
-/** Same bulk-assign convenience as a campaign's, but for a company's Quick Gift orders -- keyed by companyId since there's no campaign to key off. */
+/** Bulk-assigns a company's Quick Gift orders to a vendor, keyed by companyId. */
 export async function assignQuickGiftVendor(companyId: string, vendorId: string): Promise<BulkAssignResult> {
   const { data } = await apiClient.post<BulkAssignResult>(`/api/platform/orders/quickGift/${companyId}/assign`, { vendorId })
   return data

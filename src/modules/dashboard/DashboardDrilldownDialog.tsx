@@ -2,7 +2,6 @@ import { format } from 'date-fns'
 import { Inbox } from 'lucide-react'
 import { AppDialog } from '@/components/app-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Link } from 'react-router-dom'
 import type { DrilldownDimension, DrilldownRow } from '@/api/dashboard'
 import { EmptyState } from '@/components/empty-state'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -34,16 +33,7 @@ function DrilldownRowItem({ row }: { row: DrilldownRow }) {
       <p className="mt-1 text-xs text-muted-foreground">{format(new Date(row.at), 'dd MMM yyyy, h:mm a')}</p>
     </>
   )
-  return row.campaignId ? (
-    <Link
-      to={`/campaigns/${row.campaignId}`}
-      className="rounded-lg border p-3 transition-colors hover:bg-muted/50"
-    >
-      {content}
-    </Link>
-  ) : (
-    <div className="rounded-lg border p-3">{content}</div>
-  )
+  return <div className="rounded-lg border p-3">{content}</div>
 }
 
 /** Shown when a chart datapoint (a donut slice, a bar, or a PEL figure) is clicked -- the actual records behind that number. */

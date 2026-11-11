@@ -1,17 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  ArrowLeft,
-  BadgeCheck,
-  Contact,
-  Loader2,
-  Package,
-  Palette,
-  ShoppingBag,
-  Store,
-  Truck,
-  Zap,
-} from 'lucide-react'
-import { Fragment, useState } from 'react'
+import { ArrowLeft, ArrowRight, CircleAlert, CircleCheck, FileText, Info, Loader2, MapPin } from 'lucide-react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -30,20 +19,24 @@ import { setCredentials } from '@/features/auth/authSlice'
 import { setVendorCredentials } from '@/features/vendorAuth/vendorAuthSlice'
 import { ApiError } from '@/lib/axiosClient'
 
-/** Icon + translation key + accent, as on MobixFL's sign-in: eight tinted pills, not grey rows. */
-const FEATURES = [
-  { icon: Store, key: 'giftStore', tone: 'text-emerald-300 bg-emerald-400/10' },
-  { icon: Zap, key: 'quickGift', tone: 'text-emerald-300 bg-emerald-400/10' },
-  { icon: Contact, key: 'recipients', tone: 'text-amber-300 bg-amber-400/10' },
-  { icon: BadgeCheck, key: 'approvals', tone: 'text-teal-300 bg-teal-400/10' },
-  { icon: Palette, key: 'artwork', tone: 'text-rose-300 bg-rose-400/10' },
-  { icon: Truck, key: 'vendors', tone: 'text-lime-300 bg-lime-400/10' },
-  { icon: Package, key: 'dispatch', tone: 'text-violet-300 bg-violet-400/10' },
-  { icon: ShoppingBag, key: 'tracking', tone: 'text-green-300 bg-green-400/10' },
+/** The pipeline illustration's columns: how many placeholder cards each holds. It is decorative, never real data. */
+const PIPELINE = [
+  { key: 'requested', cards: 3, active: false },
+  { key: 'inReview', cards: 2, active: false },
+  { key: 'approved', cards: 2, active: false },
+  { key: 'inPrint', cards: 2, active: false },
+  { key: 'delivered', cards: 2, active: true },
 ] as const
 
-/** Inputs on the frosted navy card. */
-const INPUT_CLASS = 'h-10 border-white/20 bg-white/[0.07] text-sm text-white placeholder:text-white/30'
+const SELLING_POINTS = [
+  { icon: CircleCheck, key: 'approvals' },
+  { icon: FileText, key: 'artwork' },
+  { icon: MapPin, key: 'tracking' },
+] as const
+
+/** Inputs on the light form panel. */
+const INPUT_CLASS =
+  'h-[50px] rounded-xl border-[#BFD3C7] bg-white px-3.5 text-base text-[#0B2F23] placeholder:text-[#5A7466] focus-visible:border-[#17794D] focus-visible:ring-2 focus-visible:ring-[#17794D] focus-visible:ring-offset-0'
 
 type LoginFormValues = { email: string; password: string }
 
@@ -108,152 +101,183 @@ export function LoginPage() {
     }
   }
 
-  const words = [t('hero.words.request'), t('hero.words.approve'), t('hero.words.track')]
-
   return (
-    <div className="hero-gradient relative isolate min-h-svh overflow-hidden text-white">
-      {/* MobixFL's sign-in floats over its film; Wrappzo has none, so the hero's own glow and
-          blueprint grid carry the backdrop. */}
-      <div aria-hidden className="hero-glow absolute inset-0 -z-10" />
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 [background-image:linear-gradient(rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.05)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(ellipse_75%_70%_at_50%_45%,black,transparent)]"
-      />
-
-      <div className="relative flex min-h-svh flex-col">
-        <header className="mx-auto flex w-full max-w-screen-xl items-center justify-between px-6 pt-6 sm:px-10">
-          <Link to="/" className="w-fit rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
-            <WrapzzoLogo height={40} />
+    <div className="flex min-h-svh flex-col bg-[#F4F8F5] text-[#0B2F23] antialiased lg:flex-row-reverse">
+      {/* Form panel */}
+      <section className="flex min-w-0 flex-col px-6 py-7 sm:px-10 lg:flex-[1_1_480px] lg:px-16">
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <Link to="/" className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17794D] focus-visible:ring-offset-2">
+            <WrapzzoLogo height={40} tone="auto" />
           </Link>
           <Link
             to="/"
-            className="hidden items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-white/75 backdrop-blur transition-colors hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:inline-flex"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md px-1 text-sm font-semibold text-[#3E5A4D] hover:text-[#0B2F23] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17794D]"
           >
-            <ArrowLeft aria-hidden className="size-3.5" />
+            <ArrowLeft aria-hidden className="size-4" />
             {t('login.backToSite')}
           </Link>
         </header>
 
-        <main className="mx-auto flex w-full max-w-screen-xl flex-1 items-center gap-12 px-6 py-8 [justify-content:safe_center] sm:px-10 lg:justify-between">
-          {/* The brand. Large screens only: on a phone the card is the page. */}
-          <section className="hidden max-w-2xl flex-1 lg:block">
-            <p className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/80 backdrop-blur">
-              <span className="relative flex size-2">
-                <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75 motion-reduce:hidden" />
-                <span aria-hidden className="size-2 rounded-full bg-emerald-400" />
-              </span>
-              {t('hero.eyebrow')}
-            </p>
+        <div className="flex flex-1 items-center justify-center py-10">
+          <div className="w-full max-w-[25rem]">
+            <h1 className="text-[2rem] font-extrabold leading-[1.15] tracking-[-0.03em]">{t('login.title')}</h1>
+            <p className="mt-3 text-base leading-relaxed text-[#3E5A4D]">{t('login.subtitle')}</p>
 
-            <p className="mt-6 flex items-baseline gap-x-[0.3em] whitespace-nowrap text-[clamp(2.5rem,4.2vw,3.75rem)] font-extrabold leading-[0.95] tracking-[-0.045em] [text-shadow:0_2px_30px_rgb(5_13_26/0.6)]">
-              {words.map((word, index) => (
-                <Fragment key={word}>
-                  {index > 0 && (
-                    <span aria-hidden className="text-teal-300">
-                      ·
-                    </span>
-                  )}
-                  <span>{word}</span>
-                </Fragment>
-              ))}
-            </p>
-            <p className="mt-2 bg-gradient-to-r from-emerald-300 via-teal-200 to-lime-300 bg-clip-text text-[clamp(1.5rem,2.4vw,2.25rem)] font-bold leading-tight tracking-[-0.03em] text-transparent">
-              {t('hero.byline')}
-            </p>
-            <p className="mt-5 max-w-md text-base leading-relaxed text-white/70">{t('hero.headline')}</p>
+            {passwordSetUp && (
+              <p role="status" className="mt-6 rounded-xl border border-[#17794D]/30 bg-[#E1F0E7] px-3.5 py-3 text-sm text-[#0B2F23]">
+                {t('login.passwordSetUp')}
+              </p>
+            )}
 
-            <ul className="mt-8 flex max-w-lg flex-wrap gap-2">
-              {FEATURES.map((feature) => (
-                <li
-                  key={feature.key}
-                  className="flex items-center gap-2 rounded-full border border-white/10 bg-[#050d1a]/40 py-1 pl-1 pr-3 text-xs font-medium text-white/85 backdrop-blur-md"
-                >
-                  <span className={`flex size-6 shrink-0 items-center justify-center rounded-full ${feature.tone}`}>
-                    <feature.icon className="size-3.5" />
-                  </span>
-                  {t(`hero.features.${feature.key}`)}
-                </li>
-              ))}
-            </ul>
-          </section>
+            {submitError && (
+              <div
+                role="alert"
+                className="mt-6 flex items-start gap-2.5 rounded-xl border border-[#FDA29B] bg-[#FEF3F2] px-3.5 py-3 text-sm leading-normal text-[#B42318]"
+              >
+                <CircleAlert aria-hidden className="mt-px size-[18px] shrink-0" />
+                <span>{submitError}</span>
+              </div>
+            )}
 
-          {/* The card: frosted navy, a hairline cyan edge and a soft glow. */}
-          <div className="relative w-full max-w-[26rem] shrink-0">
-            <div aria-hidden className="absolute -inset-px rounded-3xl bg-gradient-to-b from-teal-300/40 via-white/10 to-transparent" />
-            <div className="relative rounded-3xl bg-[#071226]/30 p-6 shadow-[0_30px_80px_-20px_rgb(0_0_0/0.7),0_0_60px_-20px_rgb(56_189_248/0.35)] backdrop-blur-md sm:p-8">
-              <h1 className="text-2xl font-bold tracking-[-0.02em]">{t('login.title')}</h1>
-              <p className="mt-1 text-sm text-white/60">{t('login.subtitle')}</p>
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-7" noValidate>
+              <div>
+                <Label htmlFor="login-email" className="text-sm font-semibold text-[#0B2F23]">
+                  {t('login.email')}
+                </Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  autoFocus
+                  autoComplete="username"
+                  placeholder={t('login.emailPlaceholder')}
+                  aria-invalid={Boolean(errors.email)}
+                  className={`mt-2 ${INPUT_CLASS}`}
+                  {...register('email')}
+                />
+                {errors.email && <p className="mt-1.5 text-sm text-[#B42318]">{errors.email.message}</p>}
+              </div>
 
-              {passwordSetUp && (
-                <p role="status" className="mt-4 rounded-lg border border-emerald-300/30 bg-emerald-300/10 p-2.5 text-xs text-emerald-100">
-                  {t('login.passwordSetUp')}
-                </p>
-              )}
-
-              <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-3" noValidate>
-                <div className="space-y-1.5">
-                  <Label htmlFor="login-email" className="text-xs text-white/70">
-                    {t('login.email')}
-                  </Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    autoFocus
-                    autoComplete="username"
-                    placeholder={t('login.emailPlaceholder')}
-                    aria-invalid={Boolean(errors.email)}
-                    className={INPUT_CLASS}
-                    {...register('email')}
-                  />
-                  {errors.email && <p className="text-xs text-red-300">{errors.email.message}</p>}
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="login-password" className="text-xs text-white/70">
-                    {t('login.password')}
-                  </Label>
+              <div className="mt-5">
+                <Label htmlFor="login-password" className="text-sm font-semibold text-[#0B2F23]">
+                  {t('login.password')}
+                </Label>
+                <div className="mt-2">
                   <PasswordInput
                     id="login-password"
                     autoComplete="current-password"
+                    placeholder={t('login.passwordPlaceholder')}
                     aria-invalid={Boolean(errors.password)}
                     showLabel={t('action.showPassword', { ns: 'common' })}
                     hideLabel={t('action.hidePassword', { ns: 'common' })}
                     className={INPUT_CLASS}
-                    toggleClassName="text-slate-400 hover:text-slate-200"
+                    toggleClassName="text-[#3E5A4D] hover:text-[#0B2F23]"
                     {...register('password')}
                   />
-                  {errors.password && <p className="text-xs text-red-300">{errors.password.message}</p>}
                 </div>
+                {errors.password && <p className="mt-1.5 text-sm text-[#B42318]">{errors.password.message}</p>}
+              </div>
 
-                <div className="flex items-center gap-2 pt-1">
-                  <Checkbox
-                    id="login-remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked === true)}
-                    className="border-white/40"
-                  />
-                  <Label htmlFor="login-remember" className="cursor-pointer text-xs font-normal text-white/70">
-                    {t('login.rememberMe')}
-                  </Label>
-                </div>
+              <div className="mt-3 flex min-h-11 items-center gap-2.5">
+                <Checkbox
+                  id="login-remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                  className="size-[18px] border-[#5A7466] data-[state=checked]:border-[#17794D] data-[state=checked]:bg-[#17794D]"
+                />
+                <Label htmlFor="login-remember" className="cursor-pointer text-sm font-medium text-[#3E5A4D]">
+                  {t('login.rememberMe')}
+                </Label>
+              </div>
 
-                {submitError && (
-                  <p className="text-sm text-red-300" role="alert">
-                    {submitError}
-                  </p>
-                )}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-3 h-[54px] w-full gap-2.5 rounded-xl bg-[#0E3B2C] text-base font-bold text-white hover:bg-[#145238]"
+              >
+                {isSubmitting && <Loader2 className="animate-spin" />}
+                {isSubmitting ? t('login.submitting') : t('login.submit')}
+                {!isSubmitting && <ArrowRight aria-hidden className="size-[18px]" />}
+              </Button>
+            </form>
 
-                <Button type="submit" className="h-10 w-full" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="animate-spin" />}
-                  {isSubmitting ? t('login.submitting') : t('login.submit')}
-                </Button>
-              </form>
-
-              <p className="mt-6 border-t border-white/10 pt-4 text-center text-xs text-white/50">{t('login.noAccount')}</p>
+            <div className="mt-7 flex items-start gap-3 rounded-xl bg-[#E1F0E7] px-4 py-3.5 text-sm leading-relaxed">
+              <Info aria-hidden className="mt-0.5 size-[18px] shrink-0 text-[#17794D]" />
+              <span>
+                <strong>{t('login.noAccountTitle')}</strong> {t('login.noAccount')}
+              </span>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+
+        <footer className="text-[13px] text-[#3E5A4D]">{t('login.footer')}</footer>
+      </section>
+
+      {/* Brand panel: large screens only; on a phone the form is the page. */}
+      <aside className="hidden min-w-0 flex-col justify-center gap-10 px-[clamp(24px,4.5vw,72px)] py-14 text-white [background:linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(135deg,#0E3B2C_0%,#145238_55%,#1B7A53_100%)] lg:flex lg:flex-[1.15_1_560px]">
+        <div>
+          <p className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 font-mono text-xs uppercase tracking-[0.14em]">
+            <span aria-hidden className="size-2 rounded-full bg-[#6EE7B7]" />
+            {t('hero.eyebrow')}
+          </p>
+          <h2 className="mt-6 max-w-[620px] text-[clamp(2rem,3.8vw,3.25rem)] font-extrabold leading-[1.06] tracking-[-0.035em]">
+            {t('hero.headlineLead')} <span className="text-[#6EE7B7]">{t('hero.headlineAccent')}</span>
+          </h2>
+          <p className="mt-5 max-w-[540px] text-lg leading-relaxed text-white/85">{t('hero.description')}</p>
+        </div>
+
+        {/* Decorative pipeline illustration (no real data) */}
+        <div aria-hidden className="max-w-[720px] rounded-[20px] border border-white/20 bg-white/[0.07] p-5 shadow-[0_30px_80px_rgb(0_0_0/0.25)]">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-white/85">
+              <span className="size-2 rounded-full bg-[#6EE7B7]" />
+              {t('hero.pipeline.title')}
+            </div>
+            <span className="text-xs text-white/70">{t('hero.pipeline.illustration')}</span>
+          </div>
+          <div className="flex gap-3">
+            {PIPELINE.map((column, columnIndex) => (
+              <div key={column.key} className="min-w-0 flex-1">
+                <div className={`mb-2.5 flex items-center gap-1.5 text-xs font-semibold ${column.active ? 'text-[#6EE7B7]' : 'text-white/90'}`}>
+                  <span className={`size-2 rounded-full ${column.active ? 'bg-[#6EE7B7]' : 'bg-white/50'}`} />
+                  {t(`hero.pipeline.${column.key}`)}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {Array.from({ length: column.cards }, (_, card) => {
+                    const highlighted = column.key === 'inReview' && card === 0
+                    const width = 56 + ((columnIndex * 7 + card * 5) % 20)
+                    return (
+                      <div
+                        key={card}
+                        className={`rounded-[10px] border p-2.5 ${highlighted ? 'border-[#6EE7B7]/75 bg-[#6EE7B7]/15' : 'border-white/10 bg-white/[0.09]'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {column.active && <CircleCheck className="size-3.5 shrink-0 text-[#6EE7B7]" strokeWidth={3} />}
+                          <div className="flex-1">
+                            <div className={`h-[7px] rounded ${highlighted ? 'bg-[#6EE7B7]' : 'bg-white/60'}`} style={{ width: `${width}%` }} />
+                            <div className={`mt-2 h-1.5 rounded ${highlighted ? 'bg-[#6EE7B7]/50' : 'bg-white/30'}`} style={{ width: `${86 - width / 2}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <ul className="flex max-w-[720px] gap-6">
+          {SELLING_POINTS.map((point) => (
+            <li key={point.key} className="min-w-0 flex-1">
+              <span className="flex size-10 items-center justify-center rounded-xl border border-[#6EE7B7]/40 bg-[#6EE7B7]/15 text-[#6EE7B7]">
+                <point.icon aria-hidden className="size-5" />
+              </span>
+              <p className="mt-3.5 text-base font-bold">{t(`hero.points.${point.key}.title`)}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-white/80">{t(`hero.points.${point.key}.body`)}</p>
+            </li>
+          ))}
+        </ul>
+      </aside>
     </div>
   )
 }

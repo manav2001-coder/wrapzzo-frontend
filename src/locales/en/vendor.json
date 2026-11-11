@@ -114,7 +114,7 @@
       "shipToWarehouse": "Ship to the company's warehouse",
       "finalRecipient": "Final delivery (by the warehouse)",
       "quantity": "Quantity",
-      "message": "Message",
+      "message": "Note from the AM",
       "price": "Your price",
       "photo": "Recipient's photo",
       "noPhoto": "Not uploaded yet"

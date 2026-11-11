@@ -166,8 +166,8 @@ export function OrderRequestsSection() {
 
                 {open.giftMessage && (
                   <section className="space-y-1">
-                    <h3 className="text-sm font-semibold">Gift message</h3>
-                    <p className="text-sm text-muted-foreground">“{open.giftMessage}”</p>
+                    <h3 className="text-sm font-semibold">Note for the vendor</h3>
+                    <p className="text-sm text-muted-foreground">{open.giftMessage}</p>
                   </section>
                 )}
                 {open.internalNotes && (

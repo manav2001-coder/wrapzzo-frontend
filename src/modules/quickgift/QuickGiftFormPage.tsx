@@ -50,7 +50,6 @@ interface DraftRecipient {
   deliveryAddress: string
   dateOfBirth: Date | null
   giftMessage: string
-  internalNotes: string
   /** The recipient's photos (up to MAX_PHOTOS), uploaded when the row is sent. */
   photos?: File[]
   /** Units to order, as typed -- validated to a whole number from 1 on submit. */
@@ -98,7 +97,6 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
     deliveryAddress: prefill?.deliveryAddress ?? '',
     dateOfBirth: prefill?.dateOfBirth ?? null,
     giftMessage: '',
-    internalNotes: '',
     quantity: '1',
     doctor: {
       qualification: prefill?.doctor?.qualification ?? '',
@@ -329,15 +327,6 @@ function RecipientCard({
                 onChange={(e) => onUpdate({ giftMessage: e.target.value })}
               />
             </LabelledField>
-            <LabelledField id={id('notes')} label={t('form.notes')} className="sm:col-span-1 lg:col-span-2">
-              <Textarea
-                id={id('notes')}
-                rows={2}
-                value={row.internalNotes}
-                placeholder={t('form.notesPlaceholder')}
-                onChange={(e) => onUpdate({ internalNotes: e.target.value })}
-              />
-            </LabelledField>
           </>
         )}
 
@@ -440,7 +429,6 @@ export function QuickGiftFormPage() {
           deliveryAddress: row.deliveryAddress.trim(),
           recipientDob: toDateOnly(row.dateOfBirth) ?? undefined,
           giftMessage: row.giftMessage.trim() || undefined,
-          internalNotes: row.internalNotes.trim() || undefined,
           photos: photos.length > 0 ? photos : undefined,
           doctor: gift.artworkRequired ? doctorInput(row.doctor) : undefined,
           quantity: parseQuantity(row.quantity, minQuantity) ?? minQuantity,

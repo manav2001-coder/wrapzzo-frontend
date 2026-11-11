@@ -209,7 +209,15 @@ export function LoginPage() {
           </div>
         </div>
 
-        <footer className="text-[13px] text-[#3E5A4D]">{t('login.footer')}</footer>
+        <footer className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-[13px] text-[#3E5A4D]">
+          <span>{t('login.footer')}</span>
+          <span>
+            {t('login.support')}{' '}
+            <a href="mailto:support@wrappzo.com" className="font-semibold text-[#17794D] underline">
+              support@wrappzo.com
+            </a>
+          </span>
+        </footer>
       </section>
 
       {/* Brand panel: large screens only; on a phone the form is the page. */}

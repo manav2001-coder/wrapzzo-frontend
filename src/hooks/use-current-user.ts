@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getCurrentUser } from '@/api/auth'
 import { useAppSelector } from '@/app/hooks'
+import { PERMISSIONS_REFRESH_MS } from '@/lib/live-refresh'
 
 export const CURRENT_USER_QUERY_KEY = ['me'] as const
 
@@ -22,6 +23,6 @@ export function useCurrentUser() {
     queryFn: getCurrentUser,
     enabled: isAuthenticated,
     staleTime: 60_000,
-    refetchInterval: isAuthenticated ? 60_000 : false,
+    refetchInterval: isAuthenticated ? PERMISSIONS_REFRESH_MS : false,
   })
 }

@@ -28,7 +28,7 @@ function renderLogin(route = '/login') {
 }
 
 async function signIn(email = 'priya@acme.com', password = 'secret') {
-  await userEvent.type(screen.getByLabelText('Email'), email)
+  await userEvent.type(screen.getByLabelText('Work email'), email)
   await userEvent.type(screen.getByLabelText('Password'), password)
   await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 }

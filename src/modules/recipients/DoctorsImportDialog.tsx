@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { importErrorDetails } from '@/api/importJobs'
 import { AppDialog } from '@/components/app-dialog'
 import { FileDropzone } from '@/components/file-dropzone'
 import { Button } from '@/components/ui/button'
@@ -20,17 +21,20 @@ export function DoctorsImportDialog({ open, onOpenChange }: { open: boolean; onO
   const importDoctors = useBulkCreateMyDoctors()
   const [file, setFile] = useState<File | null>(null)
   const [parsed, setParsed] = useState<ParsedDoctorSheet | null>(null)
+  const [serverErrors, setServerErrors] = useState<string[]>([])
 
   function close(next: boolean) {
     if (!next) {
       setFile(null)
       setParsed(null)
+      setServerErrors([])
     }
     onOpenChange(next)
   }
 
   async function pick(picked: File | null) {
     setFile(picked)
+    setServerErrors([])
     setParsed(picked ? await parseDoctorWorkbook(picked).catch(() => ({ rows: [], errors: [t('import.unreadable')] })) : null)
   }
 
@@ -41,7 +45,9 @@ export function DoctorsImportDialog({ open, onOpenChange }: { open: boolean; onO
       toast.success(t('import.done', { created: result.created, joined: result.joined, unchanged: result.unchanged }))
       close(false)
     } catch (error) {
-      showError(error)
+      // A big sheet is saved in the background; if it was refused, the server names the bad rows.
+      setServerErrors(importErrorDetails(error) ?? [])
+      if (!importErrorDetails(error)) showError(error)
     }
   }
 
@@ -65,6 +71,12 @@ export function DoctorsImportDialog({ open, onOpenChange }: { open: boolean; onO
         </Button>
         <FileDropzone file={file} onChange={(picked) => void pick(picked)} accept={XLSX_ACCEPT} prompt={t('import.drop')} />
         {parsed && parsed.errors.length > 0 && <ErrorList title={t('import.sheetErrors')} errors={parsed.errors} />}
+        {serverErrors.length > 0 && <ErrorList title={t('import.serverErrors')} errors={serverErrors} />}
+        {importDoctors.isPending && rows.length > 100 && (
+          <p role="status" className="text-xs text-muted-foreground">
+            {t('import.working', { count: rows.length })}
+          </p>
+        )}
         {rows.length > 0 && parsed?.errors.length === 0 && <p className="text-sm text-muted-foreground">{t('import.ready', { count: rows.length })}</p>}
       </div>
     </AppDialog>

@@ -1,3 +1,4 @@
+import { waitForImport, type ImportJob } from '@/api/importJobs'
 import { apiClient } from '@/lib/axiosClient'
 import type { Paginated } from '@/lib/list-filter'
 
@@ -88,6 +89,7 @@ export interface BulkDoctorsResult {
 
 /** A sheet of doctors onto the caller's own list, all or none. */
 export async function bulkCreateMyDoctors(rows: CreateRecipientInput[]): Promise<BulkDoctorsResult> {
-  const { data } = await apiClient.post<BulkDoctorsResult>('/api/recipients/mine/bulk', { rows })
-  return data
+  const { data } = await apiClient.post<ImportJob>('/api/recipients/mine/bulk', { rows })
+  const done = await waitForImport(data)
+  return { created: done.counts.created ?? 0, joined: done.counts.joined ?? 0, unchanged: done.counts.unchanged ?? 0 }
 }

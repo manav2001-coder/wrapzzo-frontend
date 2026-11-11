@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
+import { importErrorDetails } from '@/api/importJobs'
 import type { BulkImportUserRow } from '@/api/users'
 import { DataTable } from '@/components/data-table'
 import { Combobox } from '@/components/fields/combobox'
@@ -17,7 +18,6 @@ import { Label } from '@/components/ui/label'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useBulkImportUsers } from '@/hooks/useUsers'
-import { ApiError } from '@/lib/axiosClient'
 import {
   EMPLOYEE_FIELDS,
   buildAutoMapping,
@@ -100,8 +100,8 @@ export function CompanyUsersImportPage() {
       setParsedRows([])
       setFile(null)
     } catch (error) {
-      const details = error instanceof ApiError ? (error.data as { details?: string[] } | undefined)?.details : undefined
-      if (details?.length) setServerErrors(details)
+      const details = importErrorDetails(error)
+      if (details) setServerErrors(details)
       else showError(error)
     }
   }
@@ -216,6 +216,11 @@ export function CompanyUsersImportPage() {
                 {bulkImport.isPending && <Loader2 className="animate-spin" />}
                 {t('users.importPage.importCount', { count: parsedRows.length })}
               </Button>
+              {bulkImport.isPending && parsedRows.length > 100 && (
+                <p role="status" className="text-xs text-muted-foreground">
+                  {t('users.importPage.working', { count: parsedRows.length })}
+                </p>
+              )}
             </div>
           )}
         </div>

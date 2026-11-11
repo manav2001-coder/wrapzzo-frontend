@@ -63,6 +63,8 @@
     "ready": "{{count}} doctors ready to upload.",
     "confirm_one": "Upload {{count}} doctor",
     "confirm_other": "Upload {{count}} doctors",
+    "serverErrors": "The upload was refused, nothing was added. Fix these rows and try again",
+    "working": "Saving {{count}} doctors on the server. A big sheet can take a minute or two -- keep this window open.",
     "done": "{{created}} new, {{joined}} already in the company, {{unchanged}} already on your list"
   }
 }

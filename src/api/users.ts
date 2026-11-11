@@ -1,4 +1,5 @@
 import type { OrgUnit } from '@/api/myOrgUnits'
+import { waitForImport, type ImportJob } from '@/api/importJobs'
 import { apiClient } from '@/lib/axiosClient'
 
 export interface BulkImportUserRow {
@@ -40,7 +41,6 @@ export interface CompanyUser {
 export interface BulkImportUsersResult {
   createdCount: number
   updatedCount: number
-  users: CompanyUser[]
 }
 
 export interface BulkImportValidationError {
@@ -48,9 +48,11 @@ export interface BulkImportValidationError {
   details: string[]
 }
 
+/** A big sheet is saved in the background: this resolves when it has been, and rejects with the bad rows if it was refused. */
 export async function bulkImportUsers(companyId: string, rows: BulkImportUserRow[]): Promise<BulkImportUsersResult> {
-  const { data } = await apiClient.post<BulkImportUsersResult>(`/api/platform/companies/${companyId}/users/bulkImport`, { rows })
-  return data
+  const { data } = await apiClient.post<ImportJob>(`/api/platform/companies/${companyId}/users/bulkImport`, { rows })
+  const done = await waitForImport(data)
+  return { createdCount: done.counts.created ?? 0, updatedCount: done.counts.updated ?? 0 }
 }
 
 export async function makeCompanyAdmin(companyId: string, userId: string): Promise<CompanyUser> {

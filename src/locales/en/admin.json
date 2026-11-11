@@ -140,6 +140,7 @@
       "importCount_one": "Import {{count}} employee",
       "importCount_other": "Import {{count}} employees",
       "imported": "Imported: {{created}} added, {{updated}} updated.",
+      "working": "Saving {{count}} users on the server. A big sheet can take a minute or two -- keep this page open.",
       "orgPath": "Org path"
     },
     "wholeCompany": {

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
+import { importErrorDetails } from '@/api/importJobs'
 import type { BulkImportUserRow } from '@/api/users'
 import { TextField } from '@/components/fields/text-field'
 import { IconButton } from '@/components/icon-button'
@@ -14,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useBulkImportUsers } from '@/hooks/useUsers'
-import { ApiError } from '@/lib/axiosClient'
 import { ErrorList } from './ErrorList'
 
 type Column = 'name' | 'email' | 'mobile' | 'designation' | 'role' | 'employeeCode' | 'reportsToEmail' | 'orgUnit'
@@ -99,8 +99,8 @@ export function CompanyUsersAddPage() {
       setRows([emptyRow()])
     } catch (error) {
       // The backend checks the whole batch first and names each bad row.
-      const details = error instanceof ApiError ? (error.data as { details?: string[] } | undefined)?.details : undefined
-      if (details?.length) setServerErrors(details)
+      const details = importErrorDetails(error)
+      if (details) setServerErrors(details)
       else showError(error)
     }
   }

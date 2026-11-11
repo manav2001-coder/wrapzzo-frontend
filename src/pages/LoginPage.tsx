@@ -21,7 +21,7 @@ import { ApiError } from '@/lib/axiosClient'
 
 /** The pipeline illustration's columns: how many placeholder cards each holds. It is decorative, never real data. */
 const PIPELINE = [
-  { key: 'requested', cards: 3, active: false },
+  { key: 'requested', cards: 2, active: false },
   { key: 'inReview', cards: 2, active: false },
   { key: 'approved', cards: 2, active: false },
   { key: 'inPrint', cards: 2, active: false },
@@ -36,7 +36,7 @@ const SELLING_POINTS = [
 
 /** Inputs on the light form panel. */
 const INPUT_CLASS =
-  'h-[50px] rounded-xl border-[#BFD3C7] bg-white px-3.5 text-base text-[#0B2F23] placeholder:text-[#5A7466] focus-visible:border-[#17794D] focus-visible:ring-2 focus-visible:ring-[#17794D] focus-visible:ring-offset-0'
+  'h-12 rounded-xl border-[#D5E2DA] bg-white [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_100px_#fff_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#0B2F23] px-3.5 text-base text-[#0B2F23] placeholder:text-[#5A7466] focus-visible:border-[#17794D] focus-visible:ring-2 focus-visible:ring-[#17794D] focus-visible:ring-offset-0'
 
 type LoginFormValues = { email: string; password: string }
 
@@ -104,10 +104,10 @@ export function LoginPage() {
   return (
     <div className="flex min-h-svh flex-col bg-[#F4F8F5] text-[#0B2F23] antialiased lg:flex-row-reverse">
       {/* Form panel */}
-      <section className="flex min-w-0 flex-col px-6 py-7 sm:px-10 lg:flex-[1_1_480px] lg:px-16">
+      <section className="flex min-w-0 flex-col px-6 py-8 sm:px-10 lg:flex-[1_1_480px] lg:px-[clamp(40px,5vw,88px)] lg:py-10">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <Link to="/" className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17794D] focus-visible:ring-offset-2">
-            <WrapzzoLogo height={40} tone="auto" />
+            <WrapzzoLogo height={40} tone="dark" />
           </Link>
           <Link
             to="/"
@@ -119,8 +119,8 @@ export function LoginPage() {
         </header>
 
         <div className="flex flex-1 items-center justify-center py-10">
-          <div className="w-full max-w-[26rem] rounded-2xl border border-[#BFD3C7] bg-white p-6 shadow-[0_1px_2px_rgb(11_47_35/0.04)] sm:p-8">
-            <h1 className="text-[2rem] font-extrabold leading-[1.15] tracking-[-0.03em]">{t('login.title')}</h1>
+          <div className="w-full max-w-[26rem] rounded-2xl border border-[#0B2F23]/[0.07] bg-white px-6 py-7 shadow-[0_8px_30px_-12px_rgb(11_47_35/0.10)] sm:px-9 sm:py-9">
+            <h1 className="text-[1.75rem] font-extrabold leading-[1.15] tracking-[-0.03em]">{t('login.title')}</h1>
             <p className="mt-3 text-base leading-relaxed text-[#3E5A4D]">{t('login.subtitle')}</p>
 
             {passwordSetUp && (
@@ -139,7 +139,7 @@ export function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-7" noValidate>
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-6" noValidate>
               <div>
                 <Label htmlFor="login-email" className="text-sm font-semibold text-[#0B2F23]">
                   {t('login.email')}
@@ -200,7 +200,7 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-7 flex items-start gap-3 rounded-xl border border-[#17794D]/15 bg-[#E1F0E7] px-4 py-3.5 text-sm leading-relaxed">
+            <div className="mt-6 flex items-start gap-3 rounded-xl bg-[#EAF4EE] px-4 py-3.5 text-sm leading-relaxed">
               <Info aria-hidden className="mt-0.5 size-[18px] shrink-0 text-[#17794D]" />
               <span>
                 <strong>{t('login.noAccountTitle')}</strong> {t('login.noAccount')}
@@ -221,20 +221,20 @@ export function LoginPage() {
       </section>
 
       {/* Brand panel: large screens only; on a phone the form is the page. */}
-      <aside className="hidden min-w-0 flex-col justify-center gap-10 px-[clamp(24px,4.5vw,72px)] py-14 text-white [background:linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(135deg,#0E3B2C_0%,#145238_55%,#1B7A53_100%)] lg:flex lg:flex-[1.15_1_560px]">
+      <aside className="hidden min-w-0 flex-col justify-center gap-9 px-[clamp(32px,5vw,88px)] py-16 text-white [background:linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(135deg,#0E3B2C_0%,#145238_55%,#1B7A53_100%)] lg:flex lg:flex-[1.15_1_560px]">
         <div>
           <p className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 font-mono text-xs uppercase tracking-[0.14em]">
             <span aria-hidden className="size-2 rounded-full bg-[#6EE7B7]" />
             {t('hero.eyebrow')}
           </p>
-          <h2 className="mt-6 max-w-[620px] text-[clamp(2rem,3.8vw,3.25rem)] font-extrabold leading-[1.06] tracking-[-0.035em]">
+          <h2 className="mt-6 max-w-[620px] text-[clamp(2rem,3.4vw,3rem)] font-extrabold leading-[1.06] tracking-[-0.035em]">
             {t('hero.headlineLead')} <span className="text-[#6EE7B7]">{t('hero.headlineAccent')}</span>
           </h2>
-          <p className="mt-5 max-w-[540px] text-lg leading-relaxed text-white/85">{t('hero.description')}</p>
+          <p className="mt-4 max-w-[540px] text-base leading-relaxed text-white/85">{t('hero.description')}</p>
         </div>
 
         {/* Decorative pipeline illustration (no real data) */}
-        <div aria-hidden className="max-w-[720px] rounded-[20px] border border-white/20 bg-white/[0.07] p-5 shadow-[0_30px_80px_rgb(0_0_0/0.25)]">
+        <div aria-hidden className="max-w-[720px] rounded-[20px] border border-white/20 bg-white/[0.07] p-6 shadow-[0_30px_80px_rgb(0_0_0/0.25)]">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-white/85">
               <span className="size-2 rounded-full bg-[#6EE7B7]" />

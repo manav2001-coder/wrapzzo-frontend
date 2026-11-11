@@ -8,7 +8,7 @@ interface WrapzzoLogoProps {
   /** px height of the tile; the wordmark scales with it. */
   height?: number
   /** "white": white wordmark for the dark-navy sidebar and hero. "auto": follows the theme. */
-  tone?: 'white' | 'auto'
+  tone?: 'white' | 'auto' | 'dark'
   className?: string
 }
 
@@ -33,7 +33,7 @@ export function WrapzzoLogo({ variant = 'full', height = 28, tone = 'white', cla
       {variant === 'full' && (
         <span
           aria-hidden="true"
-          className={cn('font-extrabold tracking-tight', tone === 'white' ? 'text-white' : 'text-foreground')}
+          className={cn('font-extrabold tracking-tight', tone === 'white' ? 'text-white' : tone === 'dark' ? 'text-[#0B2F23]' : 'text-foreground')}
           style={{ fontSize: height * 0.68, lineHeight: 1 }}
         >
           {t('app.name')}

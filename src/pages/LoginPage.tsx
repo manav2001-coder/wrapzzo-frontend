@@ -36,7 +36,7 @@ const SELLING_POINTS = [
 
 /** Inputs on the light form panel. */
 const INPUT_CLASS =
-  'h-12 rounded-xl border-[#D5E2DA] bg-white [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_100px_#fff_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#0B2F23] px-3.5 text-base text-[#0B2F23] placeholder:text-[#5A7466] focus-visible:border-[#17794D] focus-visible:ring-2 focus-visible:ring-[#17794D] focus-visible:ring-offset-0'
+  'h-11 rounded-xl border-[#D5E2DA] bg-white [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_100px_#fff_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#0B2F23] px-3.5 text-base text-[#0B2F23] placeholder:text-[#5A7466] focus-visible:border-[#17794D] focus-visible:ring-2 focus-visible:ring-[#17794D] focus-visible:ring-offset-0'
 
 type LoginFormValues = { email: string; password: string }
 
@@ -102,9 +102,9 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-[#F4F8F5] text-[#0B2F23] antialiased lg:flex-row-reverse">
+    <div className="flex min-h-svh flex-col bg-[#F4F8F5] text-[#0B2F23] antialiased lg:h-svh lg:flex-row-reverse lg:overflow-hidden">
       {/* Form panel */}
-      <section className="flex min-w-0 flex-col px-6 py-8 sm:px-10 lg:flex-[1_1_480px] lg:px-[clamp(40px,5vw,88px)] lg:py-10">
+      <section className="flex min-w-0 flex-col px-6 py-8 sm:px-10 lg:flex-[1_1_480px] lg:overflow-y-auto lg:px-[clamp(40px,5vw,88px)] lg:py-[clamp(20px,4vh,40px)]">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <Link to="/" className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17794D] focus-visible:ring-offset-2">
             <WrapzzoLogo height={40} tone="dark" />
@@ -118,10 +118,10 @@ export function LoginPage() {
           </Link>
         </header>
 
-        <div className="flex flex-1 items-center justify-center py-10">
-          <div className="w-full max-w-[26rem] rounded-2xl border border-[#0B2F23]/[0.07] bg-white px-6 py-7 shadow-[0_8px_30px_-12px_rgb(11_47_35/0.10)] sm:px-9 sm:py-9">
+        <div className="flex flex-1 items-center justify-center py-[clamp(16px,3vh,40px)]">
+          <div className="w-full max-w-[26rem] rounded-2xl border border-[#0B2F23]/[0.07] bg-white px-6 py-6 shadow-[0_8px_30px_-12px_rgb(11_47_35/0.10)] sm:px-9 sm:py-7">
             <h1 className="text-[1.75rem] font-extrabold leading-[1.15] tracking-[-0.03em]">{t('login.title')}</h1>
-            <p className="mt-3 text-base leading-relaxed text-[#3E5A4D]">{t('login.subtitle')}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[#3E5A4D]">{t('login.subtitle')}</p>
 
             {passwordSetUp && (
               <p role="status" className="mt-6 rounded-xl border border-[#17794D]/30 bg-[#E1F0E7] px-3.5 py-3 text-sm text-[#0B2F23]">
@@ -139,7 +139,7 @@ export function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-6" noValidate>
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-5" noValidate>
               <div>
                 <Label htmlFor="login-email" className="text-sm font-semibold text-[#0B2F23]">
                   {t('login.email')}
@@ -157,7 +157,7 @@ export function LoginPage() {
                 {errors.email && <p className="mt-1.5 text-sm text-[#B42318]">{errors.email.message}</p>}
               </div>
 
-              <div className="mt-5">
+              <div className="mt-4">
                 <Label htmlFor="login-password" className="text-sm font-semibold text-[#0B2F23]">
                   {t('login.password')}
                 </Label>
@@ -177,7 +177,7 @@ export function LoginPage() {
                 {errors.password && <p className="mt-1.5 text-sm text-[#B42318]">{errors.password.message}</p>}
               </div>
 
-              <div className="mt-3 flex min-h-11 items-center gap-2.5">
+              <div className="mt-1 flex min-h-10 items-center gap-2.5">
                 <Checkbox
                   id="login-remember"
                   checked={rememberMe}
@@ -192,7 +192,7 @@ export function LoginPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-3 h-[54px] w-full gap-2.5 rounded-xl bg-[#0E3B2C] text-base font-bold text-white hover:bg-[#145238]"
+                className="mt-2 h-12 w-full gap-2.5 rounded-xl bg-[#0E3B2C] text-base font-bold text-white hover:bg-[#145238]"
               >
                 {isSubmitting && <Loader2 className="animate-spin" />}
                 {isSubmitting ? t('login.submitting') : t('login.submit')}
@@ -200,7 +200,7 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 flex items-start gap-3 rounded-xl bg-[#EAF4EE] px-4 py-3.5 text-sm leading-relaxed">
+            <div className="mt-5 flex items-start gap-3 rounded-xl bg-[#EAF4EE] px-4 py-3 text-[13px] leading-relaxed">
               <Info aria-hidden className="mt-0.5 size-[18px] shrink-0 text-[#17794D]" />
               <span>
                 <strong>{t('login.noAccountTitle')}</strong> {t('login.noAccount')}
@@ -221,7 +221,7 @@ export function LoginPage() {
       </section>
 
       {/* Brand panel: large screens only; on a phone the form is the page. */}
-      <aside className="hidden min-w-0 flex-col justify-center gap-9 px-[clamp(32px,5vw,88px)] py-16 text-white [background:linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(135deg,#0E3B2C_0%,#145238_55%,#1B7A53_100%)] lg:flex lg:flex-[1.15_1_560px]">
+      <aside className="hidden min-w-0 flex-col justify-center gap-[clamp(20px,4vh,36px)] overflow-y-auto px-[clamp(32px,5vw,88px)] py-[clamp(24px,6vh,64px)] text-white [background:linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)_0_0/48px_48px,linear-gradient(135deg,#0E3B2C_0%,#145238_55%,#1B7A53_100%)] lg:flex lg:flex-[1.15_1_560px]">
         <div>
           <p className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-2 font-mono text-xs uppercase tracking-[0.14em]">
             <span aria-hidden className="size-2 rounded-full bg-[#6EE7B7]" />

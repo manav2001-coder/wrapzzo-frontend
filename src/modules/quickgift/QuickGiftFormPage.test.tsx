@@ -120,6 +120,26 @@ describe('QuickGiftFormPage', () => {
     expect(toast.success).toHaveBeenCalledWith('Order placed', { description: expect.stringContaining('Pad Printers') })
   })
 
+  it('has one note, for the vendor -- no gift message and no internal notes to tell apart', async () => {
+    createQuickGiftRequest.mockResolvedValue({ id: 'q-1', orderId: 'o-1', status: 'APPROVED' })
+    renderForm()
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+
+    expect(screen.getAllByRole('textbox', { name: /note/i })).toHaveLength(1)
+    expect(screen.getByLabelText('Note for the vendor')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/gift message/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/internal notes/i)).not.toBeInTheDocument()
+
+    await fillRecipient()
+    await userEvent.type(screen.getByLabelText('Note for the vendor'), 'Also print "Clinic hours 10-6" at the bottom')
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
+    const sent = createQuickGiftRequest.mock.calls[0][0]
+    expect(sent.giftMessage).toBe('Also print "Clinic hours 10-6" at the bottom')
+    expect(sent).not.toHaveProperty('internalNotes')
+  })
+
   it('says the order was sent for approval, not to the vendor, when it is held for the approver', async () => {
     createQuickGiftRequest.mockResolvedValue({ id: 'q-1', orderId: 'o-1', status: 'APPROVED', orderApprovalStatus: 'PENDING' })
     renderForm()

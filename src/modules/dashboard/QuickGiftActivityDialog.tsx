@@ -61,7 +61,7 @@ export function QuickGiftActivityDialog({ quickGiftId, onHide }: { quickGiftId: 
             </div>
             {request.giftMessage && (
               <div className="sm:col-span-2">
-                <p className="text-xs text-muted-foreground">Gift message</p>
+                <p className="text-xs text-muted-foreground">Note for the vendor</p>
                 <p className="text-foreground">{request.giftMessage}</p>
               </div>
             )}

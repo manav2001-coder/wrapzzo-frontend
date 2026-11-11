@@ -31,12 +31,7 @@ import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
 import { ApprovalQueuePage } from '@/modules/campaigns/ApprovalQueuePage'
 import { ArtworkApprovalSettingsPage } from '@/modules/artwork-approval/ArtworkApprovalSettingsPage'
 import { OrderApprovalSettingsPage } from '@/modules/order-approval/OrderApprovalSettingsPage'
-import { CampaignDetailPage } from '@/modules/campaigns/CampaignDetailPage'
-import { CampaignListPage } from '@/modules/campaigns/CampaignListPage'
-import { CampaignWizardPage } from '@/modules/campaigns/CampaignWizardPage'
-import { MyCampaignsPage } from '@/modules/campaigns/MyCampaignsPage'
-import { OrdersPage as CampaignOrdersPage } from '@/modules/campaigns/OrdersPage'
-import { SubmissionFormPage } from '@/modules/campaigns/SubmissionFormPage'
+import { OrdersPage as CompanyOrdersPage } from '@/modules/campaigns/OrdersPage'
 import { VendorsPage as CompanyVendorsPage } from '@/modules/campaigns/VendorsPage'
 import { MenuConfigPage } from '@/modules/platform-config/MenuConfigPage'
 import { WarehousesPage } from '@/modules/campaigns/WarehousesPage'
@@ -110,21 +105,19 @@ export function AppRoutes() {
           <Route path="/tbac/assignments/roles" element={<Guard permission={P.ROLE_TEMPLATE_VIEW}><RoleTemplatesPage /></Guard>} />
           <Route path="/tbac/assignments/roles/:roleId" element={<Guard permission={P.ROLE_TEMPLATE_VIEW}><RoleTemplateAssignPage /></Guard>} />
 
-          {/* Campaigns module -- company-side, PRD Part 2.5. Peer of /admin, not nested under it. */}
+          {/* Company-side pages, peers of /admin rather than nested under it. */}
           <Route path="/dashboard" element={<Guard permission={P.DASHBOARD_VIEW}><DashboardPage /></Guard>} />
           <Route path="/quick-gift" element={<Guard permission={P.QUICK_GIFT_CREATE}><QuickGiftLandingPage /></Guard>} />
           <Route path="/quick-gift/new/:giftId" element={<Guard permission={P.QUICK_GIFT_CREATE}><QuickGiftFormPage /></Guard>} />
           <Route path="/gift-store" element={<Guard permission={P.GIFT_STORE_VIEW}><GiftStorePage /></Guard>} />
-          <Route path="/campaigns" element={<Guard permission={P.CAMPAIGN_VIEW}><CampaignListPage /></Guard>} />
-          <Route path="/campaigns/new" element={<Guard permission={P.CAMPAIGN_CREATE}><CampaignWizardPage /></Guard>} />
-          <Route path="/campaigns/:id" element={<Guard permissions={[P.CAMPAIGN_VIEW, P.CAMPAIGN_ENTRY_SUBMIT]}><CampaignDetailPage /></Guard>} />
-          <Route path="/campaigns/:id/submit" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><SubmissionFormPage /></Guard>} />
-          <Route path="/my-campaigns" element={<Guard permission={P.CAMPAIGN_ENTRY_SUBMIT}><MyCampaignsPage /></Guard>} />
           <Route path="/recipients" element={<Guard permission={P.DOCTOR_VIEW}><RecipientsPage /></Guard>} />
+          {/* Campaigns were retired; old links and bookmarks land on the dashboard. */}
+          <Route path="/campaigns/*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/my-campaigns" element={<Navigate to="/dashboard" replace />} />
           {/* My Doctors was folded into Doctors; keep old links working. */}
           <Route path="/my-doctors" element={<Navigate to="/recipients" replace />} />
           <Route path="/approvals" element={<Guard permission={P.APPROVAL_VIEW}><ApprovalQueuePage /></Guard>} />
-          <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CampaignOrdersPage /></Guard>} />
+          <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CompanyOrdersPage /></Guard>} />
           <Route path="/company/vendors" element={<Guard permission={P.COMPANY_VENDOR_VIEW}><CompanyVendorsPage /></Guard>} />
           <Route path="/warehouses" element={<Guard permission={P.WAREHOUSE_VIEW}><WarehousesPage /></Guard>} />
 

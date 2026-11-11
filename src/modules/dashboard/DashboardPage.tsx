@@ -24,10 +24,9 @@ import { PelStatsCard } from './PelStatsCard'
 import { PipelineFlow } from './PipelineFlow'
 import { QuickGiftActivityDialog } from './QuickGiftActivityDialog'
 import { RecentActivityFeed } from './RecentActivityFeed'
-import { RecentCampaignsCard } from './RecentCampaignsCard'
 
-const SOURCE_LABELS: Record<string, string> = { CAMPAIGN: 'Campaign', QUICK_GIFT: 'Quick Gift', BULK_GIFT: 'Bulk Gifting' }
-const SOURCE_COLORS: Record<string, string> = { CAMPAIGN: '#6366f1', QUICK_GIFT: '#f59e0b', BULK_GIFT: '#0d9488' }
+const SOURCE_LABELS: Record<string, string> = { QUICK_GIFT: 'Quick Gift', BULK_GIFT: 'Bulk Gifting' }
+const SOURCE_COLORS: Record<string, string> = { QUICK_GIFT: '#f59e0b', BULK_GIFT: '#0d9488' }
 
 function greetingFor(date: Date): string {
   const hour = date.getHours()
@@ -71,8 +70,7 @@ export function DashboardPage() {
     return {
       source: slices(data.orderSourceBreakdown, (k) => SOURCE_LABELS[k] ?? humanize(k), (k) => SOURCE_COLORS[k] ?? '#94a3b8'),
       quickGift: slices(data.quickGiftStatusBreakdown, humanize, statusColor),
-      submission: slices(data.submissionStatusBreakdown, humanize, (k) => (k === 'PENDING' ? statusColor('SUBMITTED') : statusColor(k))),
-      trend: data.activityTrend.map((p) => ({ label: p.weekLabel, CAMPAIGN: p.campaignSubmissions, QUICK_GIFT: p.quickGiftRequests })),
+      trend: data.activityTrend.map((p) => ({ label: p.weekLabel, QUICK_GIFT: p.quickGiftRequests })),
     }
   }, [data])
 
@@ -91,12 +89,10 @@ export function DashboardPage() {
   }
 
   const hasAnyActivity =
-    data.campaignsRunning > 0 ||
     data.giftsInProgress > 0 ||
     data.dispatched > 0 ||
     data.delivered > 0 ||
     data.quickGiftsThisMonth > 0 ||
-    data.recentCampaigns.length > 0 ||
     data.recentActivity.length > 0
 
   const attention: AttentionItem[] = [
@@ -141,13 +137,6 @@ export function DashboardPage() {
               >
                 <span className="font-bold tabular-nums">{data.quickGiftsThisMonth}</span> Quick Gifts this month
               </button>
-              <button
-                type="button"
-                onClick={() => navigate(data.companyWide ? '/campaigns' : '/my-campaigns')}
-                className="rounded-full border bg-background/70 px-3 py-1 text-xs font-medium backdrop-blur transition-colors hover:bg-background"
-              >
-                <span className="font-bold tabular-nums">{data.campaignsRunning}</span> Campaigns running
-              </button>
             </div>
           </div>
         </div>
@@ -159,8 +148,8 @@ export function DashboardPage() {
           title="Nothing to show yet"
           description={
             data.companyWide
-              ? 'Once your team starts campaigns and Quick Gift requests, this dashboard fills in automatically.'
-              : "Once you're part of a campaign or send a Quick Gift, it shows up here."
+              ? 'Once your team starts raising Quick Gift requests, this dashboard fills in automatically.'
+              : "Once you send a Quick Gift, it shows up here."
           }
         />
       ) : (
@@ -217,7 +206,6 @@ export function DashboardPage() {
                       <MultiLineChart
                         data={breakdowns.trend}
                         series={[
-                          { key: 'CAMPAIGN', label: 'Campaign submissions', color: SOURCE_COLORS.CAMPAIGN },
                           { key: 'QUICK_GIFT', label: 'Quick Gift requests', color: SOURCE_COLORS.QUICK_GIFT },
                         ]}
                         onSelect={(index, seriesKey) => {
@@ -232,7 +220,7 @@ export function DashboardPage() {
                   value: 'status',
                   label: 'Status',
                   content: (
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                       <ChartPanel title="Orders by source">
                         <DonutChart data={breakdowns.source} emptyText="No orders yet." onSelect={(key) => setDrilldown({ dimension: 'orderSource', value: key })} />
                       </ChartPanel>
@@ -243,13 +231,6 @@ export function DashboardPage() {
                           onSelect={(key) => setDrilldown({ dimension: 'quickGiftStatus', value: key })}
                         />
                       </ChartPanel>
-                      <ChartPanel title="Campaign submission status">
-                        <DonutChart
-                          data={breakdowns.submission}
-                          emptyText="No submissions yet."
-                          onSelect={(key) => setDrilldown({ dimension: 'submissionStatus', value: key })}
-                        />
-                      </ChartPanel>
                     </div>
                   ),
                 },
@@ -257,24 +238,13 @@ export function DashboardPage() {
                   value: 'top',
                   label: "What's performing",
                   content: (
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                       <ChartPanel title="Top gifts">
                         <MiniBarChart
-                          data={data.topGifts.map((g) => ({ label: g.giftName, value: g.orderCount, color: SOURCE_COLORS.CAMPAIGN }))}
+                          data={data.topGifts.map((g) => ({ label: g.giftName, value: g.orderCount, color: '#6366f1' }))}
                           seriesName="Orders"
                           emptyText="No orders yet."
                           onSelect={(bar) => setDrilldown({ dimension: 'topGift', value: bar.label })}
-                        />
-                      </ChartPanel>
-                      <ChartPanel title="Top campaigns">
-                        <MiniBarChart
-                          data={data.topCampaigns.map((c) => ({ label: c.campaignName, value: c.orderCount, color: SOURCE_COLORS.QUICK_GIFT }))}
-                          seriesName="Orders"
-                          emptyText="No campaign orders yet."
-                          onSelect={(bar) => {
-                            const campaign = data.topCampaigns.find((c) => c.campaignName === bar.label)
-                            if (campaign) navigate(`/campaigns/${campaign.campaignId}`)
-                          }}
                         />
                       </ChartPanel>
                       <ChartPanel title={data.companyWide ? 'Top departments' : 'Your department'}>
@@ -288,7 +258,6 @@ export function DashboardPage() {
                     </div>
                   ),
                 },
-                { value: 'campaigns', label: 'Campaigns', content: <RecentCampaignsCard campaigns={data.recentCampaigns} /> },
               ]}
             />
           </section>

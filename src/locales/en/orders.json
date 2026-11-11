@@ -62,7 +62,7 @@
       "delivered": "Delivered"
     },
     "emptyTitle": "No orders yet",
-    "emptyBody": "Orders appear here once they're placed through Quick Gift or a campaign.",
+    "emptyBody": "Orders appear here once they're placed through Quick Gift.",
     "reviewEmptyTitle": "Nothing to review",
     "reviewEmptyBody": "When a vendor uploads a proof, it shows up here for you to approve."
   },
@@ -129,7 +129,7 @@
       "delivered": "Delivered"
     },
     "emptyTitle": "No orders yet",
-    "emptyBody": "Orders appear here as companies submit campaign recipients and approve Quick Gifts.",
+    "emptyBody": "Orders appear here as companies place and approve Quick Gifts.",
     "assign": "Assign vendor",
     "reassign": "Reassign vendor",
     "autoAssign": "Auto-assign",

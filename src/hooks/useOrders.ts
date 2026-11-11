@@ -1,9 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  assignCampaignVendor,
   assignOrderVendor,
   assignQuickGiftVendor,
-  autoAssignCampaignVendor,
   autoAssignOrderVendor,
   autoAssignQuickGiftVendor,
   getOrder,
@@ -64,22 +62,6 @@ export function useAutoAssignOrderVendor() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (orderId: string) => autoAssignOrderVendor(orderId),
-    onSuccess: () => invalidateOrderLists(queryClient),
-  })
-}
-
-export function useAssignCampaignVendor() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ campaignId, vendorId }: { campaignId: string; vendorId: string }) => assignCampaignVendor(campaignId, vendorId),
-    onSuccess: () => invalidateOrderLists(queryClient),
-  })
-}
-
-export function useAutoAssignCampaignVendor() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (campaignId: string) => autoAssignCampaignVendor(campaignId),
     onSuccess: () => invalidateOrderLists(queryClient),
   })
 }

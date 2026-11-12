@@ -63,7 +63,7 @@ export function ContentHeader() {
           </Button>
         </SheetTrigger>
         {/* The drawer carries the rail's dark-navy surface, so the nav reads the same on a phone. */}
-        <SheetContent side="left" className="sidebar flex w-60 flex-col p-0">
+        <SheetContent side="left" className="sidebar flex w-72 max-w-[85vw] flex-col border-sidebar-border !bg-sidebar p-0 text-sidebar-text">
           <SheetHeader className="border-b border-sidebar-border px-4 py-4 text-left">
             <SheetTitle asChild>
               <Link to={homePath} className="inline-block">

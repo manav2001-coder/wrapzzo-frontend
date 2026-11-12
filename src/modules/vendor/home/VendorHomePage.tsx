@@ -76,16 +76,16 @@ function ActionRow({ order, stage }: { order: VendorOrder; stage: VendorStage })
           <item.icon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">
+          <p className="break-words sm:truncate text-sm font-semibold">
             {order.displayId} · {order.giftName}
           </p>
-          <p className="truncate text-xs text-muted-foreground">
+          <p className="break-words sm:truncate text-xs text-muted-foreground">
             {order.companyName} · {order.recipientName} · {formatDate(order.assignedAt ?? order.createdAt)}
           </p>
           {stage === 'rework' && order.latestDesignComment ? (
-            <p className="mt-1 truncate rounded-md bg-destructive/5 px-2 py-1 text-xs text-destructive">“{order.latestDesignComment}”</p>
+            <p className="mt-1 break-words sm:truncate rounded-md bg-destructive/5 px-2 py-1 text-xs text-destructive">“{order.latestDesignComment}”</p>
           ) : (
-            <p className="mt-0.5 truncate text-xs font-medium text-primary">{t(`home.action.${stage}`)}</p>
+            <p className="mt-0.5 break-words sm:truncate text-xs font-medium text-primary">{t(`home.action.${stage}`)}</p>
           )}
         </div>
         <VendorStageBadge stage={stage} />

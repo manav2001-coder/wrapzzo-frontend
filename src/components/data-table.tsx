@@ -67,6 +67,8 @@ import { panelFieldName, panelFilterVariant } from "@/components/data-table/pane
 import { RowSelectionBar } from "@/components/data-table/row-selection-bar";
 import { EmptyTable } from "@/components/data-table/empty-table";
 import { ErrorTable } from "@/components/data-table/error-table";
+import { MobileCards } from "@/components/data-table/mobile-cards";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { SortableHeader } from "@/components/data-table/sortable-header";
 import { TableFilterPanel } from "@/components/data-table/table-filter-panel";
 import { TablePagination, TablePaginationSkeleton } from "@/components/data-table/table-pagination";
@@ -660,6 +662,8 @@ export function DataTable<TData>({
 
   // Only render the filter row when something in it is actually filterable. `TableHead` is
   // `h-10`, so an unconditional row cost every table a 40px empty band.
+  const isMobile = useIsMobile();
+  const cardView = isMobile && !rowGroupConfig;
   const hasColumnFilters = table
     .getVisibleLeafColumns()
     .some((column) => column.getCanFilter() && column.columnDef.meta?.filterVariant);
@@ -671,7 +675,15 @@ export function DataTable<TData>({
     // the rest of the page is tall; with no bounded ancestor the row is as tall as the rows.
     // `grow` fills the frame, so even a short table keeps its pagination pinned to the bottom.
     // `frame-fill` marks it for index.css, which turns whatever wraps it into the bounded chain.
-    <div className="frame-fill grid min-h-0 grow shrink grid-rows-[auto_auto_minmax(12rem,1fr)_auto]">
+    <div
+      className={cn(
+        "grid",
+        // Cards flow with the page, which scrolls as one; the grid view bounds itself and scrolls inside.
+        cardView
+          ? "grid-rows-[auto_auto_auto_auto] pb-4"
+          : "frame-fill min-h-0 grow shrink grid-rows-[auto_auto_minmax(12rem,1fr)_auto]",
+      )}
+    >
       <div className="row-start-1">
         <TableToolbar
           search={
@@ -746,6 +758,25 @@ export function DataTable<TData>({
         <RowSelectionBar count={selectedCount} onClear={() => setRowSelection({})} />
       </div>
 
+      {cardView ? (
+        <div className="row-start-3 mt-3">
+          <MobileCards
+            table={table}
+            isLoading={isLoading}
+            pageSize={pagination.pageSize}
+            expandedIds={expandedIds}
+            renderSubRow={renderSubRow}
+            emptyBody={
+              fetchFailed ? (
+                <ErrorTable error={query.error} onRetry={() => void query.refetch()} />
+              ) : (
+                (emptyState ?? <EmptyTable message={emptyMessage} />)
+              )
+            }
+          />
+        </div>
+      ) : (
+        <>
       {/* A size container, so the empty/error body below can size itself with `cqw`. */}
       <div className="row-start-3 mt-3 flex min-h-0 flex-col rounded-lg border border-border [container-type:inline-size]">
         <Table
@@ -935,6 +966,9 @@ export function DataTable<TData>({
           </TableBody>
         </Table>
       </div>
+
+        </>
+      )}
 
       {/* Kept mounted at zero rows: filtering down to nothing used to unmount the controls,
           so there was no way to page back out of a page that no longer exists — and the row

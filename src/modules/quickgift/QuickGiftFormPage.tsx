@@ -500,13 +500,13 @@ export function QuickGiftFormPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
         {gift.vendorName && <Badge variant="secondary-soft">{t('form.suppliedBy', { vendor: gift.vendorName })}</Badge>}
         {gift.artworkRequired && (
-          <Badge variant="primary-soft" className="gap-1">
+          <Badge variant="primary-soft" className="h-auto gap-1 whitespace-normal py-1 text-left">
             <Palette className="h-3 w-3" />
             {t('form.personalisedNote')}
           </Badge>
         )}
         {gift.photoRequired && (
-          <Badge variant="warning-soft" className="gap-1">
+          <Badge variant="warning-soft" className="h-auto gap-1 whitespace-normal py-1 text-left">
             <Camera className="h-3 w-3" />
             {t('form.photoNote')}
           </Badge>

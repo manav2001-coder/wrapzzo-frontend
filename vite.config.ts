@@ -15,12 +15,12 @@ export default defineConfig({
       manifest: {
         name: 'Wrappzo',
         short_name: 'Wrappzo',
-        description: 'Wrappzo -- corporate gifting and custom merchandise commerce platform.',
-        start_url: '/admin',
+        description: 'Wrappzo -- request, approve and track orders from your phone.',
+        start_url: '/home',
         scope: '/',
         display: 'standalone',
-        background_color: '#f4faf6',
-        theme_color: '#228152',
+        background_color: '#f4f8f5',
+        theme_color: '#0e3b2c',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
@@ -32,7 +32,7 @@ export default defineConfig({
         // panel always shows live data. Offline just means no network calls.
         navigateFallbackDenylist: [/^\/api\//],
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
-        // Default is 2 MiB; the main bundle has grown past that (Campaigns module).
+        // Default is 2 MiB; the main bundle has grown past that .
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
     }),

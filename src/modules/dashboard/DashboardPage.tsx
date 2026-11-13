@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/empty-state'
 import { usePermissions } from '@/components/permission-provider'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { useQuickGiftName } from '@/hooks/use-menu-labels'
 import { useDashboard } from '@/hooks/useDashboard'
 import { usePendingArtworkPreview } from '@/hooks/useApprovalCounts'
 import { humanize } from '@/lib/format'
@@ -25,7 +26,7 @@ import { PipelineFlow } from './PipelineFlow'
 import { QuickGiftActivityDialog } from './QuickGiftActivityDialog'
 import { RecentActivityFeed } from './RecentActivityFeed'
 
-const SOURCE_LABELS: Record<string, string> = { QUICK_GIFT: 'Quick Gift', BULK_GIFT: 'Bulk Gifting' }
+const SOURCE_LABELS: Record<string, string> = { BULK_GIFT: 'Bulk Gifting' }
 const SOURCE_COLORS: Record<string, string> = { QUICK_GIFT: '#f59e0b', BULK_GIFT: '#0d9488' }
 
 function greetingFor(date: Date): string {
@@ -63,16 +64,17 @@ export function DashboardPage() {
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
   const [selectedQuickGiftId, setSelectedQuickGiftId] = useState<string | null>(null)
 
+  const quickGiftName = useQuickGiftName()
   const breakdowns = useMemo(() => {
     if (!data) return null
     const slices = (counts: Record<string, number>, label: (key: string) => string, color: (key: string) => string) =>
       Object.entries(counts).map(([key, value]) => ({ key, label: label(key), value, color: color(key) }))
     return {
-      source: slices(data.orderSourceBreakdown, (k) => SOURCE_LABELS[k] ?? humanize(k), (k) => SOURCE_COLORS[k] ?? '#94a3b8'),
+      source: slices(data.orderSourceBreakdown, (k) => (k === 'QUICK_GIFT' ? quickGiftName : (SOURCE_LABELS[k] ?? humanize(k))), (k) => SOURCE_COLORS[k] ?? '#94a3b8'),
       quickGift: slices(data.quickGiftStatusBreakdown, humanize, statusColor),
       trend: data.activityTrend.map((p) => ({ label: p.weekLabel, QUICK_GIFT: p.quickGiftRequests })),
     }
-  }, [data])
+  }, [data, quickGiftName])
 
   if (isLoading || !data || !breakdowns) {
     return (
@@ -135,7 +137,7 @@ export function DashboardPage() {
                 onClick={() => setDrilldown({ dimension: 'quickGiftsThisMonth', value: '' })}
                 className="rounded-full border bg-background/70 px-3 py-1 text-xs font-medium backdrop-blur transition-colors hover:bg-background"
               >
-                <span className="font-bold tabular-nums">{data.quickGiftsThisMonth}</span> Quick Gifts this month
+                <span className="font-bold tabular-nums">{data.quickGiftsThisMonth}</span> requests this month
               </button>
             </div>
           </div>
@@ -148,8 +150,8 @@ export function DashboardPage() {
           title="Nothing to show yet"
           description={
             data.companyWide
-              ? 'Once your team starts raising Quick Gift requests, this dashboard fills in automatically.'
-              : "Once you send a Quick Gift, it shows up here."
+              ? 'Once your team starts raising requests, this dashboard fills in automatically.'
+              : "Once you send a request, it shows up here."
           }
         />
       ) : (
@@ -206,7 +208,7 @@ export function DashboardPage() {
                       <MultiLineChart
                         data={breakdowns.trend}
                         series={[
-                          { key: 'QUICK_GIFT', label: 'Quick Gift requests', color: SOURCE_COLORS.QUICK_GIFT },
+                          { key: 'QUICK_GIFT', label: `${quickGiftName} requests`, color: SOURCE_COLORS.QUICK_GIFT },
                         ]}
                         onSelect={(index, seriesKey) => {
                           const point = data.activityTrend[index]
@@ -224,10 +226,10 @@ export function DashboardPage() {
                       <ChartPanel title="Orders by source">
                         <DonutChart data={breakdowns.source} emptyText="No orders yet." onSelect={(key) => setDrilldown({ dimension: 'orderSource', value: key })} />
                       </ChartPanel>
-                      <ChartPanel title="Quick Gift status">
+                      <ChartPanel title={`${quickGiftName} status`}>
                         <DonutChart
                           data={breakdowns.quickGift}
-                          emptyText="No Quick Gift requests yet."
+                          emptyText="No requests yet."
                           onSelect={(key) => setDrilldown({ dimension: 'quickGiftStatus', value: key })}
                         />
                       </ChartPanel>

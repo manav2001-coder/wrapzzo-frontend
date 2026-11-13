@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LabelledField } from '@/components/fields/labelled-field'
 import { Textarea } from '@/components/ui/textarea'
+import { useQuickGiftName } from '@/hooks/use-menu-labels'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useCreateQuickGiftRequest } from '@/hooks/useQuickGifts'
 import { fromDateOnly, toDateOnly } from '@/lib/datetime'
@@ -346,6 +347,7 @@ function RecipientCard({
  */
 export function QuickGiftFormPage() {
   const { t } = useTranslation('gifts')
+  const quickGiftName = useQuickGiftName()
   const { giftId } = useParams<{ giftId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -476,7 +478,7 @@ export function QuickGiftFormPage() {
         icon={GiftIcon}
         title={t('form.notAvailableTitle')}
         description={t('form.notAvailableBody')}
-        action={{ label: t('landing.title'), to: '/quick-gift', icon: ArrowLeft }}
+        action={{ label: quickGiftName, to: '/quick-gift', icon: ArrowLeft }}
       />
     )
   }
@@ -491,7 +493,7 @@ export function QuickGiftFormPage() {
           <Button asChild variant="outline" size="sm" className="h-9">
             <Link to="/quick-gift">
               <ArrowLeft />
-              {t('landing.title')}
+              {quickGiftName}
             </Link>
           </Button>
         }

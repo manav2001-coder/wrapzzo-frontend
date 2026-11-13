@@ -22,7 +22,7 @@
     "add": "Add doctor",
     "edit": "Edit {{name}}",
     "emptyTitle": "No doctors yet",
-    "emptyBody": "Add your first doctor, or bulk upload a sheet. They are also available when you send a Quick Gift.",
+    "emptyBody": "Add your first doctor, or bulk upload a sheet. They are also available when you send a request.",
     "addTitle": "Add doctor",
     "editTitle": "Edit doctor",
     "save": "Save changes",

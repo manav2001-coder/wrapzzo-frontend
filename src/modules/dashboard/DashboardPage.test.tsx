@@ -68,7 +68,7 @@ describe('DashboardPage', () => {
 
   it('drills into the records behind a number', async () => {
     renderWithProviders(<DashboardPage />)
-    await userEvent.click(await screen.findByRole('button', { name: /Quick Gifts this month/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /requests this month/ }))
     await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalled())
     expect(await screen.findByText('Nothing here yet')).toBeInTheDocument()
   })

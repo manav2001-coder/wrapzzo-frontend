@@ -19,7 +19,7 @@ export function QuickGiftActivityDialog({ quickGiftId, onHide }: { quickGiftId: 
 
   return (
     <AppDialog
-      title={request?.giftName ?? "Quick Gift request"}
+      title={request?.giftName ?? "Request"}
       open={quickGiftId !== null}
       size="md"
       cancelLabel="Close"

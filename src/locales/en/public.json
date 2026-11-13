@@ -15,7 +15,7 @@
       "body": "Each person sees and does only their part: the rep raising the request, the managers approving it, the vendor printing and dispatching it.",
       "request": {
         "title": "Raise a request",
-        "description": "Reps pick a product from the Gift Store, or send a Quick Gift, for one of their doctors.",
+        "description": "Reps pick a product from the Gift Store, or send a direct request, for one of their doctors.",
         "caption": "Choose the doctor, the product and the quantity, and leave one note for the vendor."
       },
       "doctors": {
@@ -64,7 +64,7 @@
       "account": "Account",
       "links": {
         "giftStore": "Gift Store",
-        "quickGifts": "Quick Gifts",
+        "quickGifts": "Requests",
         "approvals": "Approvals",
         "tracking": "Order tracking"
       },

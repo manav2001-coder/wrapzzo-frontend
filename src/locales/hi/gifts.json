@@ -18,7 +18,7 @@
   },
   "store": {
     "title": "गिफ्ट स्टोर",
-    "subtitle": "आपकी टीम को सेवा देने वाले वेंडरों के सभी गिफ्ट। क्विक गिफ्ट से अभी भेजें।",
+    "subtitle": "आपकी टीम को सेवा देने वाले वेंडरों के सभी गिफ्ट। भेजने के लिए एक चुनें।",
     "quickGift": "क्विक गिफ्ट",
     "notAvailable": "आपके लिए उपलब्ध नहीं"
   },
@@ -120,15 +120,15 @@
       "orderPlaced_other": "{{count}} ऑर्डर हो गए",
       "orderPlacedDetail": "{{vendor}} को भेजा गया। आर्टवर्क अपलोड होने पर आप उसकी समीक्षा करेंगे।",
       "theVendor": "वेंडर",
-      "requestSent_one": "क्विक गिफ्ट अनुरोध भेजा गया",
-      "requestSent_other": "{{count}} क्विक गिफ्ट अनुरोध भेजे गए",
+      "requestSent_one": "अनुरोध भेजा गया",
+      "requestSent_other": "{{count}} अनुरोध भेजे गए",
       "requestSentDetail": "स्वीकृति के लिए भेजा गया।",
       "awaitingApproval_one": "ऑर्डर अनुमोदन के लिए भेजा गया",
       "awaitingApproval_other": "{{count}} ऑर्डर अनुमोदन के लिए भेजे गए",
       "awaitingApprovalDetail": "आपके अनुमोदनकर्ता के मंज़ूर करने पर यह प्रोडक्शन में जाएगा। दोनों स्थितियों में आपको ईमेल मिलेगा।"
     },
     "notAvailableTitle": "गिफ्ट उपलब्ध नहीं",
-    "notAvailableBody": "यह गिफ्ट अभी आपके लिए क्विक गिफ्ट में उपलब्ध नहीं है।",
+    "notAvailableBody": "यह गिफ्ट अभी आपके लिए उपलब्ध नहीं है।",
     "addMorePhotos": "और फ़ोटो जोड़ें",
     "removePhoto": "{{name}} हटाएँ"
   }

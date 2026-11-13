@@ -251,7 +251,7 @@ describe('QuickGiftFormPage', () => {
     await userEvent.type(screen.getAllByLabelText('Delivery address *')[1], '4 Park St, Kolkata')
     await userEvent.click(screen.getByRole('button', { name: 'Send all 2' }))
 
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('2 Quick Gift requests sent', { description: 'Sent for approval.' }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('2 requests sent', { description: 'Sent for approval.' }))
     expect(createQuickGiftRequest).toHaveBeenCalledTimes(2)
     expect(createQuickGiftRequest.mock.calls[0][0].doctor).toBeUndefined()
   })

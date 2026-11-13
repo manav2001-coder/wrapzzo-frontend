@@ -18,7 +18,7 @@
   },
   "store": {
     "title": "Gift Store",
-    "subtitle": "Everything the vendors serving your team offer. Send one now with Quick Gift.",
+    "subtitle": "Everything the vendors serving your team offer. Pick one to send.",
     "quickGift": "Quick Gift",
     "notAvailable": "Not available to you"
   },
@@ -120,15 +120,15 @@
       "orderPlaced_other": "{{count}} orders placed",
       "orderPlacedDetail": "Sent to {{vendor}}. You'll review the artwork when they upload it.",
       "theVendor": "the vendor",
-      "requestSent_one": "Quick Gift request sent",
-      "requestSent_other": "{{count}} Quick Gift requests sent",
+      "requestSent_one": "Request sent",
+      "requestSent_other": "{{count}} requests sent",
       "requestSentDetail": "Sent for approval.",
       "awaitingApproval_one": "Order sent for approval",
       "awaitingApproval_other": "{{count}} orders sent for approval",
       "awaitingApprovalDetail": "It goes to production once your approver approves it. You'll get an email either way."
     },
     "notAvailableTitle": "Gift not available",
-    "notAvailableBody": "This gift isn't available to you for Quick Gift right now.",
+    "notAvailableBody": "This gift isn't available to you right now.",
     "addMorePhotos": "Add more photos",
     "removePhoto": "Remove {{name}}"
   }

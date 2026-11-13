@@ -10,7 +10,7 @@
   },
   "source": {
     "CAMPAIGN": "Campaign",
-    "QUICK_GIFT": "Quick Gift",
+    "QUICK_GIFT": "Request",
     "BULK_GIFT": "Bulk gift"
   },
   "column": {
@@ -62,7 +62,7 @@
       "delivered": "Delivered"
     },
     "emptyTitle": "No orders yet",
-    "emptyBody": "Orders appear here once they're placed through Quick Gift.",
+    "emptyBody": "Orders appear here once they're placed.",
     "reviewEmptyTitle": "Nothing to review",
     "reviewEmptyBody": "When a vendor uploads a proof, it shows up here for you to approve."
   },
@@ -129,7 +129,7 @@
       "delivered": "Delivered"
     },
     "emptyTitle": "No orders yet",
-    "emptyBody": "Orders appear here as companies place and approve Quick Gifts.",
+    "emptyBody": "Orders appear here as companies place and approve requests.",
     "assign": "Assign vendor",
     "reassign": "Reassign vendor",
     "autoAssign": "Auto-assign",

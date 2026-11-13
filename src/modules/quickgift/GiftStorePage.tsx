@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { GiftCatalogue } from '@/components/gifts/gift-catalogue'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { Button } from '@/components/ui/button'
-import { useMenuLabel } from '@/hooks/use-menu-labels'
+import { useMenuLabel, useQuickGiftName } from '@/hooks/use-menu-labels'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useHasAccess } from '@/hooks/use-permission'
 import { P } from '@/lib/permissions'
@@ -14,6 +14,7 @@ import { P } from '@/lib/permissions'
 export function GiftStorePage() {
   const { t } = useTranslation('gifts')
   const pageTitle = useMenuLabel('gift-store', t('store.title'))
+  const quickGiftName = useQuickGiftName()
   const navigate = useNavigate()
   const { data: gifts, isLoading } = useActiveGifts()
   const canQuickGift = useHasAccess(P.QUICK_GIFT_CREATE)
@@ -28,7 +29,7 @@ export function GiftStorePage() {
           canQuickGift ? (
             <Button size="sm" onClick={() => navigate(`/quick-gift/new/${gift.id}`)}>
               <Zap />
-              {t('store.quickGift')}
+              {quickGiftName}
             </Button>
           ) : (
             <span className="text-xs text-muted-foreground">{t('store.notAvailable')}</span>

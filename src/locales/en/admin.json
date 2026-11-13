@@ -554,7 +554,7 @@
     "title": "Order approval",
     "subtitle": "Whether an order needs an approver's yes before it goes to production, and who approves it.",
     "card": "Approval before production",
-    "cardHelp": "With this on, a Quick Gift or PEL order waits for the approver below. It goes to the vendor only once they approve it; if they decline, it is cancelled and the person who placed it sees their note.",
+    "cardHelp": "With this on, a request waits for the approver below. It goes to the vendor only once they approve it; if they decline, it is cancelled and the person who placed it sees their note.",
     "require": "Orders need approval before they go to the vendor",
     "role": "Approver role",
     "pickRole": "Choose a role",

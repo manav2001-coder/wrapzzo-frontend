@@ -19,7 +19,7 @@ describe('Sidebar', () => {
   it('shows a company user only the entries their keys open', () => {
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/dashboard')
-    expect(screen.getByRole('link', { name: /quick gift/i })).toHaveAttribute('href', '/quick-gift')
+    expect(screen.getByRole('link', { name: /quick pel/i })).toHaveAttribute('href', '/quick-gift')
     // No artwork key, so the Approvals entry is not offered.
     expect(screen.queryByRole('link', { name: /approvals/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /campaign/i })).not.toBeInTheDocument()
@@ -75,7 +75,7 @@ describe('Sidebar', () => {
 
   it('marks the current route active', () => {
     renderWithProviders(<Sidebar />, { route: '/quick-gift' })
-    expect(screen.getByRole('link', { name: /quick gift/i })).toHaveClass('active')
+    expect(screen.getByRole('link', { name: /quick pel/i })).toHaveClass('active')
     expect(screen.getByRole('link', { name: /dashboard/i })).not.toHaveClass('active')
   })
 

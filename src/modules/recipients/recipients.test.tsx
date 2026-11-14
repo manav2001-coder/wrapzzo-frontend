@@ -150,7 +150,7 @@ describe('Doctors page', () => {
     renderWithProviders(<RecipientsPage />)
     expect(await screen.findByText('Upcoming birthdays')).toBeInTheDocument()
     expect(screen.getByText('Tomorrow')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Send a gift/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Send a PEL/ })).toBeInTheDocument()
   })
 })
 

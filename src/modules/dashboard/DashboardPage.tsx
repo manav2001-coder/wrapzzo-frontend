@@ -26,7 +26,7 @@ import { PipelineFlow } from './PipelineFlow'
 import { QuickGiftActivityDialog } from './QuickGiftActivityDialog'
 import { RecentActivityFeed } from './RecentActivityFeed'
 
-const SOURCE_LABELS: Record<string, string> = { BULK_GIFT: 'Bulk Gifting' }
+const SOURCE_LABELS: Record<string, string> = { BULK_GIFT: 'Bulk PEL ordering' }
 const SOURCE_COLORS: Record<string, string> = { QUICK_GIFT: '#f59e0b', BULK_GIFT: '#0d9488' }
 
 function greetingFor(date: Date): string {
@@ -184,7 +184,7 @@ export function DashboardPage() {
             <section className="lg:col-span-3">
               <SectionTitle
                 title="Recent orders"
-                description={data.companyWide ? 'Every gift order in the company, ordered to delivered.' : 'Your gift orders, ordered to delivered.'}
+                description={data.companyWide ? 'Every PEL order in the company, ordered to delivered.' : 'Your PEL orders, ordered to delivered.'}
               />
               <OrderTimeline orders={data.recentOrders} />
             </section>
@@ -241,7 +241,7 @@ export function DashboardPage() {
                   label: "What's performing",
                   content: (
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                      <ChartPanel title="Top gifts">
+                      <ChartPanel title="Top PELs">
                         <MiniBarChart
                           data={data.topGifts.map((g) => ({ label: g.giftName, value: g.orderCount, color: '#6366f1' }))}
                           seriesName="Orders"

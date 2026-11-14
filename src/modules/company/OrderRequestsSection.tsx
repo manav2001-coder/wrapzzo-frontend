@@ -84,7 +84,7 @@ export function OrderRequestsSection() {
       {
         id: 'giftName',
         accessorFn: (order) => order.giftName ?? '',
-        header: 'Gift',
+        header: 'PEL',
         meta: { className: 'min-w-[220px]' },
         cell: ({ row }) => (
           <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpen(row.original)}>
@@ -92,7 +92,7 @@ export function OrderRequestsSection() {
               <ShoppingBag className="h-4 w-4" />
             </span>
             <span className="min-w-0">
-              <span className="block truncate font-medium hover:underline">{row.original.giftName ?? 'Gift'}</span>
+              <span className="block truncate font-medium hover:underline">{row.original.giftName ?? 'PEL'}</span>
               <span className="block text-xs text-muted-foreground">{row.original.displayId}</span>
             </span>
           </button>
@@ -147,7 +147,7 @@ export function OrderRequestsSection() {
                     <ShoppingBag className="h-5 w-5" />
                   </span>
                   <div className="min-w-0">
-                    <SheetTitle className="truncate">{open.giftName ?? 'Gift'}</SheetTitle>
+                    <SheetTitle className="truncate">{open.giftName ?? 'PEL'}</SheetTitle>
                     <SheetDescription>{open.displayId} · waiting for your approval</SheetDescription>
                   </div>
                 </div>

@@ -145,7 +145,7 @@ describe('GiftStorePage', () => {
   it('offers Quick Gift, and nothing about campaigns, to someone who may send one', async () => {
     signedInWith(['quick_gift.create', 'gift_store.view', 'doctor.view', 'order.view'])
     renderWithProviders(<GiftStorePage />)
-    expect(await screen.findByRole('button', { name: 'Quick Gift' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Quick PEL' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /campaign/i })).not.toBeInTheDocument()
   })
 
@@ -153,6 +153,6 @@ describe('GiftStorePage', () => {
     signedInWith([])
     renderWithProviders(<GiftStorePage />)
     expect(await screen.findByText('Not available to you')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Quick Gift' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Quick PEL' })).not.toBeInTheDocument()
   })
 })

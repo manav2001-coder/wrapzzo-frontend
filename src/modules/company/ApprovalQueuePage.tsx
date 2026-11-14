@@ -111,7 +111,7 @@ export function ApprovalQueuePage() {
       {
         id: 'giftName',
         accessorFn: (item) => item.giftName ?? '',
-        header: 'Gift',
+        header: 'PEL',
         meta: { className: 'min-w-[220px]' },
         cell: ({ row }) => (
           <button type="button" className="flex min-w-0 items-center justify-center gap-2.5" onClick={() => setOpen(row.original)}>

@@ -28,7 +28,7 @@ export function OrderTimeline({ orders }: { orders: OrderTimelineItem[] }) {
   const [selected, setSelected] = useState<OrderTimelineItem | null>(null)
 
   if (orders.length === 0) {
-    return <EmptyState icon={Truck} title="No orders yet" description="Once a gift is ordered, its journey to delivery shows up here." />
+    return <EmptyState icon={Truck} title="No orders yet" description="Once a PEL is ordered, its journey to delivery shows up here." />
   }
 
   return (

@@ -114,7 +114,7 @@ describe('RecipientUploadPage', () => {
   it('names the company, recipient and gift, and needs a photo before sending', async () => {
     getRecipientUploadDetails.mockResolvedValue(DETAILS)
     renderUpload()
-    expect(await screen.findByRole('heading', { name: 'Acme has a gift for you, Asha!' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Acme has a PEL for you, Asha!' })).toBeInTheDocument()
     expect(screen.getByText('Desk Plant')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send my photo' })).toBeDisabled()
     expect(getRecipientUploadDetails).toHaveBeenCalledWith('tok-1', 'recipient')
@@ -124,7 +124,7 @@ describe('RecipientUploadPage', () => {
     getRecipientUploadDetails.mockResolvedValue(DETAILS)
     uploadRecipientPhoto.mockResolvedValue(undefined)
     renderUpload()
-    await screen.findByRole('heading', { name: /has a gift for you/ })
+    await screen.findByRole('heading', { name: /has a PEL for you/ })
     const file = pickPhoto()
     expect(screen.getByRole('img', { name: 'Preview' })).toHaveAttribute('src', 'blob:preview')
     await userEvent.click(screen.getByRole('button', { name: 'Send my photo' }))
@@ -137,7 +137,7 @@ describe('RecipientUploadPage', () => {
     getRecipientUploadDetails.mockResolvedValue(DETAILS)
     uploadRecipientPhoto.mockRejectedValue(apiError('File too large'))
     renderUpload()
-    await screen.findByRole('heading', { name: /has a gift for you/ })
+    await screen.findByRole('heading', { name: /has a PEL for you/ })
     pickPhoto()
     await userEvent.click(screen.getByRole('button', { name: 'Send my photo' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('File too large')
@@ -147,7 +147,7 @@ describe('RecipientUploadPage', () => {
   it('uses the quick-gift endpoint for a quick-gift link', async () => {
     getRecipientUploadDetails.mockResolvedValue({ ...DETAILS, recipientName: null })
     renderUpload('/quick-gift-upload/qg-9', 'quick-gift')
-    expect(await screen.findByRole('heading', { name: 'Acme has a gift for you!' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Acme has a PEL for you!' })).toBeInTheDocument()
     expect(getRecipientUploadDetails).toHaveBeenCalledWith('qg-9', 'quick-gift')
   })
 
@@ -155,7 +155,7 @@ describe('RecipientUploadPage', () => {
     getRecipientUploadDetails.mockResolvedValue({ ...DETAILS, giftName: null, alreadyUploaded: true })
     renderUpload()
     expect(await screen.findByRole('heading', { name: 'Thank you!' })).toBeInTheDocument()
-    expect(screen.getByText(/get your gift ready/)).toBeInTheDocument()
+    expect(screen.getByText(/get your PEL ready/)).toBeInTheDocument()
   })
 
   it("explains a dead link with the server's reason", async () => {

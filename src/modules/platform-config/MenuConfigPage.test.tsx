@@ -25,17 +25,17 @@ describe('MenuConfigPage', () => {
   it("lists the company's menus with their default, showing the names already chosen for that company", async () => {
     renderWithProviders(<MenuConfigPage />)
 
-    expect(await screen.findByLabelText("Company's name for Gift Store")).toHaveValue('Prescription Pads')
+    expect(await screen.findByLabelText("Company's name for PEL Store")).toHaveValue('Prescription Pads')
     expect(getMenuLabels).toHaveBeenCalledWith('c-1')
-    expect(screen.getByLabelText("Company's name for Quick Gift")).toHaveValue('')
-    expect(screen.getByLabelText("Company's name for Quick Gift")).toHaveAttribute('placeholder', 'Quick Gift')
+    expect(screen.getByLabelText("Company's name for Quick PEL")).toHaveValue('')
+    expect(screen.getByLabelText("Company's name for Quick PEL")).toHaveAttribute('placeholder', 'Quick PEL')
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
   })
 
   it('saves new names tidied, for that company, and a reset name goes back to the default', async () => {
     renderWithProviders(<MenuConfigPage />)
-    await userEvent.type(await screen.findByLabelText("Company's name for Quick Gift"), '  Request   Prescription Pads ')
-    await userEvent.click(screen.getByRole('button', { name: 'Use the default name for Gift Store' }))
+    await userEvent.type(await screen.findByLabelText("Company's name for Quick PEL"), '  Request   Prescription Pads ')
+    await userEvent.click(screen.getByRole('button', { name: 'Use the default name for PEL Store' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => expect(saveMenuLabels).toHaveBeenCalledWith('c-1', { 'quick-gift': 'Request Prescription Pads' }))
@@ -45,7 +45,7 @@ describe('MenuConfigPage', () => {
     currentUser.mockReturnValue(platformStaff([P.PLATFORM_MENU_CONFIG_VIEW, P.PLATFORM_COMPANY_VIEW]))
     renderWithProviders(<MenuConfigPage />)
 
-    expect(await screen.findByLabelText("Company's name for Gift Store")).toBeDisabled()
+    expect(await screen.findByLabelText("Company's name for PEL Store")).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
   })
 })

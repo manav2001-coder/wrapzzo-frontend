@@ -278,6 +278,6 @@ describe('QuickGiftFormPage', () => {
       </Routes>,
       { route: '/quick-gift/new/missing' },
     )
-    expect(await screen.findByText('Gift not available')).toBeInTheDocument()
+    expect(await screen.findByText('PEL not available')).toBeInTheDocument()
   })
 })

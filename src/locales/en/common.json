@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Wrappzo",
-    "tagline": "Corporate gifting, end to end"
+    "tagline": "Corporate PEL ordering, end to end"
   },
   "nav": {
     "general": "General",
@@ -14,12 +14,12 @@
     "admin": "Admin",
     "companies": "Companies",
     "vendors": "Vendors",
-    "giftCatalogue": "Gift Store",
+    "giftCatalogue": "PEL Store",
     "orders": "Orders",
     "accessControl": "Access Control",
     "dashboard": "Dashboard",
-    "quickGift": "Quick Gift",
-    "giftStore": "Gift Store",
+    "quickGift": "Quick PEL",
+    "giftStore": "PEL Store",
     "recipients": "Doctors",
     "approvals": "Approvals",
     "artworkApproval": "Artwork approval",

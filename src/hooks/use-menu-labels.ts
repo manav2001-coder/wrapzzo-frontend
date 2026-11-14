@@ -20,7 +20,7 @@ export function useMenuLabel(menuId: string, fallback: string): string {
 
 /** What this company calls Quick Gift (its own menu name, e.g. "Request PEL"), for every place the screens name it. */
 export function useQuickGiftName(): string {
-  return useMenuLabel('quick-gift', 'Quick Gift')
+  return useMenuLabel('quick-gift', 'Quick PEL')
 }
 
 const labelsKey = (companyId: string | null | undefined) => ['menuLabels', companyId] as const

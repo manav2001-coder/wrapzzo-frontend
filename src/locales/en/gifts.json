@@ -1,6 +1,6 @@
 {
   "catalogue": {
-    "search": "Search gifts, vendors…",
+    "search": "Search PELs, vendors…",
     "allCategories": "All categories",
     "allVendors": "All vendors",
     "category": "Category",
@@ -9,29 +9,29 @@
     "leadTime": "{{days}}-day lead time",
     "personalised": "Personalised",
     "needsPhoto": "Needs photo",
-    "emptyTitle": "No gifts available yet",
-    "emptyBody": "None of the vendors serving your team has listed a gift yet.",
-    "noMatchTitle": "No gifts match",
+    "emptyTitle": "No PELs available yet",
+    "emptyBody": "None of the vendors serving your team has listed a PEL yet.",
+    "noMatchTitle": "No PELs match",
     "noMatchBody": "Try another search, category or vendor.",
-    "count_one": "{{count}} gift",
-    "count_other": "{{count}} gifts"
+    "count_one": "{{count}} PEL",
+    "count_other": "{{count}} PELs"
   },
   "store": {
-    "title": "Gift Store",
+    "title": "PEL Store",
     "subtitle": "Everything the vendors serving your team offer. Pick one to send.",
-    "quickGift": "Quick Gift",
+    "quickGift": "Quick PEL",
     "notAvailable": "Not available to you"
   },
   "landing": {
-    "title": "Quick Gift",
-    "subtitle": "Send a gift to one or more people.",
-    "subtitleFor": "Pick a gift for {{name}}. Their details are already filled in.",
-    "tabSend": "Send a gift",
+    "title": "Quick PEL",
+    "subtitle": "Send a PEL to one or more people.",
+    "subtitleFor": "Pick a PEL for {{name}}. Their details are already filled in.",
+    "tabSend": "Send a PEL",
     "tabRequests": "My requests",
     "send": "Send this",
     "column": {
       "request": "Request",
-      "gift": "Gift",
+      "gift": "PEL",
       "recipient": "Recipient",
       "quantity": "Qty",
       "vendor": "Vendor",
@@ -39,7 +39,7 @@
       "sent": "Sent"
     },
     "emptyTitle": "No requests yet",
-    "emptyBody": "Pick a gift on the Send a gift tab to send your first one."
+    "emptyBody": "Pick a PEL on the Send a PEL tab to send your first one."
   },
   "status": {
     "SUBMITTED": "Awaiting approval",
@@ -109,7 +109,7 @@
     "minQuantity": "Minimum order: {{min}}",
     "error": {
       "required": "Required",
-      "photoOrEmail": "This gift needs a photo. Upload one, or add the recipient's email so we can ask for it.",
+      "photoOrEmail": "This PEL needs a photo. Upload one, or add the recipient's email so we can ask for it.",
       "quantity": "Enter a whole number from {{min}} to {{max}}.",
       "fixRows": "Fix the highlighted recipients",
       "partial": "{{ok}} sent, {{failed}} failed. The failed ones are still below.",
@@ -127,8 +127,8 @@
       "awaitingApproval_other": "{{count}} orders sent for approval",
       "awaitingApprovalDetail": "It goes to production once your approver approves it. You'll get an email either way."
     },
-    "notAvailableTitle": "Gift not available",
-    "notAvailableBody": "This gift isn't available to you right now.",
+    "notAvailableTitle": "PEL not available",
+    "notAvailableBody": "This PEL isn't available to you right now.",
     "addMorePhotos": "Add more photos",
     "removePhoto": "Remove {{name}}"
   }

@@ -11,14 +11,14 @@
   "source": {
     "CAMPAIGN": "Campaign",
     "QUICK_GIFT": "Request",
-    "BULK_GIFT": "Bulk gift"
+    "BULK_GIFT": "Bulk PEL"
   },
   "column": {
     "order": "Order",
     "company": "Company",
     "campaign": "Campaign",
     "recipient": "Recipient",
-    "gift": "Gift",
+    "gift": "PEL",
     "total": "Total",
     "vendor": "Vendor",
     "status": "Status",
@@ -117,7 +117,7 @@
     "whatsapp": "Share via WhatsApp",
     "copy": "Copy link",
     "copied": "Link copied",
-    "message": "Hi! We just need a quick photo from you to send your gift. Please upload it here: {{link}}"
+    "message": "Hi! We just need a quick photo from you to send your PEL. Please upload it here: {{link}}"
   },
   "platform": {
     "title": "Orders",

@@ -15,7 +15,7 @@
       "body": "Each person sees and does only their part: the rep raising the request, the managers approving it, the vendor printing and dispatching it.",
       "request": {
         "title": "Raise a request",
-        "description": "Reps pick a product from the Gift Store, or send a direct request, for one of their doctors.",
+        "description": "Reps pick a product from the PEL Store, or send a direct request, for one of their doctors.",
         "caption": "Choose the doctor, the product and the quantity, and leave one note for the vendor."
       },
       "doctors": {
@@ -63,7 +63,7 @@
       "platform": "Platform",
       "account": "Account",
       "links": {
-        "giftStore": "Gift Store",
+        "giftStore": "PEL Store",
         "quickGifts": "Requests",
         "approvals": "Approvals",
         "tracking": "Order tracking"
@@ -77,16 +77,16 @@
     "home": "Go to home"
   },
   "upload": {
-    "loading": "Loading your gift",
+    "loading": "Loading your PEL",
     "invalidTitle": "This link isn't valid anymore",
     "missingToken": "This link is missing its upload token.",
     "expired": "It may have expired or already been used.",
     "failed": "Something went wrong. Please try again.",
     "thanksTitle": "Thank you!",
     "thanksBody": "Your photo is in. {{company}} will use it to get your {{gift}} ready for you.",
-    "yourGift": "gift",
-    "title": "{{company}} has a gift for you!",
-    "titleNamed": "{{company}} has a gift for you, {{name}}!",
+    "yourGift": "PEL",
+    "title": "{{company}} has a PEL for you!",
+    "titleNamed": "{{company}} has a PEL for you, {{name}}!",
     "subtitle": "We just need a quick photo from you to get it ready.",
     "photoLabel": "Please share a photo of yourself",
     "dropHint": "Tap to choose a photo, or drag one in",

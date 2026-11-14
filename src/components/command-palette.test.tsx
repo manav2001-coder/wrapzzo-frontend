@@ -19,7 +19,7 @@ describe('CommandPalette', () => {
     await userEvent.keyboard('{Meta>}k{/Meta}')
 
     expect(screen.getByRole('option', { name: 'Dashboard' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Quick Gift' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Quick PEL' })).toBeInTheDocument()
     // Not held by this user, so not offered: the palette can't jump anyone to a 403.
     expect(screen.queryByRole('option', { name: 'Approvals' })).not.toBeInTheDocument()
   })
@@ -32,7 +32,7 @@ describe('CommandPalette', () => {
       </Routes>,
     )
     await userEvent.click(screen.getAllByRole('button', { name: /search/i })[0])
-    await userEvent.click(screen.getByRole('option', { name: 'Quick Gift' }))
+    await userEvent.click(screen.getByRole('option', { name: 'Quick PEL' }))
     expect(await screen.findByRole('heading', { name: 'Quick Gift page' })).toBeInTheDocument()
   })
 

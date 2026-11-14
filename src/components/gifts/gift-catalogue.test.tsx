@@ -53,12 +53,12 @@ describe('GiftCatalogue', () => {
     expect(screen.getByText('Needs photo')).toBeInTheDocument()
     expect(screen.getByText('7-day lead time')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Pick Steel Mug' })).toBeInTheDocument()
-    expect(screen.getByText('3 gifts')).toBeInTheDocument()
+    expect(screen.getByText('3 PELs')).toBeInTheDocument()
   })
 
   it('searches across name and vendor', async () => {
     renderCatalogue()
-    await userEvent.type(screen.getByLabelText('Search gifts, vendors…'), 'print house')
+    await userEvent.type(screen.getByLabelText('Search PELs, vendors…'), 'print house')
     expect(cardNames()).toEqual(['Rx Pad Premium', 'Steel Mug'])
   })
 
@@ -77,11 +77,11 @@ describe('GiftCatalogue', () => {
 
   it('says when nothing matches, and when there is nothing at all', async () => {
     const { unmount } = renderCatalogue()
-    await userEvent.type(screen.getByLabelText('Search gifts, vendors…'), 'zzz')
-    expect(screen.getByText('No gifts match')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Search PELs, vendors…'), 'zzz')
+    expect(screen.getByText('No PELs match')).toBeInTheDocument()
     unmount()
 
     renderCatalogue([])
-    expect(screen.getByText('No gifts available yet')).toBeInTheDocument()
+    expect(screen.getByText('No PELs available yet')).toBeInTheDocument()
   })
 })

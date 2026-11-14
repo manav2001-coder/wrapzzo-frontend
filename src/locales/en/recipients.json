@@ -34,7 +34,7 @@
     "today": "Today",
     "tomorrow": "Tomorrow",
     "inDays": "In {{count}} days",
-    "gift": "Send a gift"
+    "gift": "Send a PEL"
   },
   "picker": {
     "title": "Pick from my doctors",
@@ -47,7 +47,7 @@
   },
   "doctors": {
     "removeTitle": "Remove {{name}} from your list?",
-    "removeBody": "The doctor stays in the company records, so past gifts are unaffected.",
+    "removeBody": "The doctor stays in the company records, so past PELs are unaffected.",
     "remove": "Remove {{name}}",
     "removeConfirm": "Remove",
     "removed": "Doctor removed from your list"

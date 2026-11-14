@@ -72,7 +72,18 @@
       "body": "Everyone holding it loses what it grants. Nothing is deleted - reactivate to restore."
     },
     "empty": "No templates yet",
-    "emptyBody": "Create one, add features to it, then assign it to a role or a user."
+    "emptyBody": "Create one, add features to it, then assign it to a role or a user.",
+    "clone": {
+      "action": "Clone",
+      "title": "Clone \"{{name}}\"",
+      "body": "Makes a new template with all of its features, including inherited ones, as its own, so you can edit them freely. It is not linked to the original, and roles and users are not copied.",
+      "name": "Name for the copy",
+      "confirm": "Clone",
+      "done_one": "Cloned with {{count}} feature",
+      "done_other": "Cloned with {{count}} features",
+      "leftOut_one": "{{count}} was left out: switched off for the company, or access you do not hold.",
+      "leftOut_other": "{{count}} were left out: switched off for the company, or access you do not hold."
+    }
   },
   "quickCreate": {
     "title": "Quick create module templates",
@@ -180,7 +191,8 @@
     "noneAvailable": "Nothing left to add",
     "noneAssigned": "Nothing assigned yet",
     "featuresAdded": "Features added",
-    "featuresRemoved": "Features removed"
+    "featuresRemoved": "Features removed",
+    "makeEditable": "Make these editable"
   },
   "effectiveFeatures": {
     "title": "Effective features",
@@ -202,5 +214,12 @@
     "all": "All platforms",
     "web": "Web",
     "mobile": "Mobile"
+  },
+  "makeEditable": {
+    "title": "Make inherited features editable?",
+    "body": "These features come from templates this one includes. They will become this template's own, and the included templates will be dropped, so you can add and remove any feature here. What this template grants does not change, but it will no longer follow later changes to the templates it included.",
+    "confirm": "Make editable",
+    "done_one": "{{count}} feature is now this template's own",
+    "done_other": "{{count}} features are now this template's own"
   }
 }

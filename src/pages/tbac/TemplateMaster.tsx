@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle2, Eye, Layers, Pencil, Trash2 } from "lucide-react";
+import { CheckCircle2, Copy, Eye, Layers, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -8,7 +8,9 @@ import { LIST_FIELDS } from "@/lib/list-fields";
 import type { EffectiveFeatures, Template } from "@/types/tbac";
 
 import { DataTable } from "@/components/data-table";
+import { AppDialog } from "@/components/app-dialog";
 import { IconButton } from "@/components/icon-button";
+import { Input } from "@/components/ui/input";
 import { PermissionGate } from "@/components/access-control/permission-gate";
 import { useCompanyScope } from "@/components/masters/company-scope-select";
 import { MasterPageHeader, SystemBadge, useAuditColumns } from "@/components/masters/master-page";
@@ -17,7 +19,10 @@ import { QuickCreateModuleTemplates } from "@/components/tbac/quick-create-modul
 import { ToggleActiveDialog } from "@/components/tbac/toggle-active-dialog";
 import { useApiErrorToast } from "@/hooks/use-api-error-toast";
 import { useFieldConfig } from "@/hooks/use-field-config";
+import { useHasAccess } from "@/hooks/use-permission";
+import { P } from "@/lib/permissions";
 import {
+  createResource,
   deactivateResource,
   getResource,
   listAll,
@@ -50,6 +55,11 @@ export default function TemplateMasterPage() {
   const [busy, setBusy] = React.useState(false);
   const [existingNames, setExistingNames] = React.useState<string[]>([]);
   const [viewing, setViewing] = React.useState<Template | null>(null);
+  const [cloning, setCloning] = React.useState<Template | null>(null);
+  const [cloneName, setCloneName] = React.useState("");
+  // A clone makes a template and grants features to it, so it needs both rights (the server checks too).
+  const mayClone = useHasAccess([P.TEMPLATE_MASTER_ADD, P.FEATURES_TO_TEMPLATE_ASSIGN], true);
+  const mayOpenFeatures = useHasAccess(P.FEATURES_TO_TEMPLATE_VIEW);
   const [effective, setEffective] = React.useState<EffectiveFeatures>({
     direct: [],
     inherited: [],
@@ -95,6 +105,27 @@ export default function TemplateMasterPage() {
     },
     [showError],
   );
+
+  async function cloneTemplate() {
+    if (!cloning) return;
+    setBusy(true);
+    try {
+      const result = await createResource<{ template: Template; copied: number; leftOut: number }>(`${PATH}/${cloning.id}/clone`, {
+        name: cloneName.trim() || undefined,
+      });
+      toast.success(t("templateMaster.clone.done", { count: result.copied }), {
+        description: result.leftOut > 0 ? t("templateMaster.clone.leftOut", { count: result.leftOut }) : undefined,
+      });
+      setCloning(null);
+      setRefreshTrigger((n) => n + 1);
+      // Straight to the copy's features, where the small edits are made.
+      if (mayOpenFeatures) navigate(`/tbac/features-to-template/${result.template.id}`);
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function toggleActive() {
     if (!pending) return;
@@ -163,6 +194,17 @@ export default function TemplateMasterPage() {
                   label={t("action.view", { ns: "common" })}
                   onClick={() => navigate(`/tbac/template-master/view/${template.id}`)}
                 />
+                {/* Cloning is how a company starts from any template, a shared system one included: the copy is its own. */}
+                {mayClone && (
+                  <IconButton
+                    icon={Copy}
+                    label={t("templateMaster.clone.action")}
+                    onClick={() => {
+                      setCloning(template);
+                      setCloneName(`Copy of ${template.name}`);
+                    }}
+                  />
+                )}
                 {/* A system template is shared by every tenant and the API answers 403 —
                     so don't offer the action at all. */}
                 {!template.isSystem && (
@@ -189,7 +231,7 @@ export default function TemplateMasterPage() {
           },
         },
       ]),
-    [t, statusColumn, auditColumns, applyToColumns, navigate, openEffective],
+    [t, statusColumn, auditColumns, applyToColumns, navigate, openEffective, mayClone],
   );
 
   return (
@@ -241,6 +283,24 @@ export default function TemplateMasterPage() {
       >
         {pending && <p className="text-sm text-muted-foreground">{pending.name}</p>}
       </ToggleActiveDialog>
+
+      <AppDialog
+        open={cloning !== null}
+        onOpenChange={(next) => !next && setCloning(null)}
+        size="sm"
+        title={t("templateMaster.clone.title", { name: cloning?.name ?? "" })}
+        description={t("templateMaster.clone.body")}
+        confirmLabel={t("templateMaster.clone.confirm")}
+        cancelLabel={t("action.cancel", { ns: "common" })}
+        confirmDisabled={!cloneName.trim()}
+        loading={busy}
+        onConfirm={() => void cloneTemplate()}
+      >
+        <label htmlFor="clone-name" className="mb-1 block text-sm font-medium">
+          {t("templateMaster.clone.name")}
+        </label>
+        <Input id="clone-name" value={cloneName} maxLength={100} onChange={(event) => setCloneName(event.target.value)} />
+      </AppDialog>
     </div>
   );
 }

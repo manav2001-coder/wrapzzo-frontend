@@ -6,10 +6,13 @@ import type { EffectiveFeatures, Feature, Template } from "@/types/tbac";
 
 import { SectionCard } from "@/components/section-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/app-dialog";
 import { MasterPageHeader } from "@/components/masters/master-page";
 import { TransferList, type TransferItem } from "@/components/tbac/transfer-list";
 import { useCompanyScope } from "@/components/masters/company-scope-select";
-import { usePermissions } from "@/hooks/use-permission";
+import { useHasAccess, usePermissions } from "@/hooks/use-permission";
+import { P } from "@/lib/permissions";
 import { useApiErrorToast } from "@/hooks/use-api-error-toast";
 import { usePaginatedList } from "@/hooks/use-paginated-list";
 import {
@@ -45,6 +48,9 @@ export default function FeaturesToTemplateAssignPage() {
   const [loading, setLoading] = React.useState(true);
   const [busy, setBusy] = React.useState(false);
   const [search, setSearch] = React.useState("");
+  const [confirmingEditable, setConfirmingEditable] = React.useState(false);
+  // Making inherited features editable adds them here AND lets go of the includes, so both rights are needed (the server checks too).
+  const mayMakeEditable = useHasAccess([P.FEATURES_TO_TEMPLATE_ASSIGN, P.TEMPLATES_TO_TEMPLATE_ASSIGN], true);
 
   const load = React.useCallback(async () => {
     if (!templateId) return;
@@ -141,6 +147,21 @@ export default function FeaturesToTemplateAssignPage() {
     }
   }
 
+  async function handleMakeEditable() {
+    if (!templateId) return;
+    setBusy(true);
+    try {
+      const result = await createResource<{ copied: number; includesRemoved: number }>(`${TEMPLATES}/${templateId}/make-editable`, {});
+      toast.success(t("makeEditable.done", { count: result.copied }));
+      setConfirmingEditable(false);
+      await Promise.all([load(), refetchPermissions()]);
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-4 p-6">
@@ -178,6 +199,13 @@ export default function FeaturesToTemplateAssignPage() {
         available={availableItems}
         direct={effective.direct.map(toItem)}
         inherited={effective.inherited.map(toItem)}
+        inheritedAction={
+          mayMakeEditable ? (
+            <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setConfirmingEditable(true)}>
+              {t("transfer.makeEditable")}
+            </Button>
+          ) : undefined
+        }
         onAdd={handleAdd}
         onRemove={handleRemove}
         permission="features_to_template.assign"
@@ -192,6 +220,19 @@ export default function FeaturesToTemplateAssignPage() {
         sentinelRef={available.sentinelRef}
         busy={busy}
       />
+      <AppDialog
+        open={confirmingEditable}
+        onOpenChange={(next) => !next && setConfirmingEditable(false)}
+        size="sm"
+        title={t("makeEditable.title")}
+        description={t("makeEditable.body")}
+        confirmLabel={t("makeEditable.confirm")}
+        cancelLabel={t("action.cancel", { ns: "common" })}
+        loading={busy}
+        onConfirm={() => void handleMakeEditable()}
+      >
+        {null}
+      </AppDialog>
     </div>
   );
 }

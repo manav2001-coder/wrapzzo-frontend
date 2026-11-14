@@ -30,6 +30,8 @@ export interface TransferListProps {
    * not live on this record. v4 renders these disabled and italic for the same reason.
    */
   inherited?: TransferItem[];
+  /** Shown beside the inherited heading -- what to do about features that cannot be edited here (make them editable). */
+  inheritedAction?: React.ReactNode;
   onAdd: (ids: string[]) => void | Promise<void>;
   onRemove: (ids: string[]) => void | Promise<void>;
   /** Gates both buttons. Selection stays usable so the lists can still be read. */
@@ -141,6 +143,7 @@ export function TransferList({
   available,
   direct,
   inherited = [],
+  inheritedAction,
   onAdd,
   onRemove,
   permission,
@@ -327,12 +330,12 @@ export function TransferList({
 
             {filteredInherited.length > 0 && (
               <>
-                <p
-                  className="border-y bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground"
-                  title={t("transfer.inheritedHint")}
-                >
-                  {t("transfer.inherited", { count: filteredInherited.length })}
-                </p>
+                <div className="flex items-center justify-between gap-2 border-y bg-muted/40 px-3 py-1.5">
+                  <p className="text-xs font-medium text-muted-foreground" title={t("transfer.inheritedHint")}>
+                    {t("transfer.inherited", { count: filteredInherited.length })}
+                  </p>
+                  {inheritedAction}
+                </div>
                 <div className="divide-y">
                   {filteredInherited.map((item) => (
                     <Row key={item.id} item={item} readOnly badge={t("transfer.inheritedBadge")} />

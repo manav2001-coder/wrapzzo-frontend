@@ -14,6 +14,9 @@ import './index.css'
 import App from './App.tsx'
 import { Providers } from '@/components/providers'
 import { Toaster } from '@/components/ui/sonner'
+import { keepAppUpToDate } from '@/lib/pwa-update'
+
+keepAppUpToDate()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

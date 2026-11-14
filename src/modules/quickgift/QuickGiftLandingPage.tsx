@@ -170,6 +170,7 @@ export function QuickGiftLandingPage() {
                 columns={columns}
                 fetchData={fetchMyRequests}
                 listFields={LIST_FIELDS}
+                tableFilterComponents={() => [{ id: 'createdAt', label: t('landing.column.sent'), type: 'dateRange' }]}
                 searchable
                 showRowSelectionColumn={false}
                 defaultSort={{ id: 'createdAt', desc: true }}

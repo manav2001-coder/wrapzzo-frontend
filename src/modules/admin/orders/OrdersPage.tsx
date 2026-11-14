@@ -259,6 +259,7 @@ export function OrdersPage() {
         columns={columns}
         fetchData={fetchOrders}
         listFields={LIST_FIELDS}
+        tableFilterComponents={() => [{ id: 'createdAt', label: t('column.placed'), type: 'dateRange' }]}
         searchable
         refreshTrigger={refreshTrigger}
         defaultSort={{ id: 'createdAt', desc: true }}

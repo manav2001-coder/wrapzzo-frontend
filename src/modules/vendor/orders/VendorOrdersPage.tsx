@@ -168,6 +168,7 @@ export function VendorOrdersPage() {
         fetchData={fetchOrders}
         refetchInterval={LIVE_REFRESH_MS}
         listFields={LIST_FIELDS}
+        tableFilterComponents={() => [{ id: 'assignedAt', label: t('orders.column.received'), type: 'dateRange' }]}
         searchable
         showRowSelectionColumn={false}
         defaultSort={{ id: 'assignedAt', desc: true }}

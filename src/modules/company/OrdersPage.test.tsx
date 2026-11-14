@@ -247,4 +247,28 @@ describe('OrdersPage (company)', () => {
     const sheet = await openOrder()
     expect(within(sheet).getByText('Pad Printers')).toBeInTheDocument()
   })
+
+  it('narrows the orders by the day they were placed, with quick ranges, and asks the server for exactly that range', async () => {
+    serve([order()])
+    renderWithProviders(<OrdersPage />)
+    await screen.findByRole('button', { name: /Prescription Pad/ })
+
+    await userEvent.click(screen.getByRole('button', { name: /Filters/ }))
+    await userEvent.click(await screen.findByText('Pick a date range'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Last 7 days' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Apply filters' }))
+
+    await waitFor(() => {
+      const asked = get.mock.calls
+        .filter(([url]) => url === '/api/orders/page')
+        .map(([, config]) => JSON.parse(String(config?.params?.filters ?? '[]')) as { field: string; operator: string; value: string[] }[])
+        .flat()
+        .find((filter) => filter.field === 'createdAt')
+      expect(asked).toMatchObject({ operator: 'between' })
+      // Seven calendar days, today included, as plain dates -- the server reads them in the users' day.
+      const [from, to] = asked!.value
+      expect(from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      expect((new Date(to).getTime() - new Date(from).getTime()) / 86_400_000).toBe(6)
+    })
+  })
 })

@@ -6,23 +6,23 @@ import { ArtworkApprovalTrail } from './artwork-approval-trail'
 const at = '2026-11-08T09:00:00Z'
 
 describe('ArtworkApprovalTrail', () => {
-  it('shows a level that was skipped, by whom, for whom, and why', () => {
+  it('shows each level in order, who signed it, and who they signed for when it was cover', () => {
     renderWithProviders(
       <ArtworkApprovalTrail
         steps={[
-          { level: 0, decision: 'BYPASSED', decidedByName: 'Hari HO', onBehalfOfName: 'Aditi AM', comment: 'AM is on leave', decidedAt: at },
-          { level: 1, decision: 'BYPASSED', decidedByName: 'Hari HO', onBehalfOfName: 'Ravi RM', comment: 'AM is on leave', decidedAt: at },
-          { level: 2, decision: 'APPROVED', decidedByName: 'Hari HO', onBehalfOfName: null, comment: 'AM is on leave', decidedAt: at },
+          { level: 0, decision: 'APPROVED', decidedByName: 'Aditi AM', onBehalfOfName: null, comment: null, decidedAt: at },
+          { level: 1, decision: 'APPROVED', decidedByName: 'Neha', onBehalfOfName: 'Ravi RM', comment: null, decidedAt: at },
+          { level: 2, decision: 'REJECTED', decidedByName: 'Hari HO', onBehalfOfName: null, comment: 'Wrong logo', decidedAt: at },
         ]}
       />,
     )
 
     const items = screen.getAllByRole('listitem')
-    expect(items[0]).toHaveTextContent('MR review · skipped by Hari HO (for Aditi AM)')
-    expect(items[0]).toHaveTextContent('“AM is on leave”')
-    expect(items[1]).toHaveTextContent('Level 1 · skipped by Hari HO (for Ravi RM)')
-    expect(items[2]).toHaveTextContent('Level 2 · approved by Hari HO')
-    // The note is shown once, on the skipped steps -- not repeated on the approval itself.
-    expect(items[2]).not.toHaveTextContent('AM is on leave')
+    expect(items[0]).toHaveTextContent('MR review · approved by Aditi AM')
+    expect(items[1]).toHaveTextContent('Level 1 · approved by Neha')
+    expect(items[1]).toHaveTextContent('Ravi RM')
+    expect(items[2]).toHaveTextContent('Level 2')
+    // Nothing is ever marked as skipped: the cycle runs in order.
+    expect(document.body.textContent).not.toMatch(/skipped/i)
   })
 })

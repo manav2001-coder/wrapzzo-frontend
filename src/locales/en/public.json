@@ -46,7 +46,7 @@
       "artwork": {
         "title": "Artwork review",
         "description": "The vendor's proof is reviewed by the MR, then up the reporting line, before anything is printed.",
-        "caption": "A manager can approve in place of those below them when someone is unavailable."
+        "caption": "Each level signs in turn, the AM, then the RM, then the HO. Nothing is printed until the last one approves."
       },
       "vendors": {
         "title": "Vendor fulfilment",

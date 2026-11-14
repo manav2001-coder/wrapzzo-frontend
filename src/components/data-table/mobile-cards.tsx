@@ -3,7 +3,6 @@ import { flexRender, type Row, type Table } from '@tanstack/react-table'
 import { columnTitle } from '@/components/data-table/column-order'
 import { EXPAND_COLUMN_ID, SELECT_COLUMN_ID } from '@/components/data-table/column-sizing'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
 
 interface MobileCardsProps<TData> {
   table: Table<TData>
@@ -78,11 +77,11 @@ function MobileCard<TData>({ row, renderSubRow, expanded }: { row: Row<TData>; r
         )}
       </div>
       {fields.length > 0 && (
-        <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2">
+        <dl className="mt-2 space-y-1">
           {fields.map(({ cell, node }) => (
-            <div key={cell.id} className={cn('min-w-0', cell.column.columnDef.meta?.wrap && 'col-span-2')}>
-              <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{columnTitle(cell.column)}</dt>
-              <dd className="mt-0.5 break-words text-left text-sm [&_*]:justify-start [&_*]:whitespace-normal [&_*]:text-left">{node}</dd>
+            <div key={cell.id} className="flex min-w-0 items-baseline gap-3">
+              <dt className="w-24 shrink-0 text-xs text-muted-foreground">{columnTitle(cell.column)}</dt>
+              <dd className="min-w-0 flex-1 break-words text-left text-sm [&_*]:justify-start [&_*]:whitespace-normal [&_*]:text-left">{node}</dd>
             </div>
           ))}
         </dl>

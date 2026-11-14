@@ -46,7 +46,8 @@ export function RecipientsPage() {
   const removeDoctor = useRemoveMyDoctor()
   const canEdit = useHasAccess(P.DOCTOR_EDIT)
   const canRemove = useHasAccess(P.DOCTOR_REMOVE)
-  const canImport = useHasAccess(P.DOCTOR_IMPORT)
+  // Uploading a sheet of doctors is adding doctors: the same key that adds one.
+  const canImport = useHasAccess(P.DOCTOR_CREATE)
   // `undefined` = closed, `null` = adding, a recipient = editing it.
   const [editing, setEditing] = useState<Recipient | null | undefined>(undefined)
   const [removing, setRemoving] = useState<Recipient | null>(null)

@@ -26,7 +26,7 @@ const useCurrentUser = vi.hoisted(() => vi.fn())
 vi.mock('@/hooks/use-current-user', () => ({ useCurrentUser, CURRENT_USER_QUERY_KEY: ['me'] }))
 
 /** What an AM or MR holds for doctors: the whole set, on their own list. */
-const FIELD_STAFF = ['doctor.view', 'doctor.create', 'doctor.edit', 'doctor.remove', 'doctor.import', 'quick_gift.create', 'gift_store.view']
+const FIELD_STAFF = ['doctor.view', 'doctor.create', 'doctor.edit', 'doctor.remove', 'quick_gift.create', 'gift_store.view']
 
 function signedInWith(permissions: string[]) {
   useCurrentUser.mockReturnValue({ data: { companyId: 'c-1', companyName: 'Alembic', permissions }, isLoading: false })
@@ -121,11 +121,21 @@ describe('Doctors page', () => {
     await waitFor(() => expect(removeMyDoctor).toHaveBeenCalledWith('r-1'))
   })
 
-  it('offers bulk upload to someone who may import', async () => {
+  it('offers bulk upload to whoever may add a doctor -- uploading a sheet is adding doctors', async () => {
     listRecipients.mockResolvedValue([recipient()])
     renderWithProviders(<RecipientsPage />)
     await userEvent.click(await screen.findByRole('button', { name: /Bulk upload/ }))
     expect(await screen.findByRole('dialog', { name: 'Upload doctors' })).toBeInTheDocument()
+  })
+
+  it('offers no bulk upload to someone who may edit or remove doctors but not add them', async () => {
+    signedInWith(['doctor.view', 'doctor.edit', 'doctor.remove'])
+    listRecipients.mockResolvedValue([recipient()])
+    renderWithProviders(<RecipientsPage />)
+
+    expect(await screen.findByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Bulk upload/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Add doctor/ })).not.toBeInTheDocument()
   })
 
   it('lists the doctors but offers no changes to someone who may only view them', async () => {

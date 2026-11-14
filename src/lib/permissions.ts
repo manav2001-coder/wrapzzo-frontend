@@ -41,7 +41,6 @@ export const P = {
   DOCTOR_CREATE: 'doctor.create',
   DOCTOR_EDIT: 'doctor.edit',
   DOCTOR_REMOVE: 'doctor.remove',
-  DOCTOR_IMPORT: 'doctor.import',
 
   USER_VIEW: 'user.view',
   USER_CREATE: 'user.create',

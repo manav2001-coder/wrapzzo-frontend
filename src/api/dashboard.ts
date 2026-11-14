@@ -155,9 +155,50 @@ export interface DashboardInsights {
   weekly: { weekLabel: string; weekStart: string; requested: number; delivered: number }[]
   teamSize: number
   team: TeamMember[]
+  /** Present only for someone who may see prices (the company admin). */
+  spend: Spend | null
+  /** Present only for someone who may see which vendor makes an order (the company admin). */
+  vendors: VendorScore[] | null
+}
+
+export interface Spend {
+  total: number
+  /** Null for "all time". */
+  previousTotal: number | null
+  costPerPel: number | null
+  byGift: { name: string; amount: number }[]
+  byUnit: { name: string; amount: number }[]
+}
+
+export interface VendorScore {
+  vendorId: string
+  name: string
+  orders: number
+  delivered: number
+  open: number
+  /** Open orders more than 10 days old. */
+  slowOpen: number
+  avgDaysToDispatch: number | null
+  avgDaysToDeliver: number | null
+  /** Artwork versions uploaded, and how many were sent back. */
+  designs: number
+  designsRejected: number
 }
 
 export async function getDashboardInsights(range: DashboardRange): Promise<DashboardInsights> {
   const { data } = await apiClient.get<DashboardInsights>('/api/dashboard/insights', { params: { range } })
   return data
+}
+
+/** The orders behind the dashboard for a period, as a spreadsheet the browser saves. */
+export async function downloadDashboardExport(range: DashboardRange): Promise<void> {
+  const response = await apiClient.get<Blob>('/api/dashboard/export', { params: { range }, responseType: 'blob' })
+  const url = URL.createObjectURL(response.data)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `pel-orders-${range}.csv`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }

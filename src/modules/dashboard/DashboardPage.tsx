@@ -22,6 +22,9 @@ import { AttentionCard, type AttentionItem } from './AttentionCard'
 import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
 import { OrderTimeline } from './OrderTimeline'
 import { CoverageCard } from './CoverageCard'
+import { ExportButton } from './ExportButton'
+import { SpendCard } from './SpendCard'
+import { VendorScorecard } from './VendorScorecard'
 import { PeriodKpis } from './PeriodKpis'
 import { RangePicker } from './RangePicker'
 import { StageAgingCard } from './StageAging'
@@ -154,7 +157,7 @@ export function DashboardPage() {
     <div className="space-y-7 pb-8">
       <header className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-4 sm:p-8">
         <div className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-        <div className="relative flex flex-wrap items-end justify-between gap-4">
+        <div className="relative flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold tracking-wide text-primary uppercase">{format(now, 'EEEE, d MMMM')}</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-4xl">
@@ -167,6 +170,7 @@ export function DashboardPage() {
               {data.companyWide ? 'Everything happening across your company' : 'Everything happening in your area'}
             </p>
           </div>
+          <ExportButton range={range} />
         </div>
         <div className="relative mt-4 sm:mt-5">
           <RangePicker value={range} onChange={setRange} />
@@ -203,6 +207,12 @@ export function DashboardPage() {
               <PeriodKpis current={insights.current} previous={insights.previous} onSelect={(dimension) => setDrilldown({ dimension, value: '' })} />
               <StageAgingCard stages={insights.stages} onSelectStage={(stage) => setDrilldown({ dimension: 'orderStage', value: stage })} />
               {!personal && <TeamPanel team={insights.team} teamSize={insights.teamSize} />}
+              {(insights.spend || insights.vendors) && (
+                <>
+                  {insights.spend && <SpendCard spend={insights.spend} />}
+                  {insights.vendors && <VendorScorecard vendors={insights.vendors} />}
+                </>
+              )}
             </>
           )}
 

@@ -8,7 +8,8 @@ import { DashboardPage } from './DashboardPage'
 const getDashboard = vi.hoisted(() => vi.fn())
 const getDashboardDrilldown = vi.hoisted(() => vi.fn())
 const getDashboardInsights = vi.hoisted(() => vi.fn())
-vi.mock('@/api/dashboard', async (o) => ({ ...(await o<object>()), getDashboard, getDashboardDrilldown, getDashboardInsights }))
+const downloadDashboardExport = vi.hoisted(() => vi.fn())
+vi.mock('@/api/dashboard', async (o) => ({ ...(await o<object>()), getDashboard, getDashboardDrilldown, getDashboardInsights, downloadDashboardExport }))
 
 const SUMMARY: DashboardSummary = {
   companyName: 'Alembic',
@@ -60,6 +61,8 @@ const TEAM_INSIGHTS: DashboardInsights = {
   stages: STAGES,
   rejectedRequests: 0,
   weekly: [],
+  spend: null,
+  vendors: null,
   teamSize: 2,
   team: [
     { userId: 'u1', name: 'Asha Rao', unitName: 'Patna', requested: 0, served: 0, doctorsAssigned: 10, doctorsCovered: 0, inPipeline: 0, lastActivityAt: null },
@@ -72,6 +75,7 @@ describe('DashboardPage', () => {
   beforeEach(() => {
     getDashboard.mockReset().mockResolvedValue(SUMMARY)
     getDashboardInsights.mockReset().mockResolvedValue(TEAM_INSIGHTS)
+    downloadDashboardExport.mockReset().mockResolvedValue(undefined)
     getDashboardDrilldown.mockReset().mockResolvedValue({ title: 'PELs created per doctor', rows: [] })
   })
 
@@ -139,6 +143,35 @@ describe('DashboardPage', () => {
     expect(screen.queryByText('Your team')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /See the 2 doctors still waiting/ }))
     await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('uncoveredDoctors', '30d'))
+  })
+
+  it('shows no spend or vendor figures unless the server sent them', async () => {
+    renderWithProviders(<DashboardPage />)
+    await screen.findByText('Your team')
+    expect(screen.queryByText('Spend')).not.toBeInTheDocument()
+    expect(screen.queryByText('Vendor scorecard')).not.toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/₹/)
+  })
+
+  it('shows the company admin what the PELs cost and how each vendor did', async () => {
+    getDashboardInsights.mockResolvedValue({
+      ...TEAM_INSIGHTS,
+      spend: { total: 50000, previousTotal: 40000, costPerPel: 40, byGift: [{ name: 'Prescription Pad', amount: 30000 }], byUnit: [{ name: 'Patna', amount: 20000 }] },
+      vendors: [{ vendorId: 'v1', name: 'Sky Prints', orders: 20, delivered: 12, open: 8, slowOpen: 3, avgDaysToDispatch: 2.5, avgDaysToDeliver: 6.1, designs: 10, designsRejected: 4 }],
+    })
+    renderWithProviders(<DashboardPage />)
+    expect(await screen.findByText('Spend')).toBeInTheDocument()
+    expect(screen.getByText('₹50,000.00')).toBeInTheDocument()
+    expect(screen.getByText(/up 25%/)).toBeInTheDocument()
+    expect(screen.getAllByText('Sky Prints').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/40%/).length).toBeGreaterThan(0) // artwork sent back
+  })
+
+  it('downloads the report for the chosen period', async () => {
+    renderWithProviders(<DashboardPage />)
+    await userEvent.click(await screen.findByRole('radio', { name: '90 days' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Download report' }))
+    await waitFor(() => expect(downloadDashboardExport).toHaveBeenCalledWith('90d'))
   })
 
   it('reloads the figures for another period', async () => {

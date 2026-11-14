@@ -45,7 +45,7 @@ describe('VendorHomePage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: /Good (morning|afternoon|evening), Pad Printers/ })).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: /1\s*Changes requested/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /1\s*Needs artwork/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /1\s*Ready to dispatch/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /1\s*Ready to print/ })).toBeInTheDocument()
   })
 
   it('says how many orders wait on the vendor, with no button in the banner', async () => {
@@ -77,7 +77,7 @@ describe('VendorHomePage', () => {
 
   it('opens the orders list on the stage a tile stands for', async () => {
     renderHome()
-    await userEvent.click(await screen.findByRole('button', { name: /1\s*Ready to dispatch/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /1\s*Ready to print/ }))
     expect(screen.getByTestId('where')).toHaveTextContent('/vendor/orders?stage=ready')
   })
 

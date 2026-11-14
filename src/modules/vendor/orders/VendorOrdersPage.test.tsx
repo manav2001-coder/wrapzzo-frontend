@@ -45,7 +45,7 @@ describe('VendorOrdersPage', () => {
     await screen.findByRole('link', { name: 'ORD-3' })
     expect(orderIds()).toEqual(['ORD-3'])
 
-    await userEvent.click(screen.getByRole('tab', { name: /Ready to dispatch/ }))
+    await userEvent.click(screen.getByRole('tab', { name: /Ready to print/ }))
     expect(orderIds()).toEqual(['ORD-4'])
     await userEvent.click(screen.getByRole('tab', { name: /Changes requested/ }))
     expect(orderIds()).toEqual(['ORD-2'])

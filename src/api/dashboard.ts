@@ -89,7 +89,14 @@ export interface DrilldownRow {
 
 export interface DashboardDrilldown {
   title: string
+  /** One page of the records. */
   rows: DrilldownRow[]
+  /** How many records there are in all (up to the most the dashboard reads for one datapoint). */
+  total: number
+  page: number
+  pageSize: number
+  /** True when there are more than total says. */
+  capped: boolean
 }
 
 export type DrilldownDimension =
@@ -105,8 +112,8 @@ export type DrilldownDimension =
   | 'orderStage'
   | 'uncoveredDoctors'
 
-export async function getDashboardDrilldown(dimension: DrilldownDimension, value: string): Promise<DashboardDrilldown> {
-  const { data } = await apiClient.get<DashboardDrilldown>('/api/dashboard/drilldown', { params: { dimension, value } })
+export async function getDashboardDrilldown(dimension: DrilldownDimension, value: string, page = 0, size = 20): Promise<DashboardDrilldown> {
+  const { data } = await apiClient.get<DashboardDrilldown>('/api/dashboard/drilldown', { params: { dimension, value, page, size } })
   return data
 }
 

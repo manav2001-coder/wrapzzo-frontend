@@ -19,7 +19,7 @@ import { humanize } from '@/lib/format'
 import { P } from '@/lib/permissions'
 import { statusColor } from '@/lib/statusColors'
 import { AttentionCard, type AttentionItem } from './AttentionCard'
-import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
+import { DashboardDrilldownSheet, type DrilldownSelection } from './DashboardDrilldownSheet'
 import { OrderTimeline } from './OrderTimeline'
 import { CoverageCard } from './CoverageCard'
 import { ExportButton } from './ExportButton'
@@ -304,7 +304,7 @@ export function DashboardPage() {
         </>
       )}
 
-      <DashboardDrilldownDialog selection={drilldown} onHide={() => setDrilldown(null)} />
+      <DashboardDrilldownSheet selection={drilldown} onHide={() => setDrilldown(null)} />
       <QuickGiftActivityDialog quickGiftId={selectedQuickGiftId} onHide={() => setSelectedQuickGiftId(null)} />
     </div>
   )

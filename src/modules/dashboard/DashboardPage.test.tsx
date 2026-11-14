@@ -2,7 +2,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { DashboardInsights, DashboardSummary } from '@/api/dashboard'
-import { renderWithProviders, screen, waitFor } from '@/test/test-utils'
+import { renderWithProviders, screen, waitFor, within } from '@/test/test-utils'
 import { DashboardPage } from './DashboardPage'
 
 const getDashboard = vi.hoisted(() => vi.fn())
@@ -111,10 +111,40 @@ describe('DashboardPage', () => {
     })
     renderWithProviders(<DashboardPage />)
     await userEvent.click(await screen.findByRole('button', { name: /PELs requested/ }))
-    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('pelsRequested', ''))
+    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('pelsRequested', '', 0, 20))
     const dialog = await screen.findByRole('dialog', { name: 'PELs created per doctor' })
     expect(dialog).toHaveTextContent('Dr. Asha Shah')
     expect(dialog).toHaveTextContent('300 PELs')
+  })
+
+  it('opens the records in a side drawer, a page at a time, with the total and Previous / Next', async () => {
+    const everyone = Array.from({ length: 45 }, (_, n) => ({ displayId: null, title: `Dr. Doctor ${n + 1}`, subtitle: 'orders: 1', status: null, at: '2026-10-20T10:00:00Z', quantity: 5 }))
+    getDashboardDrilldown.mockImplementation(async (_dimension: string, _value: string, page = 0, size = 20) => ({
+      title: 'PELs created per doctor',
+      rows: everyone.slice(page * size, page * size + size),
+      total: everyone.length,
+      page,
+      pageSize: size,
+      capped: false,
+    }))
+    renderWithProviders(<DashboardPage />)
+    await userEvent.click(await screen.findByRole('button', { name: /PELs requested/ }))
+
+    const drawer = await screen.findByRole('dialog', { name: 'PELs created per doctor' })
+    expect(drawer).toHaveTextContent('45 records')
+    expect(drawer).toHaveTextContent('Showing 1–20 of 45')
+    expect(drawer).toHaveTextContent('Dr. Doctor 1')
+    expect(drawer).not.toHaveTextContent('Dr. Doctor 21')
+    expect(within(drawer).getByRole('button', { name: 'Previous page' })).toBeDisabled()
+
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Next page' }))
+    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('pelsRequested', '', 1, 20))
+    await waitFor(() => expect(drawer).toHaveTextContent('Showing 21–40 of 45'))
+    expect(drawer).toHaveTextContent('Dr. Doctor 21')
+
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Next page' }))
+    await waitFor(() => expect(drawer).toHaveTextContent('Showing 41–45 of 45'))
+    expect(within(drawer).getByRole('button', { name: 'Next page' })).toBeDisabled()
   })
 
   it('shows where orders are waiting and flags the stage that has waited too long', async () => {
@@ -123,7 +153,7 @@ describe('DashboardPage', () => {
     expect(artwork).toHaveTextContent('2 over 4 days')
     expect(screen.getByText(/2 orders have been waiting longer than usual/)).toBeInTheDocument()
     await userEvent.click(artwork)
-    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('orderStage', 'ARTWORK'))
+    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('orderStage', 'ARTWORK', 0, 20))
   })
 
   it('shows a manager their team and lets them narrow to who needs a nudge', async () => {
@@ -141,7 +171,7 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('Your doctors')).toBeInTheDocument()
     expect(screen.queryByText('Your team')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /See the 2 doctors still waiting/ }))
-    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('uncoveredDoctors', '30d'))
+    await waitFor(() => expect(getDashboardDrilldown).toHaveBeenCalledWith('uncoveredDoctors', '30d', 0, 20))
   })
 
   it('shows no spend or vendor figures unless the server sent them', async () => {

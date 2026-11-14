@@ -12,14 +12,12 @@ const listMyRecipients = vi.hoisted(() => vi.fn())
 const get = vi.hoisted(() => vi.fn())
 const searchRecipients = vi.hoisted(() => vi.fn())
 const updateRecipient = vi.hoisted(() => vi.fn())
-const listUpcomingBirthdays = vi.hoisted(() => vi.fn())
 const createMyDoctor = vi.hoisted(() => vi.fn())
 const removeMyDoctor = vi.hoisted(() => vi.fn())
 vi.mock('@/api/recipients', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   searchRecipients,
   updateRecipient,
-  listUpcomingBirthdays,
   createMyDoctor,
   removeMyDoctor,
 }))
@@ -65,10 +63,9 @@ beforeEach(() => {
     }
     return { data: [] }
   })
-  for (const fn of [listRecipients, listMyRecipients, searchRecipients, updateRecipient, listUpcomingBirthdays, createMyDoctor, removeMyDoctor]) {
+  for (const fn of [listRecipients, listMyRecipients, searchRecipients, updateRecipient, createMyDoctor, removeMyDoctor]) {
     fn.mockReset()
   }
-  listUpcomingBirthdays.mockResolvedValue([])
   signedInWith(FIELD_STAFF)
 })
 
@@ -144,14 +141,6 @@ describe('Doctors page', () => {
     expect(screen.queryByRole('button', { name: 'Remove Dr. Asha Shah' })).not.toBeInTheDocument()
   })
 
-  it('offers a Quick Gift for an upcoming birthday', async () => {
-    listRecipients.mockResolvedValue([])
-    listUpcomingBirthdays.mockResolvedValue([{ id: 'r-1', name: 'Dr. Asha Shah', phone: '1', email: null, address: null, dateOfBirth: '1980-10-28', daysUntilBirthday: 1 }])
-    renderWithProviders(<RecipientsPage />)
-    expect(await screen.findByText('Upcoming birthdays')).toBeInTheDocument()
-    expect(screen.getByText('Tomorrow')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Send a PEL/ })).toBeInTheDocument()
-  })
 })
 
 describe('RecipientPickerDialog', () => {

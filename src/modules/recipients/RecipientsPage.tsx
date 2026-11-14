@@ -20,7 +20,6 @@ import { formatDateOnly } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { DoctorsImportDialog } from './DoctorsImportDialog'
 import { RecipientFormDialog } from './RecipientFormDialog'
-import { UpcomingBirthdaysWidget } from './UpcomingBirthdaysWidget'
 import { useHasAccess } from '@/hooks/use-permission'
 import { P } from '@/lib/permissions'
 
@@ -129,7 +128,6 @@ export function RecipientsPage() {
           )
         }
       />
-      <UpcomingBirthdaysWidget />
       <DataTable<Recipient>
         columns={columns}
         fetchData={fetchRecipients}

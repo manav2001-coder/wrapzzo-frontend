@@ -65,11 +65,6 @@ export async function updateRecipient(id: string, input: CreateRecipientInput): 
   return data
 }
 
-export async function listUpcomingBirthdays(days = 30): Promise<UpcomingBirthday[]> {
-  const { data } = await apiClient.get<UpcomingBirthday[]>('/api/recipients/upcoming-birthdays', { params: { days } })
-  return data
-}
-
 /** Adds a doctor and puts them on the caller's list -- takes effect at once, no approval step. */
 export async function createMyDoctor(input: CreateRecipientInput): Promise<Recipient> {
   const { data } = await apiClient.post<Recipient>('/api/recipients/mine', input)

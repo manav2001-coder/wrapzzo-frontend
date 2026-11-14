@@ -18,7 +18,6 @@ import { usePendingArtworkPreview, usePendingOrderApprovalCount } from '@/hooks/
 import { humanize } from '@/lib/format'
 import { P } from '@/lib/permissions'
 import { statusColor } from '@/lib/statusColors'
-import { UpcomingBirthdaysWidget } from '@/modules/recipients/UpcomingBirthdaysWidget'
 import { AttentionCard, type AttentionItem } from './AttentionCard'
 import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
 import { OrderTimeline } from './OrderTimeline'
@@ -206,8 +205,6 @@ export function DashboardPage() {
               {!personal && <TeamPanel team={insights.team} teamSize={insights.teamSize} />}
             </>
           )}
-
-          <UpcomingBirthdaysWidget />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
             <section className="lg:col-span-3">

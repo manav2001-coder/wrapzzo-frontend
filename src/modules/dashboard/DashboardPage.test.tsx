@@ -8,9 +8,7 @@ import { DashboardPage } from './DashboardPage'
 const getDashboard = vi.hoisted(() => vi.fn())
 const getDashboardDrilldown = vi.hoisted(() => vi.fn())
 const getDashboardInsights = vi.hoisted(() => vi.fn())
-const listUpcomingBirthdays = vi.hoisted(() => vi.fn())
 vi.mock('@/api/dashboard', async (o) => ({ ...(await o<object>()), getDashboard, getDashboardDrilldown, getDashboardInsights }))
-vi.mock('@/api/recipients', async (o) => ({ ...(await o<object>()), listUpcomingBirthdays }))
 
 const SUMMARY: DashboardSummary = {
   companyName: 'Alembic',
@@ -75,7 +73,6 @@ describe('DashboardPage', () => {
     getDashboard.mockReset().mockResolvedValue(SUMMARY)
     getDashboardInsights.mockReset().mockResolvedValue(TEAM_INSIGHTS)
     getDashboardDrilldown.mockReset().mockResolvedValue({ title: 'PELs created per doctor', rows: [] })
-    listUpcomingBirthdays.mockReset().mockResolvedValue([])
   })
 
   it('greets the company and shows its numbers', async () => {

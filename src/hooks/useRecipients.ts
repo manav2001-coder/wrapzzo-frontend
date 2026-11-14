@@ -3,16 +3,13 @@ import {
   bulkCreateMyDoctors,
   createMyDoctor,
   listMyRecipientsPage,
-  listUpcomingBirthdays,
   removeMyDoctor,
   searchRecipients,
   updateRecipient,
   type CreateRecipientInput,
   type Recipient,
 } from '@/api/recipients'
-import { useHasAccess } from '@/hooks/use-permission'
 import { usePaginatedList } from '@/hooks/use-paginated-list'
-import { P } from '@/lib/permissions'
 
 /**
  * The doctors on the caller's own list, a page at a time as the picker scrolls, narrowed by what is typed (the server searches).
@@ -71,13 +68,4 @@ export function useBulkCreateMyDoctors() {
 export function useRemoveMyDoctor() {
   const invalidate = useInvalidateRecipients()
   return useMutation({ mutationFn: (id: string) => removeMyDoctor(id), onSuccess: invalidate })
-}
-
-export function useUpcomingBirthdays(days = 30) {
-  const canView = useHasAccess(P.DOCTOR_VIEW)
-  return useQuery({
-    queryKey: ['recipients', 'upcoming-birthdays', days],
-    queryFn: () => listUpcomingBirthdays(days),
-    enabled: canView,
-  })
 }

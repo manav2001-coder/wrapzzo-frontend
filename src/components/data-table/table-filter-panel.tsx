@@ -5,7 +5,7 @@ import { ChevronDown, ListFilter, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FormGenerator } from "@/components/fields/form-generator";
 import { buildFilterFields } from "@/components/data-table/build-filter-fields";
 import { filterChipLabel, isActiveFilterValue } from "@/components/data-table/filter-chip-label";
@@ -19,10 +19,10 @@ interface TableFilterPanelProps {
 }
 
 /**
- * The page-level filter panel: an inline expandable form above the table.
+ * The page-level filter panel: a Filters button whose form floats over the page (a popover), with the applied filters as chips beside it.
  *
- * Inline rather than a drawer, following v4's own note that it "replaces the side drawer with a
- * more accessible inline panel" — and the body is a real `FormGenerator` in `mode="filter"`,
+ * It was an inline panel that pushed the table down when opened; it now overlays instead, so opening it never moves what is on
+ * screen. The body is a real `FormGenerator` in `mode="filter"`,
  * so a `select` is a combobox and a `dateRange` is a range picker. It used to render a plain
  * `<Input>` for every declared type, which made four of the five types unusable, and it had no
  * consumer at all.
@@ -64,10 +64,11 @@ export function TableFilterPanel({
   );
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="flex flex-wrap items-center gap-2">
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1">
+    <div className="flex flex-wrap items-center gap-2">
+      {/* An overlay, not a panel that opens in the page: it floats over the table instead of pushing it down. */}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-8">
             <ListFilter aria-hidden className="h-3.5 w-3.5" />
             {t("action.filters")}
             {activeEntries.length > 0 && (
@@ -77,48 +78,47 @@ export function TableFilterPanel({
             )}
             <ChevronDown aria-hidden className="h-3.5 w-3.5" />
           </Button>
-        </CollapsibleTrigger>
-        {!open &&
-          activeEntries.map(([key, value]) => {
-            const field = fields.find((entry) => entry.id === key);
-            return (
-              <Badge key={key} variant="outline" className="gap-1">
-                <span className="max-w-[16rem] truncate">
-                  {field?.label ?? key}: {filterChipLabel(field, value)}
-                </span>
-                <button
-                  type="button"
-                  className="rounded-sm p-0.5 hover:bg-muted"
-                  aria-label={t("action.remove")}
-                  onClick={() => onApply({ ...activeFilters, [key]: undefined })}
-                >
-                  <X aria-hidden className="h-3 w-3" />
-                </button>
-              </Badge>
-            );
-          })}
-      </div>
-      <CollapsibleContent className="mt-3 rounded-md border border-border p-3">
-        <FormGenerator
-          maxWidgetsPerRow={3}
-          mode="filter"
-          hideCardWrapper
-          buttonAlignment="end"
-          fields={formFields}
-          // Keyed by the applied filters so re-opening the panel shows what is in force,
-          // including a chip the user removed while it was collapsed.
-          values={activeFilters}
-          onSubmit={(values) => {
-            onApply(values);
-            setOpen(false);
-          }}
-        />
-        <div className="mt-2 flex justify-end">
-          <Button variant="ghost" size="sm" onClick={onClear}>
-            {t("action.clearAll")}
-          </Button>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-[min(92vw,26rem)] p-3">
+          <FormGenerator
+            maxWidgetsPerRow={1}
+            mode="filter"
+            hideCardWrapper
+            buttonAlignment="end"
+            fields={formFields}
+            // Keyed by the applied filters so re-opening the panel shows what is in force,
+            // including a chip the user removed while it was closed.
+            values={activeFilters}
+            onSubmit={(values) => {
+              onApply(values);
+              setOpen(false);
+            }}
+          />
+          <div className="mt-2 flex justify-end">
+            <Button variant="ghost" size="sm" onClick={onClear}>
+              {t("action.clearAll")}
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+      {activeEntries.map(([key, value]) => {
+        const field = fields.find((entry) => entry.id === key);
+        return (
+          <Badge key={key} variant="outline" className="gap-1">
+            <span className="max-w-[16rem] truncate">
+              {field?.label ?? key}: {filterChipLabel(field, value)}
+            </span>
+            <button
+              type="button"
+              className="rounded-sm p-0.5 hover:bg-muted"
+              aria-label={t("action.remove")}
+              onClick={() => onApply({ ...activeFilters, [key]: undefined })}
+            >
+              <X aria-hidden className="h-3 w-3" />
+            </button>
+          </Badge>
+        );
+      })}
+    </div>
   );
 }

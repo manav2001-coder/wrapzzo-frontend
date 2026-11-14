@@ -31,6 +31,21 @@ export interface DateRangePickerProps {
 
 const isEmpty = (value: DateRangeValue | undefined) => !value?.[0] && !value?.[1];
 
+/** Two months side by side need room; on a phone one month, with the quick ranges as a row of chips above it. */
+function useWideScreen(): boolean {
+  const query = "(min-width: 768px)";
+  const [wide, setWide] = React.useState(() => (typeof window !== "undefined" && window.matchMedia ? window.matchMedia(query).matches : true));
+  React.useEffect(() => {
+    if (!window.matchMedia) return;
+    const media = window.matchMedia(query);
+    const onChange = () => setWide(media.matches);
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+  return wide;
+}
+
 /**
  * One trigger, two months, and a rail of quick ranges.
  *
@@ -64,6 +79,7 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
+  const wide = useWideScreen();
 
   const selected = React.useMemo<DateRange | undefined>(() => {
     const from = fromDateOnly(value?.[0]);
@@ -114,15 +130,15 @@ export function DateRangePicker({
           <span className="truncate">{label ?? placeholder ?? t("dateRange.placeholder")}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align={align} className="flex w-auto flex-col p-0 sm:flex-row">
-        <div className="flex flex-col gap-1 p-2 sm:w-40">
+      <PopoverContent align={align} collisionPadding={8} className="flex max-h-[85vh] w-auto max-w-[calc(100vw-1rem)] flex-col overflow-y-auto p-0 md:flex-row">
+        <div className="flex flex-row flex-wrap gap-1 p-2 md:w-40 md:flex-col">
           {DATE_RANGE_PRESETS.map((preset) => (
             <Button
               key={preset.key}
               type="button"
               variant="ghost"
               size="sm"
-              className="justify-start font-normal"
+              className="justify-start font-normal max-md:rounded-full max-md:border max-md:px-3"
               onClick={() => {
                 const [from, to] = preset.range(new Date());
                 commit({ from, to });
@@ -132,11 +148,11 @@ export function DateRangePicker({
             </Button>
           ))}
         </div>
-        <Separator className="sm:h-auto sm:w-px" orientation="horizontal" />
+        <Separator className="md:h-auto md:w-px" orientation="horizontal" />
         <div className="flex flex-col">
           <Calendar
             mode="range"
-            numberOfMonths={2}
+            numberOfMonths={wide ? 2 : 1}
             selected={pending}
             onSelect={setPending}
             // Open on the month the range is already in, not on today's. Without this,

@@ -14,7 +14,7 @@ async function sheetOf(headers: string[], rows: (string | Date)[][]): Promise<Fi
 describe('parseDoctorWorkbook', () => {
   it('reads each doctor with their print details', async () => {
     const { rows, errors } = await parseDoctorWorkbook(
-      await sheetOf(DOCTOR_TEMPLATE_HEADERS, [['P-1001', 'Dr Asha Shah', '9800000001', 'a@x.com', 'MG Road', '1980-10-28', 'MBBS', 'Cardiology', 'Shah Clinic']]),
+      await sheetOf(DOCTOR_TEMPLATE_HEADERS, [['P-1001', 'Dr Asha Shah', '9800000001', 'a@x.com', 'MG Road', 'MBBS', 'Cardiology', 'Shah Clinic']]),
     )
     expect(errors).toEqual([])
     expect(rows).toEqual([
@@ -24,7 +24,6 @@ describe('parseDoctorWorkbook', () => {
         phone: '9800000001',
         email: 'a@x.com',
         address: 'MG Road',
-        dateOfBirth: '1980-10-28',
         doctor: { qualification: 'MBBS', speciality: 'Cardiology', clinicName: 'Shah Clinic' },
       },
     ])

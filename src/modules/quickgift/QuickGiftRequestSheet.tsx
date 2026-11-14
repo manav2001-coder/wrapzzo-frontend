@@ -7,7 +7,7 @@ import type { QuickGiftRequest, QuickGiftStatus } from '@/api/quickGifts'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { formatDateOnly, formatDateTime } from '@/lib/datetime'
+import { formatDateTime } from '@/lib/datetime'
 
 const STATUS_VARIANT: Record<QuickGiftStatus, BadgeProps['variant']> = {
   SUBMITTED: 'warning-soft',
@@ -85,7 +85,6 @@ export function QuickGiftRequestSheet({
                   </Detail>
                 )}
                 {request.recipientEmail && <Detail label={t('detail.email')}>{request.recipientEmail}</Detail>}
-                {request.recipientDob && <Detail label={t('detail.dob')}>{formatDateOnly(request.recipientDob)}</Detail>}
                 <Detail label={t('detail.quantity')}>{request.quantity}</Detail>
                 {request.orderDisplayId && <Detail label={t('detail.order')}>{request.orderDisplayId}</Detail>}
                 {request.orgUnitName && <Detail label={t('detail.orgUnit')}>{request.orgUnitName}</Detail>}

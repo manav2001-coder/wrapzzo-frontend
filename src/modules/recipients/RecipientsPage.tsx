@@ -16,7 +16,6 @@ import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useMenuLabel } from '@/hooks/use-menu-labels'
 import { useRemoveMyDoctor } from '@/hooks/useRecipients'
 import { serverFetcher } from '@/lib/server-list'
-import { formatDateOnly } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { DoctorsImportDialog } from './DoctorsImportDialog'
 import { RecipientFormDialog } from './RecipientFormDialog'
@@ -77,14 +76,6 @@ export function RecipientsPage() {
         header: t('field.speciality'),
         enableColumnFilter: false,
         meta: { className: 'min-w-[130px]' },
-      },
-      {
-        id: 'dateOfBirth',
-        accessorKey: 'dateOfBirth',
-        header: t('field.dob'),
-        enableColumnFilter: false,
-        meta: { className: 'min-w-[120px]' },
-        cell: ({ row }) => formatDateOnly(row.original.dateOfBirth),
       },
       { id: 'createdByName', accessorFn: (r) => r.createdByName ?? '', header: t('field.addedBy'), meta: { className: 'min-w-[140px]' } },
       {

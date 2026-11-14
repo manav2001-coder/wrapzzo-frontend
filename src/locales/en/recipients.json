@@ -6,7 +6,6 @@
     "email": "Email",
     "address": "Address",
     "clinicAddress": "Clinic / address",
-    "dob": "Date of birth",
     "pcode": "Pcode",
     "pcodeHint": "The doctor's unique code. Search by it anywhere.",
     "qualification": "Qualification",
@@ -28,13 +27,6 @@
     "save": "Save changes",
     "added": "Doctor added",
     "updated": "Doctor updated"
-  },
-  "birthdays": {
-    "title": "Upcoming birthdays",
-    "today": "Today",
-    "tomorrow": "Tomorrow",
-    "inDays": "In {{count}} days",
-    "gift": "Send a PEL"
   },
   "picker": {
     "title": "Pick from my doctors",

@@ -21,7 +21,6 @@ export interface QuickGiftRequest {
   recipientEmail: string | null
   /** Not asked for any more; null on new orders. */
   deliveryAddress: string | null
-  recipientDob: string | null
   doctor: DoctorDetails
   quantity: number
   orgUnitName: string | null
@@ -58,7 +57,6 @@ export interface CreateQuickGiftInput {
   recipientPcode?: string
   recipientEmail?: string
   deliveryAddress?: string
-  recipientDob?: string
   giftMessage?: string
   internalNotes?: string
   /** Up to 10, each already uploaded with uploadQuickGiftPhoto. */

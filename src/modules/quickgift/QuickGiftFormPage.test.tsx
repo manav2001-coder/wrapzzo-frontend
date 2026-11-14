@@ -201,7 +201,6 @@ describe('QuickGiftFormPage', () => {
       pcode: 'P-1001',
       email: null,
       address: '12 MG Road, Pune',
-      dateOfBirth: null,
       doctor: { qualification: 'MBBS', speciality: null, clinicName: null },
     }
     listActiveGifts.mockResolvedValue([PAD])

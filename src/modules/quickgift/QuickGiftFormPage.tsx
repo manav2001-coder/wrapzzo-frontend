@@ -5,9 +5,8 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { uploadQuickGiftPhoto, type QuickGiftPhotoValue } from '@/api/quickGifts'
-import type { DoctorDetails, Recipient, UpcomingBirthday } from '@/api/recipients'
+import type { DoctorDetails, Recipient } from '@/api/recipients'
 import { EmptyState } from '@/components/empty-state'
-import { DatePicker } from '@/components/fields/date-picker'
 import { FormSkeleton } from '@/components/fields/form-skeleton'
 import { IconButton } from '@/components/icon-button'
 import { MasterPageHeader } from '@/components/masters/master-page'
@@ -19,7 +18,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { useQuickGiftName } from '@/hooks/use-menu-labels'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useCreateQuickGiftRequest } from '@/hooks/useQuickGifts'
-import { fromDateOnly, toDateOnly } from '@/lib/datetime'
 import { cn } from '@/lib/utils'
 import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
 import { RecipientPickerDialog } from '@/modules/recipients/RecipientPickerDialog'
@@ -48,7 +46,6 @@ interface DraftRecipient {
   /** A new doctor's pcode; for a picked directory doctor it is theirs (and may be empty if they predate pcodes). */
   recipientPcode: string
   recipientEmail: string
-  dateOfBirth: Date | null
   giftMessage: string
   /** The recipient's photos (up to MAX_PHOTOS), uploaded when the row is sent. */
   photos?: File[]
@@ -67,18 +64,16 @@ interface RecipientPrefill {
   recipientPhone?: string
   recipientPcode?: string
   recipientEmail?: string
-  dateOfBirth?: Date
   doctor?: Partial<DoctorDetails>
 }
 
-function prefillFrom(recipient: Recipient | UpcomingBirthday): RecipientPrefill {
+function prefillFrom(recipient: Recipient): RecipientPrefill {
   return {
     recipientId: recipient.id,
     recipientName: recipient.name,
     recipientPhone: recipient.phone,
     recipientPcode: 'pcode' in recipient ? (recipient.pcode ?? undefined) : undefined,
     recipientEmail: recipient.email ?? undefined,
-    dateOfBirth: fromDateOnly(recipient.dateOfBirth),
     doctor: 'doctor' in recipient ? recipient.doctor : undefined,
   }
 }
@@ -92,7 +87,6 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
     recipientPhone: prefill?.recipientPhone ?? '',
     recipientPcode: prefill?.recipientPcode ?? '',
     recipientEmail: prefill?.recipientEmail ?? '',
-    dateOfBirth: prefill?.dateOfBirth ?? null,
     giftMessage: '',
     quantity: '1',
     doctor: {
@@ -115,7 +109,7 @@ function parseQuantity(value: string, min = 1): number | null {
 }
 
 /** Fields the server reads from the picked doctor's record instead of the request. */
-const RECORD_FIELDS: (keyof DraftRecipient)[] = ['recipientName', 'recipientPhone', 'recipientPcode', 'recipientEmail', 'dateOfBirth', 'doctor']
+const RECORD_FIELDS: (keyof DraftRecipient)[] = ['recipientName', 'recipientPhone', 'recipientPcode', 'recipientEmail', 'doctor']
 
 /** Only the fields actually filled in -- the server stores an absent one as "not given". */
 function doctorInput(doctor: DoctorFields): Partial<DoctorDetails> | undefined {
@@ -209,9 +203,6 @@ function RecipientCard({
             aria-invalid={Boolean(row.errors.recipientPhone)}
             onChange={(e) => onUpdate({ recipientPhone: e.target.value })}
           />
-        </LabelledField>
-        <LabelledField id={id('dob')} label={t('form.dob')}>
-          <DatePicker id={id('dob')} value={row.dateOfBirth} onChange={(value) => onUpdate({ dateOfBirth: value })} toDate={new Date()} />
         </LabelledField>
         <LabelledField
           id={id('quantity')}
@@ -339,7 +330,7 @@ export function QuickGiftFormPage() {
   const { giftId } = useParams<{ giftId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { prefillRecipient } = (location.state as { prefillRecipient?: Recipient | UpcomingBirthday } | null) ?? {}
+  const { prefillRecipient } = (location.state as { prefillRecipient?: Recipient } | null) ?? {}
   const { data: gifts, isLoading } = useActiveGifts()
   const gift = gifts?.find((g) => g.id === giftId)
   const createRequest = useCreateQuickGiftRequest()
@@ -414,7 +405,6 @@ export function QuickGiftFormPage() {
           recipientPhone: row.recipientPhone.trim(),
           recipientPcode: row.recipientPcode.trim() || undefined,
           recipientEmail: row.recipientEmail.trim() || undefined,
-          recipientDob: toDateOnly(row.dateOfBirth) ?? undefined,
           giftMessage: row.giftMessage.trim() || undefined,
           photos: photos.length > 0 ? photos : undefined,
           doctor: gift.artworkRequired ? doctorInput(row.doctor) : undefined,

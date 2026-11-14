@@ -17,22 +17,11 @@ export interface Recipient {
   pcode: string | null
   email: string | null
   address: string | null
-  dateOfBirth: string | null
   doctor: DoctorDetails
   createdByName: string | null
   createdAt: string
   /** On the caller's own list (added by them or mapped to them) -- the only doctors they can remove. */
   inMyList: boolean
-}
-
-export interface UpcomingBirthday {
-  id: string
-  name: string
-  phone: string
-  email: string | null
-  address: string | null
-  dateOfBirth: string
-  daysUntilBirthday: number
 }
 
 export interface CreateRecipientInput {
@@ -42,7 +31,6 @@ export interface CreateRecipientInput {
   pcode: string
   email?: string
   address?: string
-  dateOfBirth?: string
   doctor?: Partial<DoctorDetails>
 }
 

@@ -43,6 +43,8 @@ export function OrderDetailSheet({
   const { t } = useTranslation('orders')
   // Vendor names are the company admin's alone; the server leaves them out for everyone else.
   const canSeeVendor = useHasAccess(P.VENDOR_IDENTITY_VIEW)
+  // Prices are the company admin's alone; the server leaves them out for everyone else.
+  const canSeePrice = useHasAccess(P.PRICE_VIEW)
   return (
     <Sheet open={order !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
@@ -75,7 +77,7 @@ export function OrderDetailSheet({
                 <Detail label={t('detail.source')}>{order.campaignName ?? t(`source.${order.source}`)}</Detail>
                 {(order.assignedVendorName || canSeeVendor) && <Detail label={t('detail.vendor')}>{order.assignedVendorName ?? t('unassigned')}</Detail>}
                 <Detail label={t('detail.quantity')}>{order.quantity}</Detail>
-                <Detail label={t('detail.total')}>{formatCurrency(order.totalPrice)}</Detail>
+                {canSeePrice && <Detail label={t('detail.total')}>{formatCurrency(order.totalPrice)}</Detail>}
                 {order.orgUnitName && <Detail label={t('detail.orgUnit')}>{order.orgUnitName}</Detail>}
                 {order.warehouseName && <Detail label={t('detail.warehouse')}>{order.warehouseName}</Detail>}
                 <Detail label={t('detail.placed')}>{formatDateTime(order.createdAt)}</Detail>

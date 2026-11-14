@@ -69,6 +69,8 @@ export const P = {
   ROLE_TEMPLATE_VIEW: 'role_template.view',
   ROLE_TEMPLATE_ASSIGN: 'role_template.assign',
 
+  /** May see what a gift costs: the price on the Gift Store, orders and approvals. The company admin's alone by default. */
+  PRICE_VIEW: 'price.view',
   /** May see which vendor makes an order. Not the Vendors page, which is COMPANY_VENDOR_VIEW. */
   VENDOR_IDENTITY_VIEW: 'vendor_identity.view',
   COMPANY_VENDOR_VIEW: 'company_vendor.view',

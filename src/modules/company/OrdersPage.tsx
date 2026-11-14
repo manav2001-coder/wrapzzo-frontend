@@ -67,6 +67,8 @@ export function OrdersPage() {
   const canRequestPhoto = useHasAccess(P.ORDER_REQUEST_PHOTO)
   // Vendor names are the company admin's alone; the server leaves them out for everyone else.
   const canSeeVendor = useHasAccess(P.VENDOR_IDENTITY_VIEW)
+  // Prices are the company admin's alone; the server leaves them out for everyone else.
+  const canSeePrice = useHasAccess(P.PRICE_VIEW)
   // The figures are counted by the server over all the orders; the table below is one page of them at a time.
   const { data: summary, isLoading: summaryLoading } = useOrderSummary()
   const requestPhotoLink = useRequestOrderPhotoLink()
@@ -165,6 +167,7 @@ export function OrdersPage() {
         header: t('column.orgUnit'),
         meta: { className: 'min-w-[120px]' },
       },
+      ...(canSeePrice ? ([
       {
         id: 'totalPrice',
         accessorKey: 'totalPrice',
@@ -173,6 +176,7 @@ export function OrdersPage() {
         meta: { className: 'min-w-[110px]' },
         cell: ({ row }) => formatCurrency(row.original.totalPrice),
       },
+      ] satisfies ColumnDef<Order, unknown>[]) : []),
       {
         id: 'createdAt',
         accessorKey: 'createdAt',
@@ -192,7 +196,7 @@ export function OrdersPage() {
         ),
       },
     ],
-    [t, canSeeVendor],
+    [t, canSeeVendor, canSeePrice],
   )
 
   return (

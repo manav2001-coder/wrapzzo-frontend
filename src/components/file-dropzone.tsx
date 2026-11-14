@@ -8,6 +8,10 @@ import { useTranslation } from "react-i18next";
 
 interface BaseProps {
   accept?: Record<string, string[]>;
+  /** The biggest file taken, in bytes. A bigger one is turned away like a wrong type, and \`onReject\` says why. */
+  maxSize?: number;
+  /** Called with the first file turned away and why -- so the caller can tell the person, rather than the pick just vanishing. */
+  onReject?: (file: File, reason: "type" | "size") => void;
   error?: string;
   disabled?: boolean;
   className?: string;
@@ -59,15 +63,20 @@ function fileSize(file: File): string {
  */
 export function FileDropzone(props: FileDropzoneProps) {
   const { t } = useTranslation();
-  const { accept, error, disabled, className, prompt } = props;
+  const { accept, maxSize, onReject, error, disabled, className, prompt } = props;
   const listMode = props.files !== undefined;
   const [rejected, setRejected] = React.useState<string[]>([]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     multiple: listMode ? Boolean((props as ListProps).multiple) : false,
     accept,
+    maxSize,
     disabled,
     onDrop: (accepted, refused) => {
+      if (refused[0]) {
+        const tooBig = refused[0].errors.some((e) => e.code === "file-too-large");
+        onReject?.(refused[0].file, tooBig ? "size" : "type");
+      }
       if (props.files !== undefined) {
         setRejected(refused.map((entry) => entry.file.name));
         if (accepted.length > 0) {

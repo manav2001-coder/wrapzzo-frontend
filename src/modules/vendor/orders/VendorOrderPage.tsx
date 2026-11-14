@@ -33,6 +33,7 @@ import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
+import { MAX_PROOF_BYTES, notAPdfMessage, proofTooBigMessage } from '@/lib/proof-limits'
 import { useUploadVendorOrderDesign, useVendorOrderDesigns } from '@/hooks/useVendorOrderDesigns'
 import { useUpdateVendorOrderStatus, useVendorOrder } from '@/hooks/useVendorOrders'
 import { formatDate, formatDateTime } from '@/lib/datetime'
@@ -43,7 +44,7 @@ import { nextStatusOf, vendorStageOf, type VendorStage } from '@/lib/vendor-orde
 import { ArtworkThumb, ArtworkUploadDialog } from './ArtworkPreview'
 import { VendorStageBadge } from './VendorStageBadge'
 
-// Proofs are PDFs only.
+// Proofs are PDFs only, up to 5 MB.
 const PROOF_ACCEPT = { 'application/pdf': ['.pdf'] }
 
 const DESIGN_VARIANT: Record<OrderDesign['status'], BadgeProps['variant']> = {
@@ -286,6 +287,11 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
                 setPicked(next)
               }}
               accept={PROOF_ACCEPT}
+              maxSize={MAX_PROOF_BYTES}
+              onReject={(file, reason) => {
+                setPicked(null)
+                setRefusal(reason === 'size' ? proofTooBigMessage(file.name, file.size) : notAPdfMessage(file.name))
+              }}
               disabled={upload.isPending}
               prompt={t('order.artwork.drop')}
             />

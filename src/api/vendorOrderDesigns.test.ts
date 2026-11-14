@@ -24,7 +24,7 @@ describe('uploadVendorOrderDesign', () => {
 
     await uploadVendorOrderDesign('o-1', new File(['%PDF'], 'P-1001_Asha-Shah_Patna-AM.pdf', { type: 'application/pdf' }))
 
-    expect(post).toHaveBeenNthCalledWith(1, '/api/vendor/orders/o-1/designs/presign', { contentType: 'application/pdf', fileName: 'P-1001_Asha-Shah_Patna-AM.pdf' })
+    expect(post).toHaveBeenNthCalledWith(1, '/api/vendor/orders/o-1/designs/presign', { contentType: 'application/pdf', fileName: 'P-1001_Asha-Shah_Patna-AM.pdf', sizeBytes: 4 })
     expect(fetch).toHaveBeenCalledWith('https://storage.test/put', expect.objectContaining({ method: 'PUT', headers: { 'Content-Type': 'application/pdf' } }))
     expect(post).toHaveBeenNthCalledWith(2, '/api/vendor/orders/o-1/designs', { key: 'order-designs/o-1/u/P-1001_AM-PATNA_v1.pdf' })
   })
@@ -34,7 +34,22 @@ describe('uploadVendorOrderDesign', () => {
       .mockResolvedValueOnce({ data: { uploadUrl: 'https://storage.test/put', key: 'k/P_A_v1.pdf', fileName: 'P_A_v1.pdf' } })
       .mockResolvedValueOnce({ data: { id: 'd-1' } })
     await uploadVendorOrderDesign('o-1', new File(['%PDF'], 'proof.PDF', { type: '' }))
-    expect(post).toHaveBeenNthCalledWith(1, '/api/vendor/orders/o-1/designs/presign', { contentType: 'application/pdf', fileName: 'proof.PDF' })
+    expect(post).toHaveBeenNthCalledWith(1, '/api/vendor/orders/o-1/designs/presign', { contentType: 'application/pdf', fileName: 'proof.PDF', sizeBytes: 4 })
+  })
+
+  it('refuses a proof over 5 MB, or an empty one, before asking for an upload URL', async () => {
+    const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'big.pdf', { type: 'application/pdf' })
+    await expect(uploadVendorOrderDesign('o-1', big)).rejects.toThrow('"big.pdf" is 5.0 MB. A proof can be at most 5 MB')
+    await expect(uploadVendorOrderDesign('o-1', new File([], 'empty.pdf', { type: 'application/pdf' }))).rejects.toThrow('"empty.pdf" is empty')
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  it('takes a proof of exactly 5 MB', async () => {
+    post
+      .mockResolvedValueOnce({ data: { uploadUrl: 'https://storage.test/put', key: 'k/P_A_v1.pdf', fileName: 'P_A_v1.pdf' } })
+      .mockResolvedValueOnce({ data: { id: 'd-1' } })
+    await uploadVendorOrderDesign('o-1', new File([new Uint8Array(5 * 1024 * 1024)], 'ok.pdf', { type: 'application/pdf' }))
+    expect(post).toHaveBeenCalledTimes(2)
   })
 
   it('uploads nothing when the server refuses the file name, and passes its explanation on', async () => {

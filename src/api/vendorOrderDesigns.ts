@@ -1,4 +1,5 @@
 import type { OrderDesign } from '@/api/orderDesigns'
+import { MAX_PROOF_BYTES, notAPdfMessage, proofTooBigMessage } from '@/lib/proof-limits'
 import { UserFacingError } from '@/lib/user-facing-error'
 import { vendorApiClient } from '@/lib/vendorApiClient'
 
@@ -18,17 +19,20 @@ export async function listVendorOrderDesigns(orderId: string): Promise<OrderDesi
 
 /**
  * Presigns an upload URL and PUTs the file straight to object storage, then registers the new version. Proofs are
- * PDFs, and the file must already be named PCode_DoctorName_AMName.pdf (the AM's SAP code can replace their name): the server checks the
+ * PDFs of at most 5 MB, and the file must already be named PCode_DoctorName_AMName.pdf (the AM's SAP code can replace their name): the server checks the
  * name against the order and refuses a file named otherwise, saying what it should have been called -- before anything is uploaded.
  * A good one is stored under the server's tidy name (PCODE_Doctor_AM_vN.pdf).
  */
 export async function uploadVendorOrderDesign(orderId: string, file: File): Promise<OrderDesign> {
   // Some systems report no type for a .pdf, so the extension counts too.
   const isPdf = file.type === PDF || (file.type === '' && /\.pdf$/i.test(file.name))
-  if (!isPdf) throw new UserFacingError(`"${file.name}" is not a PDF. Proofs must be PDF files.`)
+  if (!isPdf) throw new UserFacingError(notAPdfMessage(file.name))
+  if (file.size === 0) throw new UserFacingError(`"${file.name}" is empty. Choose the PDF proof again.`)
+  if (file.size > MAX_PROOF_BYTES) throw new UserFacingError(proofTooBigMessage(file.name, file.size))
   const { data: presign } = await vendorApiClient.post<PresignDesignResponse>(`/api/vendor/orders/${orderId}/designs/presign`, {
     contentType: PDF,
     fileName: file.name,
+    sizeBytes: file.size,
   })
 
   let uploadResponse: Response

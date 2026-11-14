@@ -131,6 +131,17 @@ describe('VendorOrderPage', () => {
     expect(uploadVendorOrderDesign).not.toHaveBeenCalled()
   })
 
+  it('turns away a PDF over 5 MB and says how big it is', async () => {
+    const { container } = renderWorkspace(vendorOrder())
+    await screen.findByText('Upload an artwork proof for the customer to approve.')
+
+    const big = new File([new Uint8Array(6 * 1024 * 1024)], 'huge.pdf', { type: 'application/pdf' })
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [big] } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('"huge.pdf" is 6.0 MB. A proof can be at most 5 MB')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(uploadVendorOrderDesign).not.toHaveBeenCalled()
+  })
+
   it('turns an image away: proofs are PDFs only', async () => {
     const { container } = renderWorkspace(vendorOrder())
     await screen.findByText('Upload an artwork proof for the customer to approve.')
@@ -139,6 +150,8 @@ describe('VendorOrderPage', () => {
     fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [image] } })
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(uploadVendorOrderDesign).not.toHaveBeenCalled()
+    // ...and says so, rather than the pick silently vanishing.
+    expect(await screen.findByRole('alert')).toHaveTextContent('"logo.png" is not a PDF. Proofs must be PDF files.')
   })
 
   it('shows a small preview of each version in the artwork history', async () => {

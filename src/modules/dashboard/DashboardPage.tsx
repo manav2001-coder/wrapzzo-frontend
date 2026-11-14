@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { BarChart3, Palette } from 'lucide-react'
+import { BarChart3, ClipboardCheck, Clock, Palette, Undo2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -12,8 +12,9 @@ import { usePermissions } from '@/components/permission-provider'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { useQuickGiftName } from '@/hooks/use-menu-labels'
-import { useDashboard } from '@/hooks/useDashboard'
-import { usePendingArtworkPreview } from '@/hooks/useApprovalCounts'
+import { useDashboard, useDashboardInsights } from '@/hooks/useDashboard'
+import type { DashboardRange } from '@/api/dashboard'
+import { usePendingArtworkPreview, usePendingOrderApprovalCount } from '@/hooks/useApprovalCounts'
 import { humanize } from '@/lib/format'
 import { P } from '@/lib/permissions'
 import { statusColor } from '@/lib/statusColors'
@@ -21,8 +22,11 @@ import { UpcomingBirthdaysWidget } from '@/modules/recipients/UpcomingBirthdaysW
 import { AttentionCard, type AttentionItem } from './AttentionCard'
 import { DashboardDrilldownDialog, type DrilldownSelection } from './DashboardDrilldownDialog'
 import { OrderTimeline } from './OrderTimeline'
-import { PelStatsCard } from './PelStatsCard'
-import { PipelineFlow } from './PipelineFlow'
+import { CoverageCard } from './CoverageCard'
+import { PeriodKpis } from './PeriodKpis'
+import { RangePicker } from './RangePicker'
+import { StageAgingCard } from './StageAging'
+import { TeamPanel } from './TeamPanel'
 import { QuickGiftActivityDialog } from './QuickGiftActivityDialog'
 import { RecentActivityFeed } from './RecentActivityFeed'
 
@@ -55,12 +59,15 @@ function ChartPanel({ title, description, children }: { title: string; descripti
 
 /** The company's (or, for a member, their own) gifting at a glance; every number drills into its records. */
 export function DashboardPage() {
+  const [range, setRange] = useState<DashboardRange>('30d')
   const { data, isLoading } = useDashboard()
+  const { data: insights } = useDashboardInsights(range)
   const navigate = useNavigate()
   const { data: me } = useCurrentUser()
   const { hasAnyPermission } = usePermissions()
   const canReviewArtwork = hasAnyPermission([P.APPROVAL_VIEW])
   const { data: pendingArtwork } = usePendingArtworkPreview(canReviewArtwork)
+  const { data: pendingOrderApprovals } = usePendingOrderApprovalCount(canReviewArtwork)
   const [drilldown, setDrilldown] = useState<DrilldownSelection>(null)
   const [selectedQuickGiftId, setSelectedQuickGiftId] = useState<string | null>(null)
 
@@ -72,9 +79,9 @@ export function DashboardPage() {
     return {
       source: slices(data.orderSourceBreakdown, (k) => (k === 'QUICK_GIFT' ? quickGiftName : (SOURCE_LABELS[k] ?? humanize(k))), (k) => SOURCE_COLORS[k] ?? '#94a3b8'),
       quickGift: slices(data.quickGiftStatusBreakdown, humanize, statusColor),
-      trend: data.activityTrend.map((p) => ({ label: p.weekLabel, QUICK_GIFT: p.quickGiftRequests })),
+      trend: (insights?.weekly ?? []).map((p) => ({ label: p.weekLabel, requested: p.requested, delivered: p.delivered })),
     }
-  }, [data, quickGiftName])
+  }, [data, insights, quickGiftName])
 
   if (isLoading || !data || !breakdowns) {
     return (
@@ -97,9 +104,19 @@ export function DashboardPage() {
     data.quickGiftsThisMonth > 0 ||
     data.recentActivity.length > 0
 
+  const personal = insights?.scope === 'PERSONAL'
+  const stuckOrders = (insights?.stages ?? []).reduce((sum, st) => sum + st.stuck, 0)
   const attention: AttentionItem[] = [
     ...(canReviewArtwork
       ? [
+          {
+            key: 'orders',
+            icon: ClipboardCheck,
+            label: 'Requests to approve',
+            hint: 'Review and approve new PEL requests',
+            count: pendingOrderApprovals ?? 0,
+            onClick: () => navigate('/approvals'),
+          },
           {
             key: 'artwork',
             icon: Palette,
@@ -110,6 +127,25 @@ export function DashboardPage() {
           },
         ]
       : []),
+    {
+      key: 'rejected',
+      icon: Undo2,
+      label: 'Requests turned down',
+      hint: 'See why, then raise them again if needed',
+      count: insights?.rejectedRequests ?? 0,
+      onClick: () => setDrilldown({ dimension: 'quickGiftStatus', value: 'REJECTED' }),
+    },
+    {
+      key: 'stuck',
+      icon: Clock,
+      label: 'Orders waiting too long',
+      hint: 'Open the stage that is slowest',
+      count: stuckOrders,
+      onClick: () => {
+        const worst = [...(insights?.stages ?? [])].sort((x, y) => y.stuck - x.stuck)[0]
+        if (worst) setDrilldown({ dimension: 'orderStage', value: worst.stage })
+      },
+    },
   ]
 
   const now = new Date()
@@ -117,30 +153,24 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-7 pb-8">
-      <header className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-6 sm:p-8">
+      <header className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-4 sm:p-8">
         <div className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold tracking-wide text-primary uppercase">{format(now, 'EEEE, d MMMM')}</p>
-            <h1 className="mt-1.5 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-4xl">
               {greetingFor(now)}
               {firstName ? `, ${firstName}` : ''}
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground sm:mt-2">
               <span className="font-semibold text-foreground">{data.companyName}</span>
               {' · '}
               {data.companyWide ? 'Everything happening across your company' : 'Everything happening in your area'}
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setDrilldown({ dimension: 'quickGiftsThisMonth', value: '' })}
-                className="rounded-full border bg-background/70 px-3 py-1 text-xs font-medium backdrop-blur transition-colors hover:bg-background"
-              >
-                <span className="font-bold tabular-nums">{data.quickGiftsThisMonth}</span> requests this month
-              </button>
-            </div>
           </div>
+        </div>
+        <div className="relative mt-4 sm:mt-5">
+          <RangePicker value={range} onChange={setRange} />
         </div>
       </header>
 
@@ -156,27 +186,26 @@ export function DashboardPage() {
         />
       ) : (
         <>
-          <PelStatsCard
-            requested={data.pelsRequested}
-            doctors={data.doctorsRequested}
-            served={data.pelsServed}
-            doctorsServed={data.doctorsServed}
-            onSelect={(dimension) => setDrilldown({ dimension, value: '' })}
-          />
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-            <div className="lg:col-span-3">
-              <PipelineFlow
-                inProgress={data.giftsInProgress}
-                dispatched={data.dispatched}
-                delivered={data.delivered}
-                onSelectStage={(stage) => setDrilldown({ dimension: 'pipelineStage', value: stage })}
-              />
-            </div>
-            <div className="lg:col-span-2">
-              <AttentionCard items={attention} />
-            </div>
-          </div>
+          {insights && (
+            <>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+                <div className={personal ? 'order-2 lg:col-span-2' : 'lg:col-span-3'}>
+                  <AttentionCard items={attention} />
+                </div>
+                <div className={personal ? 'order-1 lg:col-span-3' : 'lg:col-span-2'}>
+                  <CoverageCard
+                    personal={personal}
+                    assigned={insights.coverage.assigned}
+                    covered={insights.coverage.covered}
+                    onSeeLeft={() => setDrilldown({ dimension: 'uncoveredDoctors', value: range })}
+                  />
+                </div>
+              </div>
+              <PeriodKpis current={insights.current} previous={insights.previous} onSelect={(dimension) => setDrilldown({ dimension, value: '' })} />
+              <StageAgingCard stages={insights.stages} onSelectStage={(stage) => setDrilldown({ dimension: 'orderStage', value: stage })} />
+              {!personal && <TeamPanel team={insights.team} teamSize={insights.teamSize} />}
+            </>
+          )}
 
           <UpcomingBirthdaysWidget />
 
@@ -194,6 +223,7 @@ export function DashboardPage() {
             </section>
           </div>
 
+          {!personal && (
           <section>
             <SectionTitle title="Insights" description="Click a point, slice or bar to see the records behind it." />
             <AppTabs
@@ -204,16 +234,13 @@ export function DashboardPage() {
                   value: 'activity',
                   label: 'Weekly activity',
                   content: (
-                    <ChartPanel title="Last 12 weeks">
+                    <ChartPanel title="PELs requested vs delivered" description="Last 12 weeks">
                       <MultiLineChart
                         data={breakdowns.trend}
                         series={[
-                          { key: 'QUICK_GIFT', label: `${quickGiftName} requests`, color: SOURCE_COLORS.QUICK_GIFT },
+                          { key: 'requested', label: 'Requested', color: SOURCE_COLORS.QUICK_GIFT },
+                          { key: 'delivered', label: 'Delivered', color: '#22c55e' },
                         ]}
-                        onSelect={(index, seriesKey) => {
-                          const point = data.activityTrend[index]
-                          if (point) setDrilldown({ dimension: 'week', value: `${point.weekStart}:${seriesKey}` })
-                        }}
                       />
                     </ChartPanel>
                   ),
@@ -263,6 +290,7 @@ export function DashboardPage() {
               ]}
             />
           </section>
+          )}
         </>
       )}
 

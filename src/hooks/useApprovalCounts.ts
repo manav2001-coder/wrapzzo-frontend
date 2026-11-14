@@ -23,3 +23,8 @@ export function usePendingArtworkPreview(enabled: boolean) {
     },
   })
 }
+
+/** How many order requests wait on the caller to approve -- the dashboard's "requests to approve" tile. */
+export function usePendingOrderApprovalCount(enabled: boolean) {
+  return useQuery({ queryKey: ['approvals', 'count', 'orders', 'dashboard'], enabled, refetchInterval: LIVE_REFRESH_MS, queryFn: () => countOf('/api/order-approvals/pending/page') })
+}

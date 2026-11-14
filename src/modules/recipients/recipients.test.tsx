@@ -157,4 +157,39 @@ describe('RecipientPickerDialog', () => {
     expect(searchRecipients).not.toHaveBeenCalled()
     expect(get).toHaveBeenCalledWith('/api/recipients/mine/page', { params: expect.objectContaining({ search: 'p-2002', size: 20 }) })
   })
+
+  it('picks every doctor the search matches with one tick, and clears them with another', async () => {
+    listMyRecipients.mockResolvedValue([recipient(), recipient({ id: 'r-2', name: 'Dr. Ravi Rao', pcode: 'P-2002' }), recipient({ id: 'r-3', name: 'Dr. Meena Das', pcode: 'P-3003' })])
+    const onConfirm = vi.fn()
+    renderWithProviders(<RecipientPickerDialog visible onHide={() => {}} onConfirm={onConfirm} />)
+    await screen.findByLabelText(/Dr\. Asha Shah/)
+
+    await userEvent.click(screen.getByLabelText('Select all (3)'))
+    expect(await screen.findByRole('button', { name: 'Add 3 selected' })).toBeEnabled()
+
+    await userEvent.click(screen.getByLabelText('Select all (3)'))
+    expect(screen.getByRole('button', { name: 'Add selected' })).toBeDisabled()
+
+    // One doctor ticked by hand shows the "some" state, and a tick on the top box completes the rest.
+    await userEvent.click(screen.getByLabelText(/Dr\. Ravi Rao/))
+    expect(screen.getByLabelText('Select all (3)')).toHaveAttribute('aria-checked', 'mixed')
+    await userEvent.click(screen.getByLabelText('Select all (3)'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Add 3 selected' }))
+    expect(onConfirm).toHaveBeenCalledWith([expect.objectContaining({ id: 'r-2' }), expect.objectContaining({ id: 'r-1' }), expect.objectContaining({ id: 'r-3' })])
+  })
+
+  it('loads every page for "select all", so a long list is picked whole and not just the first screen', async () => {
+    const everyone = Array.from({ length: 45 }, (_, n) => recipient({ id: `r-${n}`, name: `Dr. Doctor ${n}`, pcode: `P-${n}` }))
+    get.mockImplementation(async (_url: string, config?: { params?: { page?: number; size?: number } }) => {
+      const page = config?.params?.page ?? 0
+      const size = config?.params?.size ?? 20
+      return { data: { data: everyone.slice(page * size, page * size + size), total: everyone.length, page, pageSize: size, hasMore: (page + 1) * size < everyone.length } }
+    })
+    const onConfirm = vi.fn()
+    renderWithProviders(<RecipientPickerDialog visible onHide={() => {}} onConfirm={onConfirm} />)
+    await userEvent.click(await screen.findByLabelText('Select all (45)'))
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Add 45 selected' }))
+    expect(onConfirm.mock.calls[0][0]).toHaveLength(45)
+  })
 })

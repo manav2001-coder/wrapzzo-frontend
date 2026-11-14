@@ -1,5 +1,5 @@
 import { Contact, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { Recipient } from '@/api/recipients'
@@ -13,7 +13,8 @@ import { useMyRecipientsList } from '@/hooks/useRecipients'
 /**
  * Pick several doctors at once from the caller's own list (the doctors they added or are mapped to) -- e.g. straight into a
  * Quick Gift form instead of retyping them. The list can run to hundreds, so the server searches it and hands over a page at a
- * time as the list is scrolled; what is ticked is remembered across searches.
+ * time as the list is scrolled; what is ticked is remembered across searches. One tick at the top picks every doctor the search
+ * matches -- the pages not yet loaded are fetched for it -- and another clears them.
  */
 export function RecipientPickerDialog({
   visible,
@@ -27,11 +28,45 @@ export function RecipientPickerDialog({
   const { t } = useTranslation('recipients')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Map<string, Recipient>>(new Map())
-  const { items: results, isLoading, isLoadingMore, onScroll } = useMyRecipientsList(search.trim())
+  const [selectingAll, setSelectingAll] = useState(false)
+  const { items: results, total, hasMore, fetchNextPage, isLoading, isLoadingMore, onScroll } = useMyRecipientsList(search.trim())
 
   function reset() {
     setSelected(new Map())
     setSearch('')
+    setSelectingAll(false)
+  }
+
+  // "Select all" keeps going until every doctor the search matches is loaded and ticked, however many pages that takes.
+  useEffect(() => {
+    if (!selectingAll || isLoading) return
+    setSelected((prev) => {
+      if (results.every((recipient) => prev.has(recipient.id))) return prev
+      const next = new Map(prev)
+      results.forEach((recipient) => next.set(recipient.id, recipient))
+      return next
+    })
+    if (hasMore) {
+      if (!isLoadingMore) fetchNextPage()
+    } else {
+      setSelectingAll(false)
+    }
+  }, [selectingAll, results, hasMore, isLoading, isLoadingMore, fetchNextPage])
+
+  const everyoneTicked = results.length > 0 && results.every((recipient) => selected.has(recipient.id))
+  const someoneTicked = results.some((recipient) => selected.has(recipient.id))
+
+  function toggleAll(checked: boolean) {
+    if (checked) {
+      setSelectingAll(true)
+      return
+    }
+    setSelectingAll(false)
+    setSelected((prev) => {
+      const next = new Map(prev)
+      results.forEach((recipient) => next.delete(recipient.id))
+      return next
+    })
   }
 
   function toggle(recipient: Recipient, checked: boolean) {
@@ -68,7 +103,10 @@ export function RecipientPickerDialog({
           <Input
             autoFocus
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setSelectingAll(false)
+            }}
             placeholder={t('picker.search')}
             aria-label={t('picker.search')}
             className="pl-8"
@@ -81,6 +119,16 @@ export function RecipientPickerDialog({
           <EmptyState variant="plain" size="sm" icon={Contact} title={t('picker.noMatchTitle')} description={t('picker.noMatchBody')} />
         ) : (
           <ul className="max-h-80 divide-y overflow-y-auto rounded-md border" onScroll={onScroll}>
+            <li className="sticky top-0 z-10 bg-card">
+              <label htmlFor="pick-all" className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-muted/50">
+                <Checkbox
+                  id="pick-all"
+                  checked={selectingAll || everyoneTicked ? true : someoneTicked ? 'indeterminate' : false}
+                  onCheckedChange={(checked) => toggleAll(checked === true)}
+                />
+                {t('picker.selectAll', { count: total ?? results.length })}
+              </label>
+            </li>
             {results.map((recipient) => {
               const id = `pick-${recipient.id}`
               return (

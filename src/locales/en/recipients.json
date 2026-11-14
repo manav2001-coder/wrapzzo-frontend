@@ -35,7 +35,8 @@
     "noMatchBody": "No doctor on your list matches. Add them under Doctors first.",
     "add_one": "Add {{count}} selected",
     "add_other": "Add {{count}} selected",
-    "addNone": "Add selected"
+    "addNone": "Add selected",
+    "selectAll": "Select all ({{count}})"
   },
   "doctors": {
     "removeTitle": "Remove {{name}} from your list?",

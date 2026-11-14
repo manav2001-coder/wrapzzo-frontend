@@ -22,6 +22,7 @@ import type { ListFieldMap } from '@/lib/list-fields'
 import { VENDOR_STAGES, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
 import { VendorDivisionFilter } from '../division/VendorDivisionFilter'
 import { VendorStageBadge } from './VendorStageBadge'
+import { doctorLabel } from '@/lib/doctor-label'
 
 const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
@@ -85,7 +86,7 @@ export function VendorOrdersPage() {
       { id: 'companyName', accessorKey: 'companyName', header: t('orders.column.company'), meta: { className: 'min-w-[150px]' } },
       {
         id: 'recipientName',
-        accessorFn: (row) => row.recipientName ?? '',
+        accessorFn: (row) => doctorLabel(row.recipientName, row.recipientPcode),
         header: t('orders.column.recipient'),
         meta: { className: 'min-w-[160px]' },
       },

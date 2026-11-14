@@ -8,6 +8,7 @@ import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { formatDateTime } from '@/lib/datetime'
+import { doctorLabel } from '@/lib/doctor-label'
 
 const STATUS_VARIANT: Record<QuickGiftStatus, BadgeProps['variant']> = {
   SUBMITTED: 'warning-soft',
@@ -77,7 +78,7 @@ export function QuickGiftRequestSheet({
               )}
 
               <dl className="grid grid-cols-2 gap-4">
-                <Detail label={t('detail.recipient')}>{request.recipientName}</Detail>
+                <Detail label={t('detail.recipient')}>{doctorLabel(request.recipientName, request.recipientPcode)}</Detail>
                 <Detail label={t('detail.phone')}>{request.recipientPhone}</Detail>
                 {request.deliveryAddress && (
                   <Detail label={t('detail.address')} wide>

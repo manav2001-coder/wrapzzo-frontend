@@ -116,7 +116,7 @@ describe('QuickGiftLandingPage', () => {
     renderLanding()
     await userEvent.click(screen.getByRole('tab', { name: /My requests/ }))
     const row = (await screen.findByText('QG-7')).closest('tr')!
-    expect(within(row).getByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(within(row).getByText('Dr. Asha Shah (P-1001)')).toBeInTheDocument()
     expect(within(row).getByText('Ordered')).toBeInTheDocument()
 
     await userEvent.click(within(row).getByRole('button', { name: 'Prescription Pad' }))

@@ -29,6 +29,7 @@ import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 import { serverFetcher } from '@/lib/server-list'
 import { OrderRequestsSection } from './OrderRequestsSection'
 import { OverridableArtworkSection } from './OverridableArtworkSection'
+import { doctorLabel } from '@/lib/doctor-label'
 
 /** The artwork queue: a page at a time from the server, which works out which proofs are the caller's to sign. */
 const fetchArtwork = serverFetcher<PendingArtworkApproval>('/api/artwork-approvals/pending/page')
@@ -125,7 +126,7 @@ export function ApprovalQueuePage() {
           </button>
         ),
       },
-      { id: 'recipientName', accessorFn: (item) => item.recipientName ?? '', header: 'Doctor', meta: { className: 'min-w-[160px]' } },
+      { id: 'recipientName', accessorFn: (item) => doctorLabel(item.recipientName, item.recipientPcode), header: 'Doctor', meta: { className: 'min-w-[160px]' } },
       { id: 'quantity', accessorKey: 'quantity', header: 'Quantity', enableColumnFilter: false, meta: { className: 'min-w-[80px]' } },
       {
         id: 'versionNo',
@@ -222,7 +223,7 @@ export function ApprovalQueuePage() {
 
               <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
                 <dl className="grid grid-cols-2 gap-4">
-                  <Detail label="Doctor">{open.recipientName}</Detail>
+                  <Detail label="Doctor">{doctorLabel(open.recipientName, open.recipientPcode)}</Detail>
                   <Detail label="Quantity">{open.quantity}</Detail>
                   <Detail label="Requested by">{open.requestedByName}</Detail>
                   <Detail label="MR approved by">{open.mrApprovedByName}</Detail>

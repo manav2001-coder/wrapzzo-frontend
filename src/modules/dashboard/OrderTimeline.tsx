@@ -7,6 +7,7 @@ import type { OrderTimelineItem } from '@/api/dashboard'
 import { AppDialog } from '@/components/app-dialog'
 import { EmptyState } from '@/components/empty-state'
 import { OrderHistoryList, OrderProgressBar, OrderStatusBadge, OrderStepper } from '@/components/orders/order-status'
+import { doctorLabel } from '@/lib/doctor-label'
 
 function Thumb({ url, size = 40 }: { url: string | null; size?: number }) {
   return url ? (
@@ -45,7 +46,7 @@ export function OrderTimeline({ orders }: { orders: OrderTimelineItem[] }) {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{order.giftName}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {order.recipientName} · {order.displayId}
+                  {doctorLabel(order.recipientName, order.recipientPcode)} · {order.displayId}
                 </p>
               </div>
               <div className="hidden w-40 shrink-0 sm:block">
@@ -80,7 +81,7 @@ export function OrderTimeline({ orders }: { orders: OrderTimelineItem[] }) {
                 <p className="text-sm text-muted-foreground">
                   {selected.displayId} · {t(`source.${selected.source}`, { defaultValue: selected.source })}
                 </p>
-                <p className="text-sm font-medium">{selected.recipientName}</p>
+                <p className="text-sm font-medium">{doctorLabel(selected.recipientName, selected.recipientPcode)}</p>
               </div>
             </div>
             <div className="flex items-center justify-between text-sm">

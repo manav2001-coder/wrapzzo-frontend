@@ -41,6 +41,7 @@ export interface Order {
   /** The gift's first catalogue image, if it has one -- same lookup as the Dashboard's order timeline chips. */
   giftImageUrl: string | null
   recipientName: string | null
+  recipientPcode: string | null
   recipientPhone: string | null
   /** Null until the recipient (or someone on their behalf) uploads one. */
   recipientPhotoUrl: string | null

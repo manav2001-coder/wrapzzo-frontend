@@ -4,6 +4,7 @@ import { AppDialog } from '@/components/app-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QuickGiftStatusBadge } from '@/modules/quickgift/QuickGiftRequestSheet'
 import { useQuickGiftRequest } from '@/hooks/useQuickGifts'
+import { doctorLabel } from '@/lib/doctor-label'
 
 /**
  * Read-only Quick Gift detail, opened from the Dashboard's activity feed -- the same
@@ -42,7 +43,7 @@ export function QuickGiftActivityDialog({ quickGiftId, onHide }: { quickGiftId: 
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Recipient</p>
-              <p className="text-foreground">{request.recipientName}</p>
+              <p className="text-foreground">{doctorLabel(request.recipientName, request.recipientPcode)}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Phone</p>

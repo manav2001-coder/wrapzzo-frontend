@@ -28,6 +28,7 @@ function order(overrides: Partial<WarehouseOrder> = {}): WarehouseOrder {
     giftName: 'Prescription Pad',
     quantity: 200,
     recipientName: 'Dr. Asha Shah',
+    recipientPcode: 'P-1001',
     recipientPhone: '9800000001',
     deliveryAddress: '12 MG Road, Pune',
     orgUnitName: 'North',
@@ -65,7 +66,7 @@ describe('WarehousesPage', () => {
     advanceWarehouseOrder.mockResolvedValue(order({ status: 'RECEIVED_AT_WAREHOUSE' }))
     renderWithProviders(<WarehousesPage />)
 
-    expect(await screen.findByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(await screen.findByText('Dr. Asha Shah (P-1001)')).toBeInTheDocument()
     expect(screen.getByText('12 MG Road, Pune', { exact: false })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Mark received' }))
 
@@ -79,7 +80,7 @@ describe('WarehousesPage', () => {
     ])
     renderWithProviders(<WarehousesPage />)
 
-    expect(await screen.findByText('Dr. Ravi Rao')).toBeInTheDocument()
+    expect(await screen.findByText('Dr. Ravi Rao (P-1001)')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mark delivered' })).toBeInTheDocument()
     expect(screen.getByText('With the vendor')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Mark received' })).not.toBeInTheDocument()
@@ -90,7 +91,7 @@ describe('WarehousesPage', () => {
     listWarehouseOrders.mockResolvedValue([order()])
     renderWithProviders(<WarehousesPage />)
 
-    expect(await screen.findByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(await screen.findByText('Dr. Asha Shah (P-1001)')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Mark received' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Add warehouse/ })).not.toBeInTheDocument()
   })

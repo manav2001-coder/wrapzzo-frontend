@@ -28,6 +28,7 @@ import { useAdvanceWarehouseOrder, useSaveWarehouse, useWarehouseOrderCounts, us
 import { formatDateTime } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
+import { doctorLabel } from '@/lib/doctor-label'
 
 const COMPANY_WIDE = '__company_wide__'
 
@@ -168,12 +169,12 @@ function WarehouseOrdersTab() {
       },
       {
         id: 'recipientName',
-        accessorFn: (o) => o.recipientName ?? '',
+        accessorFn: (o) => doctorLabel(o.recipientName, o.recipientPcode),
         header: 'Deliver to',
         meta: { className: 'min-w-[220px]' },
         cell: ({ row }) => (
           <div className="min-w-0">
-            <p className="truncate font-medium">{row.original.recipientName}</p>
+            <p className="truncate font-medium">{doctorLabel(row.original.recipientName, row.original.recipientPcode)}</p>
             <p className="truncate text-xs text-muted-foreground">
               {[row.original.recipientPhone, row.original.deliveryAddress].filter(Boolean).join(' · ')}
             </p>

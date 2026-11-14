@@ -43,6 +43,7 @@ import { cn } from '@/lib/utils'
 import { nextStatusOf, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
 import { ArtworkThumb, ArtworkUploadDialog } from './ArtworkPreview'
 import { VendorStageBadge } from './VendorStageBadge'
+import { doctorLabel } from '@/lib/doctor-label'
 
 // Proofs are PDFs only, up to 5 MB.
 const PROOF_ACCEPT = { 'application/pdf': ['.pdf'] }
@@ -149,7 +150,7 @@ function PrintCard({ order }: { order: VendorOrder }) {
     >
       {personalised ? (
         <div className="rounded-md border-2 border-dashed border-primary/30 bg-background p-4 font-serif">
-          <p className="text-lg font-bold leading-tight">{order.recipientName}</p>
+          <p className="text-lg font-bold leading-tight">{doctorLabel(order.recipientName, order.recipientPcode)}</p>
           {doctor?.qualification && <p className="text-sm">{doctor.qualification}</p>}
           {doctor?.speciality && <p className="text-sm italic text-muted-foreground">{doctor.speciality}</p>}
           {order.recipientPcode && <p className="mt-1 text-xs">{t('order.print.pcode', { value: order.recipientPcode })}</p>}

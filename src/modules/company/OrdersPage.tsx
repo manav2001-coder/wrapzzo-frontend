@@ -27,6 +27,7 @@ import { serverFetcher } from '@/lib/server-list'
 import { formatDate } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { doctorLabel } from '@/lib/doctor-label'
 
 const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
@@ -119,7 +120,7 @@ export function OrdersPage() {
       },
       {
         id: 'recipientName',
-        accessorFn: (order) => order.recipientName ?? '',
+        accessorFn: (order) => doctorLabel(order.recipientName, order.recipientPcode),
         header: t('column.recipient'),
         meta: { className: 'min-w-[160px]' },
       },

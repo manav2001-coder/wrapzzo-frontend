@@ -36,6 +36,7 @@ const SUMMARY: DashboardSummary = {
       giftName: 'Prescription Pad',
       giftImageUrl: null,
       recipientName: 'Dr. Asha',
+      recipientPcode: 'P-1001',
       requesterName: 'Rahul',
       status: 'DISPATCHED',
       source: 'QUICK_GIFT',

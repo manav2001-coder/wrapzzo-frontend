@@ -60,7 +60,7 @@ describe('OrderRequestsSection', () => {
     renderWithProviders(<OrderRequestsSection />)
     expect(await screen.findByText('Prescription Pad')).toBeInTheDocument()
     expect(screen.getByText('ORD-101')).toBeInTheDocument()
-    expect(screen.getByText('Dr. Asha Shah')).toBeInTheDocument()
+    expect(screen.getByText('Dr. Asha Shah (PC-ASHA)')).toBeInTheDocument()
     expect(screen.getByText('Mira MR')).toBeInTheDocument()
   })
 

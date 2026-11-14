@@ -65,6 +65,7 @@ export interface PendingArtworkApproval {
   orderDisplayId: string
   giftName: string | null
   recipientName: string | null
+  recipientPcode: string | null
   quantity: number
   requestedByName: string | null
   versionNo: number
@@ -88,6 +89,7 @@ export interface OverridableArtwork {
   orderDisplayId: string
   giftName: string | null
   recipientName: string | null
+  recipientPcode: string | null
   quantity: number
   requestedByName: string | null
   versionNo: number

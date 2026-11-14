@@ -30,6 +30,7 @@ export interface WarehouseOrder {
   giftName: string | null
   quantity: number
   recipientName: string | null
+  recipientPcode: string | null
   recipientPhone: string | null
   /** The final drop; null for a campaign order. */
   deliveryAddress: string | null

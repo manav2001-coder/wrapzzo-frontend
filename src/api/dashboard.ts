@@ -34,6 +34,7 @@ export interface OrderTimelineItem {
   /** Null if the gift has no image, or the order has no gift (a rare/legacy case). */
   giftImageUrl: string | null
   recipientName: string
+  recipientPcode: string | null
   requesterName: string
   status: OrderStatus
   /** 'QUICK_GIFT' | 'BULK_GIFT' (older orders may carry other sources) */

@@ -31,6 +31,7 @@ import { StageAgingCard } from './StageAging'
 import { TeamPanel } from './TeamPanel'
 import { QuickGiftActivityDialog } from './QuickGiftActivityDialog'
 import { RecentActivityFeed } from './RecentActivityFeed'
+import { doctorLabel } from '@/lib/doctor-label'
 
 const SOURCE_LABELS: Record<string, string> = { BULK_GIFT: 'Bulk PEL ordering' }
 const SOURCE_COLORS: Record<string, string> = { QUICK_GIFT: '#f59e0b', BULK_GIFT: '#0d9488' }
@@ -123,7 +124,7 @@ export function DashboardPage() {
             key: 'artwork',
             icon: Palette,
             label: 'Artwork proofs to review',
-            hint: pendingArtwork?.next ? `Next: ${pendingArtwork.next.orderDisplayId} · ${pendingArtwork.next.recipientName ?? pendingArtwork.next.giftName ?? ''}` : 'Open your approvals',
+            hint: pendingArtwork?.next ? `Next: ${pendingArtwork.next.orderDisplayId} · ${doctorLabel(pendingArtwork.next.recipientName, pendingArtwork.next.recipientPcode) || (pendingArtwork.next.giftName ?? '')}` : 'Open your approvals',
             count: pendingArtwork?.count ?? 0,
             onClick: () => navigate('/approvals'),
           },

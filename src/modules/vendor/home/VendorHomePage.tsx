@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import { ACTION_STAGES, type VendorStage } from '@/lib/vendor-order-stage'
 import { VendorDivisionFilter } from '../division/VendorDivisionFilter'
 import { VendorStageBadge } from '../orders/VendorStageBadge'
+import { doctorLabel } from '@/lib/doctor-label'
 
 interface QueueStage {
   stage: VendorStage
@@ -80,7 +81,7 @@ function ActionRow({ order, stage }: { order: VendorOrder; stage: VendorStage })
             {order.displayId} · {order.giftName}
           </p>
           <p className="break-words sm:truncate text-xs text-muted-foreground">
-            {order.companyName} · {order.recipientName} · {formatDate(order.assignedAt ?? order.createdAt)}
+            {order.companyName} · {doctorLabel(order.recipientName, order.recipientPcode)} · {formatDate(order.assignedAt ?? order.createdAt)}
           </p>
           {stage === 'rework' && order.latestDesignComment ? (
             <p className="mt-1 break-words sm:truncate rounded-md bg-destructive/5 px-2 py-1 text-xs text-destructive">“{order.latestDesignComment}”</p>

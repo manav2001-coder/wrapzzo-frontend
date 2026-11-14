@@ -23,6 +23,7 @@ import { serverFetcher } from '@/lib/server-list'
 import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { QuickGiftRequestSheet, QuickGiftStatusBadge } from './QuickGiftRequestSheet'
+import { doctorLabel } from '@/lib/doctor-label'
 
 /** The user's own requests, a page at a time from the server. */
 const fetchMyRequests = serverFetcher<QuickGiftRequest>('/api/quick-gifts/mine/page')
@@ -86,7 +87,7 @@ export function QuickGiftLandingPage() {
         ),
       },
       { id: 'displayId', accessorKey: 'displayId', header: t('landing.column.request'), meta: { className: 'min-w-[100px]' } },
-      { id: 'recipientName', accessorKey: 'recipientName', header: t('landing.column.recipient'), meta: { className: 'min-w-[160px]' } },
+      { id: 'recipientName', accessorFn: (request) => doctorLabel(request.recipientName, request.recipientPcode), header: t('landing.column.recipient'), meta: { className: 'min-w-[160px]' } },
       {
         id: 'quantity',
         accessorKey: 'quantity',

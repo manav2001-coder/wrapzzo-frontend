@@ -28,6 +28,7 @@ function order(overrides: Partial<Order> = {}): Order {
     giftName: 'Prescription Pad',
     giftImageUrl: null,
     recipientName: 'Dr. Asha Shah',
+    recipientPcode: 'P-1001',
     recipientPhone: '9800000001',
     recipientPhotoUrl: null,
     recipientPhotos: [],

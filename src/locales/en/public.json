@@ -7,7 +7,7 @@
     "hero": {
       "badge": "Request-to-delivery platform",
       "title": "Every request raised, approved, printed and delivered in one place.",
-      "body": "Your field team raises a request for a doctor, managers approve it, the vendor prints and ships it, and everyone follows it to delivery. Wrappzo runs that whole workflow.",
+      "body": "Your field team raises a request for an HCP, managers approve it, the vendor prints and ships it, and everyone follows it to delivery. Wrappzo runs that whole workflow.",
       "cta": "Log in",
       "secondary": "See how it works",
       "mock": {
@@ -28,16 +28,16 @@
     },
     "solutions": {
       "title": "One workflow, from the field to the doorstep",
-      "body": "Each person sees and does only their part: the rep raising the request, the managers approving it, the vendor printing and dispatching it.",
+      "body": "Each person sees and does only their part: the user raising the request, the managers approving it, the vendor printing and dispatching it.",
       "request": {
         "title": "Raise a request",
-        "description": "Reps pick a product from the PEL Store, or send a direct request, for one of their doctors.",
-        "caption": "Choose the doctor, the product and the quantity, and leave one note for the vendor."
+        "description": "Users pick a product from the PEL Store, or send a direct request, for one of their HCPs.",
+        "caption": "Choose the HCP, the product and the quantity, and leave one note for the vendor."
       },
       "doctors": {
-        "title": "Doctor directory",
-        "description": "Each rep's doctors in one list, with bulk upload for whole sheets at a time.",
-        "caption": "Upload a sheet of doctors once, then reuse them on every request."
+        "title": "HCP directory",
+        "description": "Each user's HCPs in one list, with bulk upload for whole sheets at a time.",
+        "caption": "Upload a sheet of HCPs once, then reuse them on every request."
       },
       "approval": {
         "title": "Manager approval",
@@ -56,7 +56,7 @@
       },
       "dispatch": {
         "title": "Labels & dispatch",
-        "description": "Vendors download a dispatch label with the doctor's and the rep's details.",
+        "description": "Vendors download a dispatch label with the HCP's and the user's details.",
         "caption": "Pack it, mark it dispatched, and the team sees it straight away."
       },
       "tracking": {
@@ -90,7 +90,7 @@
       "items": {
         "request": {
           "title": "Request",
-          "description": "A rep picks the doctor, the product and the quantity."
+          "description": "A user picks the HCP, the product and the quantity."
         },
         "approve": {
           "title": "Approve",

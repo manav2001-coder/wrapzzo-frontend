@@ -70,7 +70,7 @@ describe('LandingPage', () => {
     expect(screen.getByRole('heading', { level: 1, name: /every request raised, approved, printed and delivered/i })).toBeInTheDocument()
     // Four steps (Request, Approve, Print, Deliver) and three roles (field team, managers, vendors).
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(7)
-    for (const feature of ['Doctor directory', 'Manager approval', 'Artwork review', 'Vendor fulfilment', 'Labels & dispatch', 'Order tracking', 'Team dashboards']) {
+    for (const feature of ['HCP directory', 'Manager approval', 'Artwork review', 'Vendor fulfilment', 'Labels & dispatch', 'Order tracking', 'Team dashboards']) {
       expect(screen.getByText(feature)).toBeInTheDocument()
     }
     // The page is anchored, not a dead end: the footer links go to sections that exist.

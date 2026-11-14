@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { formatDateTime } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
+import { doctorLabel } from '@/lib/doctor-label'
 
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -71,7 +72,7 @@ export function OrderDetailSheet({
 
             <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
               <dl className="grid grid-cols-2 gap-4">
-                <Detail label={t('detail.recipient')}>{order.recipientName}</Detail>
+                <Detail label={t('detail.recipient')}>{doctorLabel(order.recipientName, order.recipientPcode)}</Detail>
                 <Detail label={t('detail.phone')}>{order.recipientPhone}</Detail>
                 <Detail label={t('detail.company')}>{order.companyName}</Detail>
                 <Detail label={t('detail.source')}>{order.campaignName ?? t(`source.${order.source}`)}</Detail>

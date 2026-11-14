@@ -21,6 +21,7 @@ import { formatDate, formatDateTime } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
+import { doctorLabel } from '@/lib/doctor-label'
 
 /** The order queue: a page at a time from the server, which works out which orders are the caller's to decide. */
 const fetchOrderRequests = serverFetcher<PendingOrderApproval>('/api/order-approvals/pending/page')
@@ -98,7 +99,7 @@ export function OrderRequestsSection() {
           </button>
         ),
       },
-      { id: 'recipientName', accessorFn: (order) => order.recipientName ?? '', header: 'Doctor', meta: { className: 'min-w-[160px]' } },
+      { id: 'recipientName', accessorFn: (order) => doctorLabel(order.recipientName, order.recipientPcode), header: 'Doctor', meta: { className: 'min-w-[160px]' } },
       { id: 'quantity', accessorKey: 'quantity', header: 'Quantity', enableColumnFilter: false, meta: { className: 'min-w-[80px]' } },
       { id: 'requestedByName', accessorKey: 'requestedByName', header: 'Requested by', meta: { className: 'min-w-[160px]' } },
       {
@@ -155,7 +156,7 @@ export function OrderRequestsSection() {
 
               <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
                 <dl className="grid grid-cols-2 gap-4">
-                  <Detail label="Doctor">{open.recipientName}</Detail>
+                  <Detail label="Doctor">{doctorLabel(open.recipientName, open.recipientPcode)}</Detail>
                   <Detail label="Doctor code">{open.recipientPcode}</Detail>
                   <Detail label="Quantity">{open.quantity}</Detail>
                   <Detail label="Total">{open.totalPrice != null ? formatCurrency(open.totalPrice) : null}</Detail>

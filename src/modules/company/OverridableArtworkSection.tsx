@@ -20,6 +20,7 @@ import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 import { serverFetcher } from '@/lib/server-list'
+import { doctorLabel } from '@/lib/doctor-label'
 
 /** Proofs still waiting on the MR or a level below the caller: the server works out which of them the caller may approve in place of the people there. */
 const fetchOverridable = serverFetcher<OverridableArtwork>('/api/artwork-approvals/overridable/page')
@@ -96,7 +97,7 @@ export function OverridableArtworkSection() {
           </button>
         ),
       },
-      { id: 'recipientName', accessorFn: (item) => item.recipientName ?? '', header: 'Doctor', meta: { className: 'min-w-[160px]' } },
+      { id: 'recipientName', accessorFn: (item) => doctorLabel(item.recipientName, item.recipientPcode), header: 'Doctor', meta: { className: 'min-w-[160px]' } },
       { id: 'versionNo', accessorKey: 'versionNo', header: 'Version', enableColumnFilter: false, meta: { className: 'min-w-[80px]' }, cell: ({ row }) => `v${row.original.versionNo}` },
       { id: 'waitingOn', accessorKey: 'waitingOn', header: 'Waiting on', enableColumnFilter: false, meta: { className: 'min-w-[220px]' } },
       {
@@ -170,7 +171,7 @@ export function OverridableArtworkSection() {
 
               <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
                 <dl className="grid grid-cols-2 gap-4">
-                  <Detail label="Doctor">{open.recipientName}</Detail>
+                  <Detail label="Doctor">{doctorLabel(open.recipientName, open.recipientPcode)}</Detail>
                   <Detail label="Quantity">{open.quantity}</Detail>
                   <Detail label="Requested by">{open.requestedByName}</Detail>
                   <Detail label="Waiting since">{open.waitingSince ? formatDate(open.waitingSince) : '—'}</Detail>

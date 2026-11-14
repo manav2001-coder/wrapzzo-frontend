@@ -65,10 +65,17 @@ describe('LandingPage', () => {
     )
   }
 
-  it('shows the hero and every solution to a signed-out visitor', () => {
+  it('shows the hero, the four steps and every role to a signed-out visitor', () => {
     renderLanding()
     expect(screen.getByRole('heading', { level: 1, name: /every request raised, approved, printed and delivered/i })).toBeInTheDocument()
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(8)
+    // Four steps (Request, Approve, Print, Deliver) and three roles (field team, managers, vendors).
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(7)
+    for (const feature of ['Doctor directory', 'Manager approval', 'Artwork review', 'Vendor fulfilment', 'Labels & dispatch', 'Order tracking', 'Team dashboards']) {
+      expect(screen.getByText(feature)).toBeInTheDocument()
+    }
+    // The page is anchored, not a dead end: the footer links go to sections that exist.
+    expect(document.getElementById('how-it-works')).not.toBeNull()
+    expect(document.getElementById('roles')).not.toBeNull()
   })
 
   it('sends the visitor to sign-in from the hero', async () => {

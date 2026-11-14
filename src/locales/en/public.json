@@ -8,7 +8,23 @@
       "badge": "Request-to-delivery platform",
       "title": "Every request raised, approved, printed and delivered in one place.",
       "body": "Your field team raises a request for a doctor, managers approve it, the vendor prints and ships it, and everyone follows it to delivery. Wrappzo runs that whole workflow.",
-      "cta": "Log in"
+      "cta": "Log in",
+      "secondary": "See how it works",
+      "mock": {
+        "label": "Live order",
+        "order": "ORD-1042",
+        "doctor": "Dr. Asha Shah",
+        "detail": "10 PELs · Patna",
+        "status": "In printing",
+        "steps": [
+          "Requested",
+          "Approved",
+          "Artwork OK",
+          "Printing",
+          "Dispatched",
+          "Delivered"
+        ]
+      }
     },
     "solutions": {
       "title": "One workflow, from the field to the doorstep",
@@ -63,12 +79,38 @@
       "platform": "Platform",
       "account": "Account",
       "links": {
-        "giftStore": "PEL Store",
-        "quickGifts": "Requests",
-        "approvals": "Approvals",
-        "tracking": "Order tracking"
+        "how": "How it works",
+        "roles": "Who it is for"
       },
       "rights": "© {{year}} Wrappzo. Operated by Orange Dot Solutions. All rights reserved."
+    },
+    "steps": {
+      "title": "From request to doorstep in four steps",
+      "body": "Everyone sees only their part, and nothing moves on without the right person's go-ahead.",
+      "items": {
+        "request": {
+          "title": "Request",
+          "description": "A rep picks the doctor, the product and the quantity."
+        },
+        "approve": {
+          "title": "Approve",
+          "description": "A manager approves it, and later the artwork proof, before anything is printed."
+        },
+        "print": {
+          "title": "Print",
+          "description": "The vendor uploads the proof, prints the order and packs it."
+        },
+        "deliver": {
+          "title": "Deliver",
+          "description": "Dispatch label, tracking and delivery, all visible to the team."
+        }
+      }
+    },
+    "roles": {
+      "title": "Made for everyone in the chain",
+      "field": "Field team",
+      "managers": "Managers",
+      "vendors": "Vendors"
     }
   },
   "notFound": {

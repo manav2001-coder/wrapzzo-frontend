@@ -256,14 +256,28 @@ export function LoginPage() {
                     return (
                       <div
                         key={card}
-                        className={`rounded-[10px] border p-2.5 ${highlighted ? 'border-[#6EE7B7]/75 bg-[#6EE7B7]/15' : 'border-white/10 bg-white/[0.09]'}`}
+                        className={`flex min-h-[52px] items-center rounded-[10px] border p-2.5 ${highlighted ? 'border-[#6EE7B7]/75 bg-[#6EE7B7]/15' : 'border-white/10 bg-white/[0.09]'}`}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex w-full items-center gap-2">
                           {column.active && <CircleCheck className="size-3.5 shrink-0 text-[#6EE7B7]" strokeWidth={3} />}
-                          <div className="flex-1">
-                            <div className={`h-[7px] rounded ${highlighted ? 'bg-[#6EE7B7]' : 'bg-white/60'}`} style={{ width: `${width}%` }} />
-                            <div className={`mt-2 h-1.5 rounded ${highlighted ? 'bg-[#6EE7B7]/50' : 'bg-white/30'}`} style={{ width: `${86 - width / 2}%` }} />
-                          </div>
+                          {highlighted ? (
+                            <>
+                              {/* An invented order, so the panel reads as the product. Where the columns are too narrow for text, the plain bars show instead. */}
+                              <div className="min-w-0 flex-1 xl:hidden">
+                                <div className="h-[7px] rounded bg-[#6EE7B7]" style={{ width: `${width}%` }} />
+                                <div className="mt-2 h-1.5 rounded bg-[#6EE7B7]/50" style={{ width: `${86 - width / 2}%` }} />
+                              </div>
+                              <div className="hidden min-w-0 flex-1 xl:block">
+                                <p className="truncate font-mono text-[11px] font-semibold leading-[1.2] text-white">{t('hero.pipeline.sample.order')}</p>
+                                <p className="mt-1 truncate text-[11px] leading-[1.2] text-white/85">{t('hero.pipeline.sample.doctor')}</p>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex-1">
+                              <div className="h-[7px] rounded bg-white/60" style={{ width: `${width}%` }} />
+                              <div className="mt-2 h-1.5 rounded bg-white/30" style={{ width: `${86 - width / 2}%` }} />
+                            </div>
+                          )}
                         </div>
                       </div>
                     )

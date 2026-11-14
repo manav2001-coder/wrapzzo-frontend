@@ -15,7 +15,6 @@ import { PermissionGate } from "@/components/access-control/permission-gate";
 import { useCompanyScope } from "@/components/masters/company-scope-select";
 import { MasterPageHeader, SystemBadge, useAuditColumns } from "@/components/masters/master-page";
 import { EffectiveFeaturesDialog } from "@/components/tbac/effective-features-dialog";
-import { QuickCreateModuleTemplates } from "@/components/tbac/quick-create-module-templates";
 import { ToggleActiveDialog } from "@/components/tbac/toggle-active-dialog";
 import { useApiErrorToast } from "@/hooks/use-api-error-toast";
 import { useFieldConfig } from "@/hooks/use-field-config";
@@ -25,7 +24,6 @@ import {
   createResource,
   deactivateResource,
   getResource,
-  listAll,
   setResource,
   tableFetcher,
 } from "@/lib/masters-api";
@@ -53,7 +51,6 @@ export default function TemplateMasterPage() {
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   const [pending, setPending] = React.useState<Template | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const [existingNames, setExistingNames] = React.useState<string[]>([]);
   const [viewing, setViewing] = React.useState<Template | null>(null);
   const [cloning, setCloning] = React.useState<Template | null>(null);
   const [cloneName, setCloneName] = React.useState("");
@@ -69,24 +66,6 @@ export default function TemplateMasterPage() {
     () => tableFetcher<Template>(PATH, scope.companyId ? { companyId: scope.companyId } : {}),
     [scope.companyId],
   );
-
-  // Quick Create needs to know which modules already have a template, INCLUDING inactive
-  // ones — offering to create "User Master" when a deactivated one exists would just 409.
-  const loadNames = React.useCallback(async () => {
-    try {
-      const rows = await listAll<Template>(PATH, {
-        includeInactive: true,
-        ...(scope.companyId ? { companyId: scope.companyId } : {}),
-      });
-      setExistingNames(rows.map((row) => row.name));
-    } catch (error) {
-      showError(error);
-    }
-  }, [scope.companyId, showError]);
-
-  React.useEffect(() => {
-    void loadNames();
-  }, [loadNames, refreshTrigger]);
 
   // `useCallback` so the columns memo below can depend on it honestly. As a plain function
   // declaration it was rebuilt every render, so listing it would have defeated the memo —
@@ -244,14 +223,6 @@ export default function TemplateMasterPage() {
         extra={scope.control}
         onCreate={() => navigate("/tbac/template-master/create")}
       />
-
-      <PermissionGate permission="template_master.add">
-        <QuickCreateModuleTemplates
-          existingNames={existingNames}
-          companyId={scope.companyId}
-          onCreated={() => setRefreshTrigger((n) => n + 1)}
-        />
-      </PermissionGate>
 
       <DataTable<Template>
         tableId={`tbac-templates-${scope.companyId ?? "all"}`}

@@ -85,23 +85,6 @@
       "leftOut_other": "{{count}} were left out: switched off for the company, or access you do not hold."
     }
   },
-  "quickCreate": {
-    "title": "Quick create module templates",
-    "subtitle": "Create a ready-made template per module, pre-filled with that module's features.",
-    "available_one": "{{count}} module available",
-    "available_other": "{{count}} modules available",
-    "none": "Every module already has a template.",
-    "createAll": "Create all",
-    "creating": "Creating…",
-    "resultTitle": "Quick create results",
-    "created_one": "{{module}} - {{count}} feature assigned",
-    "created_other": "{{module}} - {{count}} features assigned",
-    "failed": "{{module}} - {{error}}",
-    "successHeading": "Created ({{count}})",
-    "failureHeading": "Failed ({{count}})",
-    "oneCreated_one": "Created {{module}} with {{count}} feature",
-    "oneCreated_other": "Created {{module}} with {{count}} features"
-  },
   "quickAdd": {
     "add_one": "Add {{count}} available {{module}} feature",
     "add_other": "Add {{count}} available {{module}} features",

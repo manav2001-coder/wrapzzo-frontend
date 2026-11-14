@@ -1,5 +1,5 @@
 /**
- * The module-name <-> template-name convention behind Quick Create and Quick Add.
+ * The module-name <-> template-name convention behind Quick Add.
  *
  * A template called "Users" is assumed to be the template for the `Users` module, so it can offer
  * "add all N Users features" in one click. That is as fragile as it sounds -- rename the template
@@ -33,7 +33,7 @@ export function catalogueByModule(catalogue: readonly CatalogueEntry[]): Catalog
   return [...modules.values()]
 }
 
-/** Every quick-template name the catalogue offers: one per module. */
+/** Every module name the catalogue offers, one per module. */
 export function allModuleNames(catalogue: readonly CatalogueEntry[]): string[] {
   return catalogueByModule(catalogue).map((group) => group.moduleName)
 }

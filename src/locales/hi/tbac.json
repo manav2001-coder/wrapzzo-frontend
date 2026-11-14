@@ -85,23 +85,6 @@
       "leftOut_other": "{{count}} छोड़ी गईं: कंपनी के लिए बंद, या ऐसी पहुँच जो आपके पास नहीं।"
     }
   },
-  "quickCreate": {
-    "title": "मॉड्यूल टेम्पलेट जल्दी बनाएँ",
-    "subtitle": "हर मॉड्यूल के लिए तैयार टेम्पलेट बनाएँ, उस मॉड्यूल के फ़ीचर पहले से भरे हुए।",
-    "available_one": "{{count}} मॉड्यूल उपलब्ध",
-    "available_other": "{{count}} मॉड्यूल उपलब्ध",
-    "none": "हर मॉड्यूल का टेम्पलेट पहले से है।",
-    "createAll": "सभी बनाएँ",
-    "creating": "बन रहा है…",
-    "resultTitle": "त्वरित निर्माण परिणाम",
-    "created_one": "{{module}} - {{count}} फ़ीचर सौंपा गया",
-    "created_other": "{{module}} - {{count}} फ़ीचर सौंपे गए",
-    "failed": "{{module}} - {{error}}",
-    "successHeading": "बनाए गए ({{count}})",
-    "failureHeading": "विफल ({{count}})",
-    "oneCreated_one": "{{module}} {{count}} फ़ीचर के साथ बनाया गया",
-    "oneCreated_other": "{{module}} {{count}} फ़ीचर के साथ बनाया गया"
-  },
   "quickAdd": {
     "add_one": "{{module}} का {{count}} उपलब्ध फ़ीचर जोड़ें",
     "add_other": "{{module}} के {{count}} उपलब्ध फ़ीचर जोड़ें",

@@ -36,7 +36,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined
-    const isAuthEndpoint = originalRequest?.url?.includes('/api/auth/')
+    // Only the calls where a 401 means "wrong credentials" or are the refresh itself are never retried. /api/auth/me is NOT one of
+    // them: it is the first request a reopened app makes, with a saved access token that has usually expired by then -- skipping its
+    // refresh left the profile (and so every permission) empty, and the user saw "Access denied" until they signed in again.
+    const isAuthEndpoint = /\/api\/auth\/(login|refresh|logout)\b/.test(originalRequest?.url ?? '')
 
     // Also retry on 403: the backend's JWT filter silently swallows an
     // expired/invalid token and clears the security context rather than

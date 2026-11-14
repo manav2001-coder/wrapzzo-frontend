@@ -24,6 +24,7 @@ import { formatDate } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { QuickGiftRequestSheet, QuickGiftStatusBadge } from './QuickGiftRequestSheet'
 import { doctorLabel } from '@/lib/doctor-label'
+import { MobileRowCard } from '@/components/mobile-row-card'
 
 /** The user's own requests, a page at a time from the server. */
 const fetchMyRequests = serverFetcher<QuickGiftRequest>('/api/quick-gifts/mine/page')
@@ -37,6 +38,9 @@ const LIST_FIELDS: ListFieldMap = {
 }
 
 const STATUSES = ['SUBMITTED', 'APPROVED', 'REJECTED'] as const
+
+/** The strip down a card's edge: waiting, approved, or turned down. */
+const REQUEST_ACCENT: Record<string, string> = { SUBMITTED: 'bg-warning', APPROVED: 'bg-success', REJECTED: 'bg-destructive' }
 
 type Tab = 'send' | 'requests'
 
@@ -72,6 +76,26 @@ export function QuickGiftLandingPage() {
       showError(err)
     }
   }
+
+  /** One of my requests as a compact card on a phone; a tap opens the same sheet as the table's row. */
+  const requestCard = (request: QuickGiftRequest) => (
+    <MobileRowCard
+      label={request.displayId}
+      onClick={() => setViewingRow(request)}
+      accent={REQUEST_ACCENT[request.status] ?? 'bg-muted-foreground/40'}
+      title={<span className="text-primary">{request.displayId}</span>}
+      trailing={<QuickGiftStatusBadge status={request.status} />}
+      lines={[
+        <span key="what" className="text-[15px] font-medium text-foreground">
+          {request.giftName}
+          <span className="text-muted-foreground"> × </span>
+          <span className="tabular-nums">{request.quantity}</span>
+        </span>,
+        <span key="doctor" className="block truncate">{doctorLabel(request.recipientName, request.recipientPcode)}</span>,
+      ]}
+      footer={formatDate(request.createdAt)}
+    />
+  )
 
   const columns = useMemo<ColumnDef<QuickGiftRequest, unknown>[]>(
     () => [
@@ -172,6 +196,7 @@ export function QuickGiftLandingPage() {
                 listFields={LIST_FIELDS}
                 tableFilterComponents={() => [{ id: 'createdAt', label: t('landing.column.sent'), type: 'dateRange' }]}
                 searchable
+                renderMobileCard={requestCard}
                 showRowSelectionColumn={false}
                 defaultSort={{ id: 'createdAt', desc: true }}
                 getRowId={(request) => request.id}

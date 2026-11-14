@@ -27,6 +27,7 @@ import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
 import { serverFetcher } from '@/lib/server-list'
 import { OrderRequestsSection } from './OrderRequestsSection'
 import { doctorLabel } from '@/lib/doctor-label'
+import { MobileRowCard } from '@/components/mobile-row-card'
 
 /** The artwork queue: a page at a time from the server, which works out which proofs are the caller's to sign. */
 const fetchArtwork = serverFetcher<PendingArtworkApproval>('/api/artwork-approvals/pending/page')
@@ -100,6 +101,27 @@ export function ApprovalQueuePage() {
       showError(err)
     }
   }
+
+  /** A proof waiting on the approver, as a compact card on a phone: what it is, which version, and which level is waiting. */
+  const proofCard = (item: PendingArtworkApproval) => (
+    <MobileRowCard
+      label={`Review ${item.orderDisplayId}`}
+      onClick={() => setOpen(item)}
+      accent="bg-primary/60"
+      title={<span className="text-primary">{item.orderDisplayId}</span>}
+      trailing={item.covering ? <Badge variant="warning-soft">Covering</Badge> : <span className="text-xs font-normal text-muted-foreground">v{item.versionNo}</span>}
+      lines={[
+        <span key="what" className="text-[15px] font-medium text-foreground">
+          {item.giftName ?? 'Artwork'}
+          <span className="text-muted-foreground"> × </span>
+          <span className="tabular-nums">{item.quantity}</span>
+        </span>,
+        <span key="doctor" className="block truncate">{doctorLabel(item.recipientName, item.recipientPcode)}</span>,
+        <span key="level" className="block">Waiting on {levelLabel(item)}</span>,
+      ]}
+      footer={item.mrApprovedAt ? `MR approved ${formatDate(item.mrApprovedAt)}` : undefined}
+    />
+  )
 
   const columns = useMemo<ColumnDef<PendingArtworkApproval, unknown>[]>(
     () => [
@@ -187,6 +209,7 @@ export function ApprovalQueuePage() {
         refetchInterval={LIVE_REFRESH_MS}
         listFields={LIST_FIELDS}
         searchable
+        renderMobileCard={proofCard}
         showRowSelectionColumn={false}
         defaultSort={{ id: 'mrApprovedAt', desc: true }}
         getRowId={(item) => item.designId}

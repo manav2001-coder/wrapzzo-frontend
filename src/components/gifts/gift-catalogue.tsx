@@ -18,8 +18,9 @@ export function GiftCard({ gift, actions }: { gift: Gift; actions?: ReactNode })
   const cover = [...gift.images].sort((a, b) => a.displayOrder - b.displayOrder)[0]
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md">
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+    // On a phone a product is a short row (a small picture beside the details), not a tall tile with a giant picture: five fit on a screen.
+    <article className="group flex overflow-hidden rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md sm:flex-col">
+      <div className="relative w-24 shrink-0 self-stretch overflow-hidden bg-muted sm:aspect-[4/3] sm:w-auto sm:self-auto">
         {cover ? (
           <img src={cover.imageUrl} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
         ) : (
@@ -27,20 +28,23 @@ export function GiftCard({ gift, actions }: { gift: Gift; actions?: ReactNode })
             <GiftIcon className="h-10 w-10" />
           </div>
         )}
-        <Badge variant="secondary" className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm">
+        <Badge variant="secondary" className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm max-sm:hidden">
           {gift.category}
         </Badge>
         {gift.totalPrice != null && (
-          <span className="absolute right-2 bottom-2 rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground shadow-sm">
+          <span className="absolute right-2 bottom-2 max-sm:hidden rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground shadow-sm">
             {formatCurrency(gift.totalPrice)}
           </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-3.5">
-        <h3 className="line-clamp-1 text-sm font-semibold">{gift.name}</h3>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3 sm:p-3.5">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="line-clamp-1 text-[15px] font-semibold sm:text-sm">{gift.name}</h3>
+          {gift.totalPrice != null && <span className="shrink-0 text-sm font-semibold tabular-nums sm:hidden">{formatCurrency(gift.totalPrice)}</span>}
+        </div>
         {gift.vendorName && <p className="text-xs text-muted-foreground">{t('catalogue.by', { vendor: gift.vendorName })}</p>}
-        {gift.description && <p className="line-clamp-2 text-xs text-muted-foreground">{gift.description}</p>}
+        {gift.description && <p className="line-clamp-1 text-xs text-muted-foreground sm:line-clamp-2">{gift.description}</p>}
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
           {gift.leadTimeDays != null && (
             <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -61,7 +65,7 @@ export function GiftCard({ gift, actions }: { gift: Gift; actions?: ReactNode })
             </Badge>
           )}
         </div>
-        {actions && <div className="mt-auto flex flex-wrap gap-2 pt-2.5">{actions}</div>}
+        {actions && <div className="mt-auto flex flex-wrap gap-2 pt-2.5 max-sm:[&>*]:h-10 max-sm:[&>*]:flex-1">{actions}</div>}
       </div>
     </article>
   )
@@ -82,7 +86,7 @@ function FilterSelect({
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger aria-label={label} className="w-full sm:w-52">
+      <SelectTrigger aria-label={label} className="max-sm:min-w-[9rem] max-sm:flex-1 sm:w-52">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -171,7 +175,7 @@ export function GiftCatalogue({
       ) : filtered.length === 0 ? (
         <EmptyState icon={Search} title={t('catalogue.noMatchTitle')} description={t('catalogue.noMatchBody')} />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((gift) => (
             <GiftCard key={gift.id} gift={gift} actions={renderActions(gift)} />
           ))}

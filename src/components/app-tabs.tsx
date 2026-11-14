@@ -70,7 +70,8 @@ export function AppTabs({
         <TabsList
           className={cn(
             variant === "underline" &&
-              "h-auto justify-start rounded-none border-b border-border bg-transparent p-0",
+              // On a phone the underlined tabs run off the edge and cut a label in half, so they become pills in one row that swipes sideways.
+              "h-auto justify-start rounded-none border-b border-border bg-transparent p-0 max-md:-mx-4 max-md:snap-x max-md:scroll-px-4 max-md:gap-2 max-md:border-b-0 max-md:px-4 max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden",
             fullWidth && "w-full",
             scrollable && "max-w-full overflow-x-auto",
             trailing && variant === "underline" && "min-w-0 flex-1 border-b-0",
@@ -87,7 +88,7 @@ export function AppTabs({
                 className={cn(
                   "gap-2",
                   variant === "underline" &&
-                    "rounded-none border-b-2 border-transparent px-4 pb-2.5 pt-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                    "rounded-none border-b-2 border-transparent px-4 pb-2.5 pt-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none max-md:min-h-10 max-md:shrink-0 max-md:snap-start max-md:rounded-full max-md:border max-md:border-b max-md:border-border max-md:bg-card max-md:px-3.5 max-md:py-0 max-md:text-[13px] max-md:text-muted-foreground max-md:data-[state=active]:border-primary max-md:data-[state=active]:bg-primary max-md:data-[state=active]:text-primary-foreground",
                   fullWidth && "flex-1",
                 )}
               >

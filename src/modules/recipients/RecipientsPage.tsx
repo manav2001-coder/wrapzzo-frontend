@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Contact, Pencil, Trash2, Upload } from 'lucide-react'
+import { Contact, Pencil, Phone, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -10,6 +10,7 @@ import { AppDialog } from '@/components/app-dialog'
 import { DataTable } from '@/components/data-table'
 import { EmptyTable } from '@/components/data-table/empty-table'
 import { IconButton } from '@/components/icon-button'
+import { MobileRowCard } from '@/components/mobile-row-card'
 import { MasterPageHeader } from '@/components/masters/master-page'
 import { Button } from '@/components/ui/button'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
@@ -64,6 +65,30 @@ export function RecipientsPage() {
       setRemoving(null)
     }
   }
+
+  /** A doctor as a compact card on a phone: who they are, how to reach them, and the buttons for what you may do with them. */
+  const doctorCard = (r: Recipient) => (
+    <MobileRowCard
+      title={r.name}
+      trailing={
+        <>
+          {canEdit && <IconButton icon={Pencil} label={t('directory.edit', { name: r.name })} onClick={() => setEditing(r)} />}
+          {canRemove && r.inMyList && <IconButton icon={Trash2} tone="destructive" label={t('doctors.remove', { name: r.name })} onClick={() => setRemoving(r)} />}
+        </>
+      }
+      lines={[
+        [r.pcode, r.doctor?.speciality, r.doctor?.clinicName].filter(Boolean).join(' · '),
+        r.phone ? (
+          <a key="phone" href={`tel:${r.phone}`} className="inline-flex min-h-8 items-center gap-1.5 text-primary">
+            <Phone className="h-3.5 w-3.5" />
+            {r.phone}
+          </a>
+        ) : null,
+        r.email ? <span key="email" className="block truncate">{r.email}</span> : null,
+      ]}
+      footer={r.createdByName ? t('field.addedBy') + ': ' + r.createdByName : undefined}
+    />
+  )
 
   const columns = useMemo<ColumnDef<Recipient, unknown>[]>(
     () => [
@@ -126,6 +151,7 @@ export function RecipientsPage() {
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
+        renderMobileCard={doctorCard}
         getRowId={(r) => r.id}
         tableId="recipients"
         configNamespace="recipients"

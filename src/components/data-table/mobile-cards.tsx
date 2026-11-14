@@ -56,11 +56,16 @@ function MobileCard<TData>({ row, renderSubRow, expanded }: { row: Row<TData>; r
   const utility = cells.filter((c) => c.column.id === SELECT_COLUMN_ID || c.column.id === EXPAND_COLUMN_ID)
   const actions = cells.filter((c) => c.column.columnDef.meta?.pin === 'right')
   const data = cells.filter((c) => !utility.includes(c) && !actions.includes(c))
-  const [title, ...fields] = data
+  const [title, ...allFields] = data
   const show = (cell: (typeof cells)[number]) => flexRender(cell.column.columnDef.cell, cell.getContext())
+  // A column with nothing in it would only show its label above a blank, so it is left out.
+  const fields = allFields
+    .map((cell) => ({ cell, node: show(cell) }))
+    .filter(({ node }) => node !== null && node !== undefined && node !== '' && node !== false)
 
   return (
-    <li data-state={row.getIsSelected() ? 'selected' : undefined} className="rounded-xl border border-border bg-card p-4 data-[state=selected]:border-primary/50">
+    <li data-state={row.getIsSelected() ? 'selected' : undefined} className="rounded-xl border border-border bg-card p-3.5 data-[state=selected]:border-primary/50">
+      {/* The title, with the row's actions on the same line (not on a line of their own below): a card is about half as tall. */}
       <div className="flex items-start gap-3">
         {utility.map((cell) => (
           <div key={cell.id} className="shrink-0 pt-0.5">
@@ -68,19 +73,19 @@ function MobileCard<TData>({ row, renderSubRow, expanded }: { row: Row<TData>; r
           </div>
         ))}
         {title && <div className="min-w-0 flex-1 break-words text-left text-sm font-semibold [&_*]:whitespace-normal [&_*]:text-left">{show(title)}</div>}
+        {actions.length > 0 && (
+          <div className="-my-1.5 -mr-1.5 flex shrink-0 items-center gap-0.5">{actions.map((cell) => <div key={cell.id}>{show(cell)}</div>)}</div>
+        )}
       </div>
       {fields.length > 0 && (
-        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-          {fields.map((cell) => (
+        <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2">
+          {fields.map(({ cell, node }) => (
             <div key={cell.id} className={cn('min-w-0', cell.column.columnDef.meta?.wrap && 'col-span-2')}>
               <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{columnTitle(cell.column)}</dt>
-              <dd className="mt-0.5 break-words text-left text-sm [&_*]:justify-start [&_*]:whitespace-normal [&_*]:text-left">{show(cell)}</dd>
+              <dd className="mt-0.5 break-words text-left text-sm [&_*]:justify-start [&_*]:whitespace-normal [&_*]:text-left">{node}</dd>
             </div>
           ))}
         </dl>
-      )}
-      {actions.length > 0 && (
-        <div className="mt-3 flex items-center justify-end gap-1 border-t border-border pt-3">{actions.map((cell) => <div key={cell.id}>{show(cell)}</div>)}</div>
       )}
       {expanded && renderSubRow && <div className="mt-3 border-t border-border pt-3">{renderSubRow(row.original, expanded)}</div>}
     </li>

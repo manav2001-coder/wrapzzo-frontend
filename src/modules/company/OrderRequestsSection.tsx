@@ -23,6 +23,7 @@ import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
 import { doctorLabel } from '@/lib/doctor-label'
+import { MobileRowCard } from '@/components/mobile-row-card'
 
 /** The order queue: a page at a time from the server, which works out which orders are the caller's to decide. */
 const fetchOrderRequests = serverFetcher<PendingOrderApproval>('/api/order-approvals/pending/page')
@@ -79,6 +80,36 @@ export function OrderRequestsSection() {
     } catch (err) {
       showError(err)
     }
+  }
+
+  /** A request waiting on the approver, as a compact card on a phone: the photo they will judge first, then what is asked and by whom. */
+  const requestCard = (order: PendingOrderApproval) => {
+    const photos = order.recipientPhotos ?? []
+    return (
+      <MobileRowCard
+        label={`Review ${order.displayId}`}
+        onClick={() => setOpen(order)}
+        accent="bg-warning"
+        media={
+          photos.length > 0 ? (
+            <img src={photos[0].url} alt="" className="h-14 w-14 rounded-lg border object-cover" />
+          ) : (
+            <span className="grid h-14 w-14 place-items-center rounded-lg border border-dashed text-[10px] text-muted-foreground">No photo</span>
+          )
+        }
+        title={<span className="text-primary">{order.displayId}</span>}
+        trailing={photos.length > 1 ? <span className="text-xs font-normal text-muted-foreground">{photos.length} photos</span> : null}
+        lines={[
+          <span key="what" className="text-[15px] font-medium text-foreground">
+            {order.giftName ?? 'PEL'}
+            <span className="text-muted-foreground"> × </span>
+            <span className="tabular-nums">{order.quantity}</span>
+          </span>,
+          <span key="doctor" className="block truncate">{doctorLabel(order.recipientName, order.recipientPcode)}</span>,
+        ]}
+        footer={`${order.requestedByName} · ${formatDate(order.requestedAt)}`}
+      />
+    )
   }
 
   const columns = useMemo<ColumnDef<PendingOrderApproval, unknown>[]>(
@@ -148,6 +179,7 @@ export function OrderRequestsSection() {
         refetchInterval={LIVE_REFRESH_MS}
         listFields={LIST_FIELDS}
         searchable
+        renderMobileCard={requestCard}
         showRowSelectionColumn={false}
         defaultSort={{ id: 'requestedAt', desc: false }}
         getRowId={(order) => order.orderId}

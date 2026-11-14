@@ -464,11 +464,21 @@ export function QuickGiftFormPage() {
   return (
     <div className="frame-free">
       <MasterPageHeader
-        lead={<GiftThumbnail gift={gift} size={40} />}
+        lead={
+          <>
+            {/* On a phone the way back is an arrow beside the title, not a button on a line of its own. */}
+            <Button asChild variant="ghost" size="icon" className="-ml-2 size-10 sm:hidden" aria-label={quickGiftName}>
+              <Link to="/quick-gift">
+                <ArrowLeft />
+              </Link>
+            </Button>
+            <GiftThumbnail gift={gift} size={40} />
+          </>
+        }
         title={t('form.title', { gift: gift.name })}
         description={t('form.subtitle')}
         extra={
-          <Button asChild variant="outline" size="sm" className="h-9">
+          <Button asChild variant="outline" size="sm" className="h-9 max-sm:hidden">
             <Link to="/quick-gift">
               <ArrowLeft />
               {quickGiftName}
@@ -508,7 +518,8 @@ export function QuickGiftFormPage() {
         ))}
       </div>
 
-      <div className="sticky bottom-0 mt-4 flex flex-wrap items-center gap-2 border-t bg-background/95 py-3 backdrop-blur">
+      {/* On a phone: Send is one big button on top, the two ways to add a recipient side by side beneath it. */}
+      <div className="sticky bottom-0 z-20 mt-4 flex flex-wrap items-center gap-2 border-t bg-background/95 py-3 backdrop-blur max-sm:grid max-sm:grid-cols-2 max-sm:pb-[max(12px,env(safe-area-inset-bottom))] [&_button]:max-sm:h-11">
         <Button variant="outline" onClick={() => setRows((prev) => [...prev, emptyRow(startExpanded)])}>
           <Plus />
           {t('form.addRecipient')}
@@ -517,7 +528,7 @@ export function QuickGiftFormPage() {
           <Contact />
           {t('form.browse')}
         </Button>
-        <Button className="ml-auto" loading={submitting} onClick={() => void onSubmitAll()}>
+        <Button className="ml-auto max-sm:order-first max-sm:col-span-2 max-sm:ml-0 max-sm:h-12 max-sm:w-full max-sm:text-base" loading={submitting} onClick={() => void onSubmitAll()}>
           <Send />
           {rows.length > 1 ? t('form.sendAll', { count: rows.length }) : t('form.send')}
         </Button>

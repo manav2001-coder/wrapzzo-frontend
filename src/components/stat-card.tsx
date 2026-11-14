@@ -71,14 +71,15 @@ export function StatCard({
       )}
     >
       <CardContent
-        className={cn("flex items-start justify-between gap-3", compact ? "p-3" : "p-4")}
+        className={cn("flex items-start justify-between gap-3", compact ? "p-3" : "p-4 max-sm:p-3")}
       >
-        <div className={cn("min-w-0", compact ? "space-y-1" : "space-y-1.5")}>
-          <div className="flex items-center gap-1.5">
-            {Icon && <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />}
+        {/* On a phone the figure and its name sit side by side, so a tile is a short strip and three of them take two short rows. */}
+        <div className={cn("min-w-0 max-sm:flex max-sm:items-center max-sm:gap-3 max-sm:space-y-0", compact ? "space-y-1" : "space-y-1.5")}>
+          <div className="flex items-center gap-1.5 max-sm:order-2 max-sm:min-w-0">
+            {Icon && <Icon className="h-3 w-3 shrink-0 text-muted-foreground max-sm:hidden" />}
             <p
               className={cn(
-                "truncate font-semibold uppercase tracking-wider text-muted-foreground",
+                "truncate font-semibold uppercase tracking-wider text-muted-foreground max-sm:whitespace-normal max-sm:leading-tight",
                 compact ? "text-[10px]" : "text-[11px]",
               )}
             >
@@ -90,7 +91,7 @@ export function StatCard({
           ) : (
             <p
               className={cn(
-                "font-bold leading-none tabular-nums",
+                "font-bold leading-none tabular-nums max-sm:order-1",
                 compact ? "text-lg" : "text-[26px]",
                 VALUE_COLOR_CLASSES[color],
               )}

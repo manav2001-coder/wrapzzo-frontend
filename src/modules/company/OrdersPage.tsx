@@ -28,6 +28,7 @@ import { formatDate } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { doctorLabel } from '@/lib/doctor-label'
+import { MobileRowCard } from '@/components/mobile-row-card'
 
 const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
@@ -46,6 +47,15 @@ const STATUSES: OrderStatus[] = [
   'DISPATCHED',
   'CANCELLED',
 ]
+
+/** The strip down a card's edge: what state the order is in. */
+const STATUS_ACCENT: Record<string, string> = {
+  PENDING: 'bg-warning',
+  PROCESSING: 'bg-primary/60',
+  PRODUCTION_QUEUE: 'bg-warning',
+  DISPATCHED: 'bg-sky-500',
+  CANCELLED: 'bg-muted-foreground/40',
+}
 
 type Tab = 'all' | 'review'
 
@@ -91,6 +101,33 @@ export function OrdersPage() {
       showError(err)
     }
   }
+
+  /** One order as a compact card on a phone; tapping it opens the same sheet as the table's row does. */
+  const orderCard = (order: Order) => (
+    <MobileRowCard
+      label={t('detail.title', { id: order.displayId })}
+      onClick={() => setOpenRow(order)}
+      accent={STATUS_ACCENT[order.approvalStatus === 'PENDING' ? 'PENDING' : order.status] ?? 'bg-muted-foreground/40'}
+      title={<span className="text-primary">{order.displayId}</span>}
+      trailing={<OrderStatusBadge status={order.status} approvalStatus={order.approvalStatus} />}
+      lines={[
+        <span key="what" className="text-[15px] font-medium text-foreground">
+          {order.giftName ?? '—'}
+          <span className="text-muted-foreground"> × </span>
+          <span className="tabular-nums">{order.quantity}</span>
+        </span>,
+        <span key="doctor" className="block truncate">{doctorLabel(order.recipientName, order.recipientPcode)}</span>,
+        canSeeVendor && order.assignedVendorName ? <span key="vendor" className="block truncate">{order.assignedVendorName}</span> : null,
+        order.hasPendingDesignReview ? (
+          <Badge key="review" variant="primary-soft" className="mt-1 gap-1 whitespace-nowrap">
+            <Eye className="h-3 w-3" />
+            {t('needsReview')}
+          </Badge>
+        ) : null,
+      ]}
+      footer={[order.orgUnitName, formatDate(order.createdAt), canSeePrice && order.totalPrice != null ? formatCurrency(order.totalPrice) : null].filter(Boolean).join(' · ')}
+    />
+  )
 
   const columns = useMemo<ColumnDef<Order, unknown>[]>(
     () => [
@@ -201,7 +238,7 @@ export function OrdersPage() {
     <div>
       <MasterPageHeader title={pageTitle} description={t('company.subtitle')} />
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="mb-4 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3">
         {canReview && (
           <StatCard
             title={t('company.stats.review')}
@@ -237,6 +274,7 @@ export function OrdersPage() {
         tableFilterComponents={() => [{ id: 'createdAt', label: t('column.placed'), type: 'dateRange' }]}
         searchable
         showRowSelectionColumn={false}
+        renderMobileCard={orderCard}
         defaultSort={{ id: 'createdAt', desc: true }}
         getRowId={(order) => order.id}
         tableId={`company-orders-${tab}`}

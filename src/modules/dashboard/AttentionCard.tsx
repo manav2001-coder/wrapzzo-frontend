@@ -42,7 +42,7 @@ export function AttentionCard({ items }: { items: AttentionItem[] }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium">{item.label}</span>
-                  <span className="block truncate text-xs text-muted-foreground">{item.hint}</span>
+                  <span className="block text-xs text-muted-foreground sm:truncate">{item.hint}</span>
                 </span>
                 <span className="rounded-full bg-warning/15 px-2.5 py-0.5 text-sm font-bold text-warning tabular-nums">{item.count}</span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

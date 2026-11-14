@@ -12,6 +12,7 @@ import { DataTable } from '@/components/data-table'
 import { EmptyTable } from '@/components/data-table/empty-table'
 import { serverFetcher } from '@/lib/server-list'
 import { IconButton } from '@/components/icon-button'
+import { MobileRowCard } from '@/components/mobile-row-card'
 import { MasterPageHeader, StatusCell, useAuditColumns } from '@/components/masters/master-page'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -98,6 +99,54 @@ export function CompanyUsersPage() {
     if (file) navigate(importPath, { state: { file } })
   }
 
+  /** The buttons for what you may do with a person -- the same in the table's last column and on a phone card. */
+  function userActions(user: CompanyUser) {
+    const isAdmin = user.roleName === COMPANY_ADMIN_ROLE_NAME
+    return (
+      <div className="flex items-center justify-end gap-0.5">
+        {canPlace && (
+          <>
+            {!user.companyWide && <IconButton icon={Network} label={t('users.extraUnits.action')} onClick={() => setCoveringFor(user)} />}
+            <IconButton
+              icon={Building}
+              label={user.companyWide ? t('users.wholeCompany.clear') : t('users.wholeCompany.make')}
+              onClick={() => setPending({ kind: user.companyWide ? 'ownUnit' : 'wholeCompany', user })}
+            />
+            {isAdmin ? (
+              <IconButton icon={ShieldMinus} label={t('users.removeAdmin')} onClick={() => setRemovingAdminFor(user)} />
+            ) : (
+              <IconButton icon={ShieldPlus} label={t('users.makeAdmin')} onClick={() => setPending({ kind: 'makeAdmin', user })} />
+            )}
+          </>
+        )}
+        {canDelete && user.id !== currentUserId && (
+          <IconButton icon={Trash2} label={t('users.delete')} tone="destructive" onClick={() => setPending({ kind: 'delete', user })} />
+        )}
+      </div>
+    )
+  }
+
+  /** A person as a compact card on a phone: name and status, how to reach them, where they sit and their access, then the buttons. */
+  const userCard = (user: CompanyUser) => {
+    const hasActions = canDelete || canPlace
+    return (
+      <MobileRowCard
+        title={user.name}
+        trailing={<StatusCell active={user.status === 'ACTIVE'} label={t(`users.status.${user.status}`)} />}
+        lines={[
+          user.email ? <span key="e" className="block truncate">{user.email}</span> : null,
+          [user.designation, user.employeeCode].filter(Boolean).join(' · '),
+          <span key="u" className="flex flex-wrap items-center gap-1.5">
+            {user.companyWide ? <Badge variant="default">{t('users.wholeCompany.badge')}</Badge> : user.orgUnitName}
+            {user.extraOrgUnits.length > 0 && <Badge variant="secondary-soft">{t('users.extraUnits.more', { count: user.extraOrgUnits.length })}</Badge>}
+            <Badge variant={user.roleName === COMPANY_ADMIN_ROLE_NAME ? 'default' : 'secondary'}>{user.roleName}</Badge>
+          </span>,
+        ]}
+        footer={hasActions ? userActions(user) : undefined}
+      />
+    )
+  }
+
   const columns = useMemo<ColumnDef<CompanyUser, unknown>[]>(
     () => [
       {
@@ -162,32 +211,7 @@ export function CompanyUsersPage() {
         enableColumnFilter: false,
         enableSorting: false,
         meta: { className: 'min-w-[140px]', pin: 'right' },
-        cell: ({ row }) => {
-          const user = row.original
-          const isAdmin = user.roleName === COMPANY_ADMIN_ROLE_NAME
-          return (
-            <div className="flex items-center justify-end gap-0.5">
-              {canPlace && (
-                <>
-                  {!user.companyWide && <IconButton icon={Network} label={t('users.extraUnits.action')} onClick={() => setCoveringFor(user)} />}
-                  <IconButton
-                    icon={Building}
-                    label={user.companyWide ? t('users.wholeCompany.clear') : t('users.wholeCompany.make')}
-                    onClick={() => setPending({ kind: user.companyWide ? 'ownUnit' : 'wholeCompany', user })}
-                  />
-                  {isAdmin ? (
-                    <IconButton icon={ShieldMinus} label={t('users.removeAdmin')} onClick={() => setRemovingAdminFor(user)} />
-                  ) : (
-                    <IconButton icon={ShieldPlus} label={t('users.makeAdmin')} onClick={() => setPending({ kind: 'makeAdmin', user })} />
-                  )}
-                </>
-              )}
-              {canDelete && user.id !== currentUserId && (
-                <IconButton icon={Trash2} label={t('users.delete')} tone="destructive" onClick={() => setPending({ kind: 'delete', user })} />
-              )}
-            </div>
-          )
-        },
+        cell: ({ row }) => userActions(row.original),
       },
     ],
     [t, auditColumns, currentUserId, canPlace, canDelete],
@@ -238,6 +262,7 @@ export function CompanyUsersPage() {
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
+        renderMobileCard={userCard}
         pageSize={25}
         tableId={`company-users-${companyId}`}
         configNamespace="company-users"

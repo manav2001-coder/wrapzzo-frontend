@@ -11,6 +11,7 @@ import { LabelledField } from '@/components/fields/labelled-field'
 import { IconButton } from '@/components/icon-button'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { RecipientPhotos } from '@/components/orders/recipient-photos'
 import { Textarea } from '@/components/ui/textarea'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
@@ -100,6 +101,23 @@ export function OrderRequestsSection() {
         ),
       },
       { id: 'recipientName', accessorFn: (order) => doctorLabel(order.recipientName, order.recipientPcode), header: 'Doctor', meta: { className: 'min-w-[160px]' } },
+      {
+        id: 'photos',
+        header: 'Photo',
+        enableColumnFilter: false,
+        enableSorting: false,
+        meta: { className: 'w-[90px]' },
+        cell: ({ row }) => {
+          const photos = row.original.recipientPhotos ?? []
+          if (photos.length === 0) return <span className="text-xs text-muted-foreground">None</span>
+          return (
+            <button type="button" className="flex items-center justify-center gap-1.5" onClick={() => setOpen(row.original)} aria-label={`See the ${photos.length === 1 ? 'photo' : 'photos'} for ${row.original.displayId}`}>
+              <img src={photos[0].url} alt="" className="h-9 w-9 rounded-md border object-cover" />
+              {photos.length > 1 && <span className="text-xs text-muted-foreground">+{photos.length - 1}</span>}
+            </button>
+          )
+        },
+      },
       { id: 'quantity', accessorKey: 'quantity', header: 'Quantity', enableColumnFilter: false, meta: { className: 'min-w-[80px]' } },
       { id: 'requestedByName', accessorKey: 'requestedByName', header: 'Requested by', meta: { className: 'min-w-[160px]' } },
       {
@@ -165,6 +183,18 @@ export function OrderRequestsSection() {
                   <Detail label="Requested on">{formatDateTime(open.requestedAt)}</Detail>
                 </dl>
 
+                <section className="space-y-2">
+                  <h3 className="text-sm font-semibold">Photos from {open.requestedByName}</h3>
+                  {(open.recipientPhotos ?? []).length > 0 ? (
+                    <>
+                      <RecipientPhotos photos={open.recipientPhotos} size="h-36 w-36" />
+                      <p className="text-xs text-muted-foreground">Tap a photo to open it full size. If it is not good enough to print from, decline and say why.</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No photo was attached. Once you approve, the doctor is sent a link to upload one.</p>
+                  )}
+                </section>
+
                 {open.giftMessage && (
                   <section className="space-y-1">
                     <h3 className="text-sm font-semibold">Note for the vendor</h3>
@@ -214,6 +244,7 @@ export function OrderRequestsSection() {
         loading={decide.isPending}
         onConfirm={() => void decline()}
       >
+        {(declining?.recipientPhotos ?? []).length > 0 && <RecipientPhotos photos={declining?.recipientPhotos ?? []} size="h-20 w-20" className="mb-3" />}
         <LabelledField id="decline-reason" label="Why? (shown to the person who placed it; the order is cancelled)">
           <Textarea id="decline-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} />
         </LabelledField>

@@ -27,6 +27,7 @@ function pending(overrides: Partial<PendingOrderApproval> = {}): PendingOrderApp
     orgUnitName: 'N1',
     giftMessage: null,
     internalNotes: null,
+    recipientPhotos: [],
     requestedAt: '2026-11-06T10:00:00Z',
     ...overrides,
   }
@@ -102,5 +103,37 @@ describe('OrderRequestsSection', () => {
     renderWithProviders(<OrderRequestsSection />)
     const drawer = await openDrawer()
     expect(within(drawer).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument()
+  })
+
+  it('shows the approver the photos the field person attached, so a poor one can be declined with a reason', async () => {
+    const photos = [
+      { url: 'https://files.test/PC-ASHA_MR1_photo.jpg', fileName: 'PC-ASHA_MR1_photo.jpg' },
+      { url: 'https://files.test/PC-ASHA_MR1_photo_2.jpg', fileName: 'PC-ASHA_MR1_photo_2.jpg' },
+    ]
+    listPendingOrderApprovals.mockResolvedValue([pending({ recipientPhotos: photos })])
+    renderWithProviders(<OrderRequestsSection />)
+
+    // At a glance in the list: the first photo and how many more.
+    expect(await screen.findByRole('button', { name: 'See the photos for ORD-101' })).toHaveTextContent('+1')
+
+    const drawer = await openDrawer()
+    expect(drawer).toHaveTextContent('Photos from Mira MR')
+    const shown = within(drawer).getAllByRole('img')
+    expect(shown.map((img) => img.getAttribute('src'))).toEqual(photos.map((photo) => photo.url))
+    // Each opens full size, to judge the resolution.
+    expect(within(drawer).getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(photos.map((photo) => photo.url))
+
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Decline' }))
+    const dialog = (await screen.findAllByRole('dialog')).at(-1)!
+    expect(within(dialog).getAllByRole('img')).toHaveLength(2)
+    await userEvent.type(within(dialog).getByLabelText(/Why\?/), 'The photo is too low resolution to print')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Decline order' }))
+    await waitFor(() => expect(rejectOrder).toHaveBeenCalledWith('o-1', 'The photo is too low resolution to print'))
+  })
+
+  it('says so when no photo was attached', async () => {
+    renderWithProviders(<OrderRequestsSection />)
+    const drawer = await openDrawer()
+    expect(drawer).toHaveTextContent('No photo was attached')
   })
 })

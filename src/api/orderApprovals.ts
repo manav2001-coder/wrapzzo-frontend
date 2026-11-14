@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/axiosClient'
 import type { ArtworkApprovalScope } from '@/api/artworkApproval'
+import type { RecipientPhoto } from '@/api/orders'
 
 /** An order waiting on the caller's yes. The vendor is never named here. */
 export interface PendingOrderApproval {
@@ -14,6 +15,8 @@ export interface PendingOrderApproval {
   orgUnitName: string | null
   giftMessage: string | null
   internalNotes: string | null
+  /** The photos the field person attached, for the approver to judge before deciding. Empty when there are none. */
+  recipientPhotos: RecipientPhoto[]
   requestedAt: string
 }
 

@@ -104,11 +104,12 @@
     "browse": "Pick from directory",
     "send": "Send",
     "sendAll": "Send all {{count}}",
-    "minQuantity": "Minimum order: {{min}}",
+    "quantityHint": "1 PEL contains 100 leaves",
+    "quantityChoose": "Choose quantity",
     "error": {
       "required": "Required",
       "photoOrEmail": "This PEL needs a photo. Upload one, or add the recipient's email so we can ask for it.",
-      "quantity": "Enter a whole number from {{min}} to {{max}}.",
+      "quantity": "Choose a quantity.",
       "fixRows": "Fix the highlighted recipients",
       "partial": "{{ok}} sent, {{failed}} failed. The failed ones are still below.",
       "nothingSent": "Nothing could be sent. See the errors below."

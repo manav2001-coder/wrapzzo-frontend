@@ -18,11 +18,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { useQuickGiftName } from '@/hooks/use-menu-labels'
 import { useActiveGifts } from '@/hooks/useGifts'
 import { useCreateQuickGiftRequest } from '@/hooks/useQuickGifts'
+import { ORDER_QUANTITIES } from '@/lib/order-quantities'
 import { cn } from '@/lib/utils'
 import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
 import { RecipientPickerDialog } from '@/modules/recipients/RecipientPickerDialog'
 
-const MAX_QUANTITY = 100_000
 /** Photos one order can carry. */
 const MAX_PHOTOS = 10
 
@@ -88,7 +88,7 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
     recipientPcode: prefill?.recipientPcode ?? '',
     recipientEmail: prefill?.recipientEmail ?? '',
     giftMessage: '',
-    quantity: '1',
+    quantity: '',
     doctor: {
       qualification: prefill?.doctor?.qualification ?? '',
       speciality: prefill?.doctor?.speciality ?? '',
@@ -103,9 +103,9 @@ function isBlankRow(row: DraftRecipient): boolean {
   return !row.recipientName && !row.recipientPhone && !row.recipientEmail
 }
 
-function parseQuantity(value: string, min = 1): number | null {
+function parseQuantity(value: string): number | null {
   const n = Number(value)
-  return value.trim() !== '' && Number.isInteger(n) && n >= min && n <= MAX_QUANTITY ? n : null
+  return value.trim() !== '' && (ORDER_QUANTITIES as readonly number[]).includes(n) ? n : null
 }
 
 /** Fields the server reads from the picked doctor's record instead of the request. */
@@ -128,7 +128,6 @@ function RecipientCard({
   canRemove,
   photoRequired,
   artworkRequired,
-  minQuantity,
 }: {
   row: DraftRecipient
   index: number
@@ -137,7 +136,6 @@ function RecipientCard({
   canRemove: boolean
   photoRequired: boolean
   /** The vendor's minimum order, when it is more than one. */
-  minQuantity: number
   /** A personalised item (prescription pad): ask for the doctor details it is printed with. */
   artworkRequired: boolean
 }) {
@@ -207,16 +205,25 @@ function RecipientCard({
         <LabelledField
           id={id('quantity')}
           label={`${t('form.quantity')} *`}
-          hint={minQuantity > 1 ? t('form.minQuantity', { min: minQuantity.toLocaleString() }) : undefined}
+          hint={t('form.quantityHint')}
           error={row.errors.quantity}
         >
-          <Input
+          <select
             id={id('quantity')}
-            inputMode="numeric"
             value={row.quantity}
             aria-invalid={Boolean(row.errors.quantity)}
             onChange={(e) => onUpdate({ quantity: e.target.value })}
-          />
+            className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-base shadow-sm focus:outline-none focus:ring-1 focus:ring-ring aria-[invalid=true]:border-destructive md:h-9 md:text-sm"
+          >
+            <option value="" disabled>
+              {t('form.quantityChoose')}
+            </option>
+            {ORDER_QUANTITIES.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
         </LabelledField>
 
         {artworkRequired && (
@@ -340,8 +347,6 @@ export function QuickGiftFormPage() {
   const [pickerOpen, setPickerOpen] = useState(false)
   // Expanded up front when the gift needs more than the basics, so the extra fields are seen, not found by failing.
   const startExpanded = Boolean(gift?.photoRequired)
-  // The vendor's minimum order; the server refuses anything below it too.
-  const minQuantity = gift?.moq ?? 1
 
   function updateRow(key: number, patch: Partial<DraftRecipient>) {
     const unlinks = RECORD_FIELDS.some((field) => field in patch)
@@ -371,9 +376,7 @@ export function QuickGiftFormPage() {
     // A doctor picked from the directory is identified already; a new one needs a pcode.
     if (!row.recipientId && !row.recipientPcode.trim()) errors.recipientPcode = required
     if (gift.photoRequired && !row.photos?.length && !row.recipientEmail.trim()) errors.photoOrEmail = t('form.error.photoOrEmail')
-    if (parseQuantity(row.quantity, minQuantity) === null) {
-      errors.quantity = t('form.error.quantity', { min: minQuantity.toLocaleString(), max: MAX_QUANTITY.toLocaleString() })
-    }
+    if (parseQuantity(row.quantity) === null) errors.quantity = t('form.error.quantity')
     return errors
   }
 
@@ -408,7 +411,7 @@ export function QuickGiftFormPage() {
           giftMessage: row.giftMessage.trim() || undefined,
           photos: photos.length > 0 ? photos : undefined,
           doctor: gift.artworkRequired ? doctorInput(row.doctor) : undefined,
-          quantity: parseQuantity(row.quantity, minQuantity) ?? minQuantity,
+          quantity: parseQuantity(row.quantity) ?? ORDER_QUANTITIES[0],
         }
         const created = await createRequest.mutateAsync(input)
         // Direct vendor ordering approves on creation -- the order already went to the vendor.
@@ -501,7 +504,6 @@ export function QuickGiftFormPage() {
             canRemove={rows.length > 1}
             photoRequired={gift.photoRequired}
             artworkRequired={gift.artworkRequired}
-            minQuantity={minQuantity}
           />
         ))}
       </div>

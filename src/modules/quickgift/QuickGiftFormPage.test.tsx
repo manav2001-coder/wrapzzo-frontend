@@ -1,3 +1,4 @@
+import { within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -51,12 +52,11 @@ async function fillRecipient() {
   await userEvent.type(screen.getByLabelText('Pcode *'), 'P-1001')
   await userEvent.type(screen.getByLabelText('Name *'), 'Dr. Asha Shah')
   await userEvent.type(screen.getByLabelText('Phone *'), '9800000001')
+  await setQuantity('5')
 }
 
 async function setQuantity(value: string) {
-  const quantity = screen.getByLabelText('Quantity *')
-  await userEvent.clear(quantity)
-  if (value) await userEvent.type(quantity, value)
+  await userEvent.selectOptions(screen.getByLabelText('Quantity *'), value)
 }
 
 describe('QuickGiftFormPage', () => {
@@ -74,7 +74,16 @@ describe('QuickGiftFormPage', () => {
     expect(screen.getByText('Supplied by Pad Printers')).toBeInTheDocument()
     expect(screen.getByLabelText('Pcode *')).toBeInTheDocument()
     expect(screen.getByLabelText('Qualification')).toBeInTheDocument()
-    expect(screen.getByLabelText('Quantity *')).toHaveValue('1')
+  })
+
+  it('offers only 5, 10, 15, 20, 25 and 30 as the quantity, starts unchosen, and says how many leaves a PEL has', async () => {
+    renderForm()
+    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    const quantity = screen.getByLabelText('Quantity *')
+    expect(quantity).toHaveValue('')
+    const options = within(quantity).getAllByRole('option').map((o) => o.textContent)
+    expect(options).toEqual(['Choose quantity', '5', '10', '15', '20', '25', '30'])
+    expect(screen.getByText('1 PEL contains 100 leaves')).toBeInTheDocument()
   })
 
   it('hides the doctor details for a gift that is not personalised', async () => {
@@ -88,11 +97,10 @@ describe('QuickGiftFormPage', () => {
   it('will not send without the required fields or a valid quantity', async () => {
     renderForm()
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
-    await setQuantity('0')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     expect(screen.getAllByText('Required')).toHaveLength(3)
-    expect(screen.getByText(/Enter a whole number from 1 to/)).toBeInTheDocument()
+    expect(screen.getByText('Choose a quantity.')).toBeInTheDocument()
     expect(createQuickGiftRequest).not.toHaveBeenCalled()
     expect(toast.error).toHaveBeenCalledWith('Fix the highlighted recipients')
   })
@@ -103,7 +111,7 @@ describe('QuickGiftFormPage', () => {
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
     await fillRecipient()
     await userEvent.type(screen.getByLabelText('Qualification'), 'MBBS')
-    await setQuantity('5')
+    await setQuantity('25')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
@@ -111,7 +119,7 @@ describe('QuickGiftFormPage', () => {
       giftId: 'g-pad',
       recipientPcode: 'P-1001',
       recipientName: 'Dr. Asha Shah',
-      quantity: 5,
+      quantity: 25,
       doctor: { qualification: 'MBBS' },
     })
     expect(await screen.findByRole('heading', { name: 'My quick gifts' })).toBeInTheDocument()
@@ -180,18 +188,6 @@ describe('QuickGiftFormPage', () => {
     expect(screen.getByText('inside.png')).toBeInTheDocument()
   })
 
-  it("holds the quantity to the vendor's minimum order", async () => {
-    renderForm({ ...PAD, moq: 50 })
-    await screen.findByRole('heading', { name: 'Send Prescription Pad' })
-    expect(screen.getByText('Minimum order: 50')).toBeInTheDocument()
-    await fillRecipient()
-    await setQuantity('5')
-    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
-
-    expect(screen.getByText(/Enter a whole number from 50 to/)).toBeInTheDocument()
-    expect(createQuickGiftRequest).not.toHaveBeenCalled()
-  })
-
   it('sends the picked doctor as recipientId, and drops the link once their details are edited', async () => {
     createQuickGiftRequest.mockResolvedValue({ id: 'q-1', orderId: 'o-1', status: 'APPROVED' })
     const doctor = {
@@ -212,6 +208,7 @@ describe('QuickGiftFormPage', () => {
       { route: { pathname: `/quick-gift/new/${PAD.id}`, state: { prefillRecipient: doctor } } },
     )
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
+    await setQuantity('5')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
@@ -228,6 +225,7 @@ describe('QuickGiftFormPage', () => {
     )
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
     await userEvent.type(screen.getByLabelText('Name *'), ' Jr')
+    await setQuantity('5')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
@@ -245,6 +243,7 @@ describe('QuickGiftFormPage', () => {
     await userEvent.type(screen.getAllByLabelText('Pcode *')[1], 'P-2002')
     await userEvent.type(names[1], 'Dr. Ravi Rao')
     await userEvent.type(screen.getAllByLabelText('Phone *')[1], '9800000002')
+    await userEvent.selectOptions(screen.getAllByLabelText('Quantity *')[1], '10')
     await userEvent.click(screen.getByRole('button', { name: 'Send all 2' }))
 
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('2 requests sent', { description: 'Sent for approval.' }))
@@ -261,6 +260,7 @@ describe('QuickGiftFormPage', () => {
     await userEvent.type(screen.getAllByLabelText('Pcode *')[1], 'P-2002')
     await userEvent.type(screen.getAllByLabelText('Name *')[1], 'Dr. Ravi Rao')
     await userEvent.type(screen.getAllByLabelText('Phone *')[1], '9800000002')
+    await userEvent.selectOptions(screen.getAllByLabelText('Quantity *')[1], '10')
     await userEvent.click(screen.getByRole('button', { name: 'Send all 2' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Gift is out of stock')

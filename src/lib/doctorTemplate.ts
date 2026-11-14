@@ -1,10 +1,9 @@
 import ExcelJS from 'exceljs'
 import type { CreateRecipientInput } from '@/api/recipients'
-import { toDateOnly } from '@/lib/datetime'
 import { downloadBlob } from '@/lib/download'
 import { cellText, normalizeHeader } from '@/lib/employeeTemplate'
 
-type DoctorField = 'pcode' | 'name' | 'phone' | 'email' | 'address' | 'dateOfBirth' | 'qualification' | 'speciality' | 'clinicName'
+type DoctorField = 'pcode' | 'name' | 'phone' | 'email' | 'address' | 'qualification' | 'speciality' | 'clinicName'
 
 const DOCTOR_FIELDS: { key: DoctorField; label: string; required: boolean }[] = [
   { key: 'pcode', label: 'Pcode', required: true },
@@ -12,7 +11,6 @@ const DOCTOR_FIELDS: { key: DoctorField; label: string; required: boolean }[] = 
   { key: 'phone', label: 'Phone', required: true },
   { key: 'email', label: 'Email', required: false },
   { key: 'address', label: 'Clinic Address', required: false },
-  { key: 'dateOfBirth', label: 'Date of Birth', required: false },
   { key: 'qualification', label: 'Qualification', required: false },
   { key: 'speciality', label: 'Speciality', required: false },
   { key: 'clinicName', label: 'Clinic / Hospital', required: false },
@@ -26,7 +24,6 @@ const ALIASES: Partial<Record<DoctorField, string[]>> = {
   name: ['name', 'dr name', 'dr. name', 'doctor'],
   phone: ['mobile', 'phone number', 'mobile number', 'contact'],
   address: ['address'],
-  dateOfBirth: ['dob'],
   clinicName: ['clinic', 'hospital', 'clinic name'],
 }
 
@@ -45,12 +42,6 @@ export async function downloadDoctorTemplate(): Promise<void> {
 export interface ParsedDoctorSheet {
   rows: CreateRecipientInput[]
   errors: string[]
-}
-
-function dateCell(value: unknown): string | null {
-  if (value instanceof Date) return toDateOnly(value) ?? null
-  const text = cellText(value)
-  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : null
 }
 
 /** Reads a doctors sheet, one doctor per row; Pcode, Doctor Name and Phone are required. */
@@ -83,18 +74,12 @@ export async function parseDoctorWorkbook(file: File): Promise<ParsedDoctorSheet
       errors.push(`Row ${rowNumber}: missing ${absent.join(' and ')}.`)
       return
     }
-    const dob = col.dateOfBirth ? dateCell(row.getCell(col.dateOfBirth).value) : null
-    if (values.dateOfBirth && !dob) {
-      errors.push(`Row ${rowNumber}: Date of Birth must be a date, or written YYYY-MM-DD.`)
-      return
-    }
     rows.push({
       pcode: values.pcode,
       name: values.name,
       phone: values.phone,
       ...(values.email && { email: values.email }),
       ...(values.address && { address: values.address }),
-      ...(dob && { dateOfBirth: dob }),
       doctor: {
         qualification: values.qualification || null,
         speciality: values.speciality || null,

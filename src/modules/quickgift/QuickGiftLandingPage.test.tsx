@@ -57,7 +57,6 @@ const REQUEST: QuickGiftRequest = {
   recipientPcode: 'P-1001',
   recipientEmail: 'asha@clinic.in',
   deliveryAddress: '12 MG Road, Pune',
-  recipientDob: null,
   doctor: { qualification: 'MBBS, MD', speciality: null, clinicName: 'Shah Heart Clinic' },
   quantity: 5,
   orgUnitName: 'N1',

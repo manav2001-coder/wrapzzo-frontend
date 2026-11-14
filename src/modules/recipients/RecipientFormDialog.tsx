@@ -4,13 +4,11 @@ import { toast } from 'sonner'
 
 import type { Recipient } from '@/api/recipients'
 import { AppDialog } from '@/components/app-dialog'
-import { DatePicker } from '@/components/fields/date-picker'
 import { LabelledField } from '@/components/fields/labelled-field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useCreateMyDoctor, useUpdateRecipient } from '@/hooks/useRecipients'
-import { fromDateOnly, toDateOnly } from '@/lib/datetime'
 
 interface Draft {
   name: string
@@ -18,7 +16,6 @@ interface Draft {
   pcode: string
   email: string
   address: string
-  dateOfBirth: Date | null
   qualification: string
   speciality: string
   clinicName: string
@@ -31,7 +28,6 @@ function draftFrom(recipient: Recipient | null | undefined): Draft {
     pcode: recipient?.pcode ?? '',
     email: recipient?.email ?? '',
     address: recipient?.address ?? '',
-    dateOfBirth: fromDateOnly(recipient?.dateOfBirth) ?? null,
     qualification: recipient?.doctor?.qualification ?? '',
     speciality: recipient?.doctor?.speciality ?? '',
     clinicName: recipient?.doctor?.clinicName ?? '',
@@ -75,7 +71,6 @@ export function RecipientFormDialog({
       pcode: draft.pcode.trim(),
       email: draft.email.trim() || undefined,
       address: draft.address.trim() || undefined,
-      dateOfBirth: toDateOnly(draft.dateOfBirth) ?? undefined,
       // Always sent from this form (it shows them), so clearing a field here really clears it.
       doctor: {
         qualification: draft.qualification.trim() || null,
@@ -117,9 +112,6 @@ export function RecipientFormDialog({
         </LabelledField>
         <LabelledField id="recipient-phone" label={`${t('field.phone')} *`} error={errors.phone}>
           <Input id="recipient-phone" type="tel" value={draft.phone} aria-invalid={Boolean(errors.phone)} onChange={(e) => set({ phone: e.target.value })} />
-        </LabelledField>
-        <LabelledField id="recipient-dob" label={t('field.dob')}>
-          <DatePicker id="recipient-dob" value={draft.dateOfBirth} onChange={(value) => set({ dateOfBirth: value })} toDate={new Date()} />
         </LabelledField>
         <LabelledField id="recipient-email" label={t('field.email')} className="sm:col-span-2">
           <Input id="recipient-email" type="email" value={draft.email} onChange={(e) => set({ email: e.target.value })} />

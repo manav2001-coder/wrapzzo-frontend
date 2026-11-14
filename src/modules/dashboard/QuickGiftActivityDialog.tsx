@@ -4,7 +4,6 @@ import { AppDialog } from '@/components/app-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QuickGiftStatusBadge } from '@/modules/quickgift/QuickGiftRequestSheet'
 import { useQuickGiftRequest } from '@/hooks/useQuickGifts'
-import { parseDateOnly } from '@/lib/format'
 
 /**
  * Read-only Quick Gift detail, opened from the Dashboard's activity feed -- the same
@@ -49,12 +48,6 @@ export function QuickGiftActivityDialog({ quickGiftId, onHide }: { quickGiftId: 
               <p className="text-xs text-muted-foreground">Phone</p>
               <p className="text-foreground">{request.recipientPhone}</p>
             </div>
-            {request.recipientDob && (
-              <div>
-                <p className="text-xs text-muted-foreground">Date of birth</p>
-                <p className="text-foreground">{format(parseDateOnly(request.recipientDob), 'dd MMM yyyy')}</p>
-              </div>
-            )}
             {request.deliveryAddress && (
               <div className="sm:col-span-2">
                 <p className="text-xs text-muted-foreground">Delivery address</p>

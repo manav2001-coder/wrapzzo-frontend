@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import type { QuickGiftRequest } from '@/api/quickGifts'
-import type { Recipient, UpcomingBirthday } from '@/api/recipients'
+import type { Recipient } from '@/api/recipients'
 import { AppTabs } from '@/components/app-tabs'
 import { DataTable } from '@/components/data-table'
 import { EmptyTable } from '@/components/data-table/empty-table'
@@ -41,7 +41,7 @@ type Tab = 'send' | 'requests'
 
 /**
  * Quick Gift's home: pick a gift to send (optionally for a recipient carried in from the
- * birthdays widget), and follow every request the user has sent.
+ * doctors list), and follow every request the user has sent.
  */
 export function QuickGiftLandingPage() {
   const { t } = useTranslation('gifts')
@@ -50,7 +50,7 @@ export function QuickGiftLandingPage() {
   const location = useLocation()
   const showError = useApiErrorToast()
   const { prefillRecipient, tab: initialTab } =
-    (location.state as { prefillRecipient?: Recipient | UpcomingBirthday; tab?: Tab } | null) ?? {}
+    (location.state as { prefillRecipient?: Recipient; tab?: Tab } | null) ?? {}
   const { data: gifts, isLoading: giftsLoading } = useActiveGifts()
   const { data: requestCount } = useMyQuickGiftCount()
   const requestPhotoLink = useRequestQuickGiftPhotoLink()

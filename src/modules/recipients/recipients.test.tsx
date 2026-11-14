@@ -40,7 +40,6 @@ function recipient(overrides: Partial<Recipient> = {}): Recipient {
     pcode: 'P-1001',
     email: null,
     address: null,
-    dateOfBirth: null,
     doctor: { qualification: 'MBBS', speciality: 'Cardiology', clinicName: 'Shah Clinic' },
     createdByName: 'Rahul',
     createdAt: '2026-10-01T00:00:00Z',

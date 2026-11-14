@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Camera, Gift as GiftIcon, Pencil } from 'lucide-react'
+import { Camera, ChevronRight, Gift as GiftIcon, Pencil } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -21,6 +21,34 @@ const LIST_FIELDS: ListFieldMap = {
   displayId: 'text',
   category: 'enum',
   price: 'number',
+}
+
+/** A product on a phone: one tap target with the name, what it earns and how fast it is made, and whether it is live. */
+function VendorGiftCard({ gift }: { gift: Gift }) {
+  const { t } = useTranslation('vendor')
+  return (
+    <Link to={`/vendor/gifts/${gift.id}`} className="flex items-center gap-3 rounded-xl border bg-card p-3.5 transition-colors active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none">
+      <GiftThumbnail gift={gift} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{gift.name}</p>
+        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+          {gift.displayId} · {gift.category}
+        </p>
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <span className="font-semibold tabular-nums">{formatCurrency(gift.price)}</span>
+          {gift.leadTimeDays != null && <span className="text-muted-foreground">· {t('gifts.days', { count: gift.leadTimeDays })}</span>}
+          <StatusCell active={gift.active} label={gift.active ? t('gifts.live') : t('gifts.hidden')} />
+          {gift.photoRequired && (
+            <Badge variant="warning-soft" className="gap-1">
+              <Camera className="h-3 w-3" />
+              {t('order.shipping.photo')}
+            </Badge>
+          )}
+        </p>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+    </Link>
+  )
 }
 
 /** A vendor's own products. Whether one is live in stores is Wrappzo's call, so status is shown, not toggled. */
@@ -137,6 +165,7 @@ export function VendorGiftListPage() {
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}
+        renderMobileCard={(gift) => <VendorGiftCard gift={gift} />}
         getRowId={(gift) => gift.id}
         tableId="vendor-gifts"
         configNamespace="vendor-gifts"

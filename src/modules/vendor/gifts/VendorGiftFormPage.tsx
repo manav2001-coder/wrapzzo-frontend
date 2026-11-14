@@ -21,6 +21,7 @@ import {
   useVendorGift,
   useVendorGifts,
 } from '@/hooks/useVendorGifts'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import { formatCurrency } from '@/lib/format'
 import { GIFT_IMAGE_ACCEPT, MAX_GIFT_IMAGES, useGiftFormModel } from '@/modules/admin/gifts/gift-form-model'
 import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
@@ -31,6 +32,7 @@ import { GiftThumbnail } from '@/modules/admin/gifts/GiftThumbnail'
  */
 export function VendorGiftFormPage() {
   const { t } = useTranslation('vendor')
+  const isTouch = useIsMobile()
   const { id } = useParams<{ id: string }>()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
@@ -176,7 +178,7 @@ export function VendorGiftFormPage() {
                 onChange={(file) => (file ? void onImagePicked(file) : setPendingImage(null))}
                 accept={GIFT_IMAGE_ACCEPT}
                 disabled={uploadImage.isPending}
-                prompt={t('gifts.form.imageDrop')}
+                prompt={isTouch ? t('gifts.form.imageDropTouch') : t('gifts.form.imageDrop')}
               />
             )}
           </div>

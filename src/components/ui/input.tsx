@@ -27,7 +27,8 @@ const inputVariants = cva(
   {
     variants: {
       size: {
-        default: "h-9 px-3 py-1 text-sm file:text-sm",
+        // Taller, and 16px, on a phone: a 36px box is hard to hit with a thumb, and a font under 16px makes iOS zoom the page on focus.
+        default: "h-9 px-3 py-1 text-sm file:text-sm max-md:h-11 max-md:text-base",
         sm: "h-8 px-2 py-1 text-xs file:text-xs",
       },
     },

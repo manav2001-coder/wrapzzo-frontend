@@ -139,7 +139,8 @@
       "confirmLabel": "Upload proof",
       "confirmCancel": "Choose another",
       "previewAlt": "Preview of {{name}}",
-      "pdfPreview": "PDF proof (no preview)"
+      "pdfPreview": "PDF proof (no preview)",
+      "dropTouch": "Tap to choose the proof (PDF only, up to 5 MB)"
     },
     "action": {
       "markDispatched": "Mark as dispatched",
@@ -187,7 +188,8 @@
       "imageAdded": "Image added",
       "imageRemoved": "Image removed",
       "removeImage": "Remove image",
-      "imageFailed": "The product was created, but its image couldn't be uploaded. Try again from the product."
+      "imageFailed": "The product was created, but its image couldn't be uploaded. Try again from the product.",
+      "imageDropTouch": "Tap to choose an image"
     }
   },
   "label": {

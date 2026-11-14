@@ -12,6 +12,8 @@ interface MobileCardsProps<TData> {
   /** Shown instead of the cards when there are no rows (the empty or error body). */
   emptyBody: React.ReactNode
   renderSubRow?: (row: TData, expanded: boolean) => React.ReactNode
+  /** A screen's own compact card for a row, in place of the generic one. */
+  renderCard?: (row: TData) => React.ReactNode
   expandedIds: Set<string>
 }
 
@@ -20,7 +22,7 @@ interface MobileCardsProps<TData> {
  * field is readable without swiping. The first data column is the card's title, the rest are
  * label/value pairs, and the row's actions (the pinned column) close the card.
  */
-export function MobileCards<TData>({ table, isLoading, pageSize, emptyBody, renderSubRow, expandedIds }: MobileCardsProps<TData>) {
+export function MobileCards<TData>({ table, isLoading, pageSize, emptyBody, renderSubRow, renderCard, expandedIds }: MobileCardsProps<TData>) {
   if (isLoading) {
     return (
       <ul className="space-y-3">
@@ -37,10 +39,14 @@ export function MobileCards<TData>({ table, isLoading, pageSize, emptyBody, rend
   const rows = table.getRowModel().rows
   if (!rows.length) return <div className="rounded-xl border border-border p-4">{emptyBody}</div>
   return (
-    <ul className="space-y-3">
-      {rows.map((row) => (
+    <ul className={renderCard ? 'space-y-2.5' : 'space-y-3'}>
+      {rows.map((row) =>
+        renderCard ? (
+          <li key={row.id}>{renderCard(row.original)}</li>
+        ) : (
         <MobileCard key={row.id} row={row} renderSubRow={renderSubRow} expanded={expandedIds.has(row.id)} />
-      ))}
+        ),
+      )}
     </ul>
   )
 }

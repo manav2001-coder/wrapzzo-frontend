@@ -47,8 +47,10 @@ export function TablePagination<TData>({
     : [pageSize, ...PAGE_SIZES].sort((a, b) => a - b);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+    // On a phone one page of cards is usually all there is, and the page-size picker and first/last buttons are noise: it shows the range and
+    // previous / next, bigger to tap, and nothing at all when everything fits on one page.
+    <div className={`flex flex-wrap items-center justify-between gap-3${pageCount <= 1 ? " max-sm:hidden" : ""}`}>
+      <div className="flex items-center gap-2 text-sm text-muted-foreground max-sm:hidden">
         <span>{t("table.rowsPerPage")}</span>
         <Select value={String(pageSize)} onValueChange={(v) => table.setPageSize(Number(v))}>
           <SelectTrigger size="sm" className="w-[70px]" aria-label={t("table.rowsPerPage")}>
@@ -63,7 +65,7 @@ export function TablePagination<TData>({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 max-sm:w-full max-sm:justify-between">
         <span className="text-sm text-muted-foreground">
           {totalCount !== undefined
             ? t("table.rangeOf", { start, end, total: totalCapped ? `${totalCount}+` : totalCount })
@@ -76,6 +78,7 @@ export function TablePagination<TData>({
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
             aria-label={t("table.firstPage")}
+            className="max-sm:hidden"
           >
             <ChevronsLeft />
           </Button>
@@ -85,6 +88,7 @@ export function TablePagination<TData>({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             aria-label={t("table.previousPage")}
+            className="max-sm:size-11"
           >
             <ChevronLeft />
           </Button>
@@ -94,6 +98,7 @@ export function TablePagination<TData>({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             aria-label={t("table.nextPage")}
+            className="max-sm:size-11"
           >
             <ChevronRight />
           </Button>
@@ -103,6 +108,7 @@ export function TablePagination<TData>({
             onClick={() => table.setPageIndex(pageCount - 1)}
             disabled={!table.getCanNextPage()}
             aria-label={t("table.lastPage")}
+            className="max-sm:hidden"
           >
             <ChevronsRight />
           </Button>

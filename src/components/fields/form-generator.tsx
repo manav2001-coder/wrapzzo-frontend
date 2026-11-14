@@ -881,7 +881,7 @@ export function FormGenerator({
               {t("action.continue")}
             </Button>
           )}
-          <Button type="submit" disabled={form.formState.isSubmitting}>
+          <Button type="submit" disabled={form.formState.isSubmitting} className="max-sm:h-11 max-sm:flex-1">
             {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
             {submitLabel ?? defaultLabel}
           </Button>

@@ -68,7 +68,7 @@ export function TableFilterPanel({
       {/* An overlay, not a panel that opens in the page: it floats over the table instead of pushing it down. */}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-8">
+          <Button variant="outline" size="sm" className="h-9 gap-1 sm:h-8">
             <ListFilter aria-hidden className="h-3.5 w-3.5" />
             {t("action.filters")}
             {activeEntries.length > 0 && (

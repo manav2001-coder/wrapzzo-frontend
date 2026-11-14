@@ -6,6 +6,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 
 import type { VendorOrder } from '@/api/vendorOrders'
 import { AppTabs } from '@/components/app-tabs'
+import { ScrollTabs } from '@/components/scroll-tabs'
 import { DataTable } from '@/components/data-table'
 import { EmptyTable } from '@/components/data-table/empty-table'
 import { MasterPageHeader } from '@/components/masters/master-page'
@@ -22,6 +23,8 @@ import type { ListFieldMap } from '@/lib/list-fields'
 import { VENDOR_STAGES, vendorStageOf, type VendorStage } from '@/lib/vendor-order-stage'
 import { VendorDivisionFilter } from '../division/VendorDivisionFilter'
 import { VendorStageBadge } from './VendorStageBadge'
+import { VendorOrderCard } from './VendorOrderCard'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import { doctorLabel } from '@/lib/doctor-label'
 
 const LIST_FIELDS: ListFieldMap = {
@@ -47,6 +50,7 @@ export function VendorOrdersPage() {
   const [params, setParams] = useSearchParams()
   // The figures are counted by the server over all of the vendor's orders (in the picked division); the table is one page at a time.
   const { data: summary } = useVendorOrderSummary()
+  const isMobile = useIsMobile()
   const division = useVendorDivision()
   const counts = summary?.byStage ?? {}
 
@@ -154,15 +158,15 @@ export function VendorOrdersPage() {
   return (
     <div>
       <MasterPageHeader title={t('orders.title')} description={t('orders.subtitle')} extra={<VendorDivisionFilter />} />
-      <AppTabs
-        value={tab}
-        onValueChange={(value) => setParams(value === ALL ? {} : { stage: value }, { replace: true })}
-        className="mb-3"
-        tabs={[
+      {(() => {
+        const tabs = [
           { value: ALL, label: t('orders.all'), badge: summary?.total || undefined },
           ...stages.map((stage) => ({ value: stage, label: t(`stage.${stage}`), badge: counts[stage] || undefined })),
-        ]}
-      />
+        ]
+        const pick = (value: string) => setParams(value === ALL ? {} : { stage: value }, { replace: true })
+        // A phone gets a row of pills it can swipe; the underlined tabs run off its edge and cut a label in half.
+        return isMobile ? <ScrollTabs value={tab} onValueChange={pick} tabs={tabs} className="mb-3" /> : <AppTabs value={tab} onValueChange={pick} className="mb-3" tabs={tabs} />
+      })()}
       <DataTable<Row>
         columns={columns}
         fetchData={fetchOrders}
@@ -171,6 +175,7 @@ export function VendorOrdersPage() {
         tableFilterComponents={() => [{ id: 'assignedAt', label: t('orders.column.received'), type: 'dateRange' }]}
         searchable
         showRowSelectionColumn={false}
+        renderMobileCard={(order) => <VendorOrderCard order={order} />}
         defaultSort={{ id: 'assignedAt', desc: true }}
         getRowId={(row) => row.id}
         tableId={`vendor-orders-${tab}-${division}`}

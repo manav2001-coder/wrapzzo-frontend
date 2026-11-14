@@ -177,6 +177,11 @@ interface DataTableProps<TData> {
   downloadAllConfig?: DownloadAllConfig;
   bulkUploadConfig?: BulkUploadConfig;
   /**
+   * On a phone each row is a card. Without this the card is generic (the first column as its title, the rest as label and value pairs);
+   * a screen that knows its rows passes a purpose-built, more compact card instead. The card is rendered inside the list item.
+   */
+  renderMobileCard?: (row: TData) => React.ReactNode;
+  /**
    * Bulk import/export controls, rendered in the toolbar and handed the table's LIVE list
    * state.
    *
@@ -241,6 +246,7 @@ export function DataTable<TData>({
   downloadAllConfig,
   renderBulkActions,
   bulkUploadConfig,
+  renderMobileCard,
   refreshTrigger,
   refetchInterval,
   getRowCanExpand,
@@ -737,7 +743,8 @@ export function DataTable<TData>({
                   {downloadAllConfig.label ?? t("table.downloadAll")}
                 </Button>
               )}
-              {configNamespace && (
+              {/* Choosing columns means nothing for cards, which show what the screen decides to. */}
+              {configNamespace && !cardView && (
                 <ColumnVisibilityPopover
                   table={table}
                   onReset={resetColumnConfig}
@@ -766,6 +773,7 @@ export function DataTable<TData>({
             pageSize={pagination.pageSize}
             expandedIds={expandedIds}
             renderSubRow={renderSubRow}
+            renderCard={renderMobileCard}
             emptyBody={
               fetchFailed ? (
                 <ErrorTable error={query.error} onRetry={() => void query.refetch()} />

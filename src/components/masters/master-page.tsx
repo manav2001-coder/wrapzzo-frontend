@@ -47,14 +47,14 @@ export function MasterPageHeader({
       <div className="flex min-w-0 items-center gap-2.5">
         {lead}
         <div className="min-w-0">
-          <h1 className="text-[15px] font-semibold tracking-tight">{title}</h1>
-          {description && <p className="mt-0.5 text-[11.5px] text-muted-foreground">{description}</p>}
+          <h1 className="text-lg font-semibold tracking-tight sm:text-[15px]">{title}</h1>
+          {description && <p className="mt-0.5 text-xs text-muted-foreground sm:text-[11.5px]">{description}</p>}
         </div>
       </div>
-      <div className="flex max-w-full flex-wrap items-end gap-2">
+      <div className="flex max-w-full flex-wrap items-end gap-2 max-sm:w-full">
         {extra}
         {canCreate && (
-          <Button onClick={onCreate} size="sm" className="h-9 shrink-0" data-testid="master-create">
+          <Button onClick={onCreate} size="sm" className="h-11 shrink-0 max-sm:w-full sm:h-9" data-testid="master-create">
             <Plus />
             {createLabel}
           </Button>

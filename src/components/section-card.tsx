@@ -95,7 +95,7 @@ export const SectionCard = React.forwardRef<HTMLDivElement, SectionCardProps>(
           <>
             <CardHeader
               className={cn(
-                "flex flex-row items-start justify-between gap-4 space-y-0",
+                "flex flex-row items-start justify-between gap-4 space-y-0 max-sm:flex-col max-sm:gap-3 max-sm:p-4",
                 headerClassName,
               )}
             >
@@ -103,14 +103,14 @@ export const SectionCard = React.forwardRef<HTMLDivElement, SectionCardProps>(
                 {title && <CardTitle className="text-base">{title}</CardTitle>}
                 {description && <CardDescription>{description}</CardDescription>}
               </div>
-              {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+              {actions && <div className="flex shrink-0 items-center gap-2 max-sm:w-full max-sm:[&>*]:flex-1">{actions}</div>}
             </CardHeader>
             {showDivider && <Separator />}
           </>
         )}
 
         {padded ? (
-          <CardContent className={cn(hasHeader && "pt-6", contentClassName)}>
+          <CardContent className={cn("max-sm:p-4", hasHeader && "pt-6 max-sm:pt-4", contentClassName)}>
             {loading ? <SectionCardSkeleton /> : children}
           </CardContent>
         ) : (

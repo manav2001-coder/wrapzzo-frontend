@@ -49,19 +49,22 @@ function QueueCard({ item, count, loading, onOpen }: { item: QueueStage; count: 
     <button
       type="button"
       onClick={onOpen}
-      className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+      className="group relative flex items-center gap-3 overflow-hidden rounded-2xl border bg-card p-3.5 text-left shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none active:bg-muted/60 md:flex-col md:items-stretch md:p-4 md:hover:-translate-y-0.5 md:hover:shadow-md"
     >
-      <span className={cn('absolute inset-x-0 top-0 h-1 transition-opacity', item.accent, waiting ? 'opacity-100' : 'opacity-0')} />
-      <div className="flex items-center justify-between">
+      {/* A phone gets a list row (strip on the left, count on the right); a wider screen gets the tile (strip on top, count above the name). */}
+      <span className={cn('absolute transition-opacity max-md:inset-y-0 max-md:left-0 max-md:w-1 md:inset-x-0 md:top-0 md:h-1', item.accent, waiting ? 'opacity-100' : 'opacity-0')} />
+      <div className="flex items-center justify-between max-md:pl-1">
         <span className={cn('grid h-9 w-9 place-items-center rounded-xl', waiting ? item.chip : 'bg-muted text-muted-foreground')}>
           <item.icon className="h-4.5 w-4.5" />
         </span>
-        {!item.mine && waiting && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">{t('home.waitingOnOthers')}</span>}
+        {!item.mine && waiting && <span className="max-md:hidden rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">{t('home.waitingOnOthers')}</span>}
       </div>
-      <div>
-        {loading ? <Skeleton className="h-9 w-10" /> : <p className={cn('text-3xl leading-none font-bold tabular-nums', !waiting && 'text-muted-foreground/60')}>{count}</p>}
-        <p className="mt-1.5 text-sm font-semibold">{t(`stage.${item.stage}`)}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{t(`home.hint.${item.stage}`)}</p>
+      <div className="contents md:block">
+        {loading ? <Skeleton className="h-9 w-10 max-md:order-3" /> : <p className={cn('text-3xl leading-none font-bold tabular-nums max-md:order-3 max-md:ml-auto max-md:text-2xl', !waiting && 'text-muted-foreground/60')}>{count}</p>}
+        <div className="min-w-0 max-md:order-2 max-md:flex-1">
+          <p className="text-sm font-semibold md:mt-1.5">{t(`stage.${item.stage}`)}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t(`home.hint.${item.stage}`)}</p>
+        </div>
       </div>
     </button>
   )
@@ -72,7 +75,7 @@ function ActionRow({ order, stage }: { order: VendorOrder; stage: VendorStage })
   const item = QUEUE.find((q) => q.stage === stage)!
   return (
     <li>
-      <Link to={`/vendor/orders/${order.id}`} className="flex items-center gap-3 p-3.5 transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none">
+      <Link to={`/vendor/orders/${order.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3.5 transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none">
         <span className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-xl', item.chip)}>
           <item.icon className="h-5 w-5" />
         </span>
@@ -89,7 +92,10 @@ function ActionRow({ order, stage }: { order: VendorOrder; stage: VendorStage })
             <p className="mt-0.5 break-words sm:truncate text-xs font-medium text-primary">{t(`home.action.${stage}`)}</p>
           )}
         </div>
-        <VendorStageBadge stage={stage} />
+        {/* On a phone the stage sits on its own line under the order, so the text gets the full width. */}
+        <div className="max-md:order-last max-md:basis-full max-md:pl-[52px]">
+          <VendorStageBadge stage={stage} />
+        </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </Link>
     </li>
@@ -119,12 +125,12 @@ export function VendorHomePage() {
 
   return (
     <div className="space-y-7 pb-8">
-      <header className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-6 sm:p-8">
+      <header className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-5 sm:p-8">
         <div className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="text-xs font-semibold tracking-wide text-primary uppercase">{format(now, 'EEEE, d MMMM')}</p>
-            <h1 className="mt-1.5 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="mt-1.5 text-2xl font-bold tracking-tight sm:text-4xl">
               {t(`home.good.${greetingKey(now)}`)}
               {profile?.name ? `, ${profile.name}` : ''}
             </h1>
@@ -147,7 +153,7 @@ export function VendorHomePage() {
 
       <section aria-label={t('home.todo')}>
         <h2 className="mb-3 text-base font-semibold tracking-tight">{t('home.todo')}</h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-3 xl:grid-cols-5">
           {QUEUE.map((item) => (
             <QueueCard key={item.stage} item={item} count={countOf(item.stage)} loading={isLoading} onOpen={() => navigate(`/vendor/orders?stage=${item.stage}`)} />
           ))}

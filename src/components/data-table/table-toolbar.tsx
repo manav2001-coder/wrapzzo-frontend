@@ -45,9 +45,10 @@ export function TableToolbar({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
+      {/* On a phone the search box and the Filters button share one row; the box takes what the button leaves. */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:flex-none">
         {search && (
-          <div className="w-full sm:w-64">
+          <div className="min-w-0 max-sm:flex-1 max-sm:basis-[55%] sm:w-64">
             <DebouncedInput
               type="search"
               size="default"
@@ -70,7 +71,7 @@ export function TableToolbar({
           </Button>
         )}
       </div>
-      {trailing && <div className="flex items-center gap-2">{trailing}</div>}
+      {trailing && <div className="flex items-center gap-2 max-sm:empty:hidden">{trailing}</div>}
     </div>
   );
 }

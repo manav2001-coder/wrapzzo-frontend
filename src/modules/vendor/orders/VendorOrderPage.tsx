@@ -28,6 +28,7 @@ import { AppDialog } from '@/components/app-dialog'
 import { EmptyState } from '@/components/empty-state'
 import { FileDropzone } from '@/components/file-dropzone'
 import { MasterPageHeader } from '@/components/masters/master-page'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import { SectionCard } from '@/components/section-card'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -216,6 +217,8 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
   const { data: designs, isLoading } = useVendorOrderDesigns(order.id)
   const upload = useUploadVendorOrderDesign(order.id)
   const closed = order.status === 'CANCELLED'
+  // Nothing is dropped on a phone: it taps to choose.
+  const isTouch = useIsMobile()
 
   // A picked file waits for a look at it: a wrong pick would send the customer the wrong proof.
   const [picked, setPicked] = useState<File | null>(null)
@@ -278,7 +281,7 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
                 setRefusal(reason === 'size' ? proofTooBigMessage(file.name, file.size) : notAPdfMessage(file.name))
               }}
               disabled={upload.isPending}
-              prompt={t('order.artwork.drop')}
+              prompt={isTouch ? t('order.artwork.dropTouch') : t('order.artwork.drop')}
             />
             <p className="text-xs text-muted-foreground">{t('order.artwork.nameRule')}</p>
             {refusal && (
@@ -376,6 +379,7 @@ export function VendorOrderPage() {
   const showError = useApiErrorToast()
   const { data: order, isLoading, error } = useVendorOrder(id)
   const updateStatus = useUpdateVendorOrderStatus()
+  const isMobile = useIsMobile()
   const [pending, setPending] = useState<PendingMove | null>(null)
 
   if (isLoading) {
@@ -425,7 +429,7 @@ export function VendorOrderPage() {
   }
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className={cn('space-y-5 pb-6', isMobile && (forward || blockedByArtwork) && 'pb-28')}>
       <MasterPageHeader
         lead={
           <Button asChild variant="ghost" size="icon" aria-label={t('order.back')}>
@@ -456,7 +460,8 @@ export function VendorOrderPage() {
             <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t('order.yourNextStep')}</p>
             <p className="text-sm font-medium">{t(`next.${stage}`)}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          {/* On a phone these are full-width and big enough to tap, and the main one moves to a bar fixed at the bottom of the screen. */}
+          <div className="flex flex-wrap gap-2 max-sm:w-full max-sm:flex-col [&>button]:max-sm:h-11 [&>button]:max-sm:w-full">
             {(!order.artworkRequired || order.artworkApproved) && <DispatchLabelButton order={order} />}
             {back && (
               <Button variant="outline" onClick={() => setPending(back)}>
@@ -464,13 +469,13 @@ export function VendorOrderPage() {
                 {back.label}
               </Button>
             )}
-            {forward && (
+            {!isMobile && forward && (
               <Button onClick={() => setPending(forward)}>
                 {forward.status === 'DISPATCHED' ? <Truck /> : <Check />}
                 {forward.label}
               </Button>
             )}
-            {blockedByArtwork && (
+            {!isMobile && blockedByArtwork && (
               <Button disabled title={t('order.action.blocked')}>
                 <Lock />
                 {t('order.action.markDispatched')}
@@ -489,6 +494,25 @@ export function VendorOrderPage() {
           <ArtworkCard order={order} />
         </div>
       </div>
+
+      {isMobile && (forward || blockedByArtwork) && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur">
+          {forward ? (
+            <Button className="h-12 w-full text-base" onClick={() => setPending(forward)}>
+              {forward.status === 'DISPATCHED' ? <Truck /> : <Check />}
+              {forward.label}
+            </Button>
+          ) : (
+            <>
+              <p className="mb-2 text-center text-xs text-muted-foreground">{t('order.action.blocked')}</p>
+              <Button className="h-12 w-full text-base" disabled>
+                <Lock />
+                {t('order.action.markDispatched')}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
 
       <AppDialog
         open={pending !== null}

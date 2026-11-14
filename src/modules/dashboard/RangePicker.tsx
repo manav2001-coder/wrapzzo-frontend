@@ -20,7 +20,7 @@ export const RANGE_PHRASE: Record<DashboardRange, string> = {
 /** Period pills. They scroll sideways on a narrow phone rather than wrapping, and each is a 44px tap target. */
 export function RangePicker({ value, onChange }: { value: DashboardRange; onChange: (range: DashboardRange) => void }) {
   return (
-    <div role="radiogroup" aria-label="Period" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div role="radiogroup" aria-label="Period" className="-mx-1 flex gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {OPTIONS.map((o) => (
         <button
           key={o.value}

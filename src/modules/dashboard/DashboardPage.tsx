@@ -157,7 +157,7 @@ export function DashboardPage() {
     <div className="space-y-7 pb-8">
       <header className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-4 sm:p-8">
         <div className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-        <div className="relative flex items-start justify-between gap-3">
+        <div className="relative">
           <div>
             <p className="text-xs font-semibold tracking-wide text-primary uppercase">{format(now, 'EEEE, d MMMM')}</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-4xl">
@@ -170,12 +170,15 @@ export function DashboardPage() {
               {data.companyWide ? 'Everything happening across your company' : 'Everything happening in your area'}
             </p>
           </div>
-          <ExportButton range={range} />
-        </div>
-        <div className="relative mt-4 sm:mt-5">
-          <RangePicker value={range} onChange={setRange} />
         </div>
       </header>
+
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <RangePicker value={range} onChange={setRange} />
+        </div>
+        <ExportButton range={range} />
+      </div>
 
       {!hasAnyActivity ? (
         <EmptyState

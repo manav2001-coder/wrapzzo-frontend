@@ -36,7 +36,6 @@ function order(overrides: Partial<Order> = {}): Order {
     quantity: 5,
     orgUnitName: 'N1',
     artworkRequired: true,
-    warehouseName: null,
     source: 'QUICK_GIFT',
     status: 'PRODUCTION_QUEUE',
     assignedVendorId: 'v-1',
@@ -121,7 +120,7 @@ describe('OrdersPage (company)', () => {
   it('counts and tabs the orders whose artwork waits on the reviewer', async () => {
     serve([
       order({ id: 'o-1', displayId: 'ORD-101', hasPendingDesignReview: true }),
-      order({ id: 'o-2', displayId: 'ORD-102', giftName: 'Desk Calendar', status: 'DELIVERED' }),
+      order({ id: 'o-2', displayId: 'ORD-102', giftName: 'Desk Calendar', status: 'DISPATCHED' }),
     ])
     renderWithProviders(<OrdersPage />)
     expect(await screen.findByRole('button', { name: /Artwork to review\s*1/ })).toBeInTheDocument()

@@ -3,9 +3,6 @@
     "PROCESSING": "प्रोसेसिंग",
     "PRODUCTION_QUEUE": "उत्पादन",
     "DISPATCHED": "भेजा गया",
-    "RECEIVED_AT_WAREHOUSE": "गोदाम में",
-    "OUT_FOR_DELIVERY": "डिलीवरी के लिए निकला",
-    "DELIVERED": "पहुँचाया गया",
     "CANCELLED": "रद्द"
   },
   "source": {
@@ -41,7 +38,6 @@
     "total": "कुल",
     "quantity": "मात्रा",
     "orgUnit": "ऑर्ग यूनिट",
-    "warehouse": "गोदाम के ज़रिए",
     "placed": "दिया गया",
     "progress": "प्रगति",
     "history": "इतिहास",
@@ -58,8 +54,7 @@
     "stats": {
       "review": "समीक्षा के लिए आर्टवर्क",
       "production": "उत्पादन में",
-      "dispatched": "डिस्पैच",
-      "delivered": "डिलीवर"
+      "dispatched": "डिस्पैच"
     },
     "emptyTitle": "अभी कोई ऑर्डर नहीं",
     "emptyBody": "ऑर्डर होने पर वे यहाँ दिखेंगे।",
@@ -126,7 +121,7 @@
       "total": "कुल ऑर्डर",
       "unassigned": "विक्रेता चाहिए",
       "production": "उत्पादन में",
-      "delivered": "पहुँचाए गए"
+      "dispatched": "डिस्पैच हुए"
     },
     "emptyTitle": "अभी कोई ऑर्डर नहीं",
     "emptyBody": "जब कंपनियाँ अनुरोध करती और स्वीकृत करती हैं, तो ऑर्डर यहाँ दिखते हैं।",

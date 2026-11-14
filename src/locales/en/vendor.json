@@ -5,8 +5,6 @@
     "review": "Artwork in review",
     "ready": "Ready to print",
     "dispatched": "Dispatched",
-    "warehouse": "Sent to warehouse",
-    "delivered": "Delivered",
     "cancelled": "Cancelled"
   },
   "next": {
@@ -14,9 +12,7 @@
     "rework": "The customer asked for changes. Upload a corrected proof.",
     "review": "Your proof is with the customer. You'll see their decision here.",
     "ready": "Produce and pack the order, then mark it dispatched.",
-    "dispatched": "On its way. Mark it delivered once it arrives.",
-    "warehouse": "Shipped to the company's warehouse. They deliver it from here, so you're done.",
-    "delivered": "Done. Nothing more to do on this order.",
+    "dispatched": "Dispatched. Nothing more to do on this order.",
     "cancelled": "This order was cancelled. Nothing to do."
   },
   "home": {
@@ -57,13 +53,13 @@
       "artwork": "Upload a proof",
       "review": "Customer is deciding",
       "ready": "Pack and dispatch",
-      "dispatched": "Mark delivered on arrival"
+      "dispatched": "Done"
     },
     "action": {
       "rework": "Upload a corrected proof",
       "artwork": "Upload an artwork proof",
       "ready": "Pack it and mark it dispatched",
-      "dispatched": "Mark it delivered once it arrives"
+      "dispatched": "Nothing more to do"
     }
   },
   "orders": {
@@ -95,8 +91,7 @@
       "received": "Received",
       "artwork": "Artwork approved",
       "production": "In production",
-      "dispatched": "Dispatched",
-      "delivered": "Delivered"
+      "dispatched": "Dispatched"
     },
     "print": {
       "title": "What to print",
@@ -110,9 +105,7 @@
       "title": "Shipping",
       "recipient": "Recipient",
       "phone": "Phone",
-      "address": "Deliver to",
-      "shipToWarehouse": "Ship to the company's warehouse",
-      "finalRecipient": "Final delivery (by the warehouse)",
+      "address": "Ship to",
       "quantity": "Quantity",
       "message": "Note from the AM",
       "price": "Your price",
@@ -150,12 +143,9 @@
     },
     "action": {
       "markDispatched": "Mark as dispatched",
-      "markDelivered": "Mark as delivered",
       "backToProduction": "Move back to production",
       "dispatchTitle": "Mark {{id}} as dispatched?",
-      "dispatchBody": "The customer will see the order is on its way.",
-      "deliverTitle": "Mark {{id}} as delivered?",
-      "deliverBody": "This completes the order. It can't be changed afterwards.",
+      "dispatchBody": "The customer will see the order has been dispatched.",
       "backTitle": "Move {{id}} back to production?",
       "backBody": "Use this if it was marked dispatched by mistake.",
       "moved": "{{id}} is now {{stage}}",

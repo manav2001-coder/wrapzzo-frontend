@@ -55,22 +55,19 @@ const DESIGN_VARIANT: Record<OrderDesign['status'], BadgeProps['variant']> = {
   REJECTED: 'destructive-soft',
 }
 
-type StepKey = 'received' | 'artwork' | 'production' | 'dispatched' | 'delivered'
+type StepKey = 'received' | 'artwork' | 'production' | 'dispatched'
 
 /** How far along the order is, as a list of steps -- the artwork step only for orders that need it. */
 function progressOf(order: VendorOrder, stage: VendorStage): { steps: StepKey[]; current: number } {
   const steps: StepKey[] = order.artworkRequired
-    ? ['received', 'artwork', 'production', 'dispatched', 'delivered']
-    : ['received', 'production', 'dispatched', 'delivered']
+    ? ['received', 'artwork', 'production', 'dispatched']
+    : ['received', 'production', 'dispatched']
   const at: Record<VendorStage, StepKey> = {
     rework: 'artwork',
     artwork: 'artwork',
     review: 'artwork',
     ready: 'production',
     dispatched: 'dispatched',
-    // Shipped to the company's warehouse: the vendor's last step is done.
-    warehouse: 'delivered',
-    delivered: 'delivered',
     cancelled: 'received',
   }
   return { steps, current: steps.indexOf(at[stage]) }
@@ -79,7 +76,8 @@ function progressOf(order: VendorOrder, stage: VendorStage): { steps: StepKey[];
 function Progress({ order, stage }: { order: VendorOrder; stage: VendorStage }) {
   const { t } = useTranslation('vendor')
   const { steps, current } = progressOf(order, stage)
-  const finished = stage === 'delivered' || stage === 'warehouse'
+  // Dispatched is the last step: once it is reached, it is done, not "current".
+  const finished = stage === 'dispatched'
   return (
     <ol className="flex items-start" aria-label={t('order.yourNextStep')}>
       {steps.map((step, index) => {
@@ -183,23 +181,9 @@ function ShippingCard({ order }: { order: VendorOrder }) {
             '—'
           )}
         </Row>
-        {order.shipToWarehouseName ? (
-          <>
-            <div className="col-span-2 rounded-md border border-primary/30 bg-primary/5 p-3">
-              <Row label={t('order.shipping.shipToWarehouse')}>
-                <span className="block">{order.shipToWarehouseName}</span>
-                <span className="block font-normal">{order.shipToWarehouseAddress}</span>
-              </Row>
-            </div>
-            <div className="col-span-2">
-              <Row label={t('order.shipping.finalRecipient')}>{order.deliveryAddress ?? '—'}</Row>
-            </div>
-          </>
-        ) : (
-          <div className="col-span-2">
-            <Row label={t('order.shipping.address')}>{order.deliveryAddress ?? '—'}</Row>
-          </div>
-        )}
+        <div className="col-span-2">
+          <Row label={t('order.shipping.address')}>{order.deliveryAddress ?? '—'}</Row>
+        </div>
         <Row label={t('order.shipping.quantity')}>
           <span className="text-lg font-semibold">{order.quantity}</span>
         </Row>
@@ -231,7 +215,7 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
   const showError = useApiErrorToast()
   const { data: designs, isLoading } = useVendorOrderDesigns(order.id)
   const upload = useUploadVendorOrderDesign(order.id)
-  const closed = ['DELIVERED', 'CANCELLED', 'RECEIVED_AT_WAREHOUSE', 'OUT_FOR_DELIVERY'].includes(order.status)
+  const closed = order.status === 'CANCELLED'
 
   // A picked file waits for a look at it: a wrong pick would send the customer the wrong proof.
   const [picked, setPicked] = useState<File | null>(null)
@@ -416,9 +400,7 @@ export function VendorOrderPage() {
   const forward: PendingMove | null =
     next === 'DISPATCHED'
       ? { status: next, label: t('order.action.markDispatched'), title: t('order.action.dispatchTitle', { id: order.displayId }), body: t('order.action.dispatchBody') }
-      : next === 'DELIVERED'
-        ? { status: next, label: t('order.action.markDelivered'), title: t('order.action.deliverTitle', { id: order.displayId }), body: t('order.action.deliverBody') }
-        : null
+      : null
   const back: PendingMove | null =
     stage === 'dispatched'
       ? {

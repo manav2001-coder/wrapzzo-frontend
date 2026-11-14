@@ -5,9 +5,9 @@
       "login": "Log in"
     },
     "hero": {
-      "badge": "Request-to-delivery platform",
-      "title": "Every request raised, approved, printed and delivered in one place.",
-      "body": "Your field team raises a request for an HCP, managers approve it, the vendor prints and ships it, and everyone follows it to delivery. Wrappzo runs that whole workflow.",
+      "badge": "Request-to-dispatch platform",
+      "title": "Every request raised, approved, printed and dispatched in one place.",
+      "body": "Your field team raises a request for an HCP, managers approve it, the vendor prints and dispatches it, and everyone follows it until it leaves the vendor. Wrappzo runs that whole workflow.",
       "cta": "Log in",
       "secondary": "See how it works",
       "mock": {
@@ -21,13 +21,12 @@
           "Approved",
           "Artwork OK",
           "Printing",
-          "Dispatched",
-          "Delivered"
+          "Dispatched"
         ]
       }
     },
     "solutions": {
-      "title": "One workflow, from the field to the doorstep",
+      "title": "One workflow, from the field to dispatch",
       "body": "Each person sees and does only their part: the user raising the request, the managers approving it, the vendor printing and dispatching it.",
       "request": {
         "title": "Raise a request",
@@ -61,21 +60,21 @@
       },
       "tracking": {
         "title": "Order tracking",
-        "description": "Every order's status and history, from raised to delivered.",
+        "description": "Every order's status and history, from raised to dispatched.",
         "caption": "Follow an order without calling anyone."
       },
       "dashboards": {
         "title": "Team dashboards",
-        "description": "Managers see what is pending, approved and delivered across their team.",
+        "description": "Managers see what is pending, approved and dispatched across their team.",
         "caption": "Each person sees their own team's orders and nobody else's."
       }
     },
     "cta": {
-      "title": "Ready to see your requests through to delivery?",
+      "title": "Ready to see your requests through to dispatch?",
       "body": "Log in to raise requests, approve artwork and track every order."
     },
     "footer": {
-      "blurb": "Requests, approvals, printing and delivery for field teams, run by Wrappzo.",
+      "blurb": "Requests, approvals, printing and dispatch for field teams, run by Wrappzo.",
       "platform": "Platform",
       "account": "Account",
       "links": {
@@ -85,7 +84,7 @@
       "rights": "© {{year}} Wrappzo. Operated by Orange Dot Solutions. All rights reserved."
     },
     "steps": {
-      "title": "From request to doorstep in four steps",
+      "title": "From request to dispatch in four steps",
       "body": "Everyone sees only their part, and nothing moves on without the right person's go-ahead.",
       "items": {
         "request": {
@@ -100,9 +99,9 @@
           "title": "Print",
           "description": "The vendor uploads the proof, prints the order and packs it."
         },
-        "deliver": {
-          "title": "Deliver",
-          "description": "Dispatch label, tracking and delivery, all visible to the team."
+        "dispatch": {
+          "title": "Dispatch",
+          "description": "The vendor dispatches the approved order with a label, and the team sees it straight away."
         }
       }
     },

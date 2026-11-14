@@ -33,7 +33,6 @@ const order = (id: string, companyId: string, recipientName: string): Order =>
     quantity: 1,
     orgUnitName: null,
     artworkRequired: false,
-    warehouseName: null,
     source: 'QUICK_GIFT',
     status: 'PROCESSING',
     assignedVendorId: null,

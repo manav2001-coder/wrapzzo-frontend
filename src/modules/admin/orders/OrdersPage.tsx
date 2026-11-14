@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CheckCircle2, Cog, Eye, Palette, ShoppingBag, Truck, TriangleAlert, Wand2 } from 'lucide-react'
+import { Cog, Eye, Palette, ShoppingBag, Truck, TriangleAlert, Wand2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -88,7 +88,7 @@ export function OrdersPage() {
     total: summary?.total ?? 0,
     unassigned: summary?.unassigned ?? 0,
     production: summary?.byStatus.PRODUCTION_QUEUE ?? 0,
-    delivered: summary?.byStatus.DELIVERED ?? 0,
+    dispatched: summary?.byStatus.DISPATCHED ?? 0,
   }
 
   /** Runs one call per order, best-effort like the backend's own bulk assign, then refreshes once. */
@@ -186,7 +186,7 @@ export function OrdersPage() {
         meta: {
           className: 'min-w-[130px]',
           filterVariant: 'select',
-          filterOptions: (['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'DELIVERED', 'CANCELLED'] as const).map((value) => ({
+          filterOptions: (['PROCESSING', 'PRODUCTION_QUEUE', 'DISPATCHED', 'CANCELLED'] as const).map((value) => ({
             value,
             label: t(`status.${value}`),
           })),
@@ -252,7 +252,7 @@ export function OrdersPage() {
           loading={summaryLoading}
         />
         <StatCard title={t('platform.stats.production')} value={counts.production} icon={Cog} loading={summaryLoading} />
-        <StatCard title={t('platform.stats.delivered')} value={counts.delivered} icon={CheckCircle2} loading={summaryLoading} />
+        <StatCard title={t('platform.stats.dispatched')} value={counts.dispatched} icon={Truck} loading={summaryLoading} />
       </div>
 
       <DataTable<Order>

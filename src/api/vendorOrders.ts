@@ -35,9 +35,6 @@ export interface VendorOrder {
   quantity: number
   /** The final recipient's address -- from the Quick Gift request; null for a campaign order. */
   deliveryAddress: string | null
-  /** Set when the order goes through the company's warehouse: ship there, and the warehouse delivers it. */
-  shipToWarehouseName: string | null
-  shipToWarehouseAddress: string | null
   giftMessage: string | null
   doctor: DoctorDetails | null
   /** The order may not be dispatched until one of its proofs is approved. */

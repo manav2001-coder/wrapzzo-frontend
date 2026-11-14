@@ -79,9 +79,6 @@ export const P = {
   COMPANY_VENDOR_EDIT: 'company_vendor.edit',
   COMPANY_VENDOR_STATUS: 'company_vendor.status',
 
-  WAREHOUSE_VIEW: 'warehouse.view',
-  WAREHOUSE_SETUP: 'warehouse.setup',
-  WAREHOUSE_OPERATE: 'warehouse.operate',
 
   PLATFORM_COMPANY_VIEW: 'platform_company.view',
   PLATFORM_COMPANY_CREATE: 'platform_company.create',

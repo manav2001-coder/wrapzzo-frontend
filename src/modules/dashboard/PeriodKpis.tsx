@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 
 const count = (n: number) => n.toLocaleString('en-IN')
 
-/** "up 12%" against the period before; for something where lower is better (days to deliver) the colours flip. */
+/** "up 12%" against the period before; for something where lower is better (days to dispatch) the colours flip. */
 function Delta({ now, before, lowerIsBetter = false }: { now: number; before: number | null | undefined; lowerIsBetter?: boolean }) {
   if (before === null || before === undefined) return null
   if (before === 0 && now === 0) return null
@@ -84,7 +84,7 @@ function Tile({
 }
 
 /** The four numbers for the chosen period, each against the period before. Two across on a phone, four on a desktop. */
-export function PeriodKpis({ current, previous, onSelect }: { current: InsightPeriod; previous: InsightPeriod | null; onSelect: (dimension: 'pelsRequested' | 'pelsServed') => void }) {
+export function PeriodKpis({ current, previous, onSelect }: { current: InsightPeriod; previous: InsightPeriod | null; onSelect: (dimension: 'pelsRequested' | 'pelsDispatched') => void }) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Tile
@@ -98,29 +98,29 @@ export function PeriodKpis({ current, previous, onSelect }: { current: InsightPe
       />
       <Tile
         icon={PackageCheck}
-        label="PELs delivered"
-        value={count(current.served)}
-        caption={current.served > 0 ? 'reached doctors' : 'None yet'}
-        delta={<Delta now={current.served} before={previous?.served} />}
+        label="PELs dispatched"
+        value={count(current.dispatched)}
+        caption={current.dispatched > 0 ? 'sent by the vendor' : 'None yet'}
+        delta={<Delta now={current.dispatched} before={previous?.dispatched} />}
         tone="bg-success/15"
-        onClick={current.served > 0 ? () => onSelect('pelsServed') : undefined}
+        onClick={current.dispatched > 0 ? () => onSelect('pelsDispatched') : undefined}
       />
       <Tile
         icon={Stethoscope}
-        label="Doctors reached"
-        value={count(current.doctorsServed)}
-        caption="received a PEL"
-        delta={<Delta now={current.doctorsServed} before={previous?.doctorsServed} />}
+        label="Doctors dispatched to"
+        value={count(current.doctorsDispatched)}
+        caption="had a PEL sent"
+        delta={<Delta now={current.doctorsDispatched} before={previous?.doctorsDispatched} />}
         tone="bg-sky-500/15"
-        onClick={current.doctorsServed > 0 ? () => onSelect('pelsServed') : undefined}
+        onClick={current.doctorsDispatched > 0 ? () => onSelect('pelsDispatched') : undefined}
       />
       <Tile
         icon={Clock}
-        label="Time to deliver"
-        value={current.avgDaysToDeliver === null ? '—' : String(current.avgDaysToDeliver)}
-        unit={current.avgDaysToDeliver === null ? undefined : 'days'}
-        caption={current.avgDaysToDeliver === null ? 'No deliveries yet' : 'request to door'}
-        delta={current.avgDaysToDeliver !== null && previous?.avgDaysToDeliver != null ? <Delta now={current.avgDaysToDeliver} before={previous.avgDaysToDeliver} lowerIsBetter /> : null}
+        label="Time to dispatch"
+        value={current.avgDaysToDispatch === null ? '—' : String(current.avgDaysToDispatch)}
+        unit={current.avgDaysToDispatch === null ? undefined : 'days'}
+        caption={current.avgDaysToDispatch === null ? 'No dispatches yet' : 'request to dispatch'}
+        delta={current.avgDaysToDispatch !== null && previous?.avgDaysToDispatch != null ? <Delta now={current.avgDaysToDispatch} before={previous.avgDaysToDispatch} lowerIsBetter /> : null}
         tone="bg-amber-500/15"
       />
     </div>

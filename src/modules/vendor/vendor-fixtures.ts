@@ -23,8 +23,6 @@ export function vendorOrder(overrides: Partial<VendorOrder> = {}): VendorOrder {
     price: 40,
     quantity: 5,
     deliveryAddress: '12 MG Road, Pune',
-    shipToWarehouseName: null,
-    shipToWarehouseAddress: null,
     giftMessage: null,
     doctor: { qualification: 'MBBS, MD', speciality: 'Cardiology', clinicName: 'Shah Heart Clinic' },
     artworkRequired: true,

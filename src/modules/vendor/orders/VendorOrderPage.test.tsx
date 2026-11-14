@@ -197,16 +197,12 @@ describe('VendorOrderPage', () => {
     await waitFor(() => expect(updateVendorOrderStatus).toHaveBeenCalledWith('o-1', 'DISPATCHED'))
   })
 
-  it('offers delivery and a way back to production for a dispatched order', async () => {
+  it('ends at dispatch: nothing more to do, no delivery step, only a way back if it was marked by mistake', async () => {
     renderWorkspace(vendorOrder({ status: 'DISPATCHED', artworkApproved: true }))
-    expect(await screen.findByRole('button', { name: 'Mark as delivered' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: 'Move back to production' })).toBeEnabled()
-  })
-
-  it('needs nothing from the vendor once delivered', async () => {
-    renderWorkspace(vendorOrder({ status: 'DELIVERED', artworkApproved: true }))
-    expect(await screen.findByText('Done. Nothing more to do on this order.')).toBeInTheDocument()
+    expect(await screen.findByText('Dispatched. Nothing more to do on this order.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Mark as/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/delivered/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Move back to production' })).toBeEnabled()
   })
 
   it('says so when the order is not the vendor’s', async () => {

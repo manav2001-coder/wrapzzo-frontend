@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { CheckCircle2, Cog, Eye, Palette, ShoppingBag, Truck } from 'lucide-react'
+import { Cog, Eye, Palette, ShoppingBag, Truck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -44,9 +44,6 @@ const STATUSES: OrderStatus[] = [
   'PROCESSING',
   'PRODUCTION_QUEUE',
   'DISPATCHED',
-  'RECEIVED_AT_WAREHOUSE',
-  'OUT_FOR_DELIVERY',
-  'DELIVERED',
   'CANCELLED',
 ]
 
@@ -204,7 +201,7 @@ export function OrdersPage() {
     <div>
       <MasterPageHeader title={pageTitle} description={t('company.subtitle')} />
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
         {canReview && (
           <StatCard
             title={t('company.stats.review')}
@@ -218,7 +215,6 @@ export function OrdersPage() {
         )}
         <StatCard title={t('company.stats.production')} value={count('PRODUCTION_QUEUE')} icon={Cog} color="warning" loading={summaryLoading} />
         <StatCard title={t('company.stats.dispatched')} value={count('DISPATCHED')} icon={Truck} color="primary" loading={summaryLoading} />
-        <StatCard title={t('company.stats.delivered')} value={count('DELIVERED')} icon={CheckCircle2} color="success" loading={summaryLoading} />
       </div>
 
       {canReview && (

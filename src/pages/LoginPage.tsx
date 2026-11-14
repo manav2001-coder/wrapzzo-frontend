@@ -25,7 +25,7 @@ const PIPELINE = [
   { key: 'inReview', cards: 2, active: false },
   { key: 'approved', cards: 2, active: false },
   { key: 'inPrint', cards: 2, active: false },
-  { key: 'delivered', cards: 2, active: true },
+  { key: 'dispatched', cards: 2, active: true },
 ] as const
 
 const SELLING_POINTS = [

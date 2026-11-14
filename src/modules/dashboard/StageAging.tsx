@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, ClipboardCheck, Cog, Palette, Truck, type LucideIcon } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ClipboardCheck, Cog, Palette, type LucideIcon } from 'lucide-react'
 
 import type { InsightStage, StageAging as Stage } from '@/api/dashboard'
 import { cn } from '@/lib/utils'
@@ -7,7 +7,6 @@ const META: Record<InsightStage, { label: string; icon: LucideIcon; tone: string
   APPROVAL: { label: 'Waiting for approval', icon: ClipboardCheck, tone: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
   ARTWORK: { label: 'Artwork & proof', icon: Palette, tone: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
   PRODUCTION: { label: 'In production', icon: Cog, tone: 'bg-sky-500/15 text-sky-600 dark:text-sky-400' },
-  TRANSIT: { label: 'On the way', icon: Truck, tone: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
 }
 
 /**

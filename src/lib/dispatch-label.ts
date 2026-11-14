@@ -26,7 +26,7 @@ const escapeHtml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 /**
- * The parcel goes to the AM who raised the order (via the warehouse), and the AM hands it to the doctor -- so the AM is the
+ * The parcel goes to the AM who raised the order, and the AM hands it to the doctor -- so the AM is the
  * addressee and the doctor is what is inside.
  */
 export function dispatchLabelOf(order: VendorOrder, artworkFile: string | null): DispatchLabel {
@@ -53,7 +53,7 @@ export async function qrSvgOf(text: string): Promise<string> {
   return QRCode.toString(text, { type: 'svg', margin: 0, width: 110 })
 }
 
-/** A Code 128 barcode of the same text, as SVG -- for a handheld scanner at the warehouse. */
+/** A Code 128 barcode of the same text, as SVG -- for a handheld scanner. */
 export function barcodeSvgOf(text: string): string {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   JsBarcode(svg, text, { format: 'CODE128', displayValue: false, margin: 0, height: 34, width: 2 })

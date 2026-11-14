@@ -82,7 +82,7 @@ export function DashboardPage() {
     return {
       source: slices(data.orderSourceBreakdown, (k) => (k === 'QUICK_GIFT' ? quickGiftName : (SOURCE_LABELS[k] ?? humanize(k))), (k) => SOURCE_COLORS[k] ?? '#94a3b8'),
       quickGift: slices(data.quickGiftStatusBreakdown, humanize, statusColor),
-      trend: (insights?.weekly ?? []).map((p) => ({ label: p.weekLabel, requested: p.requested, delivered: p.delivered })),
+      trend: (insights?.weekly ?? []).map((p) => ({ label: p.weekLabel, requested: p.requested, dispatched: p.dispatched })),
     }
   }, [data, insights, quickGiftName])
 
@@ -103,7 +103,6 @@ export function DashboardPage() {
   const hasAnyActivity =
     data.giftsInProgress > 0 ||
     data.dispatched > 0 ||
-    data.delivered > 0 ||
     data.quickGiftsThisMonth > 0 ||
     data.recentActivity.length > 0
 
@@ -224,7 +223,7 @@ export function DashboardPage() {
             <section className="lg:col-span-3">
               <SectionTitle
                 title="Recent orders"
-                description={data.companyWide ? 'Every PEL order in the company, ordered to delivered.' : 'Your PEL orders, ordered to delivered.'}
+                description={data.companyWide ? 'Every PEL order in the company, from requested to dispatched.' : 'Your PEL orders, from requested to dispatched.'}
               />
               <OrderTimeline orders={data.recentOrders} />
             </section>
@@ -245,12 +244,12 @@ export function DashboardPage() {
                   value: 'activity',
                   label: 'Weekly activity',
                   content: (
-                    <ChartPanel title="PELs requested vs delivered" description="Last 12 weeks">
+                    <ChartPanel title="PELs requested vs dispatched" description="Last 12 weeks">
                       <MultiLineChart
                         data={breakdowns.trend}
                         series={[
                           { key: 'requested', label: 'Requested', color: SOURCE_COLORS.QUICK_GIFT },
-                          { key: 'delivered', label: 'Delivered', color: '#22c55e' },
+                          { key: 'dispatched', label: 'Dispatched', color: '#22c55e' },
                         ]}
                       />
                     </ChartPanel>

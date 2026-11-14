@@ -69,7 +69,7 @@ describe('VendorHomePage', () => {
   })
 
   it('says so when nothing is waiting', async () => {
-    get.mockImplementation(fakeVendorApi([vendorOrder({ id: 'd', status: 'DELIVERED', artworkApproved: true })]))
+    get.mockImplementation(fakeVendorApi([vendorOrder({ id: 'd', status: 'DISPATCHED', artworkApproved: true })]))
     renderHome()
     expect(await screen.findAllByText("You're all caught up")).not.toHaveLength(0)
     expect(screen.queryByRole('button', { name: 'Open the most urgent order' })).not.toBeInTheDocument()

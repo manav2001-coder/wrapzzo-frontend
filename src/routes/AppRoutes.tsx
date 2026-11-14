@@ -34,7 +34,6 @@ import { OrderApprovalSettingsPage } from '@/modules/order-approval/OrderApprova
 import { OrdersPage as CompanyOrdersPage } from '@/modules/company/OrdersPage'
 import { VendorsPage as CompanyVendorsPage } from '@/modules/company/VendorsPage'
 import { MenuConfigPage } from '@/modules/platform-config/MenuConfigPage'
-import { WarehousesPage } from '@/modules/company/WarehousesPage'
 import { DashboardPage } from '@/modules/dashboard/DashboardPage'
 import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
 import { QuickGiftFormPage } from '@/modules/quickgift/QuickGiftFormPage'
@@ -119,7 +118,6 @@ export function AppRoutes() {
           <Route path="/approvals" element={<Guard permission={P.APPROVAL_VIEW}><ApprovalQueuePage /></Guard>} />
           <Route path="/orders" element={<Guard permission={P.ORDER_VIEW}><CompanyOrdersPage /></Guard>} />
           <Route path="/company/vendors" element={<Guard permission={P.COMPANY_VENDOR_VIEW}><CompanyVendorsPage /></Guard>} />
-          <Route path="/warehouses" element={<Guard permission={P.WAREHOUSE_VIEW}><WarehousesPage /></Guard>} />
 
           {/* Company Admin's own roster -- same Users pages as the platform-admin route above, just resolving "my company" instead of an :id param. */}
           {/* Masters: roles and users, shared by platform staff (who pick a company) and company admins. */}

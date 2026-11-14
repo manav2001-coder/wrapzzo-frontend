@@ -9,16 +9,6 @@ describe('vendorStageOf', () => {
     expect(vendorStageOf(base)).toBe('artwork')
   })
 
-  it('is done for the vendor once a warehouse-routed order is shipped to the warehouse', () => {
-    const viaWarehouse = { ...base, shipToWarehouseName: 'North Warehouse' }
-    expect(vendorStageOf({ ...viaWarehouse, status: 'DISPATCHED' })).toBe('warehouse')
-    expect(vendorStageOf({ ...viaWarehouse, status: 'RECEIVED_AT_WAREHOUSE' })).toBe('warehouse')
-    expect(vendorStageOf({ ...viaWarehouse, status: 'OUT_FOR_DELIVERY' })).toBe('warehouse')
-    expect(vendorStageOf({ ...viaWarehouse, status: 'DELIVERED' })).toBe('delivered')
-    // The vendor never marks it delivered -- the warehouse does.
-    expect(nextStatusOf('warehouse')).toBeNull()
-  })
-
   it('is in review while the newest proof waits on the customer', () => {
     expect(vendorStageOf({ ...base, latestDesignStatus: 'PENDING_REVIEW' })).toBe('review')
   })
@@ -41,7 +31,6 @@ describe('vendorStageOf', () => {
 
   it('follows the status once the order has left production', () => {
     expect(vendorStageOf({ ...base, status: 'DISPATCHED' })).toBe('dispatched')
-    expect(vendorStageOf({ ...base, status: 'DELIVERED' })).toBe('delivered')
     expect(vendorStageOf({ ...base, status: 'CANCELLED' })).toBe('cancelled')
   })
 })
@@ -49,9 +38,10 @@ describe('vendorStageOf', () => {
 describe('nextStatusOf', () => {
   it('moves forward only where the move is the vendor’s', () => {
     expect(nextStatusOf('ready')).toBe('DISPATCHED')
-    expect(nextStatusOf('dispatched')).toBe('DELIVERED')
+    // Dispatched is where it ends: there is no forward move from there.
+    expect(nextStatusOf('dispatched')).toBeNull()
     expect(nextStatusOf('artwork')).toBeNull()
     expect(nextStatusOf('review')).toBeNull()
-    expect(nextStatusOf('delivered')).toBeNull()
+    expect(nextStatusOf('cancelled')).toBeNull()
   })
 })

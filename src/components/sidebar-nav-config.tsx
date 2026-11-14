@@ -20,7 +20,6 @@ import {
   Store,
   Truck,
   Users,
-  Warehouse,
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -80,7 +79,6 @@ const MASTERS_NAV: NavSource = {
     { id: 'masters-roles', titleKey: 'nav.roles', type: 'item', url: '/masters/roles', icon: BadgeCheck, permission: P.ROLE_VIEW },
     { id: 'masters-users', titleKey: 'nav.users', type: 'item', url: '/masters/users', icon: Users, permission: P.USER_VIEW },
     { id: 'company-vendors', titleKey: 'nav.myVendors', type: 'item', url: '/company/vendors', icon: Truck, permission: P.COMPANY_VENDOR_VIEW },
-    { id: 'warehouses', titleKey: 'nav.warehouses', type: 'item', url: '/warehouses', icon: Warehouse, permission: P.WAREHOUSE_VIEW },
     { id: 'artwork-approval', titleKey: 'nav.artworkApproval', type: 'item', url: '/masters/artwork-approval', icon: Palette, permission: P.ARTWORK_APPROVAL_VIEW },
     { id: 'order-approval', titleKey: 'nav.orderApproval', type: 'item', url: '/masters/order-approval', icon: BadgeCheck, permission: P.ORDER_APPROVAL_VIEW },
   ],
@@ -129,7 +127,7 @@ const ADMIN_MASTERS_NAV: NavSource = {
   children: [
     { id: 'companies', titleKey: 'nav.companies', type: 'item', url: '/admin/companies', icon: Building2, permission: P.PLATFORM_COMPANY_VIEW },
     { id: 'vendors', titleKey: 'nav.vendors', type: 'item', url: '/admin/vendors', icon: Truck, permission: P.PLATFORM_VENDOR_VIEW },
-    // Roles and users only: My Vendors and Warehouses are a company's own screens, and platform staff are kept out of them.
+    // Roles and users only: My Vendors is a company's own screen, and platform staff are kept out of them.
     ...(MASTERS_NAV.children ?? []).filter((item) => item.id.startsWith('masters-')),
   ],
 }

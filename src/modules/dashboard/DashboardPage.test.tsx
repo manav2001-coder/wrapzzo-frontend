@@ -16,13 +16,12 @@ const SUMMARY: DashboardSummary = {
   companyWide: true,
   giftsInProgress: 4,
   dispatched: 1,
-  delivered: 7,
   quickGiftsThisMonth: 5,
   quickGiftsPending: 3,
   pelsRequested: 1500,
   doctorsRequested: 6,
-  pelsServed: 900,
-  doctorsServed: 4,
+  pelsDispatched: 900,
+  doctorsDispatched: 4,
   orderSourceBreakdown: { QUICK_GIFT: 5 },
   quickGiftStatusBreakdown: { APPROVED: 4, SUBMITTED: 1 },
   activityTrend: [],
@@ -46,18 +45,17 @@ const SUMMARY: DashboardSummary = {
   ],
 }
 
-const PERIOD = { requested: 1500, served: 900, doctorsRequested: 6, doctorsServed: 4, avgDaysToDeliver: 6.5 }
+const PERIOD = { requested: 1500, dispatched: 900, doctorsRequested: 6, doctorsDispatched: 4, avgDaysToDispatch: 6.5 }
 const STAGES: DashboardInsights['stages'] = [
   { stage: 'APPROVAL', count: 0, stuck: 0, oldestDays: 0, thresholdDays: 2 },
   { stage: 'ARTWORK', count: 3, stuck: 2, oldestDays: 9, thresholdDays: 4 },
   { stage: 'PRODUCTION', count: 1, stuck: 0, oldestDays: 2, thresholdDays: 7 },
-  { stage: 'TRANSIT', count: 0, stuck: 0, oldestDays: 0, thresholdDays: 5 },
 ]
 const TEAM_INSIGHTS: DashboardInsights = {
   scope: 'TEAM',
   range: '30d',
   current: PERIOD,
-  previous: { ...PERIOD, requested: 1000, avgDaysToDeliver: 8 },
+  previous: { ...PERIOD, requested: 1000, avgDaysToDispatch: 8 },
   coverage: { assigned: 20, covered: 12 },
   stages: STAGES,
   rejectedRequests: 0,
@@ -66,8 +64,8 @@ const TEAM_INSIGHTS: DashboardInsights = {
   vendors: null,
   teamSize: 2,
   team: [
-    { userId: 'u1', name: 'Asha Rao', unitName: 'Patna', requested: 0, served: 0, doctorsAssigned: 10, doctorsCovered: 0, inPipeline: 0, lastActivityAt: null },
-    { userId: 'u2', name: 'Ravi Kumar', unitName: 'Delhi', requested: 40, served: 30, doctorsAssigned: 10, doctorsCovered: 8, inPipeline: 2, lastActivityAt: '2026-11-10T10:00:00Z' },
+    { userId: 'u1', name: 'Asha Rao', unitName: 'Patna', requested: 0, dispatched: 0, doctorsAssigned: 10, doctorsCovered: 0, inPipeline: 0, lastActivityAt: null },
+    { userId: 'u2', name: 'Ravi Kumar', unitName: 'Delhi', requested: 40, dispatched: 30, doctorsAssigned: 10, doctorsCovered: 8, inPipeline: 2, lastActivityAt: '2026-11-10T10:00:00Z' },
   ],
 }
 const PERSONAL_INSIGHTS: DashboardInsights = { ...TEAM_INSIGHTS, scope: 'PERSONAL', coverage: { assigned: 5, covered: 3 }, team: [], teamSize: 0 }
@@ -100,7 +98,7 @@ describe('DashboardPage', () => {
     expect(requested).toHaveTextContent('1,500')
     expect(requested).toHaveTextContent('6 doctors')
     expect(requested).toHaveTextContent('50%') // up from 1,000
-    expect(screen.getByRole('button', { name: /PELs delivered/ })).toHaveTextContent('900')
+    expect(screen.getByRole('button', { name: /PELs dispatched/ })).toHaveTextContent('900')
     expect(screen.getByText('6.5')).toBeInTheDocument()
     expect(screen.queryByText(/spend|revenue/i)).not.toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/₹|\bINR\b/)
@@ -158,7 +156,7 @@ describe('DashboardPage', () => {
     getDashboardInsights.mockResolvedValue({
       ...TEAM_INSIGHTS,
       spend: { total: 50000, previousTotal: 40000, costPerPel: 40, byGift: [{ name: 'Prescription Pad', amount: 30000 }], byUnit: [{ name: 'Patna', amount: 20000 }] },
-      vendors: [{ vendorId: 'v1', name: 'Sky Prints', orders: 20, delivered: 12, open: 8, slowOpen: 3, avgDaysToDispatch: 2.5, avgDaysToDeliver: 6.1, designs: 10, designsRejected: 4 }],
+      vendors: [{ vendorId: 'v1', name: 'Sky Prints', orders: 20, dispatched: 12, open: 8, slowOpen: 3, avgDaysToDispatch: 2.5, designs: 10, designsRejected: 4 }],
     })
     renderWithProviders(<DashboardPage />)
     expect(await screen.findByText('Spend')).toBeInTheDocument()
@@ -192,7 +190,6 @@ describe('DashboardPage', () => {
       ...SUMMARY,
       giftsInProgress: 0,
       dispatched: 0,
-      delivered: 0,
       quickGiftsThisMonth: 0,
       recentOrders: [],
     })

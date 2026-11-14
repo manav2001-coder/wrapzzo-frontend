@@ -50,17 +50,16 @@ export interface DashboardSummary {
   companyWide: boolean
   giftsInProgress: number
   dispatched: number
-  delivered: number
   quickGiftsThisMonth: number
   quickGiftsPending: number
   /** PELs (units) on every order placed, cancelled ones aside. */
   pelsRequested: number
   /** Distinct doctors those PELs were requested for. */
   doctorsRequested: number
-  /** PELs on delivered orders. */
-  pelsServed: number
-  /** Distinct doctors those delivered PELs reached. */
-  doctorsServed: number
+  /** PELs on orders the vendor has dispatched. */
+  pelsDispatched: number
+  /** Distinct doctors those dispatched PELs were sent for. */
+  doctorsDispatched: number
   /** Order counts by source -- "QUICK_GIFT" / "BULK_GIFT". */
   orderSourceBreakdown: Record<string, number>
   /** Quick Gift request counts by status -- "SUBMITTED" / "APPROVED" / "REJECTED". */
@@ -100,7 +99,7 @@ export type DrilldownDimension =
   | 'topDepartment'
   | 'week'
   | 'pelsRequested'
-  | 'pelsServed'
+  | 'pelsDispatched'
   | 'pipelineStage'
   | 'quickGiftsThisMonth'
   | 'orderStage'
@@ -112,15 +111,15 @@ export async function getDashboardDrilldown(dimension: DrilldownDimension, value
 }
 
 export type DashboardRange = '7d' | '30d' | '90d' | 'year' | 'all'
-export type InsightStage = 'APPROVAL' | 'ARTWORK' | 'PRODUCTION' | 'TRANSIT'
+export type InsightStage = 'APPROVAL' | 'ARTWORK' | 'PRODUCTION'
 
 export interface InsightPeriod {
   requested: number
-  served: number
+  dispatched: number
   doctorsRequested: number
-  doctorsServed: number
-  /** Average days from request to delivery of what was delivered in the period; null when nothing was. */
-  avgDaysToDeliver: number | null
+  doctorsDispatched: number
+  /** Average days from request to dispatch of what was dispatched in the period; null when nothing was. */
+  avgDaysToDispatch: number | null
 }
 
 export interface StageAging {
@@ -137,7 +136,7 @@ export interface TeamMember {
   name: string
   unitName: string
   requested: number
-  served: number
+  dispatched: number
   doctorsAssigned: number
   doctorsCovered: number
   inPipeline: number
@@ -153,7 +152,7 @@ export interface DashboardInsights {
   coverage: { assigned: number; covered: number }
   stages: StageAging[]
   rejectedRequests: number
-  weekly: { weekLabel: string; weekStart: string; requested: number; delivered: number }[]
+  weekly: { weekLabel: string; weekStart: string; requested: number; dispatched: number }[]
   teamSize: number
   team: TeamMember[]
   /** Present only for someone who may see prices (the company admin). */
@@ -175,12 +174,11 @@ export interface VendorScore {
   vendorId: string
   name: string
   orders: number
-  delivered: number
+  dispatched: number
   open: number
   /** Open orders more than 10 days old. */
   slowOpen: number
   avgDaysToDispatch: number | null
-  avgDaysToDeliver: number | null
   /** Artwork versions uploaded, and how many were sent back. */
   designs: number
   designsRejected: number

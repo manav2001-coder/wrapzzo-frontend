@@ -6,7 +6,7 @@ import type { ActivityItem } from '@/api/dashboard'
  * from a rejection, which looks different from something just being created or sent for review. */
 function activityStyle(verb: string): { icon: LucideIcon; colorClass: string } {
   if (verb.includes('rejected')) return { icon: XCircle, colorClass: 'bg-red-500/10 text-red-500' }
-  if (verb.includes('approved') || verb.includes('delivered')) return { icon: CheckCircle2, colorClass: 'bg-emerald-500/10 text-emerald-500' }
+  if (verb.includes('approved') || verb.includes('dispatched')) return { icon: CheckCircle2, colorClass: 'bg-emerald-500/10 text-emerald-500' }
   if (verb.includes('dispatched')) return { icon: Send, colorClass: 'bg-sky-500/10 text-sky-500' }
   if (verb.includes('created')) return { icon: PlusCircle, colorClass: 'bg-primary/10 text-primary' }
   if (verb.includes('requested') || verb.includes('submitted')) return { icon: Bolt, colorClass: 'bg-amber-500/10 text-amber-500' }

@@ -67,7 +67,7 @@ describe('LandingPage', () => {
 
   it('shows the hero, the four steps and every role to a signed-out visitor', () => {
     renderLanding()
-    expect(screen.getByRole('heading', { level: 1, name: /every request raised, approved, printed and delivered/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /every request raised, approved, printed and dispatched/i })).toBeInTheDocument()
     // Four steps (Request, Approve, Print, Deliver) and three roles (field team, managers, vendors).
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(7)
     for (const feature of ['HCP directory', 'Manager approval', 'Artwork review', 'Vendor fulfilment', 'Labels & dispatch', 'Order tracking', 'Team dashboards']) {

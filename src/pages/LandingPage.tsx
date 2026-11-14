@@ -25,7 +25,7 @@ const STEPS: { key: string; icon: LucideIcon }[] = [
   { key: 'request', icon: Send },
   { key: 'approve', icon: BadgeCheck },
   { key: 'print', icon: Printer },
-  { key: 'deliver', icon: Truck },
+  { key: 'dispatch', icon: Truck },
 ]
 
 /** Who does what: each group lists the existing feature blurbs (title + description) for that role. */

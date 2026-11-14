@@ -80,7 +80,6 @@ export function OrderDetailSheet({
                 <Detail label={t('detail.quantity')}>{order.quantity}</Detail>
                 {canSeePrice && <Detail label={t('detail.total')}>{formatCurrency(order.totalPrice)}</Detail>}
                 {order.orgUnitName && <Detail label={t('detail.orgUnit')}>{order.orgUnitName}</Detail>}
-                {order.warehouseName && <Detail label={t('detail.warehouse')}>{order.warehouseName}</Detail>}
                 <Detail label={t('detail.placed')}>{formatDateTime(order.createdAt)}</Detail>
               </dl>
 
@@ -100,7 +99,7 @@ export function OrderDetailSheet({
 
               <section className="space-y-3">
                 <h3 className="text-sm font-semibold">{t('detail.progress')}</h3>
-                <OrderStepper status={order.status} history={order.history} viaWarehouse={Boolean(order.warehouseName)} />
+                <OrderStepper status={order.status} history={order.history} />
               </section>
 
               <section className="space-y-3">

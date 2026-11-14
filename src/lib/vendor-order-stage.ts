@@ -7,25 +7,21 @@ import type { VendorOrder } from '@/api/vendorOrders'
  * dispatch gate (an artwork-required order can't leave before a proof is approved) is the rule
  * this mirrors; this is the reading of it, not the enforcement.
  *
- * 'warehouse': an order routed through the company's warehouse, shipped there -- the warehouse
- * delivers it, so the vendor's part is done.
+ * The vendor's part -- and the platform's -- ends at 'dispatched'.
  */
-export type VendorStage = 'artwork' | 'rework' | 'review' | 'ready' | 'dispatched' | 'warehouse' | 'delivered' | 'cancelled'
+export type VendorStage = 'artwork' | 'rework' | 'review' | 'ready' | 'dispatched' | 'cancelled'
 
 /** Queue order: what needs the vendor first. */
-export const VENDOR_STAGES: VendorStage[] = ['rework', 'artwork', 'review', 'ready', 'dispatched', 'warehouse', 'delivered', 'cancelled']
+export const VENDOR_STAGES: VendorStage[] = ['rework', 'artwork', 'review', 'ready', 'dispatched', 'cancelled']
 
 /** Stages where the next move is the vendor's. */
-export const ACTION_STAGES: VendorStage[] = ['rework', 'artwork', 'ready', 'dispatched']
+export const ACTION_STAGES: VendorStage[] = ['rework', 'artwork', 'ready']
 
-type StageInput = Pick<VendorOrder, 'status' | 'artworkRequired' | 'artworkApproved' | 'latestDesignStatus'> &
-  Partial<Pick<VendorOrder, 'shipToWarehouseName'>>
+type StageInput = Pick<VendorOrder, 'status' | 'artworkRequired' | 'artworkApproved' | 'latestDesignStatus'>
 
 export function vendorStageOf(order: StageInput): VendorStage {
   if (order.status === 'CANCELLED') return 'cancelled'
-  if (order.status === 'DELIVERED') return 'delivered'
-  if (order.status === 'RECEIVED_AT_WAREHOUSE' || order.status === 'OUT_FOR_DELIVERY') return 'warehouse'
-  if (order.status === 'DISPATCHED') return order.shipToWarehouseName ? 'warehouse' : 'dispatched'
+  if (order.status === 'DISPATCHED') return 'dispatched'
   if (order.artworkRequired && !order.artworkApproved) {
     // Still with the customer while the MR's manager gives the final approval.
     if (order.latestDesignStatus === 'PENDING_REVIEW' || order.latestDesignStatus === 'PENDING_FINAL_APPROVAL') return 'review'
@@ -34,9 +30,7 @@ export function vendorStageOf(order: StageInput): VendorStage {
   return 'ready'
 }
 
-/** The one forward move the vendor makes from a stage, if it is theirs to make. */
+/** The one forward move the vendor makes from a stage, if it is theirs to make: dispatching. */
 export function nextStatusOf(stage: VendorStage): OrderStatus | null {
-  if (stage === 'ready') return 'DISPATCHED'
-  if (stage === 'dispatched') return 'DELIVERED'
-  return null
+  return stage === 'ready' ? 'DISPATCHED' : null
 }

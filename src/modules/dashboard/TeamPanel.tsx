@@ -128,7 +128,7 @@ export function TeamPanel({ team, teamSize, unitLabel }: { team: TeamMember[]; t
                   {m.requested === 0 && <span className="shrink-0 rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-semibold text-warning">Nudge</span>}
                 </div>
                 <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-                  {[['Requested', m.requested], ['Delivered', m.served], ['In progress', m.inPipeline]].map(([label, value]) => (
+                  {[['Requested', m.requested], ['Dispatched', m.dispatched], ['In progress', m.inPipeline]].map(([label, value]) => (
                     <div key={label as string} className="rounded-lg bg-muted/50 py-2">
                       <dd className="text-lg leading-none font-bold tabular-nums">{count(value as number)}</dd>
                       <dt className="mt-1 text-[11px] text-muted-foreground">{label}</dt>
@@ -150,7 +150,7 @@ export function TeamPanel({ team, teamSize, unitLabel }: { team: TeamMember[]; t
                 <tr className="border-b text-left text-xs text-muted-foreground">
                   <th className="py-2 pr-3 font-medium">Person</th>
                   <th className="px-3 py-2 text-right font-medium">Requested</th>
-                  <th className="px-3 py-2 text-right font-medium">Delivered</th>
+                  <th className="px-3 py-2 text-right font-medium">Dispatched</th>
                   <th className="px-3 py-2 text-right font-medium">In progress</th>
                   <th className="px-3 py-2 font-medium">Doctors covered</th>
                   <th className="py-2 pl-3 text-right font-medium">Last request</th>
@@ -169,7 +169,7 @@ export function TeamPanel({ team, teamSize, unitLabel }: { team: TeamMember[]; t
                       </div>
                     </td>
                     <td className={cn('px-3 text-right font-semibold tabular-nums', m.requested === 0 && 'text-warning')}>{count(m.requested)}</td>
-                    <td className="px-3 text-right tabular-nums">{count(m.served)}</td>
+                    <td className="px-3 text-right tabular-nums">{count(m.dispatched)}</td>
                     <td className="px-3 text-right tabular-nums">{count(m.inPipeline)}</td>
                     <td className="w-56 px-3">
                       <CoverageBar member={m} />

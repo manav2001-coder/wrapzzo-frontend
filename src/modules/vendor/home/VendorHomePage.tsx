@@ -25,7 +25,7 @@ interface QueueStage {
   mine: boolean
 }
 
-/** The queue in the order work happens: fix, create, wait for the customer, ship, confirm. */
+/** The queue in the order work happens: fix, create, wait for the customer, ship. Dispatched is the end of the line: nothing is left to do, so it never reads as waiting. */
 const QUEUE: QueueStage[] = [
   { stage: 'rework', icon: MessageSquareWarning, chip: 'bg-destructive/10 text-destructive', accent: 'bg-destructive', mine: true },
   { stage: 'artwork', icon: Palette, chip: 'bg-warning/15 text-warning', accent: 'bg-warning', mine: true },
@@ -112,7 +112,7 @@ export function VendorHomePage() {
   const countOf = (stage: VendorStage) => summary?.byStage[stage] ?? 0
   // How many orders are waiting on the vendor, in all (the list shows only the first few).
   const waiting = ACTION_STAGES.reduce((sum, stage) => sum + countOf(stage), 0)
-  const delivered = countOf('delivered')
+  const dispatched = countOf('dispatched')
   const live = (gifts ?? []).filter((gift) => gift.active).length
   const hidden = (gifts ?? []).length - live
   const now = new Date()
@@ -196,8 +196,8 @@ export function VendorHomePage() {
                 <dd className="mt-1 text-2xl font-bold tabular-nums">{isLoading ? '–' : (summary?.total ?? 0)}</dd>
               </div>
               <div className="rounded-xl bg-success/10 p-3">
-                <dt className="text-xs text-muted-foreground">{t('stage.delivered')}</dt>
-                <dd className="mt-1 text-2xl font-bold text-success tabular-nums">{isLoading ? '–' : delivered}</dd>
+                <dt className="text-xs text-muted-foreground">{t('stage.dispatched')}</dt>
+                <dd className="mt-1 text-2xl font-bold text-success tabular-nums">{isLoading ? '–' : dispatched}</dd>
               </div>
             </dl>
           </section>

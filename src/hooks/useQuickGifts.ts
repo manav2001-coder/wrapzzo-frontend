@@ -24,8 +24,11 @@ export function useCreateQuickGiftRequest() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateQuickGiftInput) => createQuickGiftRequest(input),
-    onSuccess: () =>
-      Promise.all([queryClient.invalidateQueries({ queryKey: ['quick-gifts'] }), queryClient.invalidateQueries({ queryKey: ['table-data'] })]),
+    // Refresh the lists in the background: returning the promise would hold the Send button until every refetch finished.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['quick-gifts'] })
+      void queryClient.invalidateQueries({ queryKey: ['table-data'] })
+    },
   })
 }
 

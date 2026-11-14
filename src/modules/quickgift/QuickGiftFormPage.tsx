@@ -403,11 +403,10 @@ export function QuickGiftFormPage() {
 
     for (const row of rows) {
       try {
-        const photos: QuickGiftPhotoValue[] = []
-        // One after another, numbered, so the stored names run PCODE_AMCODE_photo, _photo_2, _photo_3 in the order they were picked.
-        for (const [index, file] of (row.photos ?? []).entries()) {
-          photos.push(await uploadQuickGiftPhoto(file, row.recipientPcode.trim() || undefined, index + 1))
-        }
+        // Uploaded together, but numbered by the order they were picked, so the stored names still run PCODE_AMCODE_photo, _photo_2, _photo_3.
+        const photos: QuickGiftPhotoValue[] = await Promise.all(
+          (row.photos ?? []).map((file, index) => uploadQuickGiftPhoto(file, row.recipientPcode.trim() || undefined, index + 1)),
+        )
         const input = {
           giftId: gift.id,
           recipientId: row.recipientId,

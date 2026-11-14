@@ -79,9 +79,11 @@ export function QuickGiftRequestSheet({
               <dl className="grid grid-cols-2 gap-4">
                 <Detail label={t('detail.recipient')}>{request.recipientName}</Detail>
                 <Detail label={t('detail.phone')}>{request.recipientPhone}</Detail>
-                <Detail label={t('detail.address')} wide>
-                  {request.deliveryAddress}
-                </Detail>
+                {request.deliveryAddress && (
+                  <Detail label={t('detail.address')} wide>
+                    {request.deliveryAddress}
+                  </Detail>
+                )}
                 {request.recipientEmail && <Detail label={t('detail.email')}>{request.recipientEmail}</Detail>}
                 {request.recipientDob && <Detail label={t('detail.dob')}>{formatDateOnly(request.recipientDob)}</Detail>}
                 <Detail label={t('detail.quantity')}>{request.quantity}</Detail>

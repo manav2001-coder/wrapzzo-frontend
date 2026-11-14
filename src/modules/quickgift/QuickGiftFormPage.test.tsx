@@ -51,7 +51,6 @@ async function fillRecipient() {
   await userEvent.type(screen.getByLabelText('Pcode *'), 'P-1001')
   await userEvent.type(screen.getByLabelText('Name *'), 'Dr. Asha Shah')
   await userEvent.type(screen.getByLabelText('Phone *'), '9800000001')
-  await userEvent.type(screen.getByLabelText('Delivery address *'), '12 MG Road, Pune')
 }
 
 async function setQuantity(value: string) {
@@ -92,7 +91,7 @@ describe('QuickGiftFormPage', () => {
     await setQuantity('0')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
-    expect(screen.getAllByText('Required')).toHaveLength(4)
+    expect(screen.getAllByText('Required')).toHaveLength(3)
     expect(screen.getByText(/Enter a whole number from 1 to/)).toBeInTheDocument()
     expect(createQuickGiftRequest).not.toHaveBeenCalled()
     expect(toast.error).toHaveBeenCalledWith('Fix the highlighted recipients')
@@ -112,7 +111,6 @@ describe('QuickGiftFormPage', () => {
       giftId: 'g-pad',
       recipientPcode: 'P-1001',
       recipientName: 'Dr. Asha Shah',
-      deliveryAddress: '12 MG Road, Pune',
       quantity: 5,
       doctor: { qualification: 'MBBS' },
     })
@@ -230,12 +228,12 @@ describe('QuickGiftFormPage', () => {
       { route: { pathname: `/quick-gift/new/${PAD.id}`, state: { prefillRecipient: doctor } } },
     )
     await screen.findByRole('heading', { name: 'Send Prescription Pad' })
-    await userEvent.type(screen.getByLabelText('Delivery address *'), ', Clinic gate')
+    await userEvent.type(screen.getByLabelText('Name *'), ' Jr')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     await waitFor(() => expect(createQuickGiftRequest).toHaveBeenCalledTimes(1))
     expect(createQuickGiftRequest.mock.calls[0][0].recipientId).toBeUndefined()
-    expect(createQuickGiftRequest.mock.calls[0][0].deliveryAddress).toBe('12 MG Road, Pune, Clinic gate')
+    expect(createQuickGiftRequest.mock.calls[0][0]).not.toHaveProperty('deliveryAddress')
   })
 
   it('keeps the approval wording when requests still wait for approval, one per recipient', async () => {
@@ -248,7 +246,6 @@ describe('QuickGiftFormPage', () => {
     await userEvent.type(screen.getAllByLabelText('Pcode *')[1], 'P-2002')
     await userEvent.type(names[1], 'Dr. Ravi Rao')
     await userEvent.type(screen.getAllByLabelText('Phone *')[1], '9800000002')
-    await userEvent.type(screen.getAllByLabelText('Delivery address *')[1], '4 Park St, Kolkata')
     await userEvent.click(screen.getByRole('button', { name: 'Send all 2' }))
 
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('2 requests sent', { description: 'Sent for approval.' }))
@@ -265,7 +262,6 @@ describe('QuickGiftFormPage', () => {
     await userEvent.type(screen.getAllByLabelText('Pcode *')[1], 'P-2002')
     await userEvent.type(screen.getAllByLabelText('Name *')[1], 'Dr. Ravi Rao')
     await userEvent.type(screen.getAllByLabelText('Phone *')[1], '9800000002')
-    await userEvent.type(screen.getAllByLabelText('Delivery address *')[1], '4 Park St, Kolkata')
     await userEvent.click(screen.getByRole('button', { name: 'Send all 2' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Gift is out of stock')

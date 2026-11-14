@@ -55,10 +55,12 @@ export function QuickGiftActivityDialog({ quickGiftId, onHide }: { quickGiftId: 
                 <p className="text-foreground">{format(parseDateOnly(request.recipientDob), 'dd MMM yyyy')}</p>
               </div>
             )}
-            <div className="sm:col-span-2">
-              <p className="text-xs text-muted-foreground">Delivery address</p>
-              <p className="text-foreground">{request.deliveryAddress}</p>
-            </div>
+            {request.deliveryAddress && (
+              <div className="sm:col-span-2">
+                <p className="text-xs text-muted-foreground">Delivery address</p>
+                <p className="text-foreground">{request.deliveryAddress}</p>
+              </div>
+            )}
             {request.giftMessage && (
               <div className="sm:col-span-2">
                 <p className="text-xs text-muted-foreground">Note for the vendor</p>

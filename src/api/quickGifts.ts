@@ -19,7 +19,8 @@ export interface QuickGiftRequest {
   /** The doctor's pcode when ordered. */
   recipientPcode: string | null
   recipientEmail: string | null
-  deliveryAddress: string
+  /** Not asked for any more; null on new orders. */
+  deliveryAddress: string | null
   recipientDob: string | null
   doctor: DoctorDetails
   quantity: number
@@ -56,7 +57,7 @@ export interface CreateQuickGiftInput {
   /** A new doctor's pcode -- required when no existing doctor (recipientId) was picked. */
   recipientPcode?: string
   recipientEmail?: string
-  deliveryAddress: string
+  deliveryAddress?: string
   recipientDob?: string
   giftMessage?: string
   internalNotes?: string

@@ -48,7 +48,6 @@ interface DraftRecipient {
   /** A new doctor's pcode; for a picked directory doctor it is theirs (and may be empty if they predate pcodes). */
   recipientPcode: string
   recipientEmail: string
-  deliveryAddress: string
   dateOfBirth: Date | null
   giftMessage: string
   /** The recipient's photos (up to MAX_PHOTOS), uploaded when the row is sent. */
@@ -60,7 +59,7 @@ interface DraftRecipient {
   errors: Partial<Record<RowErrorKey, string>>
 }
 
-type RowErrorKey = 'recipientName' | 'recipientPhone' | 'recipientPcode' | 'deliveryAddress' | 'photoOrEmail' | 'quantity' | 'submit'
+type RowErrorKey = 'recipientName' | 'recipientPhone' | 'recipientPcode' | 'photoOrEmail' | 'quantity' | 'submit'
 
 interface RecipientPrefill {
   recipientId?: string
@@ -68,7 +67,6 @@ interface RecipientPrefill {
   recipientPhone?: string
   recipientPcode?: string
   recipientEmail?: string
-  deliveryAddress?: string
   dateOfBirth?: Date
   doctor?: Partial<DoctorDetails>
 }
@@ -80,7 +78,6 @@ function prefillFrom(recipient: Recipient | UpcomingBirthday): RecipientPrefill 
     recipientPhone: recipient.phone,
     recipientPcode: 'pcode' in recipient ? (recipient.pcode ?? undefined) : undefined,
     recipientEmail: recipient.email ?? undefined,
-    deliveryAddress: recipient.address ?? undefined,
     dateOfBirth: fromDateOnly(recipient.dateOfBirth),
     doctor: 'doctor' in recipient ? recipient.doctor : undefined,
   }
@@ -95,7 +92,6 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
     recipientPhone: prefill?.recipientPhone ?? '',
     recipientPcode: prefill?.recipientPcode ?? '',
     recipientEmail: prefill?.recipientEmail ?? '',
-    deliveryAddress: prefill?.deliveryAddress ?? '',
     dateOfBirth: prefill?.dateOfBirth ?? null,
     giftMessage: '',
     quantity: '1',
@@ -110,7 +106,7 @@ function emptyRow(expanded = false, prefill?: RecipientPrefill): DraftRecipient 
 }
 
 function isBlankRow(row: DraftRecipient): boolean {
-  return !row.recipientName && !row.recipientPhone && !row.recipientEmail && !row.deliveryAddress
+  return !row.recipientName && !row.recipientPhone && !row.recipientEmail
 }
 
 function parseQuantity(value: string, min = 1): number | null {
@@ -119,7 +115,7 @@ function parseQuantity(value: string, min = 1): number | null {
 }
 
 /** Fields the server reads from the picked doctor's record instead of the request. */
-const RECORD_FIELDS: (keyof DraftRecipient)[] = ['recipientName', 'recipientPhone', 'recipientPcode', 'recipientEmail', 'deliveryAddress', 'dateOfBirth', 'doctor']
+const RECORD_FIELDS: (keyof DraftRecipient)[] = ['recipientName', 'recipientPhone', 'recipientPcode', 'recipientEmail', 'dateOfBirth', 'doctor']
 
 /** Only the fields actually filled in -- the server stores an absent one as "not given". */
 function doctorInput(doctor: DoctorFields): Partial<DoctorDetails> | undefined {
@@ -229,14 +225,6 @@ function RecipientCard({
             value={row.quantity}
             aria-invalid={Boolean(row.errors.quantity)}
             onChange={(e) => onUpdate({ quantity: e.target.value })}
-          />
-        </LabelledField>
-        <LabelledField id={id('address')} label={`${t('form.address')} *`} error={row.errors.deliveryAddress} className="sm:col-span-2 lg:col-span-4">
-          <Input
-            id={id('address')}
-            value={row.deliveryAddress}
-            aria-invalid={Boolean(row.errors.deliveryAddress)}
-            onChange={(e) => onUpdate({ deliveryAddress: e.target.value })}
           />
         </LabelledField>
 
@@ -391,7 +379,6 @@ export function QuickGiftFormPage() {
     if (!row.recipientPhone.trim()) errors.recipientPhone = required
     // A doctor picked from the directory is identified already; a new one needs a pcode.
     if (!row.recipientId && !row.recipientPcode.trim()) errors.recipientPcode = required
-    if (!row.deliveryAddress.trim()) errors.deliveryAddress = required
     if (gift.photoRequired && !row.photos?.length && !row.recipientEmail.trim()) errors.photoOrEmail = t('form.error.photoOrEmail')
     if (parseQuantity(row.quantity, minQuantity) === null) {
       errors.quantity = t('form.error.quantity', { min: minQuantity.toLocaleString(), max: MAX_QUANTITY.toLocaleString() })
@@ -428,7 +415,6 @@ export function QuickGiftFormPage() {
           recipientPhone: row.recipientPhone.trim(),
           recipientPcode: row.recipientPcode.trim() || undefined,
           recipientEmail: row.recipientEmail.trim() || undefined,
-          deliveryAddress: row.deliveryAddress.trim(),
           recipientDob: toDateOnly(row.dateOfBirth) ?? undefined,
           giftMessage: row.giftMessage.trim() || undefined,
           photos: photos.length > 0 ? photos : undefined,

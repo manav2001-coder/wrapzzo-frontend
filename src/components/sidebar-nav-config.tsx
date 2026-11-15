@@ -1,6 +1,7 @@
 import {
   BadgeCheck,
   Briefcase,
+  MailCheck,
   ClipboardList,
   KeyRound,
   Layers,
@@ -167,6 +168,7 @@ const PLATFORM_CONFIG_NAV: NavSource = {
       icon: Settings2,
       children: [
         { id: 'menu-config', titleKey: 'nav.menuConfig', type: 'item', url: '/platform-config/menu', end: true, icon: PencilLine, permission: P.PLATFORM_MENU_CONFIG_VIEW },
+        { id: 'email-settings', titleKey: 'nav.emailSettings', type: 'item', url: '/platform-config/email', end: true, icon: MailCheck, permission: P.PLATFORM_EMAIL_SETTINGS_VIEW },
         { id: 'jobs', titleKey: 'nav.jobs', type: 'item', url: '/platform-config/jobs', end: true, icon: Briefcase, permission: P.PLATFORM_JOBS_VIEW },
       ],
     },

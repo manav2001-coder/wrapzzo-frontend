@@ -101,6 +101,8 @@ export const P = {
 
   PLATFORM_MENU_CONFIG_VIEW: 'platform_menu_config.view',
   PLATFORM_MENU_CONFIG_EDIT: 'platform_menu_config.edit',
+  PLATFORM_EMAIL_SETTINGS_VIEW: 'platform_email_settings.view',
+  PLATFORM_EMAIL_SETTINGS_EDIT: 'platform_email_settings.edit',
 } as const
 
 export type PermissionKey = (typeof P)[keyof typeof P]

@@ -44,7 +44,8 @@
     "platformConfig": "Platform Configuration",
     "jobs": "Background jobs",
     "menuConfig": "Menu config",
-    "orderApproval": "Order approval"
+    "orderApproval": "Order approval",
+    "emailSettings": "Email settings"
   },
   "action": {
     "activate": "Activate",

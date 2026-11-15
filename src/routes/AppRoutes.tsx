@@ -33,6 +33,7 @@ import { ArtworkApprovalSettingsPage } from '@/modules/artwork-approval/ArtworkA
 import { OrderApprovalSettingsPage } from '@/modules/order-approval/OrderApprovalSettingsPage'
 import { OrdersPage as CompanyOrdersPage } from '@/modules/company/OrdersPage'
 import { VendorsPage as CompanyVendorsPage } from '@/modules/company/VendorsPage'
+import { EmailSettingsPage } from '@/modules/platform-config/EmailSettingsPage'
 import { MenuConfigPage } from '@/modules/platform-config/MenuConfigPage'
 import { DashboardPage } from '@/modules/dashboard/DashboardPage'
 import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
@@ -75,6 +76,7 @@ export function AppRoutes() {
           {/* Admin module -- add a new module by adding its route tree here and its entry in components/sidebar-nav-config.tsx */}
           <Route path="/home" element={<FirstMenuRedirect />} />
           <Route path="/platform-config/menu" element={<Guard permission={P.PLATFORM_MENU_CONFIG_VIEW}><MenuConfigPage /></Guard>} />
+          <Route path="/platform-config/email" element={<Guard permission={P.PLATFORM_EMAIL_SETTINGS_VIEW}><EmailSettingsPage /></Guard>} />
           <Route path="/platform-config/jobs" element={<Guard permission={P.PLATFORM_JOBS_VIEW}><JobsMonitorPage /></Guard>} />
           <Route path="/admin" element={<FirstMenuRedirect />} />
           <Route path="/admin/dashboard" element={<Guard permission={P.PLATFORM_DASHBOARD_VIEW}><PlatformDashboardPage /></Guard>} />

@@ -525,6 +525,37 @@
       "reset": "Use the default name",
       "resetFor": "Use the default name for {{menu}}",
       "nameFor": "Company's name for {{menu}}"
+    },
+    "emailSettings": {
+      "title": "Email settings",
+      "subtitle": "Decide which emails the platform sends. Account setup and password reset emails are never affected.",
+      "cardTitle": "Order workflow emails",
+      "cardHelp": "The emails sent as an order moves through approval and printing.",
+      "toggleLabel": "Send order workflow emails",
+      "on": "On",
+      "off": "Off",
+      "stateOn": "Order workflow emails are being sent.",
+      "stateOff": "Order workflow emails are switched off: none are being sent.",
+      "coversTitle": "Switched off, these are not sent",
+      "covers": [
+        "An approver is told an order or an artwork proof is waiting for them",
+        "Daily reminders to approvers",
+        "An order was approved or not approved",
+        "The vendor is told about a new order, or a proof was approved or needs changes"
+      ],
+      "alwaysTitle": "These always work, on or off",
+      "always": [
+        "Account setup emails for new users and vendors",
+        "Password reset and setup links",
+        "The photo request emailed to a doctor"
+      ],
+      "warning": "Emails for what happens while this is off are not sent later. Daily reminders pick up again once it is on.",
+      "lastChanged": "Last changed by {{name}}, {{when}}",
+      "neverChanged": "Not changed yet.",
+      "saved": "Order workflow emails are now {{state}}.",
+      "savedOn": "on",
+      "savedOff": "off",
+      "loadFailed": "The email settings could not be loaded."
     }
   },
   "artworkApproval": {

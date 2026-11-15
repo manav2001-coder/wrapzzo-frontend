@@ -56,11 +56,24 @@ describe('Sidebar', () => {
   })
 
   it("uses the company's own menu names where it has renamed them", () => {
-    companyUser(['dashboard.view', 'quick_gift.create', 'gift_store.view', 'doctor.view'], false, { 'quick-gift': 'Request Prescription Pads', 'gift-store': 'Prescription Pads' })
+    companyUser(['dashboard.view', 'quick_gift.create', 'doctor.view'], false, { 'quick-gift': 'Request Prescription Pads' })
     renderWithProviders(<Sidebar />, { route: '/dashboard' })
     expect(screen.getByRole('link', { name: 'Request Prescription Pads' })).toHaveAttribute('href', '/quick-gift')
-    expect(screen.getByRole('link', { name: 'Prescription Pads' })).toHaveAttribute('href', '/gift-store')
     expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
+  })
+
+  it('has one PEL entry for someone who can send: the catalogue is already a tab of Request PEL', () => {
+    companyUser(['dashboard.view', 'quick_gift.create', 'gift_store.view'])
+    renderWithProviders(<Sidebar />, { route: '/dashboard' })
+    expect(screen.getByRole('link', { name: /quick pel/i })).toHaveAttribute('href', '/quick-gift')
+    expect(screen.queryByRole('link', { name: /gift-store/i })).not.toBeInTheDocument()
+    expect(document.querySelector('a[href="/gift-store"]')).toBeNull()
+  })
+
+  it('keeps the catalogue entry, with the company\'s name for it, for someone who can browse but not send', () => {
+    companyUser(['dashboard.view', 'gift_store.view'], false, { 'gift-store': 'Prescription Pads' })
+    renderWithProviders(<Sidebar />, { route: '/dashboard' })
+    expect(screen.getByRole('link', { name: 'Prescription Pads' })).toHaveAttribute('href', '/gift-store')
   })
 
   it('shows platform staff the Admin tree instead of the company one', () => {

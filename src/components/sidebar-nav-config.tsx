@@ -47,6 +47,8 @@ export interface NavSource {
   end?: boolean
   /** Any-of. Omit for an entry everyone in this portal may see. */
   permission?: PermissionRequirement
+  /** Hidden from anyone holding this: the destination is already a tab of another entry, so a second menu item would only repeat it. */
+  hideWhen?: PermissionRequirement
   /** Also shown to anyone with direct reports, whatever their keys (a manager's own approvals). */
   forManagers?: boolean
   children?: NavSource[]
@@ -205,7 +207,7 @@ export const COMPANY_NAV: NavSource[] = [
     icon: Briefcase,
     children: [
       { id: 'quick-gift', titleKey: 'nav.quickGift', type: 'item', url: '/quick-gift', icon: Zap, permission: P.QUICK_GIFT_CREATE },
-      { id: 'gift-store', titleKey: 'nav.giftStore', type: 'item', url: '/gift-store', icon: Store, permission: P.GIFT_STORE_VIEW },
+      { id: 'gift-store', titleKey: 'nav.giftStore', type: 'item', url: '/gift-store', icon: Store, permission: P.GIFT_STORE_VIEW, hideWhen: P.QUICK_GIFT_CREATE },
       { id: 'recipients', titleKey: 'nav.recipients', type: 'item', url: '/recipients', icon: Contact, permission: P.DOCTOR_VIEW },
       { id: 'approvals', titleKey: 'nav.approvals', type: 'item', url: '/approvals', icon: BadgeCheck, permission: P.APPROVAL_VIEW },
       { id: 'company-orders', titleKey: 'nav.orders', type: 'item', url: '/orders', icon: ShoppingBag, permission: P.ORDER_VIEW },

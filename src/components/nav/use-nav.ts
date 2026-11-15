@@ -21,6 +21,7 @@ interface FilterContext {
  * filtered out -- unless it has a `url` of its own, in which case it is still a destination.
  */
 function filterItem(item: NavSource, ctx: FilterContext): NavItemType | null {
+  if (item.hideWhen && ctx.can(item.hideWhen)) return null
   if (!ctx.can(item.permission) && !(item.forManagers && ctx.managesTeam)) return null
 
   const title = ctx.labels?.[item.id] ?? ctx.t(item.titleKey)

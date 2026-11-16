@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -48,10 +48,16 @@ export function ContentHeader() {
   const { t } = useTranslation();
   const { collapsed, toggle } = useSidebar();
   const { homePath } = useShell();
+  // The phone drawer is shut by going somewhere: tapping a menu item must not leave the menu lying over the page it opened.
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const { pathname } = useLocation();
+  React.useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-1 border-b border-border bg-background/80 px-4 backdrop-blur">
-      <Sheet>
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetTrigger asChild>
           <Button
             variant="ghost"

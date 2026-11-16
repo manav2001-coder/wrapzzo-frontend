@@ -1,7 +1,8 @@
+import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
-import { renderWithProviders, screen } from '@/test/test-utils'
+import { renderWithProviders, screen, within } from '@/test/test-utils'
 import { AppLayout } from './layout'
 
 vi.mock('@/hooks/use-current-user', () => ({
@@ -14,6 +15,7 @@ function renderLayout(portal: 'app' | 'vendor' = 'app') {
     <Routes>
       <Route element={<AppLayout portal={portal} />}>
         <Route path="/dashboard" element={<h1>Dashboard page</h1>} />
+        <Route path="/doctors-page" element={<h1>Doctors page</h1>} />
       </Route>
     </Routes>,
     { route: '/dashboard' },
@@ -21,6 +23,24 @@ function renderLayout(portal: 'app' | 'vendor' = 'app') {
 }
 
 describe('AppLayout', () => {
+  it('shuts the phone menu once a menu item has been tapped, instead of leaving it over the new page', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <Routes>
+        <Route element={<AppLayout portal="app" />}>
+          <Route path="/dashboard" element={<h1>Dashboard page</h1>} />
+          <Route path="/doctors-page" element={<h1>Doctors page</h1>} />
+        </Route>
+      </Routes>,
+      { route: '/doctors-page' },
+    )
+    await user.click(screen.getByRole('button', { name: /open navigation/i }))
+    const menu = await screen.findByRole('dialog')
+    await user.click(within(menu).getByRole('link', { name: /dashboard/i }))
+    expect(await screen.findByRole('heading', { name: 'Dashboard page' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
   it('renders the outlet inside the header and rail chrome', () => {
     renderLayout()
     expect(screen.getByRole('heading', { name: 'Dashboard page' })).toBeInTheDocument()

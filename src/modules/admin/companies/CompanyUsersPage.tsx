@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Building, Download, Network, Plus, ShieldMinus, ShieldPlus, Trash2, Upload, Users } from 'lucide-react'
+import { Building, Download, Link2, Network, Plus, Send, ShieldMinus, ShieldPlus, Trash2, Upload, Users } from 'lucide-react'
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess, usePermissions } from '@/hooks/use-permission'
 import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
-import { useDeleteUser, useMakeCompanyAdmin, useSetCompanyWide } from '@/hooks/useUsers'
+import { useDeleteUser, useMakeCompanyAdmin, useResendInvite, useSetCompanyWide, useSetupLink } from '@/hooks/useUsers'
 import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { P } from '@/lib/permissions'
@@ -43,7 +43,7 @@ const LIST_FIELDS: ListFieldMap = {
   updatedByName: 'text',
 }
 
-type PendingAction = { kind: 'makeAdmin' | 'wholeCompany' | 'ownUnit' | 'delete'; user: CompanyUser }
+type PendingAction = { kind: 'makeAdmin' | 'wholeCompany' | 'ownUnit' | 'delete' | 'resend' | 'copyLink'; user: CompanyUser }
 
 export function CompanyUsersPage() {
   const { t } = useTranslation('admin')
@@ -58,6 +58,8 @@ export function CompanyUsersPage() {
   const makeCompanyAdmin = useMakeCompanyAdmin(companyId)
   const deleteUser = useDeleteUser(companyId)
   const setCompanyWide = useSetCompanyWide(companyId)
+  const resendInvite = useResendInvite(companyId)
+  const setupLink = useSetupLink(companyId)
   const canCreate = useHasAccess(P.USER_CREATE)
   const canDelete = useHasAccess(P.USER_DELETE)
   // Changing who sees what takes user.edit AND seeing the whole company yourself (the API refuses
@@ -69,6 +71,8 @@ export function CompanyUsersPage() {
   const [pending, setPending] = useState<PendingAction | null>(null)
   const [coveringFor, setCoveringFor] = useState<CompanyUser | null>(null)
   const [removingAdminFor, setRemovingAdminFor] = useState<CompanyUser | null>(null)
+  // A setup link the browser would not let us copy, shown so the admin can copy it by hand.
+  const [shownLink, setShownLink] = useState<{ name: string; url: string } | null>(null)
 
   const company = companyName ?? t('users.thisCompany')
 
@@ -79,6 +83,17 @@ export function CompanyUsersPage() {
       if (kind === 'makeAdmin') {
         await makeCompanyAdmin.mutateAsync(user.id)
         toast.success(t('users.madeAdmin', { name: user.name }))
+      } else if (kind === 'resend') {
+        await resendInvite.mutateAsync(user.id)
+        toast.success(t('users.invite.sent', { name: user.name, email: user.email }))
+      } else if (kind === 'copyLink') {
+        const link = await setupLink.mutateAsync(user.id)
+        try {
+          await navigator.clipboard.writeText(link.setupUrl)
+          toast.success(t('users.invite.linkCopied', { name: user.name }))
+        } catch {
+          setShownLink({ name: user.name, url: link.setupUrl })
+        }
       } else if (kind === 'wholeCompany' || kind === 'ownUnit') {
         await setCompanyWide.mutateAsync({ userId: user.id, companyWide: kind === 'wholeCompany' })
         toast.success(t(kind === 'wholeCompany' ? 'users.wholeCompany.set' : 'users.wholeCompany.cleared', { name: user.name }))
@@ -100,10 +115,23 @@ export function CompanyUsersPage() {
   }
 
   /** The buttons for what you may do with a person -- the same in the table's last column and on a phone card. */
-  function userActions(user: CompanyUser) {
+  function userActions(user: CompanyUser, onPhone = false) {
     const isAdmin = user.roleName === COMPANY_ADMIN_ROLE_NAME
+    const waiting = user.status === 'INVITED'
     return (
       <div className="flex items-center justify-end gap-0.5">
+        {/* Someone who has not set up gets a new email, or a link to pass on. Someone who has set up has nothing to resend: the
+            button stays in the table, greyed out and saying why, and is left off a phone card where it would only take room. */}
+        {canEditUsers && (waiting || !onPhone) && (
+          <IconButton
+            icon={Send}
+            label={t('users.invite.resend')}
+            tooltip={waiting ? undefined : t('users.invite.alreadySetUp')}
+            disabled={!waiting}
+            onClick={() => setPending({ kind: 'resend', user })}
+          />
+        )}
+        {canPlace && waiting && <IconButton icon={Link2} label={t('users.invite.copyLink')} onClick={() => setPending({ kind: 'copyLink', user })} />}
         {canPlace && (
           <>
             {!user.companyWide && <IconButton icon={Network} label={t('users.extraUnits.action')} onClick={() => setCoveringFor(user)} />}
@@ -128,7 +156,7 @@ export function CompanyUsersPage() {
 
   /** A person as a compact card on a phone: name and status, how to reach them, where they sit and their access, then the buttons. */
   const userCard = (user: CompanyUser) => {
-    const hasActions = canDelete || canPlace
+    const hasActions = canDelete || canPlace || (canEditUsers && user.status === 'INVITED')
     return (
       <MobileRowCard
         title={user.name}
@@ -142,7 +170,7 @@ export function CompanyUsersPage() {
             <Badge variant={user.roleName === COMPANY_ADMIN_ROLE_NAME ? 'default' : 'secondary'}>{user.roleName}</Badge>
           </span>,
         ]}
-        footer={hasActions ? userActions(user) : undefined}
+        footer={hasActions ? userActions(user, true) : undefined}
       />
     )
   }
@@ -214,7 +242,7 @@ export function CompanyUsersPage() {
         cell: ({ row }) => userActions(row.original),
       },
     ],
-    [t, auditColumns, currentUserId, canPlace, canDelete],
+    [t, auditColumns, currentUserId, canPlace, canDelete, canEditUsers],
   )
 
   const dialog = pending && {
@@ -226,6 +254,8 @@ export function CompanyUsersPage() {
       destructive: false,
     },
     delete: { title: t('users.delete'), body: t('users.deleteBody', { name: pending.user.name }), destructive: true },
+    resend: { title: t('users.invite.resend'), body: t('users.invite.resendBody', { name: pending.user.name, email: pending.user.email }), destructive: false },
+    copyLink: { title: t('users.invite.copyLink'), body: t('users.invite.copyLinkBody', { name: pending.user.name }), destructive: false },
   }[pending.kind]
 
   return (
@@ -279,9 +309,23 @@ export function CompanyUsersPage() {
           confirmLabel={dialog.title}
           cancelLabel={t('action.cancel', { ns: 'common' })}
           confirmVariant={dialog.destructive ? 'destructive' : 'default'}
-          loading={makeCompanyAdmin.isPending || setCompanyWide.isPending || deleteUser.isPending}
+          loading={makeCompanyAdmin.isPending || setCompanyWide.isPending || deleteUser.isPending || resendInvite.isPending || setupLink.isPending}
           onConfirm={confirmPending}
         />
+      )}
+      {shownLink && (
+        <AppDialog
+          open
+          onOpenChange={(next) => !next && setShownLink(null)}
+          size="sm"
+          title={t('users.invite.linkTitle', { name: shownLink.name })}
+          description={t('users.invite.linkManual')}
+          confirmLabel={t('action.close', { ns: 'common' })}
+          cancelLabel={t('action.close', { ns: 'common' })}
+          onConfirm={() => setShownLink(null)}
+        >
+          <input readOnly value={shownLink.url} aria-label={t('users.invite.copyLink')} className="w-full rounded-md border bg-muted p-2 text-xs" onFocus={(e) => e.currentTarget.select()} />
+        </AppDialog>
       )}
       {removingAdminFor && companyId && <RemoveAdminDialog key={removingAdminFor.id} companyId={companyId} user={removingAdminFor} onClose={() => setRemovingAdminFor(null)} />}
       {coveringFor && companyId && (

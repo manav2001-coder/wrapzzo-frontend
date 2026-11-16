@@ -8,6 +8,8 @@ import {
   setCompanyWide,
   setExtraOrgUnits,
   type BulkImportUserRow,
+  getSetupLink,
+  resendInvite,
 } from '@/api/users'
 import { CURRENT_USER_QUERY_KEY } from '@/hooks/use-current-user'
 
@@ -73,6 +75,14 @@ export function useSetCompanyWide(companyId: string) {
     mutationFn: ({ userId, companyWide }: { userId: string; companyWide: boolean }) => setCompanyWide(companyId, userId, companyWide),
     onSuccess: () => invalidateUserLists(queryClient, companyId),
   })
+}
+
+export function useResendInvite(companyId: string) {
+  return useMutation({ mutationFn: (userId: string) => resendInvite(companyId, userId) })
+}
+
+export function useSetupLink(companyId: string) {
+  return useMutation({ mutationFn: (userId: string) => getSetupLink(companyId, userId) })
 }
 
 export function useDeleteUser(companyId: string) {

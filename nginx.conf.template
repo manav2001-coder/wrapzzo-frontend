@@ -2,6 +2,8 @@ server {
     listen ${PORT};
     server_name _;
 
+    resolver ${DNS_RESOLVER} valid=30s ipv6=off;
+
     root /usr/share/nginx/html;
     index index.html;
 
@@ -18,6 +20,27 @@ server {
     location /assets/ {
         add_header Cache-Control "public, max-age=31536000, immutable";
         try_files $uri =404;
+    }
+
+    # The backend, under the app's own address. The browser only ever talks to this host: an office network that
+    # blocks the backend's own address (a generic hosting domain, which firewalls often do) cannot then break sign-in.
+    # API_UPSTREAM and DNS_RESOLVER come from the environment (defaults in the Dockerfile). Because the upstream is a
+    # variable, nginx looks it up at request time through `resolver`, and passes the request path on unchanged.
+    location /api/ {
+        set $upstream ${API_UPSTREAM};
+        proxy_pass $upstream;
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header Connection "";
+        # Bulk uploads of users and doctors are large JSON bodies, and imports can take a while to answer.
+        client_max_body_size 25m;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+        add_header Cache-Control "no-store";
     }
 
     # The page that points at those files must be re-checked on every visit, or a deploy is not seen.

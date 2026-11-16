@@ -6,7 +6,7 @@ import { renderWithProviders, screen } from '@/test/test-utils'
 import { AccountMenu, initialsFromEmail } from './account-menu'
 
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { companyId: 'c1', companyName: 'Acme Pharma', permissions: [] }, isLoading: false }),
+  useCurrentUser: () => ({ data: { companyId: 'c1', companyName: 'Acme Pharma', permissions: [], name: 'Priya Sharma' }, isLoading: false }),
   CURRENT_USER_QUERY_KEY: ['me'],
 }))
 
@@ -34,13 +34,27 @@ describe('AccountMenu', () => {
     expect(screen.getByText('Vendor portal')).toBeInTheDocument()
   })
 
-  it('splits into Profile and Settings tabs, with the theme picker under Settings', async () => {
+  it('is one panel: the name and full email, a link to My profile, the theme picker and a labelled Sign out -- no tabs', async () => {
     renderWithProviders(<AccountMenu />)
     await userEvent.click(screen.getByRole('button', { name: 'Account' }))
-    expect(screen.queryByRole('link', { name: 'Account settings' })).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Settings' }))
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'My profile' })).toHaveAttribute('href', '/profile')
     expect(screen.getByRole('radio', { name: 'Dark theme' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sign out' })).toHaveTextContent('Sign out')
+  })
+
+  it("shows the person's name above their email when it is known", async () => {
+    renderWithProviders(<AccountMenu />)
+    await userEvent.click(screen.getByRole('button', { name: 'Account' }))
+    expect(screen.getByText('Priya Sharma')).toBeInTheDocument()
+    expect(screen.getByText('priya.sharma@acme.com')).toBeInTheDocument()
+  })
+
+  it("sends a vendor to their own profile page", async () => {
+    renderWithProviders(<AccountMenu />, { shell: { portal: 'vendor', email: 'orders@printhouse.in' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Account' }))
+    expect(screen.getByRole('link', { name: 'My profile' })).toHaveAttribute('href', '/vendor/profile')
   })
 
   it("signs out of this portal's session and goes to /login", async () => {

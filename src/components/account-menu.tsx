@@ -2,12 +2,10 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "next-themes";
-import { ExternalLink, LogOut, Settings, User, type LucideIcon } from "lucide-react";
+import { ExternalLink, LogOut, User, type LucideIcon } from "lucide-react";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useProfile } from "@/hooks/use-profile";
-import { AppTabs } from "@/components/app-tabs";
-import { IconButton } from "@/components/icon-button";
 import { useShell } from "@/components/shell-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -26,9 +24,9 @@ export interface AccountMenuItem {
 }
 
 export interface AccountMenuProps {
-  /** Appended to the Profile tab. */
+  /** Added to the list under the name. */
   profileItems?: AccountMenuItem[];
-  /** Appended to the Settings tab. */
+  /** Added to the list under the name, after the profile items. */
   settingsItems?: AccountMenuItem[];
 }
 
@@ -41,11 +39,8 @@ export function initialsFromEmail(email: string | null | undefined): string {
 }
 
 /**
- * The account menu, with a Profile / Settings tab split.
- *
- * Built on `Popover`, NOT `DropdownMenu`: Radix `Tabs` inside a `DropdownMenuContent` has its
- * arrow keys and typeahead swallowed by the menu's own roving focus, so the tab triggers never
- * see them.
+ * The account menu: who is signed in, a way to their profile, the appearance choice and a plainly labelled Sign out -- one panel,
+ * no tabs, since there is little enough in it to see at once.
  */
 export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMenuProps) {
   const { t } = useTranslation();
@@ -54,6 +49,7 @@ export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMe
   // A person's picture comes with /me; a vendor's logo is read from their own profile.
   const { data: vendorProfile } = useProfile("vendor");
   const photoUrl = portal === "vendor" ? vendorProfile?.photoUrl : user?.photoUrl;
+  const name = portal === "vendor" ? vendorProfile?.name : user?.name;
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = React.useState(false);
@@ -81,86 +77,48 @@ export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMe
           </Avatar>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-64 p-0">
-        <div className="flex items-center gap-3 p-3">
-          <Avatar className="h-9 w-9">
+      <PopoverContent align="end" className="w-80 max-w-[calc(100vw-1.5rem)] p-0">
+        {/* Who is signed in: the name first (it is what people recognise), then the email in full -- never cut off -- and the company. */}
+        <div className="flex items-center gap-3 p-4">
+          <Avatar className="h-12 w-12">
             {photoUrl && <AvatarImage src={photoUrl} alt="" />}
-            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            <AvatarFallback className="text-sm">{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{email ?? t("account.signedIn")}</p>
-            <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+            {name && <p className="truncate text-sm font-semibold">{name}</p>}
+            <p className={name ? "break-all text-xs text-muted-foreground" : "break-all text-sm font-medium"}>{email ?? t("account.signedIn")}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</p>
           </div>
-          <IconButton
-            icon={LogOut}
-            label={t("action.signOut")}
-            tone="destructive"
-            size="sm"
-            // Points left, not down: the default bottom placement lands the tooltip
-            // squarely over the Settings tab inside this narrow popover.
-            tooltipSide="left"
-            onClick={handleSignOut}
+        </div>
+
+        <div className="border-t p-2">
+          <MenuItemList
+            items={[
+              { id: "my-profile", label: t("account.myProfile"), icon: User, to: portal === "vendor" ? "/vendor/profile" : "/profile" },
+              ...profileItems,
+              ...settingsItems,
+            ]}
+            onNavigate={close}
           />
         </div>
 
-        <AppTabs
-          variant="pills"
-          fullWidth
-          className="px-3"
-          contentClassName="p-2"
-          tabs={[
-            {
-              value: "profile",
-              label: t("account.profile"),
-              icon: User,
-              content: (
-                <MenuItemList
-                  items={[
-                    { id: "my-profile", label: t("account.myProfile"), icon: User, to: portal === "vendor" ? "/vendor/profile" : "/profile" },
-                    ...profileItems,
-                  ]}
-                  onNavigate={close}
-                />
-              ),
-            },
-            {
-              value: "settings",
-              label: t("settings.title"),
-              icon: Settings,
-              content: (
-                <div className="space-y-3">
-                  <div className="space-y-1.5 px-1">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      {t("settings.appearance")}
-                    </p>
-                    <ToggleGroup
-                      type="single"
-                      value={theme ?? "system"}
-                      onValueChange={(next) => next && setTheme(next)}
-                      className="justify-start"
-                    >
-                      {(["light", "dark", "system"] as const).map((option) => (
-                        <ToggleGroupItem
-                          key={option}
-                          value={option}
-                          aria-label={t("account.themeOption", {
-                            name: t(`settings.theme.${option}`),
-                          })}
-                          className="text-xs"
-                        >
-                          {t(`settings.theme.${option}`)}
-                        </ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
-                  </div>
-                  {settingsItems.length > 0 && (
-                    <MenuItemList items={settingsItems} onNavigate={close} />
-                  )}
-                </div>
-              ),
-            },
-          ]}
-        />
+        <div className="space-y-1.5 border-t px-4 py-3">
+          <p className="text-xs font-medium text-muted-foreground">{t("settings.appearance")}</p>
+          <ToggleGroup type="single" value={theme ?? "system"} onValueChange={(next) => next && setTheme(next)} className="w-full justify-start">
+            {(["light", "dark", "system"] as const).map((option) => (
+              <ToggleGroupItem key={option} value={option} aria-label={t("account.themeOption", { name: t(`settings.theme.${option}`) })} className="flex-1 text-xs">
+                {t(`settings.theme.${option}`)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
+
+        <div className="border-t p-2">
+          <Button type="button" variant="ghost" size="sm" className="w-full justify-start gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleSignOut}>
+            <LogOut className="h-4 w-4" />
+            {t("action.signOut")}
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

@@ -37,6 +37,7 @@ import { EmailSettingsPage } from '@/modules/platform-config/EmailSettingsPage'
 import { MenuConfigPage } from '@/modules/platform-config/MenuConfigPage'
 import { DashboardPage } from '@/modules/dashboard/DashboardPage'
 import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
+import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { QuickGiftFormPage } from '@/modules/quickgift/QuickGiftFormPage'
 import { QuickGiftLandingPage } from '@/modules/quickgift/QuickGiftLandingPage'
 import { RecipientsPage } from '@/modules/recipients/RecipientsPage'
@@ -75,6 +76,7 @@ export function AppRoutes() {
           */}
           {/* Admin module -- add a new module by adding its route tree here and its entry in components/sidebar-nav-config.tsx */}
           <Route path="/home" element={<FirstMenuRedirect />} />
+          <Route path="/profile" element={<ProfilePage kind="user" />} />
           <Route path="/platform-config/menu" element={<Guard permission={P.PLATFORM_MENU_CONFIG_VIEW}><MenuConfigPage /></Guard>} />
           <Route path="/platform-config/email" element={<Guard permission={P.PLATFORM_EMAIL_SETTINGS_VIEW}><EmailSettingsPage /></Guard>} />
           <Route path="/platform-config/jobs" element={<Guard permission={P.PLATFORM_JOBS_VIEW}><JobsMonitorPage /></Guard>} />
@@ -135,6 +137,7 @@ export function AppRoutes() {
       <Route element={<VendorProtectedRoute />}>
         <Route element={<AppLayout portal="vendor" />}>
           <Route path="/vendor" element={<VendorHomePage />} />
+          <Route path="/vendor/profile" element={<ProfilePage kind="vendor" />} />
           <Route path="/vendor/gifts" element={<VendorGiftListPage />} />
           <Route path="/vendor/gifts/new" element={<VendorGiftFormPage />} />
           <Route path="/vendor/gifts/:id" element={<VendorGiftFormPage />} />

@@ -1,0 +1,58 @@
+{
+  "title": "My profile",
+  "subtitle": "Your photo, your phone number and your password.",
+  "vendorSubtitle": "Your logo, your contact phone and your password.",
+  "photo": {
+    "title": "Photo",
+    "logoTitle": "Logo",
+    "hint": "A square photo works best. JPG or PNG.",
+    "change": "Change photo",
+    "add": "Add photo",
+    "remove": "Remove",
+    "saving": "Uploading…",
+    "saved": "Your photo is updated",
+    "removed": "Your photo is removed",
+    "wrongType": "Choose a JPG or PNG picture",
+    "tooLarge": "That picture is too large. Choose one under 15 MB",
+    "failed": "The photo could not be updated."
+  },
+  "details": {
+    "title": "Your details",
+    "lockedNote": "These are set by your admin. Ask them if one needs changing.",
+    "vendorLockedNote": "These are set by Wrappzo. Contact us if one needs changing.",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "employeeCode": "Employee code",
+    "orgUnit": "Area",
+    "manager": "Reports to",
+    "company": "Company",
+    "designation": "Designation",
+    "businessName": "Business name",
+    "vendorNumber": "Vendor number"
+  },
+  "phone": {
+    "label": "Mobile number",
+    "vendorLabel": "Contact phone",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Your number is saved",
+    "invalid": "Enter a valid number: digits, with an optional + at the start, 7 to 20 characters",
+    "failed": "The number could not be saved."
+  },
+  "password": {
+    "title": "Change password",
+    "hint": "You will stay signed in here. Every other device is signed out.",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "required": "Required",
+    "minLength": "Use at least 8 characters",
+    "mismatch": "The two passwords do not match",
+    "same": "The new password must be different from your current one",
+    "submit": "Change password",
+    "submitting": "Changing…",
+    "done": "Password changed. Your other devices are signed out.",
+    "failed": "The password could not be changed."
+  }
+}

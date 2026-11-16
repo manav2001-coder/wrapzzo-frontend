@@ -5,10 +5,11 @@ import { useTheme } from "next-themes";
 import { ExternalLink, LogOut, Settings, User, type LucideIcon } from "lucide-react";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useProfile } from "@/hooks/use-profile";
 import { AppTabs } from "@/components/app-tabs";
 import { IconButton } from "@/components/icon-button";
 import { useShell } from "@/components/shell-context";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -50,6 +51,9 @@ export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMe
   const { t } = useTranslation();
   const { portal, email, signOut } = useShell();
   const { data: user } = useCurrentUser();
+  // A person's picture comes with /me; a vendor's logo is read from their own profile.
+  const { data: vendorProfile } = useProfile("vendor");
+  const photoUrl = portal === "vendor" ? vendorProfile?.photoUrl : user?.photoUrl;
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = React.useState(false);
@@ -72,6 +76,7 @@ export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMe
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" aria-label={t("account.label")}>
           <Avatar className="h-7 w-7">
+            {photoUrl && <AvatarImage src={photoUrl} alt="" />}
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
         </Button>
@@ -79,6 +84,7 @@ export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMe
       <PopoverContent align="end" className="w-64 p-0">
         <div className="flex items-center gap-3 p-3">
           <Avatar className="h-9 w-9">
+            {photoUrl && <AvatarImage src={photoUrl} alt="" />}
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
@@ -110,6 +116,7 @@ export function AccountMenu({ profileItems = [], settingsItems = [] }: AccountMe
               content: (
                 <MenuItemList
                   items={[
+                    { id: "my-profile", label: t("account.myProfile"), icon: User, to: portal === "vendor" ? "/vendor/profile" : "/profile" },
                     ...profileItems,
                   ]}
                   onNavigate={close}

@@ -8,6 +8,7 @@ import common_en from '@/locales/en/common.json'
 import gifts_en from '@/locales/en/gifts.json'
 import masters_en from '@/locales/en/masters.json'
 import orders_en from '@/locales/en/orders.json'
+import profile_en from '@/locales/en/profile.json'
 import public_en from '@/locales/en/public.json'
 import recipients_en from '@/locales/en/recipients.json'
 import tbac_en from '@/locales/en/tbac.json'
@@ -18,6 +19,7 @@ import common_hi from '@/locales/hi/common.json'
 import gifts_hi from '@/locales/hi/gifts.json'
 import masters_hi from '@/locales/hi/masters.json'
 import orders_hi from '@/locales/hi/orders.json'
+import profile_hi from '@/locales/hi/profile.json'
 import public_hi from '@/locales/hi/public.json'
 import recipients_hi from '@/locales/hi/recipients.json'
 import tbac_hi from '@/locales/hi/tbac.json'
@@ -48,8 +50,8 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 export const defaultNS = 'common'
 
 export const resources = {
-  en: { common: common_en, auth: auth_en, admin: admin_en, orders: orders_en, public: public_en, gifts: gifts_en, vendor: vendor_en, recipients: recipients_en, masters: masters_en, tbac: tbac_en },
-  hi: { common: common_hi, auth: auth_hi, admin: admin_hi, orders: orders_hi, public: public_hi, gifts: gifts_hi, vendor: vendor_hi, recipients: recipients_hi, masters: masters_hi, tbac: tbac_hi },
+  en: { common: common_en, auth: auth_en, admin: admin_en, orders: orders_en, public: public_en, gifts: gifts_en, vendor: vendor_en, recipients: recipients_en, masters: masters_en, tbac: tbac_en, profile: profile_en },
+  hi: { common: common_hi, auth: auth_hi, admin: admin_hi, orders: orders_hi, public: public_hi, gifts: gifts_hi, vendor: vendor_hi, recipients: recipients_hi, masters: masters_hi, tbac: tbac_hi, profile: profile_hi },
 } as const
 
 export function isSupportedLocale(value: unknown): value is Locale {

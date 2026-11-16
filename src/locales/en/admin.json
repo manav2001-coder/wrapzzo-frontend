@@ -154,7 +154,18 @@
     },
     "removeAdminRole": "Move to role",
     "removeAdminPick": "Choose a role",
-    "removeAdminNoRoles": "Create another role first -- there is none to move them to."
+    "removeAdminNoRoles": "Create another role first -- there is none to move them to.",
+    "invite": {
+      "resend": "Resend invite",
+      "alreadySetUp": "Already set up: nothing to resend",
+      "resendBody": "Send {{name}} a new setup email at {{email}}? The link they were sent before stops working.",
+      "sent": "A new setup email is on its way to {{email}}.",
+      "copyLink": "Copy setup link",
+      "copyLinkBody": "Get a new setup link for {{name}} to pass on yourself, for example on WhatsApp. It works once, and the link they were sent before stops working. Anyone who has it can set {{name}}'s password, so send it only to them.",
+      "linkCopied": "The setup link for {{name}} is copied. Send it only to them.",
+      "linkTitle": "Setup link for {{name}}",
+      "linkManual": "Your browser would not copy it. Copy it from here and send it only to them."
+    }
   },
   "vendors": {
     "title": "Vendors",

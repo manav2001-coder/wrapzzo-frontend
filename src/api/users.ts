@@ -92,3 +92,19 @@ export async function setCompanyWide(companyId: string, userId: string, companyW
 export async function deleteUser(companyId: string, userId: string): Promise<void> {
   await apiClient.delete(`/api/platform/companies/${companyId}/users/${userId}`)
 }
+
+/** Sends someone who has not set up yet a fresh setup email; the link they were sent before stops working. */
+export async function resendInvite(companyId: string, userId: string): Promise<void> {
+  await apiClient.post(`/api/platform/companies/${companyId}/users/${userId}/resendInvite`)
+}
+
+export interface SetupLink {
+  setupUrl: string
+  expiresAt: string
+}
+
+/** A fresh setup link to hand to the person another way, instead of emailing it. It works once. */
+export async function getSetupLink(companyId: string, userId: string): Promise<SetupLink> {
+  const { data } = await apiClient.post<SetupLink>(`/api/platform/companies/${companyId}/users/${userId}/setupLink`)
+  return data
+}

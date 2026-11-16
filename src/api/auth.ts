@@ -33,6 +33,8 @@ export interface CurrentUser {
   companyWide?: boolean
   /** The caller's own name, for greeting them. */
   name?: string
+  /** Their profile picture; null or absent when none has been set. */
+  photoUrl?: string | null
 }
 
 /** The logged-in user's effective access-control keys and their own company -- lets the UI gate things like "New campaign" without guessing from a role name. */

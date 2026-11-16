@@ -33,6 +33,18 @@ async function signIn(email = 'priya@acme.com', password = 'secret') {
   await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
 }
 
+describe('LoginPage -- forgot password', () => {
+  it('has a way to ask for a reset link, and says a reset worked when it brings the person back', () => {
+    renderWithProviders(<Routes><Route path="/login" element={<LoginPage />} /></Routes>, { route: '/login' })
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password')
+  })
+
+  it('tells someone who has just reset their password to sign in with the new one', () => {
+    renderWithProviders(<Routes><Route path="/login" element={<LoginPage />} /></Routes>, { route: { pathname: '/login', state: { passwordReset: true } } as never })
+    expect(screen.getByRole('status')).toHaveTextContent('Password changed. Sign in with your new password.')
+  })
+})
+
 describe('LoginPage', () => {
   beforeEach(() => {
     login.mockReset()

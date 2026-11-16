@@ -24,3 +24,8 @@ export async function setupVendorPassword(token: string, password: string, confi
   })
   return data
 }
+
+/** A vendor's counterpart of resetPassword: their link points at the vendor address. */
+export async function resetVendorPassword(token: string, newPassword: string, confirmPassword: string): Promise<void> {
+  await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/vendor/auth/resetPassword`, { token, newPassword, confirmPassword })
+}

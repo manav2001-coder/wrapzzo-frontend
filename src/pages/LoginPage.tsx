@@ -59,8 +59,9 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } })
 
-  const locationState = location.state as { passwordSetUp?: boolean } | null
+  const locationState = location.state as { passwordSetUp?: boolean; passwordReset?: boolean } | null
   const passwordSetUp = locationState?.passwordSetUp ?? false
+  const passwordReset = locationState?.passwordReset ?? false
 
   function lockedMessage(error: ApiError): string {
     const lockedUntil = (error.data as { lockedUntil?: string } | undefined)?.lockedUntil
@@ -129,6 +130,12 @@ export function LoginPage() {
               </p>
             )}
 
+            {passwordReset && (
+              <p role="status" className="mt-6 rounded-xl border border-[#17794D]/30 bg-[#E1F0E7] px-3.5 py-3 text-sm text-[#0B2F23]">
+                {t('login.passwordReset')}
+              </p>
+            )}
+
             {submitError && (
               <div
                 role="alert"
@@ -158,9 +165,14 @@ export function LoginPage() {
               </div>
 
               <div className="mt-4">
-                <Label htmlFor="login-password" className="text-sm font-semibold text-[#0B2F23]">
-                  {t('login.password')}
-                </Label>
+                <div className="flex items-baseline justify-between gap-3">
+                  <Label htmlFor="login-password" className="text-sm font-semibold text-[#0B2F23]">
+                    {t('login.password')}
+                  </Label>
+                  <Link to="/forgot-password" className="text-sm font-medium text-[#17794D] underline-offset-2 hover:underline">
+                    {t('login.forgot')}
+                  </Link>
+                </div>
                 <div className="mt-2">
                   <PasswordInput
                     id="login-password"

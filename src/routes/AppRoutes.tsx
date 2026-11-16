@@ -51,6 +51,8 @@ import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RecipientUploadPage } from '@/pages/RecipientUploadPage'
 import ComponentsPage from '@/pages/Components'
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { SetupPasswordPage } from '@/pages/SetupPasswordPage'
 import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
 
@@ -59,6 +61,9 @@ export function AppRoutes() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/vendor/reset-password" element={<ResetPasswordPage kind="vendor" />} />
       <Route path="/setup-password" element={<SetupPasswordPage />} />
       <Route path="/vendor/setup-password" element={<SetupVendorPasswordPage />} />
       <Route path="/recipient-upload/:token" element={<RecipientUploadPage />} />

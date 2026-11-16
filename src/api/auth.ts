@@ -56,3 +56,16 @@ export async function setupPassword(token: string, password: string, confirmPass
   })
   return data
 }
+
+/**
+ * Asks for a reset link. Raw axios for the same reason as setupPassword: nobody is signed in. The answer is always the same
+ * whether or not the email has an account, so the page can say nothing more than "if it does, we sent one".
+ */
+export async function forgotPassword(email: string): Promise<void> {
+  await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/forgotPassword`, { email })
+}
+
+/** Sets a new password from the emailed link. It does not sign the person in: they sign in themselves afterwards. */
+export async function resetPassword(token: string, newPassword: string, confirmPassword: string): Promise<void> {
+  await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/resetPassword`, { token, newPassword, confirmPassword })
+}

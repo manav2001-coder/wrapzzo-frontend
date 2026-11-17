@@ -53,6 +53,9 @@ export function ArtworkReview({ orderId, artworkRequired, readOnly = false }: { 
   const sorted = [...(designs ?? [])].sort((a, b) => b.versionNo - a.versionNo)
   const [latest, ...earlier] = sorted
   const approved = sorted.find((d) => d.status === 'APPROVED')
+  // "Waiting on you" is only true for the person whose review it is. Someone who is only watching (an RM, the Head Office) is told who it
+  // is really waiting on, so a proof that has not yet had its first review is not mistaken for something they must do.
+  const statusLabel = (design: OrderDesign) => (design.status === 'PENDING_REVIEW' && readOnly ? t('artwork.waitingOnRequester') : t(`artwork.status.${design.status}`))
 
   async function onApprove(design: OrderDesign) {
     try {
@@ -109,7 +112,7 @@ export function ArtworkReview({ orderId, artworkRequired, readOnly = false }: { 
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium">{t('artwork.version', { n: latest.versionNo })}</span>
-              <Badge variant={VARIANT[latest.status]}>{t(`artwork.status.${latest.status}`)}</Badge>
+              <Badge variant={VARIANT[latest.status]}>{statusLabel(latest)}</Badge>
               <span className="text-xs text-muted-foreground">
                 {formatDateTime(latest.createdAt)}
               </span>
@@ -163,7 +166,7 @@ export function ArtworkReview({ orderId, artworkRequired, readOnly = false }: { 
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm">{t('artwork.version', { n: design.versionNo })}</span>
-                        <Badge variant={VARIANT[design.status]}>{t(`artwork.status.${design.status}`)}</Badge>
+                        <Badge variant={VARIANT[design.status]}>{statusLabel(design)}</Badge>
                       </div>
                       {design.fileName && <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{design.fileName}</p>}
                       {design.reviewComment && <p className="mt-0.5 text-xs text-muted-foreground">“{design.reviewComment}”</p>}

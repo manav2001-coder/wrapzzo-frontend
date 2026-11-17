@@ -93,13 +93,14 @@ describe('VendorOrderPage', () => {
 
   it('tells the vendor how to name the proof, before they pick one', async () => {
     renderWorkspace(vendorOrder())
-    expect(await screen.findByText(/Name the file PCode_DoctorName_AMName\.pdf/)).toBeInTheDocument()
-    expect(screen.getByText(/SAP code can be used in place of the AM's name/)).toBeInTheDocument()
+    expect(await screen.findByText(/Name the file PCode_DoctorName\.pdf/)).toBeInTheDocument()
+    // The AM is no longer part of the name.
+    expect(screen.queryByText(/AMName|SAP code/)).not.toBeInTheDocument()
   })
 
   it('nudges the vendor to upload the correct file when the name is refused, and clears the nudge on the next pick', async () => {
     uploadVendorOrderDesign.mockRejectedValue(
-      new ApiError('"final.pdf" is not named the way this order needs. Name the proof PCode_DoctorName_AMName.pdf -- for this order: P-1001_Asha-Shah_MR-North.pdf -- then upload it again.', 400),
+      new ApiError('"final.pdf" is not named the way this order needs. Name the proof PCode_DoctorName.pdf -- for this order: P-1001_Asha-Shah.pdf -- then upload it again.', 400),
     )
     const { container } = renderWorkspace(vendorOrder())
     await screen.findByText('Upload an artwork proof for the customer to approve.')
@@ -110,9 +111,9 @@ describe('VendorOrderPage', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('This file was not uploaded')
-    expect(alert).toHaveTextContent('for this order: P-1001_Asha-Shah_MR-North.pdf')
+    expect(alert).toHaveTextContent('for this order: P-1001_Asha-Shah.pdf')
     // It stays on the page (not a toast that vanishes) until another file is picked.
-    const better = new File(['%PDF'], 'P-1001_Asha-Shah_MR-North.pdf', { type: 'application/pdf' })
+    const better = new File(['%PDF'], 'P-1001_Asha-Shah.pdf', { type: 'application/pdf' })
     fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [better] } })
     await waitFor(() => expect(screen.queryByText('This file was not uploaded')).not.toBeInTheDocument())
   })

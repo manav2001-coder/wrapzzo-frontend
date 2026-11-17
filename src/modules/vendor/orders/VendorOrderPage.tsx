@@ -222,7 +222,7 @@ function ArtworkCard({ order }: { order: VendorOrder }) {
 
   // A picked file waits for a look at it: a wrong pick would send the customer the wrong proof.
   const [picked, setPicked] = useState<File | null>(null)
-  // The server refuses a proof that is not named PCode_DoctorName_AMName.pdf; its message says what the name should have been, and stays until another file is picked.
+  // The server refuses a proof that is not named PCode_DoctorName.pdf; its message says what the name should have been, and stays until another file is picked.
   const [refusal, setRefusal] = useState<string | null>(null)
 
   async function confirmUpload() {

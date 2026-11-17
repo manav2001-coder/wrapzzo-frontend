@@ -51,7 +51,7 @@
       "vendors": {
         "title": "Vendor fulfilment",
         "description": "Printers get their own portal for their orders, proof uploads and dispatch.",
-        "caption": "Proofs are named PCode_Doctor_AM, so every file matches its order."
+        "caption": "Proofs are named PCode_Doctor, so every file matches its order."
       },
       "dispatch": {
         "title": "Labels & dispatch",

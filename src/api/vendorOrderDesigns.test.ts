@@ -22,9 +22,9 @@ describe('uploadVendorOrderDesign', () => {
       .mockResolvedValueOnce({ data: { uploadUrl: 'https://storage.test/put', key: 'order-designs/o-1/u/P-1001_AM-PATNA_v1.pdf', fileName: 'P-1001_AM-PATNA_v1.pdf' } })
       .mockResolvedValueOnce({ data: { id: 'd-1', fileName: 'P-1001_AM-PATNA_v1.pdf' } })
 
-    await uploadVendorOrderDesign('o-1', new File(['%PDF'], 'P-1001_Asha-Shah_Patna-AM.pdf', { type: 'application/pdf' }))
+    await uploadVendorOrderDesign('o-1', new File(['%PDF'], 'P-1001_Asha-Shah.pdf', { type: 'application/pdf' }))
 
-    expect(post).toHaveBeenNthCalledWith(1, '/api/vendor/orders/o-1/designs/presign', { contentType: 'application/pdf', fileName: 'P-1001_Asha-Shah_Patna-AM.pdf', sizeBytes: 4 })
+    expect(post).toHaveBeenNthCalledWith(1, '/api/vendor/orders/o-1/designs/presign', { contentType: 'application/pdf', fileName: 'P-1001_Asha-Shah.pdf', sizeBytes: 4 })
     expect(fetch).toHaveBeenCalledWith('https://storage.test/put', expect.objectContaining({ method: 'PUT', headers: { 'Content-Type': 'application/pdf' } }))
     expect(post).toHaveBeenNthCalledWith(2, '/api/vendor/orders/o-1/designs', { key: 'order-designs/o-1/u/P-1001_AM-PATNA_v1.pdf' })
   })
@@ -53,7 +53,7 @@ describe('uploadVendorOrderDesign', () => {
   })
 
   it('uploads nothing when the server refuses the file name, and passes its explanation on', async () => {
-    const refusal = new ApiError('"final.pdf" is not named the way this order needs. Name the proof PCode_DoctorName_AMName.pdf -- for this order: P-1001_Asha-Shah_Patna-AM.pdf', 400)
+    const refusal = new ApiError('"final.pdf" is not named the way this order needs. Name the proof PCode_DoctorName.pdf -- for this order: P-1001_Asha-Shah.pdf', 400)
     post.mockRejectedValueOnce(refusal)
 
     await expect(uploadVendorOrderDesign('o-1', new File(['%PDF'], 'final.pdf', { type: 'application/pdf' }))).rejects.toBe(refusal)

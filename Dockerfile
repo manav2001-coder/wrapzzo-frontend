@@ -23,6 +23,8 @@ ENV PORT=8080
 #   API_UPSTREAM=http://wrappzo-backend.railway.internal:8080   DNS_RESOLVER=[fd12::10]
 ENV API_UPSTREAM=https://wrappzo-backend-production.up.railway.app
 ENV DNS_RESOLVER=1.1.1.1
+# Where /storage/ is forwarded: the bucket's S3 endpoint (the backend's S3_ENDPOINT), without the bucket name.
+ENV STORAGE_UPSTREAM=https://d5688d06f65308ddd6191d6b89f10ea1.r2.cloudflarestorage.com
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 

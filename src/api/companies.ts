@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/axiosClient'
+import { putToStorage } from '@/lib/storage-upload'
 
 export interface Company {
   id: string
@@ -88,14 +89,7 @@ export async function uploadCompanyLogo(id: string, file: File): Promise<Company
     contentType: file.type,
   })
 
-  const uploadResponse = await fetch(presign.uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': file.type },
-    body: file,
-  })
-  if (!uploadResponse.ok) {
-    throw new Error(`Upload to storage failed with status ${uploadResponse.status}`)
-  }
+  await putToStorage(presign.uploadUrl, file, file.type, 'logo')
 
   const { data } = await apiClient.post<Company>(`/api/platform/companies/attachLogo/${id}`, { key: presign.key })
   return data

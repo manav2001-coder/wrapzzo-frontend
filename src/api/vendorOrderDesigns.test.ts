@@ -66,9 +66,9 @@ describe('uploadVendorOrderDesign', () => {
     const pdf = new File(['%PDF'], 'proof.pdf', { type: 'application/pdf' })
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 403 }))
-    await expect(uploadVendorOrderDesign('o-1', pdf)).rejects.toThrow('File storage refused "proof.pdf" (status 403)')
+    await expect(uploadVendorOrderDesign('o-1', pdf)).rejects.toThrow('File storage refused the proof "proof.pdf" (status 403)')
 
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
-    await expect(uploadVendorOrderDesign('o-1', pdf)).rejects.toThrow('could not be sent to file storage')
+    await expect(uploadVendorOrderDesign('o-1', pdf)).rejects.toThrow('could not be uploaded')
   })
 })

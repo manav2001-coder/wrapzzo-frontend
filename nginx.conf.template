@@ -1,3 +1,9 @@
+# The request as the browser sent it, minus the /storage prefix: path and query, still percent-encoded exactly as signed.
+map $request_uri $storage_uri {
+    ~^/storage(?<rest>/.*)$ $rest;
+    default "";
+}
+
 server {
     listen ${PORT};
     server_name _;
@@ -37,6 +43,29 @@ server {
         proxy_set_header Connection "";
         # Bulk uploads of users and doctors are large JSON bodies, and imports can take a while to answer.
         client_max_body_size 25m;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+        add_header Cache-Control "no-store";
+    }
+
+    # Photo and proof uploads, under the app's own address. The browser PUTs to a signed storage URL, and some phone networks
+    # and office firewalls block the storage host (r2.cloudflarestorage.com) while letting the app load, so the upload died
+    # with "Failed to fetch". The page rewrites the storage URL to /storage/... and this forwards it, unchanged, to storage.
+    # The signature covers the path, query and Host, so none of them is altered: only the /storage prefix is dropped (byte for
+    # byte, encoding included), and Host is the storage host. STORAGE_UPSTREAM comes from the environment (default in the Dockerfile).
+    location /storage/ {
+        # proxy_pass with the raw path and query ($storage_uri, below): `rewrite` would decode and re-encode the path (%2B -> +),
+        # which changes what was signed.
+        proxy_pass ${STORAGE_UPSTREAM}$storage_uri;
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header Connection "";
+        # Photos are a few MB, but a phone camera can make 20 MB; stream them through rather than hold them in memory.
+        client_max_body_size 50m;
+        proxy_request_buffering off;
+        proxy_buffering off;
         proxy_connect_timeout 10s;
         proxy_read_timeout 120s;
         proxy_send_timeout 120s;

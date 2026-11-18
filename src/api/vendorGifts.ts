@@ -1,5 +1,6 @@
 import type { Gift, GiftInput } from '@/api/gifts'
 import { vendorApiClient } from '@/lib/vendorApiClient'
+import { putToStorage } from '@/lib/storage-upload'
 
 interface PresignImageUploadResponse {
   uploadUrl: string
@@ -38,14 +39,7 @@ export async function uploadVendorGiftImage(giftId: string, file: File, displayO
     contentType: file.type,
   })
 
-  const uploadResponse = await fetch(presign.uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': file.type },
-    body: file,
-  })
-  if (!uploadResponse.ok) {
-    throw new Error(`Upload to storage failed with status ${uploadResponse.status}`)
-  }
+  await putToStorage(presign.uploadUrl, file, file.type, 'image')
 
   const { data } = await vendorApiClient.post<Gift>(`/api/vendor/gifts/addImage/${giftId}`, { key: presign.key, displayOrder })
   return data

@@ -1,10 +1,10 @@
-import axios from 'axios'
 
 import { store } from '@/app/store'
 import { setCredentials } from '@/features/auth/authSlice'
 import { setVendorCredentials } from '@/features/vendorAuth/vendorAuthSlice'
 import { apiClient } from '@/lib/axiosClient'
 import { vendorApiClient } from '@/lib/vendorApiClient'
+import { putToStorage } from '@/lib/storage-upload'
 
 /** A person signs in on one login, a vendor on another, and each has its own profile endpoints. */
 export type ProfileKind = 'user' | 'vendor'
@@ -63,7 +63,7 @@ export async function removePhoto(kind: ProfileKind): Promise<UserProfile | Vend
 export async function uploadPhoto(kind: ProfileKind, picture: Blob): Promise<UserProfile | VendorProfile> {
   const { data: slot } = await CLIENT[kind].post<{ uploadUrl: string; key: string }>(`${BASE[kind]}/photo/presign`, { contentType: picture.type })
   // A raw call: the storage URL is signed, and must not be sent our session token.
-  await axios.put(slot.uploadUrl, picture, { headers: { 'Content-Type': picture.type } })
+  await putToStorage(slot.uploadUrl, picture, picture.type, 'photo')
   const { data } = await CLIENT[kind].put(`${BASE[kind]}/photo`, { key: slot.key })
   return data
 }

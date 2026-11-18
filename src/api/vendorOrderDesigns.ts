@@ -2,6 +2,7 @@ import type { OrderDesign } from '@/api/orderDesigns'
 import { MAX_PROOF_BYTES, notAPdfMessage, proofTooBigMessage } from '@/lib/proof-limits'
 import { UserFacingError } from '@/lib/user-facing-error'
 import { vendorApiClient } from '@/lib/vendorApiClient'
+import { putToStorage } from '@/lib/storage-upload'
 
 interface PresignDesignResponse {
   uploadUrl: string
@@ -35,15 +36,7 @@ export async function uploadVendorOrderDesign(orderId: string, file: File): Prom
     sizeBytes: file.size,
   })
 
-  let uploadResponse: Response
-  try {
-    uploadResponse = await fetch(presign.uploadUrl, { method: 'PUT', headers: { 'Content-Type': PDF }, body: file })
-  } catch {
-    throw new UserFacingError(`"${file.name}" could not be sent to file storage -- check your connection and try again.`)
-  }
-  if (!uploadResponse.ok) {
-    throw new UserFacingError(`File storage refused "${file.name}" (status ${uploadResponse.status}). Please try again, and tell us if it keeps happening.`)
-  }
+  await putToStorage(presign.uploadUrl, file, PDF, `proof "${file.name}"`)
 
   const { data } = await vendorApiClient.post<OrderDesign>(`/api/vendor/orders/${orderId}/designs`, {
     key: presign.key,

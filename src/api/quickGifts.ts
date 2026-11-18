@@ -1,6 +1,7 @@
 import type { DoctorDetails } from '@/api/recipients'
 import type { OrderApprovalStatus, RecipientPhoto } from '@/api/orders'
 import { apiClient } from '@/lib/axiosClient'
+import { putToStorage } from '@/lib/storage-upload'
 
 export type QuickGiftStatus = 'SUBMITTED' | 'APPROVED' | 'REJECTED'
 
@@ -79,14 +80,7 @@ export async function uploadQuickGiftPhoto(file: File, pcode?: string, number = 
   // The doctor's pcode lets the server name the stored file after them (and the AM), like a proof; `number` keeps several photos of one order apart.
   const { data: presign } = await apiClient.post<PresignPhotoResponse>('/api/quick-gifts/presignPhoto', { contentType: file.type, pcode, number })
 
-  const uploadResponse = await fetch(presign.uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': file.type },
-    body: file,
-  })
-  if (!uploadResponse.ok) {
-    throw new Error(`Upload to storage failed with status ${uploadResponse.status}`)
-  }
+  await putToStorage(presign.uploadUrl, file, file.type, 'photo')
 
   return { key: presign.key, fileName: presign.fileName, contentType: file.type }
 }

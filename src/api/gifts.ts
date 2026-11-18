@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/axiosClient'
+import { putToStorage } from '@/lib/storage-upload'
 
 export interface GiftImage {
   id: string
@@ -103,14 +104,7 @@ export async function uploadGiftImage(giftId: string, file: File, displayOrder: 
     contentType: file.type,
   })
 
-  const uploadResponse = await fetch(presign.uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': file.type },
-    body: file,
-  })
-  if (!uploadResponse.ok) {
-    throw new Error(`Upload to storage failed with status ${uploadResponse.status}`)
-  }
+  await putToStorage(presign.uploadUrl, file, file.type, 'image')
 
   const { data } = await apiClient.post<Gift>(`/api/platform/gifts/addImage/${giftId}`, { key: presign.key, displayOrder })
   return data

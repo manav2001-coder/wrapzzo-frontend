@@ -197,11 +197,13 @@
     "failed": "डिस्पैच लेबल नहीं बन सका।",
     "product": "उत्पाद",
     "quantity": "मात्रा",
-    "clinic": "क्लिनिक",
-    "phone": "फ़ोन",
-    "dispatchTo": "AM को भेजें",
-    "forDoctor": "डॉक्टर के लिए",
-    "order": "ऑर्डर"
+    "sapCode": "SAP Code",
+    "hq": "H.Q. Name",
+    "drName": "Dr. Name",
+    "mCode": "M.Code",
+    "supplier": "Supplier",
+    "div": "DIV",
+    "pieces": "Pcs"
   },
   "division": {
     "label": "डिवीज़न",

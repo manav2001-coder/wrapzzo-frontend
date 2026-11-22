@@ -196,12 +196,14 @@
     "download": "Download label",
     "failed": "The dispatch label could not be created.",
     "product": "Product",
-    "quantity": "Quantity",
-    "clinic": "Clinic",
-    "phone": "Phone",
-    "dispatchTo": "Dispatch to AM",
-    "forDoctor": "For doctor",
-    "order": "Order"
+    "quantity": "Qty",
+    "sapCode": "SAP Code",
+    "hq": "H.Q. Name",
+    "drName": "Dr. Name",
+    "mCode": "M.Code",
+    "supplier": "Supplier",
+    "div": "DIV",
+    "pieces": "Pcs"
   },
   "division": {
     "label": "Division",

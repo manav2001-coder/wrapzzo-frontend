@@ -4,47 +4,42 @@ import QRCode from 'qrcode'
 import type { VendorOrder } from '@/api/vendorOrders'
 import { UserFacingError } from '@/lib/user-facing-error'
 
-/** The text of the label, line by line -- everything Ops needs to tell whose parcel it is and what is in it. */
+/**
+ * What the parcel's sticker prints, in the box layout the franchise's packers already use: product, quantity, the doctor's
+ * code and name, the headquarters, the AM's code, the division and the supplier. (PO number, box range, serial and total
+ * boxes are not stored, so they are not on it.)
+ */
 export interface DispatchLabel {
   displayId: string
   product: string
   quantity: number
+  /** SAP CODE -- the doctor's pcode. */
+  sapCode: string | null
+  /** DR. NAME */
   doctorName: string | null
-  pcode: string | null
-  clinic: string | null
-  phone: string | null
-  doctorAddress: string | null
-  amName: string
-  amCode: string | null
-  amMobile: string | null
-  amArea: string | null
-  company: string
-  artworkFile: string | null
+  /** H.Q. NAME -- the AM's area. */
+  hq: string | null
+  /** M.CODE -- the AM's employee code. */
+  mCode: string | null
+  division: string | null
+  /** SUPPLIER -- the vendor making the parcel. */
+  supplier: string
 }
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-/**
- * The parcel goes to the AM who raised the order, and the AM hands it to the doctor -- so the AM is the
- * addressee and the doctor is what is inside.
- */
-export function dispatchLabelOf(order: VendorOrder, artworkFile: string | null): DispatchLabel {
+export function dispatchLabelOf(order: VendorOrder, supplier: string): DispatchLabel {
   return {
     displayId: order.displayId,
     product: order.giftName ?? '',
     quantity: order.quantity,
+    sapCode: order.recipientPcode,
     doctorName: order.recipientName,
-    pcode: order.recipientPcode,
-    clinic: order.doctor?.clinicName ?? null,
-    phone: order.recipientPhone,
-    doctorAddress: order.deliveryAddress,
-    amName: order.amName,
-    amCode: order.amCode,
-    amMobile: order.amMobile,
-    amArea: order.amArea,
-    company: order.companyName,
-    artworkFile,
+    hq: order.amArea,
+    mCode: order.amCode,
+    division: order.divisionName,
+    supplier,
   }
 }
 
@@ -60,43 +55,53 @@ export function barcodeSvgOf(text: string): string {
   return svg.outerHTML
 }
 
+/** The box-style sticker: a double frame, one "Name : value" line per field, the SAP code large, the division in a box. */
 export function labelHtml(label: DispatchLabel, qrSvg: string, barcodeSvg: string, t: (key: string) => string): string {
   const e = escapeHtml
-  const field = (name: string, value: string | number | null) =>
-    value === null || value === '' ? '' : `<div class="f"><small>${e(t(name))}</small><b>${e(String(value))}</b></div>`
-  const doctor = [label.doctorName, label.pcode ? `(${label.pcode})` : null].filter(Boolean).join(' ')
-  const am = [label.amName, label.amCode ? `(${label.amCode})` : null].filter(Boolean).join(' ')
-  const amLine = [label.amArea, label.amMobile].filter(Boolean).join(' · ')
+  const row = (name: string, value: string | number | null, big = false) =>
+    value === null || value === '' ? '' : `<div class="r${big ? ' big' : ''}"><span class="k">${e(t(name))}</span><span class="c">:</span><span class="v">${e(String(value))}</span></div>`
   return `<!doctype html><html><head><meta charset="utf-8"><title>${e(label.displayId)}</title>
 <style>
-@page{size:100mm 70mm;margin:0}
+@page{size:148mm 105mm;margin:0}
 *{box-sizing:border-box}
-html,body{margin:0;width:100mm;height:70mm}
-body{font-family:Arial,Helvetica,sans-serif;color:#000;padding:4mm 5mm;display:flex;flex-direction:column;gap:2mm}
-small{display:block;font-size:6.5pt;font-weight:bold;text-transform:uppercase;letter-spacing:.4pt;color:#333}
-.top{display:flex;justify-content:space-between;gap:4mm;border-bottom:.6mm solid #000;padding-bottom:2mm}
-.id b{display:block;font-size:22pt;line-height:1.05}
-.id span{font-size:8pt}
-.to{margin-top:1.5mm}.to b{display:block;font-size:13pt;line-height:1.15}.to span{font-size:8.5pt}
-.qr{width:22mm;height:22mm;flex:none}.qr svg{width:100%;height:100%}
-.row{display:flex;gap:4mm}.row .f{flex:1;min-width:0}
-.f b{display:block;font-size:9.5pt;line-height:1.15;overflow-wrap:anywhere}
-.bar{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:3mm}
-.bar svg{height:8mm;width:55mm}
-.file{font:6.5pt monospace;max-width:34mm;overflow-wrap:anywhere;text-align:right}
+html,body{margin:0;width:148mm;height:105mm}
+body{font-family:Arial,Helvetica,sans-serif;color:#000;padding:4mm}
+.outer{width:100%;height:100%;border:.5mm solid #000;padding:1.2mm}
+.inner{width:100%;height:100%;border:.35mm solid #000;padding:4mm 5mm 3mm;display:flex;flex-direction:column}
+.rows{display:flex;flex-direction:column;gap:2.2mm}
+.r{display:flex;align-items:baseline;font-size:12.5pt;line-height:1.2}
+.r .k{width:33mm;flex:none;text-transform:uppercase;font-weight:normal}
+.r .c{width:4mm;flex:none}
+.r .v{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:bold}
+.r.big .v{font-size:24pt;line-height:1}
+.foot{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:4mm}
+.scan{display:flex;align-items:flex-end;gap:3mm}
+.qr{width:17mm;height:17mm;flex:none}.qr svg{width:100%;height:100%}
+.ids{font-size:8pt;line-height:1.3}.ids b{display:block;font-size:11pt}
+.ids svg{display:block;height:7mm;width:42mm;margin-top:1mm}
+.div{border:.5mm solid #000;min-width:42mm;text-align:center;padding:1mm 3mm 2mm}
+.div small{display:block;font-size:8pt;font-weight:bold;border-bottom:.35mm solid #000;margin:0 -3mm 1.5mm;padding-bottom:.8mm}
+.div b{font-size:19pt;text-transform:uppercase}
 </style></head><body>
-<div class="top">
-  <div><div class="id"><small>${e(t('label.order'))}</small><b>${e(label.displayId)}</b><span>${e(label.company)}</span></div>
-  <div class="to"><small>${e(t('label.dispatchTo'))}</small><b>${e(am)}</b>${amLine ? `<span>${e(amLine)}</span>` : ''}</div></div>
-  <div class="qr">${qrSvg}</div>
-</div>
-<div class="row">${field('label.forDoctor', doctor)}${field('label.clinic', label.clinic)}</div>
-<div class="row">${field('label.product', label.product)}${field('label.quantity', label.quantity)}</div>
-<div class="bar">${barcodeSvg}${label.artworkFile ? `<div class="file">${e(label.artworkFile)}</div>` : ''}</div>
+<div class="outer"><div class="inner">
+  <div class="rows">
+    ${row('label.product', label.product)}
+    ${row('label.quantity', `${label.quantity} ${t('label.pieces')}`)}
+    ${row('label.sapCode', label.sapCode, true)}
+    ${row('label.hq', label.hq)}
+    ${row('label.drName', label.doctorName)}
+    ${row('label.mCode', label.mCode)}
+    ${row('label.supplier', label.supplier)}
+  </div>
+  <div class="foot">
+    <div class="scan"><div class="qr">${qrSvg}</div><div class="ids"><b>${e(label.displayId)}</b>${barcodeSvg}</div></div>
+    ${label.division ? `<div class="div"><small>${e(t('label.div'))}</small><b>${e(label.division)}</b></div>` : ''}
+  </div>
+</div></div>
 </body></html>`
 }
 
-/** Opens the browser's print dialog on the label alone (a 100 x 70 mm sticker) (choose "Save as PDF" there to download it). */
+/** Opens the browser's print dialog on the label alone (an A6 landscape sticker, 148 x 105 mm) (choose "Save as PDF" there to download it). */
 export function printLabel(html: string): void {
   const frame = document.createElement('iframe')
   frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'

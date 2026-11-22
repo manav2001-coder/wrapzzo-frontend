@@ -36,7 +36,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { MAX_PROOF_BYTES, notAPdfMessage, proofTooBigMessage } from '@/lib/proof-limits'
 import { useUploadVendorOrderDesign, useVendorOrderDesigns } from '@/hooks/useVendorOrderDesigns'
-import { useUpdateVendorOrderStatus, useVendorOrder } from '@/hooks/useVendorOrders'
+import { useMyVendorProfile, useUpdateVendorOrderStatus, useVendorOrder } from '@/hooks/useVendorOrders'
 import { formatDate, formatDateTime } from '@/lib/datetime'
 import { barcodeSvgOf, dispatchLabelOf, labelHtml, printLabel, qrSvgOf } from '@/lib/dispatch-label'
 import { formatCurrency } from '@/lib/format'
@@ -343,17 +343,18 @@ type PendingMove = { status: OrderStatus; title: string; body: string; label: st
 
 /** Downloads the parcel's label (the browser's print dialog -- "Save as PDF" there) once the order may be packed. */
 function DispatchLabelButton({ order }: { order: VendorOrder }) {
-  const { t } = useTranslation('vendor')
+  const { t, i18n } = useTranslation('vendor')
   const showError = useApiErrorToast()
-  const { data: designs } = useVendorOrderDesigns(order.id)
+  const { data: vendor } = useMyVendorProfile()
   const [busy, setBusy] = useState(false)
 
   async function onClick() {
     setBusy(true)
     try {
-      const approved = designs?.find((d) => d.status === 'APPROVED')
-      const label = dispatchLabelOf(order, approved?.fileName ?? null)
-      printLabel(labelHtml(label, await qrSvgOf(order.displayId), barcodeSvgOf(order.displayId), (key) => t(key)))
+      const label = dispatchLabelOf(order, vendor?.name ?? '')
+      // The sticker is a physical label the packers and the franchise read, so it is always printed in English.
+      const english = i18n.getFixedT('en', 'vendor')
+      printLabel(labelHtml(label, await qrSvgOf(order.displayId), barcodeSvgOf(order.displayId), (key) => english(key)))
     } catch (err) {
       showError(err, t('label.failed'))
     } finally {

@@ -610,5 +610,18 @@
     "discard": "Discard changes",
     "savedOn": "Orders now need approval from {{role}} before they go to the vendor",
     "savedOff": "Orders go straight to the vendor again"
+  },
+  "activity": {
+    "never": "Never signed in",
+    "column": "Last active",
+    "filterLabel": "Activity",
+    "all": "Anyone",
+    "preset": {
+      "today": "Active in the last 24 hours",
+      "week": "Active in the last 7 days",
+      "inactive7": "Not active for 7+ days",
+      "inactive30": "Not active for 30+ days",
+      "never": "Never signed in"
+    }
   }
 }

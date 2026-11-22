@@ -20,6 +20,8 @@ export interface Vendor {
   addedByName?: string | null
   updatedOn?: string | null
   updatedByName?: string | null
+  /** When it last used the app (ISO); null if never. Only sent to someone with platform_user_activity.view. */
+  lastActiveAt?: string | null
 }
 
 /** Every vendor across all franchises; with a company, only those serving it. Platform staff view; each company runs its own. */

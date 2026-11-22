@@ -103,6 +103,9 @@ export const P = {
   PLATFORM_MENU_CONFIG_EDIT: 'platform_menu_config.edit',
   PLATFORM_EMAIL_SETTINGS_VIEW: 'platform_email_settings.view',
   PLATFORM_EMAIL_SETTINGS_EDIT: 'platform_email_settings.edit',
+
+  /** Super Admin only: when each user and vendor was last active. */
+  PLATFORM_USER_ACTIVITY_VIEW: 'platform_user_activity.view',
 } as const
 
 export type PermissionKey = (typeof P)[keyof typeof P]

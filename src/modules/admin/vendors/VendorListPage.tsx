@@ -9,8 +9,13 @@ import { listEmptyBody } from '@/components/data-table/list-body'
 import { IconButton } from '@/components/icon-button'
 import { useCompanyScope } from '@/components/masters/company-scope-select'
 import { MasterPageHeader, useMasterColumns } from '@/components/masters/master-page'
+import { LastActiveCell } from '@/components/last-active-cell'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useHasAccess } from '@/hooks/use-permission'
 import { useVendors } from '@/hooks/useVendors'
+import { ACTIVITY_PRESETS, matchesActivity, type ActivityPreset } from '@/lib/last-active'
+import { P } from '@/lib/permissions'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { rowsFetcher } from '@/lib/masters-api'
 import { VendorMappingDialog } from './VendorMappingDialog'
@@ -21,6 +26,7 @@ const LIST_FIELDS: ListFieldMap = {
   companyName: 'text',
   contactEmail: 'text',
   contactPhone: 'text',
+  lastActiveAt: 'date',
   addedOn: 'date',
   addedByName: 'text',
 }
@@ -52,7 +58,14 @@ export function VendorListPage() {
   const scope = useCompanyScope()
   const { data: vendors, dataUpdatedAt, error, refetch } = useVendors(scope.companyId)
   const [viewing, setViewing] = useState<Vendor | null>(null)
-  const fetchVendors = useMemo(() => rowsFetcher(vendors ?? [], (vendor: Vendor) => vendor.status === 'ACTIVE'), [vendors])
+  // Last active is for the Super Admin only. This list is read whole and filtered here, so its activity filter is applied here too.
+  const canViewActivity = useHasAccess(P.PLATFORM_USER_ACTIVITY_VIEW)
+  const [activity, setActivity] = useState<ActivityPreset | 'all'>('all')
+  const shown = useMemo(
+    () => (activity === 'all' ? (vendors ?? []) : (vendors ?? []).filter((vendor) => matchesActivity(activity, vendor.lastActiveAt))),
+    [vendors, activity],
+  )
+  const fetchVendors = useMemo(() => rowsFetcher(shown, (vendor: Vendor) => vendor.status === 'ACTIVE'), [shown])
 
   const { statusColumn, auditColumns } = useMasterColumns<Vendor>({
     isActive: (vendor) => vendor.status === 'ACTIVE',
@@ -75,6 +88,18 @@ export function VendorListPage() {
       { id: 'contactEmail', accessorKey: 'contactEmail', header: t('vendors.column.email'), meta: { className: 'min-w-[200px]' } },
       { id: 'contactPhone', accessorFn: (v) => v.contactPhone ?? '', header: t('vendors.column.phone'), meta: { className: 'min-w-[130px]' } },
       statusColumn,
+      ...(canViewActivity
+        ? [
+            {
+              id: 'lastActiveAt',
+              accessorFn: (v: Vendor) => v.lastActiveAt ?? '',
+              header: t('activity.column'),
+              enableColumnFilter: false,
+              meta: { className: 'min-w-[150px]' },
+              cell: ({ row }: { row: { original: Vendor } }) => <LastActiveCell value={row.original.lastActiveAt} />,
+            },
+          ]
+        : []),
       ...auditColumns,
       {
         id: 'actions',
@@ -85,16 +110,37 @@ export function VendorListPage() {
         cell: ({ row }) => <IconButton icon={Eye} label={`View where ${row.original.name} serves`} onClick={() => setViewing(row.original)} />,
       },
     ],
-    [t, statusColumn, auditColumns],
+    [t, statusColumn, auditColumns, canViewActivity],
   )
 
   return (
     <div>
-      <MasterPageHeader title={t('vendors.title')} description={t('vendors.subtitle')} extra={scope.control} />
+      <MasterPageHeader title={t('vendors.title')} description={t('vendors.subtitle')} extra={
+          <div className="flex flex-wrap items-end gap-2">
+            {scope.control}
+            {canViewActivity && (
+              <Select value={activity} onValueChange={(value) => setActivity(value as ActivityPreset | 'all')}>
+                <SelectTrigger className="h-9 w-[220px]" aria-label={t('activity.filterLabel')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('activity.filterLabel')}: {t('activity.all')}</SelectItem>
+                  {ACTIVITY_PRESETS.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {t(`activity.preset.${value}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        }
+      />
       <DataTable<Vendor>
         columns={columns}
         fetchData={fetchVendors}
-        refreshTrigger={dataUpdatedAt}
+        // The table reloads when the vendors do, and when the activity filter changes (it is applied to the rows handed to the fetcher).
+        refreshTrigger={dataUpdatedAt * 8 + (activity === 'all' ? 0 : ACTIVITY_PRESETS.indexOf(activity) + 1)}
         listFields={LIST_FIELDS}
         searchable
         showRowSelectionColumn={false}

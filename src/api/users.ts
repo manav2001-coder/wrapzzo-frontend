@@ -36,6 +36,8 @@ export interface CompanyUser {
   addedByName?: string | null
   updatedOn?: string | null
   updatedByName?: string | null
+  /** When they last used the app (ISO); null if never. Only sent to someone with platform_user_activity.view. */
+  lastActiveAt?: string | null
 }
 
 export interface BulkImportUsersResult {

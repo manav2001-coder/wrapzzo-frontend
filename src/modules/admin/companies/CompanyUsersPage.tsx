@@ -22,6 +22,8 @@ import { useCompanyUserContext } from '@/hooks/useCompanyUserContext'
 import { useDeleteUser, useMakeCompanyAdmin, useResendInvite, useSetCompanyWide, useSetupLink } from '@/hooks/useUsers'
 import { downloadEmployeeTemplate } from '@/lib/employeeTemplate'
 import type { ListFieldMap } from '@/lib/list-fields'
+import { LastActiveCell } from '@/components/last-active-cell'
+import { ACTIVITY_PRESETS } from '@/lib/last-active'
 import { P } from '@/lib/permissions'
 import { RemoveAdminDialog } from './RemoveAdminDialog'
 import { ExtraOrgUnitsDialog } from './ExtraOrgUnitsDialog'
@@ -37,6 +39,8 @@ const LIST_FIELDS: ListFieldMap = {
   reportsToName: 'text',
   orgUnitName: 'text',
   roleName: 'text',
+  // Last active: filtered by presets, sorted by the time. Only offered to someone with platform_user_activity.view (the column is left out otherwise).
+  activity: 'enum',
   addedOn: 'date',
   addedByName: 'text',
   updatedOn: 'date',
@@ -65,6 +69,7 @@ export function CompanyUsersPage() {
   // Changing who sees what takes user.edit AND seeing the whole company yourself (the API refuses
   // anyone else), so a regional manager can't widen their own reach.
   const canEditUsers = useHasAccess(P.USER_EDIT)
+  const canViewActivity = useHasAccess(P.PLATFORM_USER_ACTIVITY_VIEW)
   const { companyWide } = usePermissions()
   const canPlace = canEditUsers && companyWide
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -164,6 +169,11 @@ export function CompanyUsersPage() {
         lines={[
           user.email ? <span key="e" className="block truncate">{user.email}</span> : null,
           [user.designation, user.employeeCode].filter(Boolean).join(' · '),
+          canViewActivity ? (
+            <span key="a" className="text-muted-foreground">
+              {t('activity.column')}: <LastActiveCell value={user.lastActiveAt} />
+            </span>
+          ) : null,
           <span key="u" className="flex flex-wrap items-center gap-1.5">
             {user.companyWide ? <Badge variant="default">{t('users.wholeCompany.badge')}</Badge> : user.orgUnitName}
             {user.extraOrgUnits.length > 0 && <Badge variant="secondary-soft">{t('users.extraUnits.more', { count: user.extraOrgUnits.length })}</Badge>}
@@ -232,6 +242,22 @@ export function CompanyUsersPage() {
         },
         cell: ({ row }) => <StatusCell active={row.original.status === 'ACTIVE'} label={t(`users.status.${row.original.status}`)} />,
       },
+      ...(canViewActivity
+        ? [
+            {
+              id: 'activity',
+              accessorFn: (u: CompanyUser) => u.lastActiveAt ?? '',
+              header: t('activity.column'),
+              filterFn: 'equals' as const,
+              meta: {
+                className: 'min-w-[150px]',
+                filterVariant: 'select' as const,
+                filterOptions: ACTIVITY_PRESETS.map((value) => ({ value, label: t(`activity.preset.${value}`) })),
+              },
+              cell: ({ row }: { row: { original: CompanyUser } }) => <LastActiveCell value={row.original.lastActiveAt} />,
+            },
+          ]
+        : []),
       ...auditColumns,
       {
         id: 'actions',
@@ -242,7 +268,7 @@ export function CompanyUsersPage() {
         cell: ({ row }) => userActions(row.original),
       },
     ],
-    [t, auditColumns, currentUserId, canPlace, canDelete, canEditUsers],
+    [t, auditColumns, currentUserId, canPlace, canDelete, canEditUsers, canViewActivity],
   )
 
   const dialog = pending && {

@@ -13,13 +13,13 @@ export interface DispatchLabel {
   displayId: string
   product: string
   quantity: number
-  /** SAP CODE -- the doctor's pcode. */
+  /** SAP CODE -- the AM's employee code (the SAP code is their employee code). */
   sapCode: string | null
   /** DR. NAME */
   doctorName: string | null
   /** H.Q. NAME -- the AM's area. */
   hq: string | null
-  /** M.CODE -- the AM's employee code. */
+  /** M.CODE -- the doctor's pcode. */
   mCode: string | null
   division: string | null
   /** SUPPLIER -- the vendor making the parcel. */
@@ -34,10 +34,10 @@ export function dispatchLabelOf(order: VendorOrder, supplier: string): DispatchL
     displayId: order.displayId,
     product: order.giftName ?? '',
     quantity: order.quantity,
-    sapCode: order.recipientPcode,
+    sapCode: order.amCode,
     doctorName: order.recipientName,
     hq: order.amArea,
-    mCode: order.amCode,
+    mCode: order.recipientPcode,
     division: order.divisionName,
     supplier,
   }

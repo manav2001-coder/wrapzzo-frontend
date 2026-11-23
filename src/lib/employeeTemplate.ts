@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs'
+import { loadExcelJs } from '@/lib/excel'
 import type { BulkImportUserRow } from '@/api/users'
 import { downloadBlob } from '@/lib/download'
 
@@ -50,7 +50,7 @@ export const EMPLOYEE_TEMPLATE_HEADERS = EMPLOYEE_FIELDS.map((field) => field.la
 export type ColumnMapping = Partial<Record<EmployeeFieldKey, string>>
 
 export async function generateEmployeeTemplateBlob(): Promise<Blob> {
-  const workbook = new ExcelJS.Workbook()
+  const workbook = new (await loadExcelJs()).Workbook()
   const sheet = workbook.addWorksheet('Employees')
   sheet.addRow(EMPLOYEE_TEMPLATE_HEADERS)
   sheet.getRow(1).font = { bold: true }
@@ -84,7 +84,7 @@ export function cellText(value: unknown): string {
 
 /** Reads just the header row -- lets the caller offer a column-mapping step before committing to a full parse. */
 export async function getWorkbookHeaders(file: File): Promise<string[]> {
-  const workbook = new ExcelJS.Workbook()
+  const workbook = new (await loadExcelJs()).Workbook()
   const buffer = await file.arrayBuffer()
   await workbook.xlsx.load(buffer)
 
@@ -121,7 +121,7 @@ export function getUnmappedRequiredFields(mapping: ColumnMapping): EmployeeField
  * Falls back to auto-matching our own header names when omitted.
  */
 export async function parseEmployeeWorkbook(file: File, mapping?: ColumnMapping): Promise<ParsedEmployeeSheet> {
-  const workbook = new ExcelJS.Workbook()
+  const workbook = new (await loadExcelJs()).Workbook()
   const buffer = await file.arrayBuffer()
   await workbook.xlsx.load(buffer)
 

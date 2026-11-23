@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs'
+import { loadExcelJs } from '@/lib/excel'
 import type { BulkImportRoleRow } from '@/api/roles'
 import { downloadBlob } from '@/lib/download'
 import { cellText, normalizeHeader } from '@/lib/employeeTemplate'
@@ -7,7 +7,7 @@ export const ROLE_TEMPLATE_HEADERS = ['Name', 'Description']
 
 /** Builds the roles template and saves it -- the Roles page offers it beside the import. */
 export async function downloadRoleTemplate(): Promise<void> {
-  const workbook = new ExcelJS.Workbook()
+  const workbook = new (await loadExcelJs()).Workbook()
   const sheet = workbook.addWorksheet('Roles')
   sheet.addRow(ROLE_TEMPLATE_HEADERS)
   sheet.getRow(1).font = { bold: true }
@@ -23,7 +23,7 @@ export interface ParsedRoleSheet {
 
 /** Reads a roles sheet: a Name column (required) and an optional Description, one role per row. */
 export async function parseRoleWorkbook(file: File): Promise<ParsedRoleSheet> {
-  const workbook = new ExcelJS.Workbook()
+  const workbook = new (await loadExcelJs()).Workbook()
   await workbook.xlsx.load(await file.arrayBuffer())
   const sheet = workbook.worksheets[0]
   if (!sheet) return { rows: [], errors: ['This file has no worksheet to read.'] }

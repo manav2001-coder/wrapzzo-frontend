@@ -1,4 +1,5 @@
-import ExcelJS from 'exceljs'
+import type ExcelJS from 'exceljs'
+import { loadExcelJs } from '@/lib/excel'
 import type { CreateRecipientInput } from '@/api/recipients'
 import { downloadBlob } from '@/lib/download'
 import { cellText, normalizeHeader } from '@/lib/employeeTemplate'
@@ -31,7 +32,7 @@ const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.s
 
 /** Builds the doctors template and saves it -- the Doctors screen offers it beside the upload. */
 export async function downloadDoctorTemplate(): Promise<void> {
-  const workbook = new ExcelJS.Workbook()
+  const workbook = new (await loadExcelJs()).Workbook()
   const sheet = workbook.addWorksheet('Doctors')
   sheet.addRow(DOCTOR_TEMPLATE_HEADERS)
   sheet.getRow(1).font = { bold: true }
@@ -46,7 +47,7 @@ export interface ParsedDoctorSheet {
 
 /** Reads a doctors sheet, one doctor per row; Pcode, Doctor Name and Phone are required. */
 export async function parseDoctorWorkbook(file: File): Promise<ParsedDoctorSheet> {
-  const workbook = new ExcelJS.Workbook()
+  const workbook = new (await loadExcelJs()).Workbook()
   await workbook.xlsx.load(await file.arrayBuffer())
   const sheet = workbook.worksheets[0]
   if (!sheet) return { rows: [], errors: ['This file has no worksheet to read.'] }

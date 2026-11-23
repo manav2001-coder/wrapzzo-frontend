@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { FirstMenuRedirect } from '@/components/FirstMenuRedirect'
 import { AppLayout } from '@/components/layout'
@@ -5,59 +6,67 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { VendorProtectedRoute } from '@/components/VendorProtectedRoute'
 import { ProtectedRoute as Guard } from '@/components/access-control/protected-route'
 import { P } from '@/lib/permissions'
-import BulkUserTemplateAssignPage from '@/pages/tbac/BulkUserTemplateAssign'
-import FeatureMasterPage from '@/pages/tbac/FeatureMaster'
-import FeaturesToTemplatePage from '@/pages/tbac/FeaturesToTemplate'
-import FeaturesToTemplateAssignPage from '@/pages/tbac/FeaturesToTemplateAssign'
-import RoleTemplateAssignPage from '@/pages/tbac/RoleTemplateAssign'
-import RoleTemplatesPage from '@/pages/tbac/RoleTemplates'
-import TemplateMasterPage from '@/pages/tbac/TemplateMaster'
-import TemplateMasterFormPage from '@/pages/tbac/TemplateMasterForm'
-import TemplatesToTemplatePage from '@/pages/tbac/TemplatesToTemplate'
-import TemplatesToTemplateAssignPage from '@/pages/tbac/TemplatesToTemplateAssign'
-import UserTemplateAssignPage from '@/pages/tbac/UserTemplateAssign'
-import UserTemplatesPage from '@/pages/tbac/UserTemplates'
-import { RolesPage } from '@/modules/admin/roles/RolesPage'
-import { CompanyListPage } from '@/modules/admin/companies/CompanyListPage'
-import { CompanyUsersAddPage } from '@/modules/admin/companies/CompanyUsersAddPage'
-import { CompanyUsersImportPage } from '@/modules/admin/companies/CompanyUsersImportPage'
-import { CompanyUsersPage } from '@/modules/admin/companies/CompanyUsersPage'
-import { GiftFormPage } from '@/modules/admin/gifts/GiftFormPage'
-import { GiftListPage } from '@/modules/admin/gifts/GiftListPage'
-import { OrdersPage } from '@/modules/admin/orders/OrdersPage'
-import { JobsMonitorPage } from '@/modules/platform-config/JobsMonitorPage'
-import { PlatformDashboardPage } from '@/modules/admin/dashboard/PlatformDashboardPage'
-import { VendorListPage } from '@/modules/admin/vendors/VendorListPage'
-import { ApprovalQueuePage } from '@/modules/company/ApprovalQueuePage'
-import { ArtworkApprovalSettingsPage } from '@/modules/artwork-approval/ArtworkApprovalSettingsPage'
-import { OrderApprovalSettingsPage } from '@/modules/order-approval/OrderApprovalSettingsPage'
-import { OrdersPage as CompanyOrdersPage } from '@/modules/company/OrdersPage'
-import { VendorsPage as CompanyVendorsPage } from '@/modules/company/VendorsPage'
-import { EmailSettingsPage } from '@/modules/platform-config/EmailSettingsPage'
-import { MenuConfigPage } from '@/modules/platform-config/MenuConfigPage'
-import { DashboardPage } from '@/modules/dashboard/DashboardPage'
-import { GiftStorePage } from '@/modules/quickgift/GiftStorePage'
-import { ProfilePage } from '@/modules/profile/ProfilePage'
-import { QuickGiftFormPage } from '@/modules/quickgift/QuickGiftFormPage'
-import { QuickGiftLandingPage } from '@/modules/quickgift/QuickGiftLandingPage'
-import { RecipientsPage } from '@/modules/recipients/RecipientsPage'
-import { VendorGiftFormPage } from '@/modules/vendor/gifts/VendorGiftFormPage'
-import { VendorGiftListPage } from '@/modules/vendor/gifts/VendorGiftListPage'
-import { VendorHomePage } from '@/modules/vendor/home/VendorHomePage'
-import { VendorOrderPage } from '@/modules/vendor/orders/VendorOrderPage'
-import { VendorOrdersPage } from '@/modules/vendor/orders/VendorOrdersPage'
 import { LandingPage } from '@/pages/LandingPage'
 import { LoginPage } from '@/pages/LoginPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { RecipientUploadPage } from '@/pages/RecipientUploadPage'
-import ComponentsPage from '@/pages/Components'
-import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
-import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
-import { SetupPasswordPage } from '@/pages/SetupPasswordPage'
-import { SetupVendorPasswordPage } from '@/pages/SetupVendorPasswordPage'
+
+// Each screen is fetched when it is first opened, not shipped to everyone in one 3 MB file.
+const BulkUserTemplateAssignPage = lazy(() => import('@/pages/tbac/BulkUserTemplateAssign'))
+const FeatureMasterPage = lazy(() => import('@/pages/tbac/FeatureMaster'))
+const FeaturesToTemplatePage = lazy(() => import('@/pages/tbac/FeaturesToTemplate'))
+const FeaturesToTemplateAssignPage = lazy(() => import('@/pages/tbac/FeaturesToTemplateAssign'))
+const RoleTemplateAssignPage = lazy(() => import('@/pages/tbac/RoleTemplateAssign'))
+const RoleTemplatesPage = lazy(() => import('@/pages/tbac/RoleTemplates'))
+const TemplateMasterPage = lazy(() => import('@/pages/tbac/TemplateMaster'))
+const TemplateMasterFormPage = lazy(() => import('@/pages/tbac/TemplateMasterForm'))
+const TemplatesToTemplatePage = lazy(() => import('@/pages/tbac/TemplatesToTemplate'))
+const TemplatesToTemplateAssignPage = lazy(() => import('@/pages/tbac/TemplatesToTemplateAssign'))
+const UserTemplateAssignPage = lazy(() => import('@/pages/tbac/UserTemplateAssign'))
+const UserTemplatesPage = lazy(() => import('@/pages/tbac/UserTemplates'))
+const RolesPage = lazy(() => import('@/modules/admin/roles/RolesPage').then((m) => ({ default: m.RolesPage })))
+const CompanyListPage = lazy(() => import('@/modules/admin/companies/CompanyListPage').then((m) => ({ default: m.CompanyListPage })))
+const CompanyUsersAddPage = lazy(() => import('@/modules/admin/companies/CompanyUsersAddPage').then((m) => ({ default: m.CompanyUsersAddPage })))
+const CompanyUsersImportPage = lazy(() => import('@/modules/admin/companies/CompanyUsersImportPage').then((m) => ({ default: m.CompanyUsersImportPage })))
+const CompanyUsersPage = lazy(() => import('@/modules/admin/companies/CompanyUsersPage').then((m) => ({ default: m.CompanyUsersPage })))
+const GiftFormPage = lazy(() => import('@/modules/admin/gifts/GiftFormPage').then((m) => ({ default: m.GiftFormPage })))
+const GiftListPage = lazy(() => import('@/modules/admin/gifts/GiftListPage').then((m) => ({ default: m.GiftListPage })))
+const OrdersPage = lazy(() => import('@/modules/admin/orders/OrdersPage').then((m) => ({ default: m.OrdersPage })))
+const JobsMonitorPage = lazy(() => import('@/modules/platform-config/JobsMonitorPage').then((m) => ({ default: m.JobsMonitorPage })))
+const PlatformDashboardPage = lazy(() => import('@/modules/admin/dashboard/PlatformDashboardPage').then((m) => ({ default: m.PlatformDashboardPage })))
+const VendorListPage = lazy(() => import('@/modules/admin/vendors/VendorListPage').then((m) => ({ default: m.VendorListPage })))
+const ApprovalQueuePage = lazy(() => import('@/modules/company/ApprovalQueuePage').then((m) => ({ default: m.ApprovalQueuePage })))
+const ArtworkApprovalSettingsPage = lazy(() => import('@/modules/artwork-approval/ArtworkApprovalSettingsPage').then((m) => ({ default: m.ArtworkApprovalSettingsPage })))
+const OrderApprovalSettingsPage = lazy(() => import('@/modules/order-approval/OrderApprovalSettingsPage').then((m) => ({ default: m.OrderApprovalSettingsPage })))
+const CompanyOrdersPage = lazy(() => import('@/modules/company/OrdersPage').then((m) => ({ default: m.OrdersPage })))
+const CompanyVendorsPage = lazy(() => import('@/modules/company/VendorsPage').then((m) => ({ default: m.VendorsPage })))
+const EmailSettingsPage = lazy(() => import('@/modules/platform-config/EmailSettingsPage').then((m) => ({ default: m.EmailSettingsPage })))
+const MenuConfigPage = lazy(() => import('@/modules/platform-config/MenuConfigPage').then((m) => ({ default: m.MenuConfigPage })))
+const DashboardPage = lazy(() => import('@/modules/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const GiftStorePage = lazy(() => import('@/modules/quickgift/GiftStorePage').then((m) => ({ default: m.GiftStorePage })))
+const ProfilePage = lazy(() => import('@/modules/profile/ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const QuickGiftFormPage = lazy(() => import('@/modules/quickgift/QuickGiftFormPage').then((m) => ({ default: m.QuickGiftFormPage })))
+const QuickGiftLandingPage = lazy(() => import('@/modules/quickgift/QuickGiftLandingPage').then((m) => ({ default: m.QuickGiftLandingPage })))
+const RecipientsPage = lazy(() => import('@/modules/recipients/RecipientsPage').then((m) => ({ default: m.RecipientsPage })))
+const VendorGiftFormPage = lazy(() => import('@/modules/vendor/gifts/VendorGiftFormPage').then((m) => ({ default: m.VendorGiftFormPage })))
+const VendorGiftListPage = lazy(() => import('@/modules/vendor/gifts/VendorGiftListPage').then((m) => ({ default: m.VendorGiftListPage })))
+const VendorHomePage = lazy(() => import('@/modules/vendor/home/VendorHomePage').then((m) => ({ default: m.VendorHomePage })))
+const VendorOrderPage = lazy(() => import('@/modules/vendor/orders/VendorOrderPage').then((m) => ({ default: m.VendorOrderPage })))
+const VendorOrdersPage = lazy(() => import('@/modules/vendor/orders/VendorOrdersPage').then((m) => ({ default: m.VendorOrdersPage })))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
+const RecipientUploadPage = lazy(() => import('@/pages/RecipientUploadPage').then((m) => ({ default: m.RecipientUploadPage })))
+const ComponentsPage = lazy(() => import('@/pages/Components'))
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
+const SetupPasswordPage = lazy(() => import('@/pages/SetupPasswordPage').then((m) => ({ default: m.SetupPasswordPage })))
+const SetupVendorPasswordPage = lazy(() => import('@/pages/SetupVendorPasswordPage').then((m) => ({ default: m.SetupVendorPasswordPage })))
+
+/** Shown for the moment a screen's code is being fetched. */
+function ScreenLoading() {
+  return <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground" role="status">Loading…</div>
+}
 
 export function AppRoutes() {
   return (
+    <Suspense fallback={<ScreenLoading />}>
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -153,5 +162,6 @@ export function AppRoutes() {
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </Suspense>
   )
 }

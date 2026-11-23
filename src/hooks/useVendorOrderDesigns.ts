@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { listVendorOrderDesigns, uploadVendorOrderDesign } from '@/api/vendorOrderDesigns'
 import { vendorOrdersKey } from '@/hooks/useVendorOrders'
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { liveRefresh } from '@/lib/live-refresh'
 
 export function useVendorOrderDesigns(orderId: string | undefined) {
   return useQuery({
@@ -9,7 +9,7 @@ export function useVendorOrderDesigns(orderId: string | undefined) {
     queryFn: () => listVendorOrderDesigns(orderId!),
     enabled: Boolean(orderId),
     // The customer's review lands here without a reload.
-    refetchInterval: LIVE_REFRESH_MS,
+    refetchInterval: liveRefresh(),
   })
 }
 

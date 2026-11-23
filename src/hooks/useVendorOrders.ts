@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { OrderStatus } from '@/api/orders'
 import { getMyVendorProfile, getVendorOrder, getVendorOrderSummary, listMyVendorDivisions, listVendorOrderDivisions, updateVendorOrderStatus, type VendorOrder } from '@/api/vendorOrders'
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { liveRefresh } from '@/lib/live-refresh'
 import type { ListFilter } from '@/lib/list-filter'
 import { fetchPage } from '@/lib/server-list'
 import { ALL_DIVISIONS, useVendorDivision } from '@/lib/vendor-division'
@@ -21,13 +21,13 @@ export function useVendorOrderSummary() {
   return useQuery({
     queryKey: [...vendorOrdersKey, 'summary', division],
     queryFn: () => getVendorOrderSummary(division === ALL_DIVISIONS ? undefined : division),
-    refetchInterval: LIVE_REFRESH_MS,
+    refetchInterval: liveRefresh(),
   })
 }
 
 /** The divisions the vendor's orders come from, whatever the division filter says -- what the filter itself is built from. */
 export function useVendorOrderDivisions() {
-  return useQuery({ queryKey: [...vendorOrdersKey, 'divisions'], queryFn: listVendorOrderDivisions, refetchInterval: LIVE_REFRESH_MS })
+  return useQuery({ queryKey: [...vendorOrdersKey, 'divisions'], queryFn: listVendorOrderDivisions, refetchInterval: liveRefresh() })
 }
 
 /** The filter the picked division adds to a list of the vendor's orders. */
@@ -71,7 +71,7 @@ export function useVendorOrder(id: string | undefined) {
     queryKey: vendorOrderKey(id ?? ''),
     queryFn: () => getVendorOrder(id!),
     enabled: Boolean(id),
-    refetchInterval: LIVE_REFRESH_MS,
+    refetchInterval: liveRefresh(),
   })
 }
 

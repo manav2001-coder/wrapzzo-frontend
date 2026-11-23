@@ -12,16 +12,16 @@ import {
   requestPlatformOrderPhotoLink,
 } from '@/api/orders'
 import { invalidateOrderLists } from '@/lib/invalidate-lists'
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { LIVE_COUNT_REFRESH_MS, LIVE_REFRESH_MS, liveRefresh } from '@/lib/live-refresh'
 
 // These poll: a vendor's new proof or status change shows on the company side without a reload. The list itself is a paged
 // DataTable (serverFetcher); what lives here is the one open order and the figures above the list.
 export function useOrderSummary() {
-  return useQuery({ queryKey: ['orders', 'summary'], queryFn: getOrderSummary, refetchInterval: LIVE_REFRESH_MS })
+  return useQuery({ queryKey: ['orders', 'summary'], queryFn: getOrderSummary, refetchInterval: liveRefresh(LIVE_COUNT_REFRESH_MS) })
 }
 
 export function useOrder(id: string | undefined) {
-  return useQuery({ queryKey: ['orders', 'detail', id], queryFn: () => getOrder(id!), enabled: Boolean(id), refetchInterval: LIVE_REFRESH_MS })
+  return useQuery({ queryKey: ['orders', 'detail', id], queryFn: () => getOrder(id!), enabled: Boolean(id), refetchInterval: liveRefresh(LIVE_REFRESH_MS) })
 }
 
 export function useRequestOrderPhotoLink() {

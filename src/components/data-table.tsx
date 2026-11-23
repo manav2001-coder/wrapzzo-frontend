@@ -207,7 +207,7 @@ interface DataTableProps<TData> {
   renderBulkActions?: (options: FetchOptions, selectedRows: TData[]) => React.ReactNode;
   refreshTrigger?: number;
   /** Server mode: re-read the page on this interval (ms), so a list that others change stays current. */
-  refetchInterval?: number;
+  refetchInterval?: number | (() => number);
   getRowCanExpand?: (row: TData) => boolean;
   renderSubRow?: (row: TData, isExpanded: boolean) => React.ReactNode;
   rowGroupConfig?: RowGroupConfig<TData>;

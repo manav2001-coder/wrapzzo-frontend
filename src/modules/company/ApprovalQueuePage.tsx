@@ -23,7 +23,7 @@ import { formatDate, formatDateTime } from '@/lib/datetime'
 import type { ListFieldMap } from '@/lib/list-fields'
 import { AppTabs } from '@/components/app-tabs'
 import { useApprovalCounts } from '@/hooks/useApprovalCounts'
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { liveRefresh } from '@/lib/live-refresh'
 import { serverFetcher } from '@/lib/server-list'
 import { OrderRequestsSection } from './OrderRequestsSection'
 import { doctorLabel } from '@/lib/doctor-label'
@@ -206,7 +206,7 @@ export function ApprovalQueuePage() {
       <DataTable<PendingArtworkApproval>
         columns={columns}
         fetchData={fetchArtwork}
-        refetchInterval={LIVE_REFRESH_MS}
+        refetchInterval={liveRefresh()}
         listFields={LIST_FIELDS}
         searchable
         renderMobileCard={proofCard}

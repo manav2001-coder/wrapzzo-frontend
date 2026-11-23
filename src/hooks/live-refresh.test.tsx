@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { LIVE_COUNT_REFRESH_MS, LIVE_REFRESH_MS, liveRefresh } from '@/lib/live-refresh'
 import { useApproveOrderDesign } from './useOrderDesigns'
 import { useOrderSummary } from './useOrders'
 import { useVendorOrderSummary } from './useVendorOrders'
@@ -29,13 +29,22 @@ describe('the artwork loop refreshes on its own', () => {
   afterEach(() => vi.useRealTimers())
 
   it.each([
-    ['the company order figures', () => void useOrderSummary(), getOrderSummary],
-    ['the vendor queue figures', () => void useVendorOrderSummary(), getVendorOrderSummary],
-  ])('re-fetches %s every interval', async (_name, hook, api) => {
+    ['the company order figures', () => void useOrderSummary(), getOrderSummary, LIVE_COUNT_REFRESH_MS],
+    ['the vendor queue figures', () => void useVendorOrderSummary(), getVendorOrderSummary, LIVE_REFRESH_MS],
+  ])('re-fetches %s every interval', async (_name, hook, api, interval) => {
     renderHook(hook, { wrapper: wrapperWith(new QueryClient()) })
     await waitFor(() => expect(api).toHaveBeenCalledTimes(1))
-    await act(() => vi.advanceTimersByTimeAsync(LIVE_REFRESH_MS))
+    await act(() => vi.advanceTimersByTimeAsync(interval))
     await waitFor(() => expect(api).toHaveBeenCalledTimes(2))
+  })
+
+  it('asks at the normal rate while someone is using the app, and much slower once they have gone quiet', () => {
+    const interval = liveRefresh(LIVE_REFRESH_MS)
+    expect(interval()).toBe(LIVE_REFRESH_MS)
+    vi.setSystemTime(Date.now() + 6 * 60_000)
+    expect(interval()).toBeGreaterThanOrEqual(3 * 60_000)
+    window.dispatchEvent(new Event('pointerdown'))
+    expect(interval()).toBe(LIVE_REFRESH_MS)
   })
 
   it('a review refreshes the orders list, so its "waiting on review" flag clears', async () => {

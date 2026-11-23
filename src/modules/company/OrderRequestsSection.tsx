@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
 import { useDecideOrder } from '@/hooks/useOrderApprovals'
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { liveRefresh } from '@/lib/live-refresh'
 import { serverFetcher } from '@/lib/server-list'
 import { formatDate, formatDateTime } from '@/lib/datetime'
 import { formatCurrency } from '@/lib/format'
@@ -176,7 +176,7 @@ export function OrderRequestsSection() {
       <DataTable<PendingOrderApproval>
         columns={columns}
         fetchData={fetchOrderRequests}
-        refetchInterval={LIVE_REFRESH_MS}
+        refetchInterval={liveRefresh()}
         listFields={LIST_FIELDS}
         searchable
         renderMobileCard={requestCard}

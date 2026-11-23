@@ -13,7 +13,7 @@ import { MasterPageHeader } from '@/components/masters/master-page'
 import { Button } from '@/components/ui/button'
 import type { FetchOptions, FetchResult } from '@/components/data-table/types'
 import { divisionFilter, useVendorOrderSummary, VENDOR_ORDERS_PATH } from '@/hooks/useVendorOrders'
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { liveRefresh } from '@/lib/live-refresh'
 import type { ListFilter } from '@/lib/list-filter'
 import { serverFetcher } from '@/lib/server-list'
 import { useVendorDivision } from '@/lib/vendor-division'
@@ -170,7 +170,7 @@ export function VendorOrdersPage() {
       <DataTable<Row>
         columns={columns}
         fetchData={fetchOrders}
-        refetchInterval={LIVE_REFRESH_MS}
+        refetchInterval={liveRefresh()}
         listFields={LIST_FIELDS}
         tableFilterComponents={() => [{ id: 'assignedAt', label: t('orders.column.received'), type: 'dateRange' }]}
         searchable

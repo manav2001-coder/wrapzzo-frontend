@@ -21,7 +21,7 @@ import { useApiErrorToast } from '@/hooks/use-api-error-toast'
 import { useHasAccess } from '@/hooks/use-permission'
 import { P } from '@/lib/permissions'
 import { useOrder, useOrderSummary, useRequestOrderPhotoLink } from '@/hooks/useOrders'
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { liveRefresh } from '@/lib/live-refresh'
 import type { ListFilter } from '@/lib/list-filter'
 import { serverFetcher } from '@/lib/server-list'
 import { formatDate } from '@/lib/datetime'
@@ -269,7 +269,7 @@ export function OrdersPage() {
       <DataTable<Order>
         columns={columns}
         fetchData={fetchOrders}
-        refetchInterval={LIVE_REFRESH_MS}
+        refetchInterval={liveRefresh()}
         listFields={LIST_FIELDS}
         tableFilterComponents={() => [{ id: 'createdAt', label: t('column.placed'), type: 'dateRange' }]}
         searchable

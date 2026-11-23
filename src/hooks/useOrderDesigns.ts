@@ -1,7 +1,7 @@
 import { invalidateOrderLists } from '@/lib/invalidate-lists'
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { approveOrderDesign, listOrderDesigns, rejectOrderDesign } from '@/api/orderDesigns'
-import { LIVE_REFRESH_MS } from '@/lib/live-refresh'
+import { liveRefresh } from '@/lib/live-refresh'
 
 export function useOrderDesigns(orderId: string | undefined) {
   return useQuery({
@@ -9,7 +9,7 @@ export function useOrderDesigns(orderId: string | undefined) {
     queryFn: () => listOrderDesigns(orderId!),
     enabled: Boolean(orderId),
     // The vendor's next proof arrives without the reviewer doing anything.
-    refetchInterval: LIVE_REFRESH_MS,
+    refetchInterval: liveRefresh(),
   })
 }
 

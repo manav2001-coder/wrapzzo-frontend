@@ -52,3 +52,12 @@ export async function countOf(path: string, fixedFilters: ListFilter[] = [], ext
   const page = await fetchPage<unknown>(path, { pageIndex: 0, pageSize: 1, filters: [] }, fixedFilters, extra, client)
   return page.total
 }
+
+/**
+ * How many approvals wait on the caller, from the server's own count endpoint (`.../pending/page` -> `.../pending/count`). The tab badges
+ * ask this every minute for every approver, so it must not make the server build the rows of a page just to read a number.
+ */
+export async function pendingCountOf(pagePath: string, client: ListClient = apiClient): Promise<number> {
+  const response = await client.get<{ total: number }>(pagePath.replace(/\/page$/, '/count'))
+  return response.data.total
+}

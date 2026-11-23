@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 
 import { LIVE_COUNT_REFRESH_MS, liveRefresh } from '@/lib/live-refresh'
 import type { PendingArtworkApproval } from '@/api/orderDesigns'
-import { countOf, fetchPage } from '@/lib/server-list'
+import { fetchPage, pendingCountOf } from '@/lib/server-list'
 
 /** How many artwork proofs and order requests wait on the caller -- the tab badges. Read as a page of one: the server counts. */
 export function useApprovalCounts() {
-  const artwork = useQuery({ queryKey: ['approvals', 'count', 'artwork'], queryFn: () => countOf('/api/artwork-approvals/pending/page'), refetchInterval: liveRefresh(LIVE_COUNT_REFRESH_MS) })
-  const orders = useQuery({ queryKey: ['approvals', 'count', 'orders'], queryFn: () => countOf('/api/order-approvals/pending/page'), refetchInterval: liveRefresh(LIVE_COUNT_REFRESH_MS) })
+  const artwork = useQuery({ queryKey: ['approvals', 'count', 'artwork'], queryFn: () => pendingCountOf('/api/artwork-approvals/pending/page'), refetchInterval: liveRefresh(LIVE_COUNT_REFRESH_MS) })
+  const orders = useQuery({ queryKey: ['approvals', 'count', 'orders'], queryFn: () => pendingCountOf('/api/order-approvals/pending/page'), refetchInterval: liveRefresh(LIVE_COUNT_REFRESH_MS) })
   return { artwork: artwork.data, orders: orders.data }
 }
 
@@ -26,5 +26,5 @@ export function usePendingArtworkPreview(enabled: boolean) {
 
 /** How many order requests wait on the caller to approve -- the dashboard's "requests to approve" tile. */
 export function usePendingOrderApprovalCount(enabled: boolean) {
-  return useQuery({ queryKey: ['approvals', 'count', 'orders', 'dashboard'], enabled, refetchInterval: liveRefresh(LIVE_COUNT_REFRESH_MS), queryFn: () => countOf('/api/order-approvals/pending/page') })
+  return useQuery({ queryKey: ['approvals', 'count', 'orders', 'dashboard'], enabled, refetchInterval: liveRefresh(LIVE_COUNT_REFRESH_MS), queryFn: () => pendingCountOf('/api/order-approvals/pending/page') })
 }

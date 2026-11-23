@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { countOf, listQueryParams, serverFetcher } from './server-list'
+import { countOf, listQueryParams, pendingCountOf, serverFetcher } from './server-list'
 
 const get = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/axiosClient', () => ({ apiClient: { get } }))
@@ -50,5 +50,11 @@ describe('server lists', () => {
   it('counts a list by reading the total of a page of one', async () => {
     expect(await countOf('/api/order-approvals/pending/page')).toBe(53)
     expect(get).toHaveBeenCalledWith('/api/order-approvals/pending/page', { params: { page: 0, size: 1 } })
+  })
+
+  it('counts approvals from the server count endpoint, which builds no rows', async () => {
+    get.mockResolvedValueOnce({ data: { total: 7 } })
+    expect(await pendingCountOf('/api/artwork-approvals/pending/page')).toBe(7)
+    expect(get).toHaveBeenLastCalledWith('/api/artwork-approvals/pending/count')
   })
 })

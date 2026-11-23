@@ -56,6 +56,9 @@ describe('ApprovalQueuePage', () => {
     get.mockReset().mockImplementation(async (url: string) => {
       if (url === '/api/artwork-approvals/pending/page') return pageOf(await listPendingArtworkApprovals())
       if (url === '/api/order-approvals/pending/page') return pageOf(await listPendingOrderApprovals())
+      // The tab badges read the server's own count, not a page of one.
+      if (url === '/api/artwork-approvals/pending/count') return { data: { total: (await listPendingArtworkApprovals()).length } }
+      if (url === '/api/order-approvals/pending/count') return { data: { total: (await listPendingOrderApprovals()).length } }
       return { data: [] }
     })
     listPendingOrderApprovals.mockReset().mockResolvedValue([])

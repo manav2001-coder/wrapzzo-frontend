@@ -26,6 +26,7 @@ ENV DNS_RESOLVER=1.1.1.1
 # Where /storage/ is forwarded: the bucket's S3 endpoint (the backend's S3_ENDPOINT), without the bucket name.
 ENV STORAGE_UPSTREAM=https://d5688d06f65308ddd6191d6b89f10ea1.r2.cloudflarestorage.com
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --chmod=755 docker/16-api-upstream.envsh /docker-entrypoint.d/16-api-upstream.envsh
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 8080

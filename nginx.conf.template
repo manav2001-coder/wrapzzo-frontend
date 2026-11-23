@@ -4,6 +4,20 @@ map $request_uri $storage_uri {
     default "";
 }
 
+# The backend, as a pool of connections that stay open between requests. Without it every /api call opened (and then closed) its own
+# connection -- over the public address that is a TLS handshake each time, and a closed connection holds a port for about a minute, so
+# a busy hour could run the web tier out of ports. `resolve` keeps looking the name up (through `resolver`), so a backend that is
+# redeployed and gets a new address is found again without restarting this server. API_* come from API_UPSTREAM (docker/16-api-upstream.envsh).
+upstream api_backend {
+    zone api_backend 64k;
+    resolver ${DNS_RESOLVER} valid=30s ipv6=off;
+    server ${API_SERVER} resolve;
+    keepalive 64;
+    keepalive_requests 1000;
+    # Shorter than the time the backend or its proxy waits before closing an idle connection, so a connection is never reused just as it closes.
+    keepalive_timeout 30s;
+}
+
 server {
     listen ${PORT};
     server_name _;
@@ -33,11 +47,11 @@ server {
     # API_UPSTREAM and DNS_RESOLVER come from the environment (defaults in the Dockerfile). Because the upstream is a
     # variable, nginx looks it up at request time through `resolver`, and passes the request path on unchanged.
     location /api/ {
-        set $upstream ${API_UPSTREAM};
-        proxy_pass $upstream;
+        proxy_pass ${API_SCHEME}://api_backend;
         proxy_http_version 1.1;
         proxy_ssl_server_name on;
-        proxy_set_header Host $proxy_host;
+        proxy_ssl_name ${API_HOSTNAME};
+        proxy_set_header Host ${API_HOST_HEADER};
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
         proxy_set_header Connection "";

@@ -1,0 +1,14 @@
+# Sourced by the nginx image's entrypoint before the template is filled in (files ending in .envsh are sourced, so what is exported here
+# is visible to envsubst). Splits API_UPSTREAM (a URL, e.g. https://host or http://svc.railway.internal:8080) into the parts nginx needs
+# for a pooled upstream: scheme, "host:port" to connect to, the Host header to send, and the name to check the certificate against.
+# API_UPSTREAM stays the one setting; nothing new has to be configured.
+url="${API_UPSTREAM%/}"
+API_SCHEME="${url%%://*}"
+hostport="${url#*://}"
+case "$hostport" in
+  *:*) API_HOSTNAME="${hostport%%:*}"; API_SERVER="$hostport" ;;
+  *)   API_HOSTNAME="$hostport"
+       if [ "$API_SCHEME" = "https" ]; then API_SERVER="$hostport:443"; else API_SERVER="$hostport:80"; fi ;;
+esac
+API_HOST_HEADER="$hostport"
+export API_SCHEME API_HOSTNAME API_SERVER API_HOST_HEADER
